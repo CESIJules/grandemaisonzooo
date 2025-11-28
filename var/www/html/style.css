@@ -225,7 +225,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   position: absolute;
   top: 50%;
   left: 0;
-  width: 320px;
+  width: 400px;
   height: 90px;
   transform: translateY(-50%);
   z-index: 1;
