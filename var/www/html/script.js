@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
         canvasCtx.clearRect(0, 0, WIDTH, HEIGHT);
 
         // Nombre de barres pour le visualiseur
-        const numBars = 80;
+        const numBars = 40;
         const barWidth = WIDTH / numBars;
         const maxBarHeight = HEIGHT * 0.45;
         
@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const normalizedValue = average / 255.0;
           const boostedValue = Math.pow(normalizedValue, 0.6); // Compression logarithmique
           
-          const barHeight = boostedValue * maxBarHeight * 1.8; // Boost global (réduit pour éviter le clipping)
+          const barHeight = boostedValue * maxBarHeight * 1.2; // Boost global (réduit pour éviter le clipping)
           const x = i * barWidth;
           
           // Opacité dynamique basée sur l'amplitude
