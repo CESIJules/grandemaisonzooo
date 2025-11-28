@@ -222,13 +222,13 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 
 #visualizer {
   position: absolute;
-  top: -10.5%;
-  left: 5%;
-  width: 45%;
-  height: 125%;
+  top: 0;
+  left: 0;
+  width: calc(100% + 30px);
+  height: 100%;
   z-index: -1;
-  pointer-events: none; /* Make sure it doesn't block clicks */
-  border-radius: 0; /* Pas de coins arrondis */
+  pointer-events: none;
+  border-radius: 0;
 }
 
 .volume-container {

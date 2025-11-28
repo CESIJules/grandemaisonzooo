@@ -81,52 +81,90 @@ document.addEventListener('DOMContentLoaded', () => {
       if (WIDTH > 0 && HEIGHT > 0) {
         canvasCtx.clearRect(0, 0, WIDTH, HEIGHT);
 
-        const barWidth = 2;
-        let barHeight;
-        let numBars = Math.floor(WIDTH / (barWidth + 1));
+        // Nombre de points pour la ligne ondulée
+        const numPoints = 120;
+        const step = bufferLength / numPoints;
         
-        // Limiter le nombre de barres pour une visualisation dense
-        if (numBars > 250) {
-          numBars = 250;
-        }
-
-        // Utiliser toute la plage de fréquences disponible (y compris basses et subs)
-        const step = bufferLength / numBars;
-
-        for (let i = 0; i < numBars; i++) {
-          // Moyenner les valeurs pour chaque barre
+        // Créer deux lignes ondulées (effet stéréo/symétrique)
+        canvasCtx.beginPath();
+        canvasCtx.lineWidth = 2;
+        canvasCtx.strokeStyle = 'rgba(204, 204, 204, 0.4)';
+        
+        // Ligne supérieure
+        for (let i = 0; i < numPoints; i++) {
           let dataSum = 0;
           const startIndex = Math.floor(i * step);
           const endIndex = Math.floor((i + 1) * step);
           const count = endIndex - startIndex;
           
           for(let j = startIndex; j < endIndex; j++) {
-              dataSum += dataArray[j];
+            dataSum += dataArray[j];
           }
           let average = dataSum / count;
           
-          // Amplifier significativement les basses fréquences
+          // Amplifier les basses fréquences
           let frequencyBoost = 1.0;
-          if (i < numBars * 0.1) {
-            // Sub-basses (0-10%)
-            frequencyBoost = 2.0;
-          } else if (i < numBars * 0.25) {
-            // Basses (10-25%)
-            frequencyBoost = 1.6;
+          if (i < numPoints * 0.15) {
+            frequencyBoost = 2.2;
+          } else if (i < numPoints * 0.3) {
+            frequencyBoost = 1.5;
           }
           
-          barHeight = (average / 255.0) * HEIGHT * 0.85 * frequencyBoost;
-
-          const x = i * (barWidth + 1);
-          const y = HEIGHT / 2 - barHeight / 2;
-
-          const gradient = canvasCtx.createLinearGradient(x, y, x, y + barHeight);
-          gradient.addColorStop(0, 'rgba(204, 204, 204, 0.3)');
-          gradient.addColorStop(1, 'rgba(204, 204, 204, 0.1)');
-
-          canvasCtx.fillStyle = gradient;
-          canvasCtx.fillRect(x, y, barWidth, barHeight);
+          const amplitude = (average / 255.0) * (HEIGHT * 0.35) * frequencyBoost;
+          const x = (i / (numPoints - 1)) * WIDTH;
+          const y = HEIGHT / 2 - amplitude;
+          
+          if (i === 0) {
+            canvasCtx.moveTo(x, y);
+          } else {
+            canvasCtx.lineTo(x, y);
+          }
         }
+        canvasCtx.stroke();
+        
+        // Ligne inférieure (miroir)
+        canvasCtx.beginPath();
+        canvasCtx.lineWidth = 2;
+        canvasCtx.strokeStyle = 'rgba(204, 204, 204, 0.3)';
+        
+        for (let i = 0; i < numPoints; i++) {
+          let dataSum = 0;
+          const startIndex = Math.floor(i * step);
+          const endIndex = Math.floor((i + 1) * step);
+          const count = endIndex - startIndex;
+          
+          for(let j = startIndex; j < endIndex; j++) {
+            dataSum += dataArray[j];
+          }
+          let average = dataSum / count;
+          
+          // Amplifier les basses fréquences
+          let frequencyBoost = 1.0;
+          if (i < numPoints * 0.15) {
+            frequencyBoost = 2.2;
+          } else if (i < numPoints * 0.3) {
+            frequencyBoost = 1.5;
+          }
+          
+          const amplitude = (average / 255.0) * (HEIGHT * 0.35) * frequencyBoost;
+          const x = (i / (numPoints - 1)) * WIDTH;
+          const y = HEIGHT / 2 + amplitude;
+          
+          if (i === 0) {
+            canvasCtx.moveTo(x, y);
+          } else {
+            canvasCtx.lineTo(x, y);
+          }
+        }
+        canvasCtx.stroke();
+        
+        // Ligne centrale subtile
+        canvasCtx.beginPath();
+        canvasCtx.strokeStyle = 'rgba(204, 204, 204, 0.15)';
+        canvasCtx.lineWidth = 1;
+        canvasCtx.moveTo(0, HEIGHT / 2);
+        canvasCtx.lineTo(WIDTH, HEIGHT / 2);
+        canvasCtx.stroke();
       }
 
       // --- Circular Visualizer (Button) ---
