@@ -83,21 +83,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Nombre de barres pour le visualiseur
         const numBars = 80;
-        const step = bufferLength / numBars;
         const barWidth = WIDTH / numBars;
         const maxBarHeight = HEIGHT * 0.45;
         
+        // Utiliser tout le spectre de fréquences de manière uniforme
+        const frequencyRange = bufferLength;
+        const step = frequencyRange / numBars;
+        
         // Dessiner les barres avec effet symétrique vertical
         for (let i = 0; i < numBars; i++) {
-          let dataSum = 0;
-          const startIndex = Math.floor(i * step);
-          const endIndex = Math.floor((i + 1) * step);
-          const count = endIndex - startIndex;
+          // Calculer l'index dans le tableau de fréquences de manière linéaire
+          const frequencyIndex = Math.floor(i * step);
+          const nextFrequencyIndex = Math.floor((i + 1) * step);
           
-          for(let j = startIndex; j < endIndex; j++) {
+          // Moyenne des valeurs dans cette plage
+          let dataSum = 0;
+          const count = nextFrequencyIndex - frequencyIndex;
+          for(let j = frequencyIndex; j < nextFrequencyIndex && j < bufferLength; j++) {
             dataSum += dataArray[j];
           }
-          let average = dataSum / count;
+          let average = count > 0 ? dataSum / count : 0;
           
           // Normalisation et boost uniforme pour toutes les fréquences
           const normalizedValue = average / 255.0;
@@ -118,10 +123,10 @@ document.addEventListener('DOMContentLoaded', () => {
           canvasCtx.fillStyle = gradient;
           
           // Barre vers le haut
-          canvasCtx.fillRect(x, HEIGHT/2 - barHeight, barWidth - 1, barHeight);
+          canvasCtx.fillRect(x, HEIGHT/2 - barHeight, barWidth - 0.5, barHeight);
           
           // Barre vers le bas (miroir)
-          canvasCtx.fillRect(x, HEIGHT/2, barWidth - 1, barHeight);
+          canvasCtx.fillRect(x, HEIGHT/2, barWidth - 0.5, barHeight);
         }
         
         // Ligne centrale pour marquer le centre
