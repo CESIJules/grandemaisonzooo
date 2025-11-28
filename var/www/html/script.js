@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
         canvasCtx.clearRect(0, 0, WIDTH, HEIGHT);
 
         // Nombre de barres pour le visualiseur
-        const numBars = 120;
+        const numBars = 80;
         const step = bufferLength / numBars;
         const barWidth = WIDTH / numBars;
         const maxBarHeight = HEIGHT * 0.45;
@@ -99,25 +99,21 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           let average = dataSum / count;
           
-          // Amplifier les basses fréquences
-          let frequencyBoost = 1.0;
-          if (i < numBars * 0.15) {
-            frequencyBoost = 2.8;
-          } else if (i < numBars * 0.25) {
-            frequencyBoost = 2.0;
-          } else if (i < numBars * 0.4) {
-            frequencyBoost = 1.4;
-          }
+          // Normalisation et boost uniforme pour toutes les fréquences
+          const normalizedValue = average / 255.0;
+          const boostedValue = Math.pow(normalizedValue, 0.6); // Compression logarithmique
           
-          const barHeight = (average / 255.0) * maxBarHeight * frequencyBoost;
+          const barHeight = boostedValue * maxBarHeight * 2.2; // Boost global
           const x = i * barWidth;
           
-          // Dégradé d'opacité basé sur la position et l'amplitude
-          const opacity = 0.2 + (average / 255.0) * 0.35;
+          // Opacité dynamique basée sur l'amplitude
+          const baseOpacity = 0.25;
+          const dynamicOpacity = baseOpacity + (boostedValue * 0.4);
+          
           const gradient = canvasCtx.createLinearGradient(0, HEIGHT/2 - barHeight, 0, HEIGHT/2 + barHeight);
-          gradient.addColorStop(0, `rgba(204, 204, 204, ${opacity * 0.7})`);
-          gradient.addColorStop(0.5, `rgba(238, 238, 238, ${opacity})`);
-          gradient.addColorStop(1, `rgba(204, 204, 204, ${opacity * 0.7})`);
+          gradient.addColorStop(0, `rgba(204, 204, 204, ${dynamicOpacity * 0.7})`);
+          gradient.addColorStop(0.5, `rgba(238, 238, 238, ${dynamicOpacity})`);
+          gradient.addColorStop(1, `rgba(204, 204, 204, ${dynamicOpacity * 0.7})`);
           
           canvasCtx.fillStyle = gradient;
           
