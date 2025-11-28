@@ -122,14 +122,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Ring 1 (Main pulse)
         circularCtx.beginPath();
-        circularCtx.arc(cx, cy, baseRadius + (normalizedVol * 27), 0, 2 * Math.PI);
+        circularCtx.arc(cx, cy, baseRadius + (normalizedVol * 50), 0, 2 * Math.PI);
         circularCtx.strokeStyle = `rgba(255, 255, 255, ${0.2 + (normalizedVol * 0.5)})`;
         circularCtx.lineWidth = 1.5;
         circularCtx.stroke();
 
         // Ring 2 (Echo pulse)
         circularCtx.beginPath();
-        circularCtx.arc(cx, cy, baseRadius + 14 + (normalizedVol * 54), 0, 2 * Math.PI);
+        circularCtx.arc(cx, cy, baseRadius + 14 + (normalizedVol * 90), 0, 2 * Math.PI);
         circularCtx.strokeStyle = `rgba(255, 255, 255, ${0.1 + (normalizedVol * 0.2)})`;
         circularCtx.lineWidth = 1;
         circularCtx.stroke();
