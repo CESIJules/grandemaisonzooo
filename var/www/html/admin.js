@@ -276,6 +276,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const buttonsDiv = document.createElement('div');
 
+        const queueBtn = document.createElement('button');
+        queueBtn.textContent = '+ File';
+        queueBtn.classList.add('queue-btn', 'queue-music-btn');
+        queueBtn.dataset.filename = file;
+
         const renameBtn = document.createElement('button');
         renameBtn.textContent = 'Renommer';
         renameBtn.classList.add('rename-music-btn');
@@ -287,6 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
         deleteBtn.dataset.filename = file; // Store original filename
 
         li.appendChild(span);
+        buttonsDiv.appendChild(queueBtn);
         buttonsDiv.appendChild(renameBtn);
         buttonsDiv.appendChild(deleteBtn);
         li.appendChild(buttonsDiv);
@@ -369,6 +375,109 @@ document.addEventListener('DOMContentLoaded', () => {
     refreshMusicBtn.addEventListener('click', renderMusicFiles);
   }
 
+  // --- Radio Control ---
+  const skipBtn = document.getElementById('skipBtn');
+  const currentPlayingSong = document.getElementById('currentPlayingSong');
+  const queueLength = document.getElementById('queueLength');
+  const queueContainer = document.getElementById('queueContainer');
+
+  // Fonction pour mettre a jour l'affichage du morceau en cours
+  async function updateCurrentSong() {
+    const currentSong = await fetchCurrentSong();
+    if (currentPlayingSong) {
+      currentPlayingSong.textContent = currentSong || 'Aucune lecture en cours';
+    }
+  }
+
+  // Fonction pour mettre a jour la longueur de la file d'attente
+  async function updateQueueLength() {
+    try {
+      const response = await fetch('radio_control.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'queue_length' }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.status === 'success') {
+        if (queueLength) {
+          queueLength.textContent = result.length;
+        }
+        // Mettre a jour le conteneur si vide
+        if (queueContainer && result.length === 0) {
+          queueContainer.innerHTML = '<p>Aucune chanson en file d\'attente</p>';
+        }
+      }
+    } catch (error) {
+      console.error('Erreur lors de la récupération de la file d\'attente:', error);
+    }
+  }
+
+  // Fonction pour passer au morceau suivant
+  async function skipSong() {
+    try {
+      skipBtn.disabled = true;
+      skipBtn.textContent = 'Passage...';
+
+      const response = await fetch('radio_control.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'skip' }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.status === 'success') {
+        // Attendre un peu et mettre a jour
+        setTimeout(() => {
+          updateCurrentSong();
+          updateQueueLength();
+        }, 1000);
+      } else {
+        alert('Erreur: ' + (result.message || 'Impossible de passer au morceau suivant'));
+      }
+    } catch (error) {
+      alert('Erreur: ' + error.message);
+    } finally {
+      skipBtn.disabled = false;
+      skipBtn.innerHTML = '<span>⏭️</span> Passer au suivant';
+    }
+  }
+
+  // Fonction pour ajouter une chanson a la file d'attente
+  async function queueSong(filename) {
+    try {
+      const response = await fetch('radio_control.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'queue', filename: filename }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.status === 'success') {
+        alert('Morceau ajouté à la file d\'attente: ' + formatSongTitle(filename));
+        updateQueueLength();
+      } else {
+        alert('Erreur: ' + (result.message || 'Impossible d\'ajouter le morceau'));
+      }
+    } catch (error) {
+      alert('Erreur: ' + error.message);
+    }
+  }
+
+  // Event listener pour le bouton skip
+  if (skipBtn) {
+    skipBtn.addEventListener('click', skipSong);
+  }
+
   // Delegated listener for music file delete buttons
   if (musicManagementContainer) {
     musicManagementContainer.addEventListener('click', (e) => {
@@ -382,6 +491,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (filename) {
           renameMusicFile(filename);
         }
+      } else if (e.target.classList.contains('queue-music-btn')) {
+        const filename = e.target.dataset.filename;
+        if (filename) {
+          queueSong(filename);
+        }
       }
     });
   }
@@ -390,6 +504,17 @@ document.addEventListener('DOMContentLoaded', () => {
   if (musicManagementContainer) {
     renderMusicFiles(); // Initial load
     setInterval(renderMusicFiles, 20000); // Refresh every 20 seconds
+  }
+
+  // Initialisation et mise a jour periodique pour radio control
+  if (currentPlayingSong) {
+    updateCurrentSong();
+    setInterval(updateCurrentSong, 10000); // Mise a jour toutes les 10 secondes
+  }
+
+  if (queueLength) {
+    updateQueueLength();
+    setInterval(updateQueueLength, 10000); // Mise a jour toutes les 10 secondes
   }
 
   // --- YouTube Downloader ---
