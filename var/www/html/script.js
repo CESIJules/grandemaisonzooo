@@ -24,12 +24,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const currentSong = document.getElementById('currentSong');
   const visualizerCanvas = document.getElementById('visualizer');
   const circularVisualizer = document.getElementById('circularVisualizer');
+  // --- Progress Bar Elements ---
+  const progressInfo = document.getElementById('progress-info');
+  const progressBar = document.getElementById('progress-bar');
+  const elapsedTimeEl = document.getElementById('elapsed-time');
+  const remainingTimeEl = document.getElementById('remaining-time');
 
   let audioContext;
   let analyser;
   let source;
   let visualizerInitialized = false;
   let fetchInterval;
+  // --- Progress Bar State ---
+  let progressInterval = null;
+  let trackDuration = 0;
+  let trackStartTime = 0;
 
   function setupVisualizer() {
     if (visualizerInitialized) return;
@@ -146,6 +155,31 @@ document.addEventListener('DOMContentLoaded', () => {
     visualizerInitialized = true;
   }
 
+  // --- Fonctions pour la barre de progression ---
+  function formatTime(seconds) {
+    const min = Math.floor(seconds / 60);
+    const sec = Math.floor(seconds % 60).toString().padStart(2, '0');
+    return `${min}:${sec}`;
+  }
+
+  function updateProgressBar() {
+    if (!trackDuration || !trackStartTime) return;
+
+    const now = Date.now() / 1000;
+    let elapsed = now - trackStartTime;
+
+    // S'assurer que le temps écoulé ne dépasse pas la durée
+    if (elapsed > trackDuration) elapsed = trackDuration;
+    if (elapsed < 0) elapsed = 0;
+
+    const remaining = trackDuration - elapsed;
+    const percentage = (elapsed / trackDuration) * 100;
+
+    progressBar.style.width = `${percentage}%`;
+    elapsedTimeEl.textContent = formatTime(elapsed);
+    remainingTimeEl.textContent = formatTime(remaining);
+  }
+
   // Noise Effect (Canvas)
   const noiseCanvas = document.getElementById('noiseCanvas');
   let noiseCtx;
@@ -212,6 +246,14 @@ document.addEventListener('DOMContentLoaded', () => {
           fetchCurrentSong(); // Fetch immediately on play
           fetchInterval = setInterval(fetchCurrentSong, 5000);
       }
+
+      // --- FIX: Relancer la barre de progression à la reprise de la lecture ---
+      if (trackDuration > 0 && trackStartTime > 0) {
+        if (progressInterval) clearInterval(progressInterval); // Sécurité
+        updateProgressBar(); // Mettre à jour immédiatement
+        progressInterval = setInterval(updateProgressBar, 250);
+        if (progressInfo) progressInfo.classList.add('visible');
+      }
     });
     audio.addEventListener('pause', () => { 
       status.textContent = ''; 
@@ -225,6 +267,12 @@ document.addEventListener('DOMContentLoaded', () => {
           clearInterval(fetchInterval);
           fetchInterval = null;
       }
+      // Arrêter la barre de progression
+      if (progressInterval) {
+        clearInterval(progressInterval);
+        progressInterval = null;
+      }
+      if(progressInfo) progressInfo.classList.remove('visible');
     });
     audio.addEventListener('waiting', () => { status.textContent = 'Connexion au flux…'; });
     audio.addEventListener('error', () => { status.textContent = 'Erreur de lecture'; });
@@ -295,15 +343,41 @@ document.addEventListener('DOMContentLoaded', () => {
       }
   }
 
+  // Nouvelle fonction pour récupérer la durée et démarrer la progression
+  async function fetchAndSetProgress(rawTitle) {
+    if (progressInterval) {
+      clearInterval(progressInterval);
+      progressInterval = null;
+    }
+    if (progressInfo) progressInfo.classList.remove('visible');
+
+    try {
+      const response = await fetch(`./get_duration.php?file=${encodeURIComponent(rawTitle)}`);
+      const data = await response.json();
+
+      if (response.ok && data.duration && data.duration > 0) {
+        trackDuration = data.duration;
+        trackStartTime = Date.now() / 1000; // Heure de début côté client
+
+        updateProgressBar(); // Premier appel
+        progressInterval = setInterval(updateProgressBar, 250);
+        if (progressInfo) progressInfo.classList.add('visible');
+      }
+    } catch (e) {
+      console.error("Erreur lors de la récupération de la durée:", e);
+      if (progressInfo) progressInfo.classList.remove('visible');
+    }
+  }
+
   async function fetchCurrentSong() {
     if (!currentSong) return;
     try {
-      // Add a cache-busting query parameter
       const response = await fetch(`https://grandemaisonzoo.com/status-json.xsl?nocache=${new Date().getTime()}`);
       if (!response.ok) throw new Error("Impossible de récupérer les infos Icecast");
 
       const data = await response.json();
       let title = "Aucun morceau en cours";
+      let rawTitle = "";
       let listeners = 0;
 
       if (data.icestats && data.icestats.source) {
@@ -311,68 +385,54 @@ document.addEventListener('DOMContentLoaded', () => {
           ? data.icestats.source.find(s => s.listenurl.includes('/stream')) 
           : data.icestats.source;
         
-        if (source) {
-          if (source.title) title = source.title;
+        if (source && source.title) {
+          rawTitle = source.title; // Garder le nom de fichier original
+          title = rawTitle
+            .replace(/\.[^/.]+$/, "")
+            .replace(/_/g, ' ')
+            .replace(/\s*-\s*/g, ' - ')
+            .toUpperCase();
           if (source.listeners) listeners = source.listeners;
         }
       }
 
-      // Update listener count (Always update this)
       const listenerCountEl = document.getElementById('listenerCount');
       if (listenerCountEl) {
         listenerCountEl.innerHTML = `<i class="fas fa-user"></i> ${listeners}`;
       }
 
-      if (title && title !== "Aucun morceau en cours") {
-        title = title
-          .replace(/\.[^/.]+$/, "")
-          .replace(/_/g, ' ')
-          .replace(/\s*-\s*/g, ' - ')
-          .toUpperCase();
-      }
-
-      // Only update if the title has changed
       const currentTitle = currentSong.querySelector('.title').textContent;
       
       if (title !== currentTitle) {
-        // Si c'est le premier chargement de la page, on affiche immédiatement pour ne pas laisser vide
         if (isFirstTitleLoad) {
-            currentSong.querySelector('.title').textContent = title;
             isFirstTitleLoad = false;
+            updateTitleUI(title);
+            if (rawTitle) fetchAndSetProgress(rawTitle);
             return;
         }
 
-        // Si le titre détecté est déjà en attente d'affichage, on ne fait rien
         if (pendingTitle === title) return;
 
-        // Si un autre titre était en attente, on l'annule
-        if (pendingTitleTimeout) {
-            clearTimeout(pendingTitleTimeout);
-            pendingTitleTimeout = null;
-        }
+        if (pendingTitleTimeout) clearTimeout(pendingTitleTimeout);
 
         pendingTitle = title;
         
-        // Calcul du délai de synchronisation (Fallback logic)
-        // Délai = Buffer Client (dynamique) + Latence Serveur (fixe estimée)
-        const SERVER_OFFSET = 12000; // Reduced to 12s for better sync
+        const SERVER_OFFSET = 12000; 
         let bufferDelay = 0;
 
         if (audio && !audio.paused && audio.buffered.length > 0) {
-            // Différence entre la fin du buffer (live) et la lecture actuelle
             const bufferedEnd = audio.buffered.end(audio.buffered.length - 1);
             const currentTime = audio.currentTime;
             bufferDelay = (bufferedEnd - currentTime) * 1000;
         }
         
-        // Sécurité
         if (bufferDelay < 0 || bufferDelay > 60000) bufferDelay = 0;
         
         const totalDelay = bufferDelay + SERVER_OFFSET;
         
-        // On attend le délai calculé avant d'afficher
         pendingTitleTimeout = setTimeout(() => {
             updateTitleUI(title);
+            if (rawTitle) fetchAndSetProgress(rawTitle); // Lancer la progression en même temps que le titre
             pendingTitle = null;
             pendingTitleTimeout = null;
         }, totalDelay);
@@ -454,15 +514,22 @@ document.addEventListener('DOMContentLoaded', () => {
         contentDiv.classList.add('timeline-content');
         contentDiv.classList.add(index % 2 === 0 ? 'timeline-content-left' : 'timeline-content-right');
 
+        const titleElement = `<h3>${post.title}</h3>`;
+
+        const subtitleElement = post.link && post.subtitle
+          ? `<a href="${post.link}" target="_blank" rel="noopener noreferrer"><h4>${post.subtitle}</h4></a>`
+          : post.subtitle
+            ? `<h4>${post.subtitle}</h4>`
+            : '';
+
+        const imageElement = post.image
+          ? `<img src="${post.image}" alt="${post.title}" class="timeline-image">`
+          : '';
+
         contentDiv.innerHTML = `
-          <h3>${post.title}</h3>
-          ${post.subtitle ? `<h4>${post.subtitle}</h4>` : ''}
-          ${post.content.startsWith('uploads/') || (post.content.startsWith('http') && (post.content.endsWith('.jpg') || post.content.endsWith('.png') || post.content.endsWith('.webp') || post.content.endsWith('.gif')))
-            ? `<img src="${post.content}" alt="${post.title}">`
-            : post.content.startsWith('http')
-              ? `<p><a href="${post.content}" target="_blank" rel="noopener noreferrer">${post.content}</a></p>`
-              : `<p>${post.content}</p>`
-          }
+          ${titleElement}
+          ${subtitleElement}
+          ${imageElement}
           <span class="timeline-date">${new Date(post.date).toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
         `;
 

@@ -44,7 +44,8 @@ try {
         'subtitle' => $_POST['subtitle'] ?? '',
         'date' => $_POST['date'],
         'artist' => $_POST['artist'],
-        'content' => $image_path ?? $_POST['content'] ?? ''
+        'link' => $_POST['link'] ?? '',
+        'image' => $image_path ?? ''
     ];
 
     $current_content = file_exists($file_path) ? file_get_contents($file_path) : '[]';
