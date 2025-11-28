@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin - GRANDE MAISON</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Additional styles for admin page */
+    .admin-container {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .post-management {
+        background-color: #222;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .post-management .post-info {
+        text-align: left;
+    }
+    .delete-btn {
+        background-color: #dc3545;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .delete-btn:hover {
+        background-color: #c82333;
+    }
+    #logoutBtn {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        z-index: 1000;
+    }
+    .playing {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <script>
+    if (!sessionStorage.getItem('loggedIn')) {
+      window.location.href = 'login.html';
+    }
+  </script>
+  <button id="logoutBtn" class="btn">Logout</button>
+  <main>
+    <section id="admin-section" class="screen">
+      <div class="admin-container">
+        <h2>Admin Timeline</h2>
+        <form id="adminTimelineForm" class="contact-form">
+          <input type="text" id="postTitle" placeholder="Titre du post" required>
+          <input type="text" id="postSubtitle" placeholder="Sous-titre du post">
+          <textarea id="postContent" placeholder="Contenu du post (texte, lien ou URL d'image)"></textarea>
+          <label for="postImage">Image du post</label>
+          <input type="file" id="postImage" accept="image/*">
+          <input type="date" id="postDate" required>
+          <select id="postArtist" required>
+            <option value="" disabled selected>Choisir un artiste</option>
+          </select>
+          <button type="submit" class="btn">Ajouter au Timeline</button>
+          <span id="adminFormMessage"></span>
+        </form>
+
+        <hr style="margin: 40px 0;">
+
+        <h2>Gérer les posts</h2>
+        <div id="postsManagementContainer">
+          <!-- Posts will be listed here -->
+        </div>
+
+        <hr style="margin: 40px 0;">
+
+        <h2>Gérer les musiques</h2>
+        <button id="refreshMusicBtn" class="btn">Rafraîchir la liste</button>
+        <div id="musicManagementContainer">
+          <!-- Music files will be listed here -->
+        </div>
+
+        <hr style="margin: 40px 0;">
+
+        <h2>Télécharger depuis YouTube</h2>
+        <form id="youtubeDownloadForm" class="contact-form">
+          <input type="url" id="youtubeUrl" placeholder="https://www.youtube.com/watch?v=..." required>
+          <button type="submit" class="btn">Télécharger et convertir en MP3</button>
+          <span id="youtubeFormMessage"></span>
+        </form>
+      </div>
+    </section>
+  </main>
+  <script src="admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,622 @@
+/* Base */
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  font-family: 'Space Grotesk', sans-serif;
+  background: #111;
+  color: #eee;
+  overflow: hidden; /* le scroll se fait sur main */
+}
+
+/* One-scroll fluide global */
+main {
+  height: 100vh;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory; /* Snap précis sur chaque section */
+  scroll-behavior: smooth;
+  scroll-padding-top: 0;
+  -webkit-overflow-scrolling: touch; /* inertie sur mobile */
+}
+main::-webkit-scrollbar { display: none; }
+main { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Sections plein écran */
+.screen {
+  min-height: 100vh;
+  padding: 80px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  scroll-snap-align: start;
+}
+
+h1, h2, h3, h4, h5, h6 { 
+  font-family: 'Syne', sans-serif;
+  font-weight: 800; 
+  margin: 0 0 12px; 
+  color: #f5f5f5; 
+  text-transform: uppercase;
+  letter-spacing: -1px; /* Un peu plus serré pour l'impact */
+}
+p { max-width: 800px; text-align: center; color: #ccc; }
+
+/* Burger */
+.burger {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 1000;
+  background: none;
+  color: #eee;
+  border: none;
+  padding: 8px 12px;
+  font-size: 25px;
+  cursor: pointer;
+}
+
+/* Menu */
+.menu {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+.menu.hidden { display: none; }
+.menu ul { list-style: none; margin: 0; padding: 0; text-align: center; }
+.menu li { margin: 12px 0; }
+.menu a {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  color: #eee;
+  text-decoration: none;
+  font-size: 20px;
+  padding: 6px 10px;
+  transition: color 0.2s;
+  text-transform: uppercase;
+}
+.menu a:hover { color: #aaa; }
+
+/* Menu Groups */
+.menu-group-title {
+  display: block;
+  font-family: 'Syne', sans-serif;
+  color: #888;
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.menu-group-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.menu-group-list li {
+  margin: 8px 0;
+}
+
+.menu-group-list a {
+  font-size: 1.2rem;
+}
+
+/* Boutons */
+.btn {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: #222;
+  color: #eee;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 0; /* Plus carré pour le côté "brut" */
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 1px;
+}
+.btn:hover { background: #eee; color: #111; }
+
+/* Contact */
+.contact-form input,
+.contact-form textarea {
+  font-family: 'Space Grotesk', sans-serif;
+  width: 100%;
+  max-width: 700px;
+  margin: 8px auto;
+  padding: 12px;
+  border-radius: 4px;
+  border: none;
+  background: #1a1a1a;
+  color: #eee;
+}
+.contact-form textarea { min-height: 120px; }
+.contact-form .btn { margin-top: 8px; }
+
+/* Radio Section */
+#radio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+#noiseCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4; /* Opacity handled in JS mostly, but this is a global multiplier */
+}
+
+#radio.playing .film-grain::before {
+  animation-play-state: running;
+}
+
+@keyframes grain {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-5%, -10%); }
+  20% { transform: translate(-15%, 5%); }
+  30% { transform: translate(7%, -25%); }
+  40% { transform: translate(-5%, 25%); }
+  50% { transform: translate(-15%, 10%); }
+  60% { transform: translate(15%, 0%); }
+  70% { transform: translate(0%, 15%); }
+  80% { transform: translate(3%, 35%); }
+  90% { transform: translate(-10%, 10%); }
+}
+
+.radio-header {
+  position: absolute;
+  top: 30px;
+  left: 30px;
+  z-index: 20;
+  display: flex;
+  align-items: baseline;
+  gap: 15px;
+}
+
+#radio h2 {
+  font-size: 4.5em;
+  margin: 0;
+  position: static;
+  line-height: 1;
+  opacity: 0.65;
+}
+
+#visualizer {
+  position: absolute;
+  top: -12.5%;
+  left: -12.5%;
+  width: 125%;
+  height: 125%;
+  z-index: -1;
+  pointer-events: none; /* Make sure it doesn't block clicks */
+  border-radius: 8px; /* Optional: adds a bit of style */
+}
+
+/* Current song */
+#currentSong {
+  margin: 0;
+  font-size: 1.3em;
+  color: #ccc;
+  font-weight: 400;
+  transition: opacity 0.5s ease-in-out;
+  max-width: 90%;
+  position: absolute;
+  top: 66px; /* Vertically centered with RADIO text (30px + 72px/2) */
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 2;
+}
+
+#currentSong .label {
+  color: #999;
+  font-weight: 400;
+}
+
+#currentSong .title {
+  color: #ccc;
+  font-weight: 700;
+  filter: drop-shadow(0 0 10px rgba(238, 238, 238, 0.3));
+}
+
+#currentSong.fade { opacity: 0.3; }
+
+/* Radio Player */
+.player {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0 40px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.player > * {
+  pointer-events: auto;
+}
+
+.player-center {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+#circularVisualizer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 500px;
+  height: 500px;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.volume-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: auto;
+}
+
+.btn-play {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 105px;
+  height: 105px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: #eee;
+  font-size: 42px;
+  cursor: pointer;
+  transition: color 0.3s, transform 0.2s;
+  filter: drop-shadow(0 0 30px rgba(238, 238, 238, 0.3));
+}
+
+.btn-play:hover {
+  color: #fff;
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 40px rgba(238, 238, 238, 0.5));
+}
+
+.btn-play:active {
+  transform: scale(0.95);
+}
+
+#volumeToggle {
+  margin: 0;
+  width: 35px;
+  height: 35px;
+  font-size: 16px;
+  position: relative;
+  z-index: 50;
+}
+
+.status {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  text-align: right;
+  color: #aaa;
+  font-size: 0.8em;
+  z-index: 20;
+}
+
+.listeners {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  color: #aaa;
+  font-size: 0.92em;
+  z-index: 20;
+}
+
+/* Volume Control */
+.volume {
+  position: absolute;
+  top: 50px; /* Position below the button */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: transparent;
+  padding: 10px 5px;
+  border-radius: 8px;
+  transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(-10px) translateX(-50%);
+}
+
+.volume:not(.hidden) {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0) translateX(-50%);
+}
+
+.volume.hidden {
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(-10px) translateX(-50%);
+}
+
+.volume:not(.hidden) {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0) translateX(-50%);
+}
+
+.volume.hidden {
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(10px) translateX(-50%);
+}
+
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.volume input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 50px; /* This is now the height */
+  height: 4px;
+  border-radius: 2px;
+  background: #333;
+  outline: none;
+  cursor: pointer;
+  transform: rotate(-90deg); /* Makes the slider vertical */
+  transform-origin: center;
+}
+
+.volume input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 2px;
+  height: 16px;
+  background: #999;
+  border: none;
+  cursor: pointer;
+  margin-top: -6px;
+}
+
+.volume input[type="range"]::-webkit-slider-runnable-track {
+  background: transparent;
+  border: none;
+}
+
+.volume input[type="range"]::-moz-range-thumb {
+  width: 2px;
+  height: 16px;
+  background: #999;
+  border: none;
+  cursor: pointer;
+  margin-top: -6px;
+}
+
+.volume input[type="range"]::-moz-range-track {
+  background: transparent;
+  border: none;
+}
+
+/* Timeline */
+#timeline { justify-content: flex-start; padding-top: 80px; }
+#timeline h2 { margin-bottom: 20px; }
+.timeline-filters {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.filter-btn.active {
+  background-color: #007bff;
+  color: white;
+}
+.timeline-container {
+  position: relative;
+  width: 100%;
+  max-width: 900px;
+  padding: 20px 0;
+  margin: 0 auto;
+  overflow-y: auto;
+  height: calc(100vh - 200px);
+  -ms-overflow-style: none; scrollbar-width: none;
+}
+.timeline-container::-webkit-scrollbar { display: none; }
+.timeline-container::after {
+  content: ''; position: absolute; width: 4px; background-color: #555;
+  top: 0; bottom: 0; left: 50%; margin-left: -2px; z-index: 1;
+}
+.timeline-item { padding: 10px 0; position: relative; width: 50%; margin-bottom: 20px; z-index: 2; }
+.timeline-item::after {
+  content: ''; position: absolute; width: 16px; height: 16px; background-color: #007bff;
+  border: 4px solid #333; top: 25px; border-radius: 50%; z-index: 3;
+}
+.timeline-item:nth-child(odd) { left: 0; padding-right: 30px; }
+.timeline-item:nth-child(odd)::after { right: -10px; }
+.timeline-content-left { background-color: #222; padding: 15px; border-radius: 8px; text-align: right; }
+.timeline-item:nth-child(even) { left: 50%; padding-left: 30px; }
+.timeline-item:nth-child(even)::after { left: -6px; }
+.timeline-content-right { background-color: #222; padding: 15px; border-radius: 8px; text-align: left; }
+.timeline-item h3 { color: #fff; margin: 0 0 5px; font-size: 1.5em; }
+.timeline-item h4 { 
+  font-family: 'Space Grotesk', sans-serif;
+  color: #aaa; 
+  margin: 0 0 10px; 
+  font-size: 0.9em; 
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.timeline-item p { color: #ccc; font-size: 0.9em; line-height: 1.5; margin-bottom: 10px; max-width: 100%; text-align: inherit; }
+.timeline-item img { max-width: 100%; height: auto; border-radius: 4px; margin-top: 10px; }
+.timeline-item a { color: #007bff; text-decoration: none; font-weight: bold; }
+.timeline-item a:hover { text-decoration: underline; }
+.timeline-date { display: block; font-size: 0.8em; color: #888; margin-top: 10px; font-weight: bold; }
+
+@media (max-width: 768px) {
+  .timeline-container::after { left: 20px; }
+  .timeline-item { width: 100%; padding-left: 50px; }
+  .timeline-item:nth-child(odd) { left: 0; padding-right: 15px; text-align: left; }
+  .timeline-item:nth-child(odd)::after { left: 14px; right: auto; }
+  .timeline-item:nth-child(even) { left: 0; padding-left: 50px; }
+  .timeline-item:nth-child(even)::after { left: 14px; }
+  .timeline-content-left, .timeline-content-.timeline-content-right { text-align: left; }
+}
+
+/* Section titre Artistes réduite */
+#artistes {
+  min-height: auto;       /* annule le 100vh hérité de .screen */
+  height: auto;           /* s’adapte au contenu */
+  padding: 80px 24px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start; /* pas besoin de centrer verticalement */
+  gap: 20px;
+  scroll-snap-align: start;
+}
+#artistes h2 {
+  margin: 0 0 20px;
+  text-align: center;
+}
+
+/* Navigation boutons sous le titre Artistes */
+.artistes-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.artistes-nav .btn {
+  font-size: 16px;
+  padding: 10px 20px;
+}
+
+/* Chaque artiste = section plein écran intégrée au one-scroll */
+.artiste {
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  padding: 40px;
+  gap: 40px;
+  scroll-snap-align: start;
+}
+
+/* Colonne gauche: infos */
+.artiste-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  text-align: left;
+  padding-left: 40px;   /* décalage vers la droite */
+}
+
+.artiste-info h3 { 
+  margin: 0; 
+  font-size: 4rem; /* Beaucoup plus gros pour l'impact */
+  line-height: 0.9;
+  color: #f5f5f5; 
+}
+.artiste-info .localisation {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.2rem;
+  color: #aaa;
+  margin: 0;
+  line-height: 1.4;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+/* Localisation alignée */
+.artiste-info .localisation {
+  font-size: 18px;
+  color: #aaa;
+  margin: 0;
+  line-height: 1.4;
+  text-align: left;
+}
+
+.artiste-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.artiste-socials { display: flex; gap: 14px; margin-top: 12px; }
+.artiste-socials a { color: #eee; font-size: 24px; transition: color 0.3s; }
+.artiste-socials a:hover { color: #ff4081; }
+
+/* Colonne droite: image */
+.artiste {
+  padding: 0;              /* supprime le padding autour de la section */
+  gap: 0;                  /* supprime l’espace entre colonnes */
+}
+
+.artiste-image {
+  width: 100%;
+  height: 100vh;           /* occupe toute la hauteur de l’écran */
+}
+
+.artiste-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;       /* l’image couvre toute la zone */
+  object-position: center;
+  border-radius: 0;
+  display: block;          /* supprime les espaces blancs éventuels */
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 1024px) {
+  .artiste { gap: 24px; padding: 32px; }
+}
+
+@media (max-width: 768) {
+  .artiste {
+    height: auto;                 /* sur mobile, on laisse respirer */
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 20px;
+  }
+  .artiste-image {
+    width: 100%;
+    height: 50vh;                 /* présence visuelle forte */
+  }
+  .artiste-info {
+    text-align: center;
+    align-items: center;
+  }
+}

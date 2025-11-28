@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>GRANDE MAISON</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <!-- Font Awesome pour les icônes -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- Burger -->
+  <button class="burger" id="burgerBtn" aria-label="Menu">☰</button>
+
+  <!-- Menu overlay -->
+  <nav id="menu" class="menu hidden" aria-hidden="true">
+    <ul>
+      <li><a href="#accueil">Accueil</a></li>
+      <li><a href="#timeline">Timeline</a></li>
+      <li><a href="#radio">Radio</a></li>
+      <li><a href="#contact">Contact</a></li>
+      <li class="menu-group">
+        <span class="menu-group-title">Artistes</span>
+        <ul class="menu-group-list">
+          <li><a href="#nelsonnoth">Nelson Noth</a></li>
+          <li><a href="#req1">Req1</a></li>
+          <li><a href="#mindset">MINDSET</a></li>
+          <li><a href="#shorebreak">SHOREBREAK</a></li>
+        </ul>
+      </li>
+      <li><a href="admin.html">Admin</a></li>
+    </ul>
+  </nav>
+
+  <!-- Sections -->
+  <main>
+    <!-- Section Accueil -->
+    <section id="accueil" class="screen">
+      <h1>GRANDEMAISON</h1>
+    </section>
+    
+    <!-- Nelson Noth -->
+    <section id="nelsonnoth" class="screen artiste">
+      <div class="artiste-info">
+        <h3 class="nom-scene">Nelson Noth</h3>
+        <p class="localisation">Nice, France</p>
+        <div class="artiste-actions">
+          <a href="https://music.apple.com/fr/artist/nelson-north/1575779612" target="_blank" class="btn">Écouter</a>
+          <a href="https://www.youtube.com/@nelsonnorth" target="_blank" class="btn">Regarder</a>
+          <a href="#timeline" data-artist="Nelson North" class="btn">Timeline</a>
+        </div>
+        <div class="artiste-socials">
+          <a href="https://www.instagram.com/nelsonnorth_" target="_blank"><i class="fab fa-instagram"></i></a>
+          <a href="#contact"><i class="fas fa-envelope"></i></a>
+        </div>
+      </div>
+      <div class="artiste-image">
+        <img src="images/nelson-north.png" alt="Nelson Noth">
+      </div>
+    </section>
+
+    <!-- Req1 -->
+    <section id="req1" class="screen artiste">
+      <div class="artiste-info">
+        <h3 class="nom-scene">Req1</h3>
+        <p class="localisation">Marseille, France</p>
+        <div class="artiste-actions">
+          <a href="https://soundcloud.com/req1quor" target="_blank" class="btn">Écouter</a>
+          <a href="https://www.youtube.com/@GRANDEMAISONzoo" target="_blank" class="btn">Regarder</a>
+          <a href="#timeline" data-artist="Req1" class="btn">Timeline</a>
+        </div>
+        <div class="artiste-socials">
+          <a href="https://www.instagram.com/req1_sns" target="_blank"><i class="fab fa-instagram"></i></a>
+          <a href="#contact"><i class="fas fa-envelope"></i></a>
+        </div>
+      </div>
+      <div class="artiste-image">
+        <img src="images/req1.png" alt="Req1">
+      </div>
+    </section>
+
+    <!-- MINDSET -->
+    <section id="mindset" class="screen artiste">
+      <div class="artiste-info">
+        <h3 class="nom-scene">MINDSET</h3>
+        <p class="localisation">Strasbourg, France</p>
+        <div class="artiste-actions">
+          <a href="https://lemage.grandemaisonzoo.com/another-time" target="_blank" class="btn">Écouter</a>
+          <a href="https://www.youtube.com/@GRANDEMAISONzoo" target="_blank" class="btn">Regarder</a>
+          <a href="#timeline" data-artist="MINDSET" class="btn">Timeline</a>
+        </div>
+        <div class="artiste-socials">
+          <a href="https://www.instagram.com/mindset.flp/" target="_blank"><i class="fab fa-instagram"></i></a>
+          <a href="#contact"><i class="fas fa-envelope"></i></a>
+        </div>
+      </div>
+      <div class="artiste-image">
+        <img src="images/mindset.jpg" alt="MINDSET">
+      </div>
+    </section>
+
+    <!-- SHOREBREAK -->
+    <section id="shorebreak" class="screen artiste">
+      <div class="artiste-info">
+        <h3 class="nom-scene">SHOREBREAK</h3>
+        <p class="localisation">SUDEST, France</p>
+        <div class="artiste-actions">
+          <a href="https://music.apple.com/fr/artist/shore-break/1685728922" target="_blank" class="btn">Écouter</a>
+          <a href="https://www.youtube.com/@GRANDEMAISONzoo" target="_blank" class="btn">Regarder</a>
+          <a href="#timeline" data-artist="SHOREBREAK" class="btn">Timeline</a>
+        </div>
+        <div class="artiste-socials">
+          <a href="https://www.instagram.com/shorebreaak/" target="_blank"><i class="fab fa-instagram"></i></a>
+          <a href="#contact"><i class="fas fa-envelope"></i></a>
+        </div>
+      </div>
+      <div class="artiste-image">
+        <img src="images/shorebreak.png" alt="SHOREBREAK">
+      </div>
+    </section>
+
+    <!-- Timeline -->
+    <section id="timeline" class="screen">
+      <h2>Timeline</h2>
+      <div class="timeline-filters">
+        <!-- Filter buttons will be dynamically inserted here -->
+      </div>
+      <div class="timeline-container">
+        <!-- Timeline posts -->
+      </div>
+    </section>
+
+    <!-- Radio -->
+    <section id="radio" class="screen">
+      <canvas id="noiseCanvas"></canvas>
+      
+      <div class="radio-header">
+        <canvas id="visualizer"></canvas>
+        <h2>RADIO</h2>
+        <div class="volume-container">
+          <button id="volumeToggle" class="btn-play" style="width: 40px; height: 40px; font-size: 18px;">
+            <i class="fas fa-volume-up"></i>
+          </button>
+          <div class="volume hidden">
+            <input type="range" id="volumeControl" min="0" max="1" step="0.01" value="1">
+          </div>
+        </div>
+      </div>
+
+      <div id="currentSong"><span class="label">En cours de lecture : </span><span class="title">Chargement du titre...</span></div>
+
+      <audio id="radioPlayer" crossorigin="anonymous">
+        <source src="https://grandemaisonzoo.com/stream" type="audio/mpeg">
+      </audio>
+
+  <div class="player">
+    <div class="player-center">
+      <canvas id="circularVisualizer"></canvas>
+      <button id="playRadio" data-src="https://grandemaisonzoo.com/stream" class="btn-play">
+        <i class="fas fa-play"></i>
+      </button>
+    </div>
+    <div id="radioStatus" class="status"></div>
+    <div id="listenerCount" class="listeners"></div>
+  </div>
+</section>
+
+    <!-- Contact -->
+    <section id="contact" class="screen">
+      <h2>Contact</h2>
+      <form id="contactForm" class="contact-form" action="https://formspree.io/f/mblewpzb" method="POST">
+        <input type="text" name="name" placeholder="Nom">
+        <input type="email" name="email" placeholder="Email">
+        <textarea name="message" placeholder="Message"></textarea>
+        <button type="submit" class="btn">Envoyer</button>
+        <span id="formMessage"></span>
+      </form>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
