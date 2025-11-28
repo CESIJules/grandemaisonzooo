@@ -222,10 +222,10 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 
 #visualizer {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: calc(100% + 30px);
-  height: 100%;
+  top: 35px;
+  left: 30px;
+  width: 280px;
+  height: 80px;
   z-index: -1;
   pointer-events: none;
   border-radius: 0;
