@@ -1,0 +1,35 @@
+# Playlist principale : lit les fichiers du dossier musique
+radio = playlist(mode="random", reload=30, "/home/radio/musique")
+
+# Fonction de mise a jour des metadonnees
+def set_title_artist(m) =
+  # Calcul du titre a partir du chemin de fichier
+  title =
+    if m["filename"] == "" then
+      "GRANDE MAISON RADIO"
+    else
+      parts = string.split(separator="/", m["filename"])
+      list.nth(parts, list.length(parts) - 1)
+    end
+  [
+    ("title",  title),
+    ("artist", "")
+  ]
+end
+
+# Application a chaque morceau
+radio = map_metadata(set_title_artist, radio)
+
+# Securite : silence si playlist vide
+radio = fallback(track_sensitive=false, [radio, blank()])
+
+# Diffusion vers Icecast
+output.icecast(
+  %mp3,
+  host     = "127.0.0.1",
+  port     = 8000,
+  password = "hacklaradio",
+  mount    = "/stream",
+  name     = "Radio GRANDE MAISON",
+  radio
+)

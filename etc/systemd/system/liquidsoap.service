@@ -1,0 +1,22 @@
+[Unit]
+Description=Liquidsoap Radio Service
+After=network.target icecast2.service
+
+[Service]
+# Chemin vers ton script Liquidsoap
+ExecStart=/usr/bin/liquidsoap /home/radio/radio.liq
+
+# Redémarre automatiquement si ça plante
+Restart=always
+RestartSec=5
+
+# Utilisateur qui lance Liquidsoap (à adapter si tu as créé un user "radio")
+User=radio
+Group=radio
+
+# Journalisation
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
