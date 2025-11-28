@@ -223,12 +223,12 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 #visualizer {
   position: absolute;
   top: -10.5%;
-  left: 0;
-  width: 60%;
+  left: 5%;
+  width: 45%;
   height: 125%;
   z-index: -1;
   pointer-events: none; /* Make sure it doesn't block clicks */
-  border-radius: 90px; /* Optional: adds a bit of style */
+  border-radius: 0; /* Pas de coins arrondis */
 }
 
 .volume-container {
