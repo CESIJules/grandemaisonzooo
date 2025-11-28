@@ -38,15 +38,37 @@ jobs:
             echo "📂 Aller dans /var/www/html"
             cd /var/www/html
 
-            # Branche actuelle du push (dev ou sandbox)
+            # Branche du push (dev ou sandbox)
             BRANCH="${GITHUB_REF_NAME:-dev}"
-            echo "🔄 Déploiement de la branche ${BRANCH}"
+            echo "🔀 Push reçu sur la branche ${BRANCH}"
+
+            # Branche actuellement checkout sur le serveur
+            CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+            echo "📌 Branche actuelle sur le serveur : ${CURRENT_BRANCH}"
+
+            # 1) Si le serveur est sur main → on ne touche à rien
+            if [ "$CURRENT_BRANCH" = "main" ]; then
+              echo "🛑 Le serveur est sur 'main'."
+              echo "    Politique : pas de déploiement auto depuis ${BRANCH} lorsque 'main' est checkout."
+              exit 0
+            fi
+
+            # 2) Si la branche du serveur est différente de la branche poussée → on ne change pas
+            if [ "$CURRENT_BRANCH" != "$BRANCH" ]; then
+              echo "🛑 Branche serveur (${CURRENT_BRANCH}) différente de la branche poussée (${BRANCH})."
+              echo "    Politique : pas de checkout automatique. Aucun déploiement effectué."
+              exit 0
+            fi
+
+            # 3) OK, on est sur la même branche que le push → on déploie
+            echo "✅ Déploiement de la branche ${BRANCH} sur le serveur."
 
             git fetch origin
-            git checkout -B "${BRANCH}" "origin/${BRANCH}"
+            git reset --hard "origin/${BRANCH}"
 
             echo "🎵 Restart Icecast2 + Liquidsoap"
+            # Si tu veux encore les désactiver, commente ces lignes :
             systemctl restart icecast2
             systemctl restart liquidsoap
 
-            echo "✅ Déploiement terminé pour ${BRANCH}"
+            echo "🎉 Déploiement terminé pour ${BRANCH}"
