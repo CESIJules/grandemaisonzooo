@@ -76,19 +76,16 @@ document.addEventListener('DOMContentLoaded', () => {
         let barHeight;
         let numBars = Math.floor(WIDTH / (barWidth + 1));
         
-        if (numBars > bufferLength) {
-          numBars = bufferLength;
-        }
-
-        const step = Math.floor(bufferLength / numBars);
+        // Focus on lower frequencies (Bass) - use only first 50% of data
+        const effectiveBufferLength = Math.floor(bufferLength * 0.5);
 
         for (let i = 0; i < numBars; i++) {
-          let dataSum = 0;
-          for(let j = 0; j < step; j++) {
-              dataSum += dataArray[(i * step) + j];
-          }
-          let average = dataSum / step;
-          barHeight = (average / 255.0) * HEIGHT * 0.5;
+          // Map bar index to frequency index
+          const dataIndex = Math.floor((i / numBars) * effectiveBufferLength);
+          const value = dataArray[Math.min(dataIndex, bufferLength - 1)];
+          
+          // Boost height slightly (0.5 -> 0.8)
+          barHeight = (value / 255.0) * HEIGHT * 0.8;
 
           const x = i * (barWidth + 1);
           const y = HEIGHT / 2 - barHeight / 2;
