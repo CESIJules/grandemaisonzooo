@@ -24,12 +24,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const currentSong = document.getElementById('currentSong');
   const visualizerCanvas = document.getElementById('visualizer');
   const circularVisualizer = document.getElementById('circularVisualizer');
+  // --- Progress Bar Elements ---
+  const progressInfo = document.getElementById('progress-info');
+  const progressBar = document.getElementById('progress-bar');
+  const elapsedTimeEl = document.getElementById('elapsed-time');
+  const remainingTimeEl = document.getElementById('remaining-time');
 
   let audioContext;
   let analyser;
   let source;
   let visualizerInitialized = false;
   let fetchInterval;
+  // --- Progress Bar State ---
+  let progressInterval = null;
+  let trackDuration = 0;
+  let trackStartTime = 0;
 
   function setupVisualizer() {
     if (visualizerInitialized) return;
@@ -146,6 +155,31 @@ document.addEventListener('DOMContentLoaded', () => {
     visualizerInitialized = true;
   }
 
+  // --- Fonctions pour la barre de progression ---
+  function formatTime(seconds) {
+    const min = Math.floor(seconds / 60);
+    const sec = Math.floor(seconds % 60).toString().padStart(2, '0');
+    return `${min}:${sec}`;
+  }
+
+  function updateProgressBar() {
+    if (!trackDuration || !trackStartTime) return;
+
+    const now = Date.now() / 1000;
+    let elapsed = now - trackStartTime;
+
+    // S'assurer que le temps écoulé ne dépasse pas la durée
+    if (elapsed > trackDuration) elapsed = trackDuration;
+    if (elapsed < 0) elapsed = 0;
+
+    const remaining = trackDuration - elapsed;
+    const percentage = (elapsed / trackDuration) * 100;
+
+    progressBar.style.width = `${percentage}%`;
+    elapsedTimeEl.textContent = formatTime(elapsed);
+    remainingTimeEl.textContent = formatTime(remaining);
+  }
+
   // Noise Effect (Canvas)
   const noiseCanvas = document.getElementById('noiseCanvas');
   let noiseCtx;
@@ -225,6 +259,12 @@ document.addEventListener('DOMContentLoaded', () => {
           clearInterval(fetchInterval);
           fetchInterval = null;
       }
+      // Arrêter la barre de progression
+      if (progressInterval) {
+        clearInterval(progressInterval);
+        progressInterval = null;
+      }
+      if(progressInfo) progressInfo.classList.remove('visible');
     });
     audio.addEventListener('waiting', () => { status.textContent = 'Connexion au flux…'; });
     audio.addEventListener('error', () => { status.textContent = 'Erreur de lecture'; });
@@ -305,6 +345,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await response.json();
       let title = "Aucun morceau en cours";
       let listeners = 0;
+      let duration = 0;
+      let startTime = 0;
 
       if (data.icestats && data.icestats.source) {
         const source = Array.isArray(data.icestats.source) 
@@ -314,6 +356,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (source) {
           if (source.title) title = source.title;
           if (source.listeners) listeners = source.listeners;
+          // Récupération des nouvelles métadonnées
+          if (source.duration) duration = parseFloat(source.duration);
+          if (source.startTime) startTime = parseInt(source.startTime, 10);
         }
       }
 
@@ -335,6 +380,23 @@ document.addEventListener('DOMContentLoaded', () => {
       const currentTitle = currentSong.querySelector('.title').textContent;
       
       if (title !== currentTitle) {
+        // Mise à jour de la barre de progression
+        if (duration > 0 && startTime > 0) {
+          trackDuration = duration;
+          trackStartTime = startTime;
+          
+          if (progressInterval) clearInterval(progressInterval);
+          updateProgressBar(); // Premier appel immédiat
+          progressInterval = setInterval(updateProgressBar, 250);
+          
+          if (progressInfo) progressInfo.classList.add('visible');
+        } else {
+          // Cacher la barre si les métadonnées sont absentes
+          if (progressInterval) clearInterval(progressInterval);
+          progressInterval = null;
+          if (progressInfo) progressInfo.classList.remove('visible');
+        }
+
         // Si c'est le premier chargement de la page, on affiche immédiatement pour ne pas laisser vide
         if (isFirstTitleLoad) {
             currentSong.querySelector('.title').textContent = title;
