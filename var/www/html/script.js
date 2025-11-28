@@ -90,55 +90,102 @@ document.addEventListener('DOMContentLoaded', () => {
         const logMax = Math.log(bufferLength);
         const logMin = Math.log(1); // Éviter log(0)
 
-        // Dessiner les barres avec effet symétrique vertical
+        // Dessiner les courbes avec effet symétrique vertical
+        canvasCtx.beginPath();
+        
+        const points = [];
         for (let i = 0; i < numBars; i++) {
-          // Calculer les index de fréquence sur une échelle logarithmique
+          // --- Same logic to calculate average and barHeight ---
           const lowPercent = i / numBars;
           const highPercent = (i + 1) / numBars;
-          
           const logIndexLow = logMin + (logMax - logMin) * lowPercent;
           const logIndexHigh = logMin + (logMax - logMin) * highPercent;
-
           const frequencyIndex = Math.floor(Math.exp(logIndexLow));
           let nextFrequencyIndex = Math.floor(Math.exp(logIndexHigh));
-
-          // S'assurer qu'il y a au moins un bin de fréquence à analyser
           if (nextFrequencyIndex <= frequencyIndex) {
             nextFrequencyIndex = frequencyIndex + 1;
           }
-          
-          // Moyenne des valeurs dans cette plage de fréquences
           let dataSum = 0;
           const count = nextFrequencyIndex - frequencyIndex;
           for (let j = frequencyIndex; j < nextFrequencyIndex && j < bufferLength; j++) {
             dataSum += dataArray[j];
           }
           let average = count > 0 ? dataSum / count : 0;
-          
-          // Normalisation et boost uniforme pour toutes les fréquences
           const normalizedValue = average / 255.0;
-          const boostedValue = Math.pow(normalizedValue, 0.6); // Compression logarithmique
-          
-          const barHeight = boostedValue * maxBarHeight * 1.2; // Boost global (réduit pour éviter le clipping)
-          const x = i * barWidth;
-          
-          // Opacité dynamique basée sur l'amplitude
-          const baseOpacity = 0.25;
-          const dynamicOpacity = baseOpacity + (boostedValue * 0.4);
-          
-          const gradient = canvasCtx.createLinearGradient(0, HEIGHT/2 - barHeight, 0, HEIGHT/2 + barHeight);
-          gradient.addColorStop(0, `rgba(204, 204, 204, ${dynamicOpacity * 0.7})`);
-          gradient.addColorStop(0.5, `rgba(238, 238, 238, ${dynamicOpacity})`);
-          gradient.addColorStop(1, `rgba(204, 204, 204, ${dynamicOpacity * 0.7})`);
-          
-          canvasCtx.fillStyle = gradient;
-          
-          // Barre vers le haut
-          canvasCtx.fillRect(x, HEIGHT/2 - barHeight, barWidth - 1, barHeight);
-          
-          // Barre vers le bas (miroir)
-          canvasCtx.fillRect(x, HEIGHT/2, barWidth - 1, barHeight);
+          const boostedValue = Math.pow(normalizedValue, 0.6);
+          const barHeight = boostedValue * maxBarHeight * 1.2;
+          // --- End of calculation ---
+
+          points.push({
+              x: i * barWidth + barWidth / 2, // Center of the bar
+              y: HEIGHT / 2 - barHeight
+          });
         }
+
+        // --- Draw top curve ---
+        canvasCtx.moveTo(0, HEIGHT / 2);
+        if (points.length > 0) {
+            // Get to the first point
+            const firstXc = points[0].x / 2;
+            const firstYc = (points[0].y + HEIGHT / 2) / 2;
+            canvasCtx.quadraticCurveTo(0, HEIGHT / 2, firstXc, firstYc);
+
+            for (let i = 0; i < points.length - 1; i++) {
+                const xc = (points[i].x + points[i+1].x) / 2;
+                const yc = (points[i].y + points[i+1].y) / 2;
+                canvasCtx.quadraticCurveTo(points[i].x, points[i].y, xc, yc);
+            }
+            // Curve to the last point and then to the edge
+            const lastPoint = points[points.length - 1];
+            const lastXc = (lastPoint.x + WIDTH) / 2;
+            const lastYc = (lastPoint.y + HEIGHT / 2) / 2;
+            canvasCtx.quadraticCurveTo(lastPoint.x, lastPoint.y, lastXc, lastYc);
+            canvasCtx.quadraticCurveTo(lastXc, lastYc, WIDTH, HEIGHT/2);
+
+        }
+        canvasCtx.lineTo(WIDTH, HEIGHT / 2); // Close path at right-middle
+
+        // --- Draw bottom curve ---
+        if (points.length > 0) {
+            // Get to the first point
+            const firstBottomY = HEIGHT - points[0].y;
+            const firstXc = points[0].x / 2;
+            const firstYc = (firstBottomY + HEIGHT / 2) / 2;
+            canvasCtx.quadraticCurveTo(0, HEIGHT / 2, firstXc, firstYc);
+
+
+            for (let i = 0; i < points.length - 1; i++) {
+                const xc = (points[i].x + points[i+1].x) / 2;
+                const yc = ( (HEIGHT - points[i].y) + (HEIGHT - points[i+1].y) ) / 2;
+                canvasCtx.quadraticCurveTo(points[i].x, HEIGHT - points[i].y, xc, yc);
+            }
+            // Curve to the last point and then to the edge
+            const lastPoint = points[points.length - 1];
+            const lastBottomY = HEIGHT - lastPoint.y;
+            const lastXc = (lastPoint.x + WIDTH) / 2;
+            const lastYc = (lastBottomY + HEIGHT / 2) / 2;
+            canvasCtx.quadraticCurveTo(lastPoint.x, lastBottomY, lastXc, lastYc);
+            canvasCtx.quadraticCurveTo(lastXc, lastYc, WIDTH, HEIGHT/2);
+
+        }
+        canvasCtx.lineTo(0, HEIGHT / 2); // Close path at left-middle
+
+
+        // --- Fill and Style ---
+        const gradient = canvasCtx.createLinearGradient(0, 0, 0, HEIGHT);
+        gradient.addColorStop(0.3, 'rgba(238, 238, 238, 0)');
+        gradient.addColorStop(0.45, 'rgba(238, 238, 238, 0.4)');
+        gradient.addColorStop(0.5, 'rgba(238, 238, 238, 0.5)');
+        gradient.addColorStop(0.55, 'rgba(238, 238, 238, 0.4)');
+        gradient.addColorStop(0.7, 'rgba(238, 238, 238, 0)');
+
+        canvasCtx.fillStyle = gradient;
+        canvasCtx.fill();
+
+        // Also add a stroke for definition
+        canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+        canvasCtx.lineWidth = 1.5;
+        canvasCtx.stroke();
         
         // Ligne centrale pour marquer le centre
         canvasCtx.beginPath();
