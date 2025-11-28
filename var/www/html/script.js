@@ -514,8 +514,12 @@ document.addEventListener('DOMContentLoaded', () => {
         contentDiv.classList.add('timeline-content');
         contentDiv.classList.add(index % 2 === 0 ? 'timeline-content-left' : 'timeline-content-right');
 
+        const titleElement = post.link
+          ? `<a href="${post.link}" target="_blank" rel="noopener noreferrer"><h3>${post.title}</h3></a>`
+          : `<h3>${post.title}</h3>`;
+
         contentDiv.innerHTML = `
-          <h3>${post.title}</h3>
+          ${titleElement}
           ${post.subtitle ? `<h4>${post.subtitle}</h4>` : ''}
           ${post.content.startsWith('uploads/') || (post.content.startsWith('http') && (post.content.endsWith('.jpg') || post.content.endsWith('.png') || post.content.endsWith('.webp') || post.content.endsWith('.gif')))
             ? `<img src="${post.content}" alt="${post.title}">`
