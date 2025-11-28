@@ -105,9 +105,17 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           let average = dataSum / count;
           
-          // Amplifier les basses fréquences pour une meilleure visibilité
-          const bassBoost = i < numBars * 0.2 ? 1.3 : 1.0;
-          barHeight = (average / 255.0) * HEIGHT * 0.85 * bassBoost;
+          // Amplifier significativement les basses fréquences
+          let frequencyBoost = 1.0;
+          if (i < numBars * 0.1) {
+            // Sub-basses (0-10%)
+            frequencyBoost = 2.0;
+          } else if (i < numBars * 0.25) {
+            // Basses (10-25%)
+            frequencyBoost = 1.6;
+          }
+          
+          barHeight = (average / 255.0) * HEIGHT * 0.85 * frequencyBoost;
 
           const x = i * (barWidth + 1);
           const y = HEIGHT / 2 - barHeight / 2;
