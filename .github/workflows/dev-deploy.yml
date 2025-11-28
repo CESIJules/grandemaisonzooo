@@ -17,7 +17,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: "8.2"
 
       - name: Run PHP syntax check
         run: |
@@ -43,8 +43,7 @@ jobs:
             echo "🔄 Déploiement de la branche ${BRANCH}"
 
             git fetch origin
-            git checkout "${BRANCH}"
-            git reset --hard "origin/${BRANCH}"
+            git checkout -B "${BRANCH}" "origin/${BRANCH}"
 
             echo "🎵 Restart Icecast2 + Liquidsoap"
             systemctl restart icecast2
