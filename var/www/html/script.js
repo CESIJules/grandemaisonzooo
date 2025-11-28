@@ -335,106 +335,96 @@ document.addEventListener('DOMContentLoaded', () => {
       }
   }
 
+  // Nouvelle fonction pour récupérer la durée et démarrer la progression
+  async function fetchAndSetProgress(rawTitle) {
+    if (progressInterval) {
+      clearInterval(progressInterval);
+      progressInterval = null;
+    }
+    if (progressInfo) progressInfo.classList.remove('visible');
+
+    try {
+      const response = await fetch(`./get_duration.php?file=${encodeURIComponent(rawTitle)}`);
+      const data = await response.json();
+
+      if (response.ok && data.duration && data.duration > 0) {
+        trackDuration = data.duration;
+        trackStartTime = Date.now() / 1000; // Heure de début côté client
+
+        updateProgressBar(); // Premier appel
+        progressInterval = setInterval(updateProgressBar, 250);
+        if (progressInfo) progressInfo.classList.add('visible');
+      }
+    } catch (e) {
+      console.error("Erreur lors de la récupération de la durée:", e);
+      if (progressInfo) progressInfo.classList.remove('visible');
+    }
+  }
+
   async function fetchCurrentSong() {
     if (!currentSong) return;
     try {
-      // Add a cache-busting query parameter
       const response = await fetch(`https://grandemaisonzoo.com/status-json.xsl?nocache=${new Date().getTime()}`);
       if (!response.ok) throw new Error("Impossible de récupérer les infos Icecast");
 
       const data = await response.json();
       let title = "Aucun morceau en cours";
+      let rawTitle = "";
       let listeners = 0;
-      let duration = 0;
-      let startTime = 0;
 
       if (data.icestats && data.icestats.source) {
         const source = Array.isArray(data.icestats.source) 
           ? data.icestats.source.find(s => s.listenurl.includes('/stream')) 
           : data.icestats.source;
         
-        if (source) {
-          if (source.title) title = source.title;
+        if (source && source.title) {
+          rawTitle = source.title; // Garder le nom de fichier original
+          title = rawTitle
+            .replace(/\.[^/.]+$/, "")
+            .replace(/_/g, ' ')
+            .replace(/\s*-\s*/g, ' - ')
+            .toUpperCase();
           if (source.listeners) listeners = source.listeners;
-          // Récupération des nouvelles métadonnées
-          if (source.duration) duration = parseFloat(source.duration);
-          if (source.startTime) startTime = parseInt(source.startTime, 10);
         }
       }
 
-      // Update listener count (Always update this)
       const listenerCountEl = document.getElementById('listenerCount');
       if (listenerCountEl) {
         listenerCountEl.innerHTML = `<i class="fas fa-user"></i> ${listeners}`;
       }
 
-      if (title && title !== "Aucun morceau en cours") {
-        title = title
-          .replace(/\.[^/.]+$/, "")
-          .replace(/_/g, ' ')
-          .replace(/\s*-\s*/g, ' - ')
-          .toUpperCase();
-      }
-
-      // Only update if the title has changed
       const currentTitle = currentSong.querySelector('.title').textContent;
       
       if (title !== currentTitle) {
-        // Mise à jour de la barre de progression
-        if (duration > 0 && startTime > 0) {
-          trackDuration = duration;
-          trackStartTime = startTime;
-          
-          if (progressInterval) clearInterval(progressInterval);
-          updateProgressBar(); // Premier appel immédiat
-          progressInterval = setInterval(updateProgressBar, 250);
-          
-          if (progressInfo) progressInfo.classList.add('visible');
-        } else {
-          // Cacher la barre si les métadonnées sont absentes
-          if (progressInterval) clearInterval(progressInterval);
-          progressInterval = null;
-          if (progressInfo) progressInfo.classList.remove('visible');
-        }
-
-        // Si c'est le premier chargement de la page, on affiche immédiatement pour ne pas laisser vide
         if (isFirstTitleLoad) {
-            currentSong.querySelector('.title').textContent = title;
             isFirstTitleLoad = false;
+            updateTitleUI(title);
+            if (rawTitle) fetchAndSetProgress(rawTitle);
             return;
         }
 
-        // Si le titre détecté est déjà en attente d'affichage, on ne fait rien
         if (pendingTitle === title) return;
 
-        // Si un autre titre était en attente, on l'annule
-        if (pendingTitleTimeout) {
-            clearTimeout(pendingTitleTimeout);
-            pendingTitleTimeout = null;
-        }
+        if (pendingTitleTimeout) clearTimeout(pendingTitleTimeout);
 
         pendingTitle = title;
         
-        // Calcul du délai de synchronisation (Fallback logic)
-        // Délai = Buffer Client (dynamique) + Latence Serveur (fixe estimée)
-        const SERVER_OFFSET = 12000; // Reduced to 12s for better sync
+        const SERVER_OFFSET = 12000; 
         let bufferDelay = 0;
 
         if (audio && !audio.paused && audio.buffered.length > 0) {
-            // Différence entre la fin du buffer (live) et la lecture actuelle
             const bufferedEnd = audio.buffered.end(audio.buffered.length - 1);
             const currentTime = audio.currentTime;
             bufferDelay = (bufferedEnd - currentTime) * 1000;
         }
         
-        // Sécurité
         if (bufferDelay < 0 || bufferDelay > 60000) bufferDelay = 0;
         
         const totalDelay = bufferDelay + SERVER_OFFSET;
         
-        // On attend le délai calculé avant d'afficher
         pendingTitleTimeout = setTimeout(() => {
             updateTitleUI(title);
+            if (rawTitle) fetchAndSetProgress(rawTitle); // Lancer la progression en même temps que le titre
             pendingTitle = null;
             pendingTitleTimeout = null;
         }, totalDelay);
