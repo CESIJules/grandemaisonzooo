@@ -246,6 +246,14 @@ document.addEventListener('DOMContentLoaded', () => {
           fetchCurrentSong(); // Fetch immediately on play
           fetchInterval = setInterval(fetchCurrentSong, 5000);
       }
+
+      // --- FIX: Relancer la barre de progression à la reprise de la lecture ---
+      if (trackDuration > 0 && trackStartTime > 0) {
+        if (progressInterval) clearInterval(progressInterval); // Sécurité
+        updateProgressBar(); // Mettre à jour immédiatement
+        progressInterval = setInterval(updateProgressBar, 250);
+        if (progressInfo) progressInfo.classList.add('visible');
+      }
     });
     audio.addEventListener('pause', () => { 
       status.textContent = ''; 
