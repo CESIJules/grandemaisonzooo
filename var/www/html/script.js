@@ -76,16 +76,20 @@ document.addEventListener('DOMContentLoaded', () => {
         let barHeight;
         let numBars = Math.floor(WIDTH / (barWidth + 1));
         
-        // Focus on lower frequencies (Bass) - use only first 50% of data
-        const effectiveBufferLength = Math.floor(bufferLength * 0.5);
+        if (numBars > bufferLength) {
+          numBars = bufferLength;
+        }
+
+        const step = Math.floor(bufferLength / numBars);
 
         for (let i = 0; i < numBars; i++) {
-          // Map bar index to frequency index
-          const dataIndex = Math.floor((i / numBars) * effectiveBufferLength);
-          const value = dataArray[Math.min(dataIndex, bufferLength - 1)];
-          
-          // Boost height slightly (0.5 -> 0.8)
-          barHeight = (value / 255.0) * HEIGHT * 0.8;
+          let dataSum = 0;
+          for(let j = 0; j < step; j++) {
+              dataSum += dataArray[(i * step) + j];
+          }
+          let average = dataSum / step;
+          // Boost height for better visibility
+          barHeight = (average / 255.0) * HEIGHT * 0.85;
 
           const x = i * (barWidth + 1);
           const y = HEIGHT / 2 - barHeight / 2;
@@ -122,14 +126,16 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Ring 1 (Main pulse)
         circularCtx.beginPath();
-        circularCtx.arc(cx, cy, baseRadius + (normalizedVol * 50), 0, 2 * Math.PI);
+        // Increased reactivity
+        circularCtx.arc(cx, cy, baseRadius + (normalizedVol * 40), 0, 2 * Math.PI);
         circularCtx.strokeStyle = `rgba(255, 255, 255, ${0.2 + (normalizedVol * 0.5)})`;
         circularCtx.lineWidth = 1.5;
         circularCtx.stroke();
 
         // Ring 2 (Echo pulse)
         circularCtx.beginPath();
-        circularCtx.arc(cx, cy, baseRadius + 14 + (normalizedVol * 90), 0, 2 * Math.PI);
+        // Increased reactivity
+        circularCtx.arc(cx, cy, baseRadius + 14 + (normalizedVol * 80), 0, 2 * Math.PI);
         circularCtx.strokeStyle = `rgba(255, 255, 255, ${0.1 + (normalizedVol * 0.2)})`;
         circularCtx.lineWidth = 1;
         circularCtx.stroke();
