@@ -188,12 +188,13 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   gap: 15px;
   background-color: #000;
   mix-blend-mode: screen;
+  padding: 10px;
 }
 
 #radio h2 {
   font-size: 4.5em;
   margin: 0;
-  position: static;
+  position: relative;
   line-height: 1;
   opacity: 1;
   color: #fff;
@@ -202,8 +203,8 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 
 #visualizer {
   position: absolute;
-  top: -8.5%;
-  left: -3.5%;
+  top: -10.5%;
+  left: -10.5%;
   width: 93%;
   height: 125%;
   z-index: 2;
@@ -212,81 +213,13 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   mix-blend-mode: multiply;
 }
 
-/* Current song */
-#currentSong {
-  margin: 0;
-  font-size: 1.3em;
-  color: #ccc;
-  font-weight: 400;
-  transition: opacity 0.5s ease-in-out;
-  max-width: 90%;
-  position: absolute;
-  top: 66px; /* Vertically centered with RADIO text (30px + 72px/2) */
-  left: 50%;
-  transform: translate(-50%, -50%);
-  text-align: center;
-  z-index: 2;
-}
-
-#currentSong .label {
-  color: #999;
-  font-weight: 400;
-}
-
-#currentSong .title {
-  color: #ccc;
-  font-weight: 700;
-  filter: drop-shadow(0 0 10px rgba(238, 238, 238, 0.3));
-}
-
-#currentSong.fade { opacity: 0.3; }
-
-/* Radio Player */
-.player {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 0 40px;
-  z-index: 10;
-  pointer-events: none;
-}
-
-.player > * {
-  pointer-events: auto;
-}
-
-.player-center {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-}
-
-#circularVisualizer {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 500px;
-  height: 500px;
-  z-index: -1;
-  pointer-events: none;
-}
-
 .volume-container {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   pointer-events: auto;
+  z-index: 3;
 }
 
 .btn-play {
