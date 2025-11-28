@@ -200,7 +200,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   position: absolute;
   top: -12.5%;
   left: -12.5%;
-  width: 100%;
+  width: 85%;
   height: 125%;
   z-index: -1;
   pointer-events: none; /* Make sure it doesn't block clicks */
