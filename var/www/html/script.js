@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const volumeToggle = document.getElementById('volumeToggle');
   const volumeContainer = document.querySelector('.volume');
   const currentSong = document.getElementById('currentSong');
+  const songTimer = document.getElementById('songTimer');
   const visualizerCanvas = document.getElementById('visualizer');
   const circularVisualizer = document.getElementById('circularVisualizer');
 
@@ -30,6 +31,102 @@ document.addEventListener('DOMContentLoaded', () => {
   let source;
   let visualizerInitialized = false;
   let fetchInterval;
+  let songTimerInterval = null;
+
+  function formatTime(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+  }
+
+  function startSongTimer(duration, startTime) {
+    if (songTimerInterval) {
+      clearInterval(songTimerInterval);
+    }
+    if (!songTimer) return;
+
+    if (!duration || !startTime) {
+      songTimer.innerHTML = '';
+      songTimer.style.display = 'none';
+      return;
+    }
+
+    songTimer.style.display = 'block';
+    songTimer.innerHTML = `
+        <div class="time-display">
+            <span class="elapsed">0:00</span>
+            <span class="total">${formatTime(duration)}</span>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar"></div>
+        </div>
+    `;
+
+    const progressBar = songTimer.querySelector('.progress-bar');
+    const elapsedEl = songTimer.querySelector('.elapsed');
+
+    songTimerInterval = setInterval(() => {
+      const elapsed = (Date.now() / 1000) - startTime;
+
+      if (elapsed >= 0 && elapsed <= duration) {
+        const progress = (elapsed / duration) * 100;
+        progressBar.style.width = `${progress}%`;
+        elapsedEl.textContent = formatTime(elapsed);
+      } else {
+        // Le temps est écoulé ou invalide, on arrête
+        progressBar.style.width = '100%';
+        elapsedEl.textContent = formatTime(duration);
+        clearInterval(songTimerInterval);
+        songTimerInterval = null;
+        // On cache le timer après une seconde pour une transition douce
+        setTimeout(() => {
+            if (songTimer) {
+                songTimer.innerHTML = '';
+                songTimer.style.display = 'none';
+            }
+        }, 1500);
+      }
+    }, 1000);
+  }
+
+  async function fetchTrackDetailsAndStartTimer(title) {
+    try {
+        // On tente d'abord avec le fichier d'info principal
+        const infoResponse = await fetch(`get_track_info.php?nocache=${new Date().getTime()}`);
+        const trackInfo = await infoResponse.json();
+
+        // On vérifie si les infos correspondent au titre actuel
+        const normalizedInfoTitle = trackInfo.title.toUpperCase().replace(/_/g, ' ');
+        const normalizedCurrentTitle = title.toUpperCase().replace(/_/g, ' ');
+
+        if (normalizedInfoTitle.includes(normalizedCurrentTitle) || normalizedCurrentTitle.includes(normalizedInfoTitle)) {
+            if (trackInfo.duration && trackInfo.started_at) {
+                startSongTimer(trackInfo.duration, trackInfo.started_at);
+                return; // Succès, on s'arrête là
+            }
+        }
+        
+        // Fallback: si la durée n'était pas dans le JSON, on la demande via get_duration.php
+        console.log("Fallback: Durée non trouvée dans track_info.json, appel de get_duration.php pour le titre :", title);
+        const durationResponse = await fetch(`get_duration.php?title=${encodeURIComponent(title)}`);
+        const durationInfo = await durationResponse.json();
+
+        if (durationInfo.duration) {
+            // Pour l'heure de début, on ne l'a pas, donc on la considère comme "maintenant".
+            // Ce sera moins précis, mais c'est mieux que rien.
+            const estimatedStartTime = Date.now() / 1000;
+            startSongTimer(durationInfo.duration, estimatedStartTime);
+        } else {
+            console.error("Impossible d'obtenir la durée pour le morceau:", title, durationInfo.error);
+            startSongTimer(0, 0); // Cache le timer
+        }
+
+    } catch (error) {
+        console.error("Erreur lors de la récupération des détails du morceau :", error);
+        startSongTimer(0, 0); // Cache le timer
+    }
+  }
+
 
   function setupVisualizer() {
     if (visualizerInitialized) return;
@@ -225,6 +322,15 @@ document.addEventListener('DOMContentLoaded', () => {
           clearInterval(fetchInterval);
           fetchInterval = null;
       }
+      // Arrêter et cacher le minuteur à la pause
+      if (songTimerInterval) {
+        clearInterval(songTimerInterval);
+        songTimerInterval = null;
+      }
+      if (songTimer) {
+        songTimer.innerHTML = '';
+        songTimer.style.display = 'none';
+      }
     });
     audio.addEventListener('waiting', () => { status.textContent = 'Connexion au flux…'; });
     audio.addEventListener('error', () => { status.textContent = 'Erreur de lecture'; });
@@ -276,6 +382,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initial fetch of song info and listeners
     fetchCurrentSong();
+    // Initial hide of the timer
+    if (songTimer) songTimer.style.display = 'none';
   }
 
   // 🔎 Récupération du titre depuis Icecast
@@ -291,6 +399,12 @@ document.addEventListener('DOMContentLoaded', () => {
           setTimeout(() => {
               currentSong.querySelector('.title').textContent = title;
               currentSong.classList.remove("fade");
+              // Une fois le titre mis à jour, on lance le minuteur
+              if (title !== "Aucun morceau en cours" && title !== "Infos indisponibles") {
+                fetchTrackDetailsAndStartTimer(title);
+              } else {
+                startSongTimer(0, 0); // Cache le timer s'il n'y a pas de morceau
+              }
           }, 300);
       }
   }
@@ -337,7 +451,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (title !== currentTitle) {
         // Si c'est le premier chargement de la page, on affiche immédiatement pour ne pas laisser vide
         if (isFirstTitleLoad) {
-            currentSong.querySelector('.title').textContent = title;
+            updateTitleUI(title);
             isFirstTitleLoad = false;
             return;
         }

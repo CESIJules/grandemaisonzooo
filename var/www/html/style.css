@@ -569,3 +569,35 @@ p { max-width: 800px; text-align: center; color: #ccc; }
     align-items: center;
   }
 }
+
+/* --- Song Timer --- */
+.song-timer {
+  width: 250px;
+  display: none; /* Caché par défaut, affiché via JS */
+}
+
+.time-display {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'Space Grotesk', monospace;
+  font-size: 0.8rem;
+  color: #aaa;
+  margin-bottom: 4px;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 4px;
+  background-color: #333;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  width: 0%;
+  height: 100%;
+  background-color: #eee;
+  border-radius: 2px;
+  transition: width 0.5s linear; /* Transition douce */
+  filter: drop-shadow(0 0 5px rgba(238, 238, 238, 0.7));
+}
