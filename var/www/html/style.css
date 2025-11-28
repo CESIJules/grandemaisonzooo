@@ -222,7 +222,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 
 #visualizer {
   position: absolute;
-  top: 35px;
+  top: 25px;
   left: 30px;
   width: 280px;
   height: 80px;
