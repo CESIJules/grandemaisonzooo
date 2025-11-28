@@ -199,7 +199,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 #visualizer {
   position: absolute;
   top: -10.5%;
-  left: -10.5%;
+  left: 39.5%;
   width: 100%;
   height: 125%;
   z-index: -1;
