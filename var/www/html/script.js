@@ -81,13 +81,13 @@ document.addEventListener('DOMContentLoaded', () => {
       if (WIDTH > 0 && HEIGHT > 0) {
         canvasCtx.clearRect(0, 0, WIDTH, HEIGHT);
 
-        const barWidth = 3;
+        const barWidth = 2;
         let barHeight;
         let numBars = Math.floor(WIDTH / (barWidth + 1));
         
-        // Limiter le nombre de barres pour garder une visualisation propre
-        if (numBars > 200) {
-          numBars = 200;
+        // Limiter le nombre de barres pour une visualisation dense
+        if (numBars > 250) {
+          numBars = 250;
         }
 
         // Utiliser toute la plage de fréquences disponible (y compris basses et subs)
