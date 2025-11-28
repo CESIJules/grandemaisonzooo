@@ -86,20 +86,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const barWidth = WIDTH / numBars;
         const maxBarHeight = HEIGHT * 0.45;
         
-        // Utiliser tout le spectre de fréquences de manière uniforme
-        const frequencyRange = bufferLength;
-        const step = frequencyRange / numBars;
-        
+        // Utiliser une échelle logarithmique pour mieux représenter les fréquences musicales
+        const logMax = Math.log(bufferLength);
+        const logMin = Math.log(1); // Éviter log(0)
+
         // Dessiner les barres avec effet symétrique vertical
         for (let i = 0; i < numBars; i++) {
-          // Calculer l'index dans le tableau de fréquences de manière linéaire
-          const frequencyIndex = Math.floor(i * step);
-          const nextFrequencyIndex = Math.floor((i + 1) * step);
+          // Calculer les index de fréquence sur une échelle logarithmique
+          const lowPercent = i / numBars;
+          const highPercent = (i + 1) / numBars;
           
-          // Moyenne des valeurs dans cette plage
+          const logIndexLow = logMin + (logMax - logMin) * lowPercent;
+          const logIndexHigh = logMin + (logMax - logMin) * highPercent;
+
+          const frequencyIndex = Math.floor(Math.exp(logIndexLow));
+          const nextFrequencyIndex = Math.floor(Math.exp(logIndexHigh));
+          
+          // Moyenne des valeurs dans cette plage de fréquences
           let dataSum = 0;
           const count = nextFrequencyIndex - frequencyIndex;
-          for(let j = frequencyIndex; j < nextFrequencyIndex && j < bufferLength; j++) {
+          for (let j = frequencyIndex; j < nextFrequencyIndex && j < bufferLength; j++) {
             dataSum += dataArray[j];
           }
           let average = count > 0 ? dataSum / count : 0;
