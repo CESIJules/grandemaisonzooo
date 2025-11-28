@@ -198,10 +198,6 @@
         <div class="radio-header">
           <canvas id="visualizer"></canvas>
           <h2>RADIO</h2>
-          <div id="currentSong">
-            <span class="label">En cours de lecture : </span
-            ><span class="title">Chargement du titre...</span>
-          </div>
           <div id="songTimer" class="song-timer"></div>
           <div class="volume-container">
             <button
@@ -227,7 +223,10 @@
         <audio id="radioPlayer" crossorigin="anonymous">
           <source src="https://grandemaisonzoo.com/stream" type="audio/mpeg" />
         </audio>
-
+          <div id="currentSong">
+            <span class="label">En cours de lecture : </span
+            ><span class="title">Chargement du titre...</span>
+          </div>
         <div class="player">
           <div class="player-center">
             <canvas id="circularVisualizer"></canvas>
