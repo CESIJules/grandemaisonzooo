@@ -514,19 +514,22 @@ document.addEventListener('DOMContentLoaded', () => {
         contentDiv.classList.add('timeline-content');
         contentDiv.classList.add(index % 2 === 0 ? 'timeline-content-left' : 'timeline-content-right');
 
-        const titleElement = post.link
-          ? `<a href="${post.link}" target="_blank" rel="noopener noreferrer"><h3>${post.title}</h3></a>`
-          : `<h3>${post.title}</h3>`;
+        const titleElement = `<h3>${post.title}</h3>`;
+
+        const subtitleElement = post.link && post.subtitle
+          ? `<a href="${post.link}" target="_blank" rel="noopener noreferrer"><h4>${post.subtitle}</h4></a>`
+          : post.subtitle
+            ? `<h4>${post.subtitle}</h4>`
+            : '';
+
+        const imageElement = post.image
+          ? `<img src="${post.image}" alt="${post.title}" class="timeline-image">`
+          : '';
 
         contentDiv.innerHTML = `
           ${titleElement}
-          ${post.subtitle ? `<h4>${post.subtitle}</h4>` : ''}
-          ${post.content.startsWith('uploads/') || (post.content.startsWith('http') && (post.content.endsWith('.jpg') || post.content.endsWith('.png') || post.content.endsWith('.webp') || post.content.endsWith('.gif')))
-            ? `<img src="${post.content}" alt="${post.title}">`
-            : post.content.startsWith('http')
-              ? `<p><a href="${post.content}" target="_blank" rel="noopener noreferrer">${post.content}</a></p>`
-              : `<p>${post.content}</p>`
-          }
+          ${subtitleElement}
+          ${imageElement}
           <span class="timeline-date">${new Date(post.date).toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
         `;
 

@@ -653,3 +653,13 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   min-width: 35px; /* Empêche le layout de sauter */
   text-align: center;
 }
+
+/* Custom timeline image style */
+.timeline-image {
+  width: 100%;
+  height: 300px; /* Fixed height */
+  object-fit: cover; /* Crop to fit */
+  object-position: center; /* Center the image */
+  border-radius: 4px;
+  margin-top: 10px;
+}
