@@ -1,5 +1,13 @@
-# Playlist principale : lit les fichiers du dossier musique
-radio = playlist(mode="random", reload=30, "/home/radio/musique")
+# Configuration du serveur telnet pour le controle externe
+settings.server.telnet := true
+settings.server.telnet.bind_addr := "127.0.0.1"
+settings.server.telnet.port := 1234
+
+# Playlist principale : lit les fichiers du dossier musique (fallback)
+playlist_fallback = playlist(mode="random", reload=30, "/home/radio/musique")
+
+# File d'attente pour les requetes externes
+queue = request.queue(id="queue")
 
 # Fonction de mise a jour des metadonnees
 def set_title_artist(m) =
@@ -16,6 +24,9 @@ def set_title_artist(m) =
     ("artist", "")
   ]
 end
+
+# Combinaison : queue prioritaire, puis playlist fallback
+radio = fallback(track_sensitive=true, [queue, playlist_fallback])
 
 # Application a chaque morceau
 radio = map_metadata(set_title_artist, radio)

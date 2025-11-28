@@ -60,6 +60,98 @@
     .playing {
       color: red;
     }
+    /* Radio Control Section Styles */
+    .radio-control-section {
+      background-color: #1a1a1a;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .radio-control-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+    .radio-control-buttons .btn {
+      flex: 1;
+      min-width: 120px;
+    }
+    .btn-skip {
+      background-color: #ff6b35 !important;
+    }
+    .btn-skip:hover {
+      background-color: #ff8c5a !important;
+      color: #111 !important;
+    }
+    .btn-refresh-queue {
+      background-color: #28a745 !important;
+    }
+    .btn-refresh-queue:hover {
+      background-color: #34ce57 !important;
+      color: #111 !important;
+    }
+    .queue-container {
+      background-color: #222;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 15px;
+    }
+    .queue-container h4 {
+      margin: 0 0 10px 0;
+      font-size: 1em;
+      color: #aaa;
+    }
+    .queue-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .queue-list li {
+      padding: 8px 0;
+      border-bottom: 1px solid #333;
+      color: #ccc;
+    }
+    .queue-list li:last-child {
+      border-bottom: none;
+    }
+    .queue-empty {
+      color: #666;
+      font-style: italic;
+    }
+    .add-queue-form {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
+    .add-queue-form select {
+      flex: 2;
+      min-width: 200px;
+      padding: 10px;
+      border-radius: 4px;
+      border: none;
+      background: #222;
+      color: #eee;
+    }
+    .add-queue-form .btn {
+      flex: 1;
+      min-width: 150px;
+    }
+    #radioMessage {
+      display: block;
+      margin-top: 10px;
+      padding: 8px;
+      border-radius: 4px;
+    }
+    #radioMessage.success {
+      background-color: rgba(40, 167, 69, 0.2);
+      color: #28a745;
+    }
+    #radioMessage.error {
+      background-color: rgba(220, 53, 69, 0.2);
+      color: #dc3545;
+    }
   </style>
 </head>
 <body>
@@ -72,6 +164,32 @@
   <main>
     <section id="admin-section" class="screen">
       <div class="admin-container">
+        <h2>Gestion Radio</h2>
+        <div class="radio-control-section">
+          <div class="radio-control-buttons">
+            <button id="skipBtn" class="btn btn-skip">⏭️ NEXT (Passer)</button>
+            <button id="refreshQueueBtn" class="btn btn-refresh-queue">🔄 Rafraîchir la file</button>
+          </div>
+          
+          <div class="add-queue-form">
+            <select id="musicSelect">
+              <option value="" disabled selected>Choisir un morceau à ajouter...</option>
+            </select>
+            <button id="addToQueueBtn" class="btn">➕ Ajouter à la file</button>
+          </div>
+          
+          <span id="radioMessage"></span>
+          
+          <div class="queue-container">
+            <h4>📋 File d'attente actuelle</h4>
+            <ul id="queueList" class="queue-list">
+              <li class="queue-empty">Chargement...</li>
+            </ul>
+          </div>
+        </div>
+
+        <hr style="margin: 40px 0;">
+
         <h2>Admin Timeline</h2>
         <form id="adminTimelineForm" class="contact-form">
           <input type="text" id="postSubtitle" placeholder="Titre du Projet">
