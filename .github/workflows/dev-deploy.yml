@@ -1,0 +1,53 @@
+name: Dev - Tests + Deploy
+
+on:
+  push:
+    branches:
+      - dev
+      - sandbox
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Run PHP syntax check
+        run: |
+          chmod +x tests/php_syntax.sh
+          ./tests/php_syntax.sh
+
+      # Si les tests sont OK, on déploie sur le VPS
+      - name: Deploy to VPS and restart radio
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            set -e
+
+            echo "📂 Aller dans /var/www/html"
+            cd /var/www/html
+
+            # Branche actuelle du push (dev ou sandbox)
+            BRANCH="${GITHUB_REF_NAME:-dev}"
+            echo "🔄 Déploiement de la branche ${BRANCH}"
+
+            git fetch origin
+            git checkout "${BRANCH}"
+            git reset --hard "origin/${BRANCH}"
+
+            echo "🎵 Restart Icecast2 + Liquidsoap"
+            systemctl restart icecast2
+            systemctl restart liquidsoap
+
+            echo "✅ Déploiement terminé pour ${BRANCH}"
