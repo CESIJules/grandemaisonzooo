@@ -192,6 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const postDate = document.getElementById('postDate').value;
       const postArtist = document.getElementById('postArtist').value;
       const postImage = document.getElementById('postImage').files[0];
+      const postLink = document.getElementById('postLink').value;
 
       if (postImage && postImage.size > MAX_FILE_SIZE) {
         adminFormMessage.textContent = 'Le fichier est trop volumineux (max 2MB)';
@@ -212,6 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
       formData.append('date', postDate);
       formData.append('artist', postArtist);
       formData.append('id', Date.now()); // Assign a temporary unique ID
+      formData.append('link', postLink);
 
       if (postImage) {
         formData.append('image', postImage);

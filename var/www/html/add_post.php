@@ -44,6 +44,7 @@ try {
         'subtitle' => $_POST['subtitle'] ?? '',
         'date' => $_POST['date'],
         'artist' => $_POST['artist'],
+        'link' => $_POST['link'] ?? '',
         'content' => $image_path ?? $_POST['content'] ?? ''
     ];
 
