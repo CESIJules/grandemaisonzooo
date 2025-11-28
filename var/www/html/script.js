@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
     source.connect(analyser);
     analyser.connect(audioContext.destination);
 
-    analyser.fftSize = 512;
+    analyser.fftSize = 2048;
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
 
@@ -85,20 +85,29 @@ document.addEventListener('DOMContentLoaded', () => {
         let barHeight;
         let numBars = Math.floor(WIDTH / (barWidth + 1));
         
-        if (numBars > bufferLength) {
-          numBars = bufferLength;
+        // Limiter le nombre de barres pour garder une visualisation propre
+        if (numBars > 200) {
+          numBars = 200;
         }
 
-        const step = Math.floor(bufferLength / numBars);
+        // Utiliser toute la plage de fréquences disponible (y compris basses et subs)
+        const step = bufferLength / numBars;
 
         for (let i = 0; i < numBars; i++) {
+          // Moyenner les valeurs pour chaque barre
           let dataSum = 0;
-          for(let j = 0; j < step; j++) {
-              dataSum += dataArray[(i * step) + j];
+          const startIndex = Math.floor(i * step);
+          const endIndex = Math.floor((i + 1) * step);
+          const count = endIndex - startIndex;
+          
+          for(let j = startIndex; j < endIndex; j++) {
+              dataSum += dataArray[j];
           }
-          let average = dataSum / step;
-          // Boost height for better visibility
-          barHeight = (average / 255.0) * HEIGHT * 0.85;
+          let average = dataSum / count;
+          
+          // Amplifier les basses fréquences pour une meilleure visibilité
+          const bassBoost = i < numBars * 0.2 ? 1.3 : 1.0;
+          barHeight = (average / 255.0) * HEIGHT * 0.85 * bassBoost;
 
           const x = i * (barWidth + 1);
           const y = HEIGHT / 2 - barHeight / 2;

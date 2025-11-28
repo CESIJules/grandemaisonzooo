@@ -224,7 +224,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   position: absolute;
   top: -10.5%;
   left: -3.5%;
-  width: 93%;
+  width: 60%;
   height: 125%;
   z-index: -1;
   pointer-events: none; /* Make sure it doesn't block clicks */
