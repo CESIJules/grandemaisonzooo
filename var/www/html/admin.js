@@ -530,4 +530,170 @@ document.addEventListener('DOMContentLoaded', () => {
       window.location.href = 'login.html';
     });
   }
+
+  // --- Radio Control ---
+  const skipBtn = document.getElementById('skipBtn');
+  const refreshQueueBtn = document.getElementById('refreshQueueBtn');
+  const addToQueueBtn = document.getElementById('addToQueueBtn');
+  const musicSelect = document.getElementById('musicSelect');
+  const queueList = document.getElementById('queueList');
+  const radioMessage = document.getElementById('radioMessage');
+
+  // Show message with auto-clear
+  function showRadioMessage(message, isError = false) {
+    if (!radioMessage) return;
+    radioMessage.textContent = message;
+    radioMessage.className = isError ? 'error' : 'success';
+    setTimeout(() => {
+      radioMessage.textContent = '';
+      radioMessage.className = '';
+    }, 4000);
+  }
+
+  // Fetch queue from API
+  async function fetchQueue() {
+    if (!queueList) return;
+    
+    try {
+      const response = await fetch('radio_api.php?action=queue', {
+        cache: 'no-store'
+      });
+      const result = await response.json();
+
+      if (result.status === 'success') {
+        if (result.queue && result.queue.length > 0) {
+          queueList.innerHTML = '';
+          result.queue.forEach((item, index) => {
+            const li = document.createElement('li');
+            li.textContent = `${index + 1}. ${formatSongTitle(item.filename)}`;
+            queueList.appendChild(li);
+          });
+        } else {
+          queueList.innerHTML = '<li class="queue-empty">La file d\'attente est vide (lecture de la playlist par défaut)</li>';
+        }
+      } else {
+        queueList.innerHTML = `<li class="queue-empty">Erreur: ${result.message}</li>`;
+      }
+    } catch (error) {
+      queueList.innerHTML = `<li class="queue-empty">Erreur de connexion à l'API radio</li>`;
+      console.error('Error fetching queue:', error);
+    }
+  }
+
+  // Populate music select dropdown
+  async function populateMusicSelect() {
+    if (!musicSelect) return;
+
+    try {
+      const response = await fetch('get_music_files.php', { cache: 'no-store' });
+      const result = await response.json();
+
+      if (result.status === 'success' && result.files) {
+        musicSelect.innerHTML = '<option value="" disabled selected>Choisir un morceau à ajouter...</option>';
+        
+        // Sort files alphabetically
+        result.files.sort((a, b) => a.localeCompare(b));
+        
+        result.files.forEach(file => {
+          const option = document.createElement('option');
+          option.value = file;
+          option.textContent = formatSongTitle(file);
+          musicSelect.appendChild(option);
+        });
+      }
+    } catch (error) {
+      console.error('Error populating music select:', error);
+    }
+  }
+
+  // Skip current track
+  async function skipTrack() {
+    if (!skipBtn) return;
+    
+    skipBtn.disabled = true;
+    skipBtn.textContent = '⏳ Passage...';
+
+    try {
+      const response = await fetch('radio_api.php?action=skip', {
+        method: 'POST',
+        cache: 'no-store'
+      });
+      const result = await response.json();
+
+      if (result.status === 'success') {
+        showRadioMessage('✅ Morceau passé avec succès!');
+        // Refresh queue after skip
+        setTimeout(fetchQueue, 1000);
+      } else {
+        showRadioMessage(`❌ ${result.message}`, true);
+      }
+    } catch (error) {
+      showRadioMessage('❌ Erreur de connexion à l\'API radio', true);
+      console.error('Error skipping track:', error);
+    } finally {
+      skipBtn.disabled = false;
+      skipBtn.textContent = '⏭️ NEXT (Passer)';
+    }
+  }
+
+  // Add track to queue
+  async function addToQueue() {
+    if (!musicSelect || !addToQueueBtn) return;
+    
+    const filename = musicSelect.value;
+    if (!filename) {
+      showRadioMessage('❌ Veuillez sélectionner un morceau', true);
+      return;
+    }
+
+    addToQueueBtn.disabled = true;
+    addToQueueBtn.textContent = '⏳ Ajout...';
+
+    try {
+      const response = await fetch('radio_api.php?action=push', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ filename: filename })
+      });
+      const result = await response.json();
+
+      if (result.status === 'success') {
+        showRadioMessage(`✅ ${result.message}`);
+        musicSelect.value = '';
+        // Refresh queue after adding
+        fetchQueue();
+      } else {
+        showRadioMessage(`❌ ${result.message}`, true);
+      }
+    } catch (error) {
+      showRadioMessage('❌ Erreur de connexion à l\'API radio', true);
+      console.error('Error adding to queue:', error);
+    } finally {
+      addToQueueBtn.disabled = false;
+      addToQueueBtn.textContent = '➕ Ajouter à la file';
+    }
+  }
+
+  // Event listeners for radio control
+  if (skipBtn) {
+    skipBtn.addEventListener('click', skipTrack);
+  }
+
+  if (refreshQueueBtn) {
+    refreshQueueBtn.addEventListener('click', fetchQueue);
+  }
+
+  if (addToQueueBtn) {
+    addToQueueBtn.addEventListener('click', addToQueue);
+  }
+
+  // Initial load for radio control
+  if (queueList) {
+    populateMusicSelect();
+    fetchQueue();
+    // Auto-refresh queue every 30 seconds
+    setInterval(fetchQueue, 30000);
+  }
 });
