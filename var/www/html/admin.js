@@ -227,10 +227,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const postToEdit = posts.find(p => p.id == postIdToEdit);
 
             if (postToEdit) {
-                document.getElementById('postTitle').value = postToEdit.title;
                 document.getElementById('postSubtitle').value = postToEdit.subtitle || '';
                 document.getElementById('postLink').value = postToEdit.link || '';
-                document.getElementById('postContent').value = postToEdit.content || '';
                 document.getElementById('postDate').value = new Date(postToEdit.date).toISOString().split('T')[0];
                 document.getElementById('postArtist').value = postToEdit.artist;
 
@@ -260,9 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
     adminTimelineForm.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const postTitle = document.getElementById('postTitle').value;
       const postSubtitle = document.getElementById('postSubtitle').value;
-      const postContent = document.getElementById('postContent').value;
       const postDate = document.getElementById('postDate').value;
       const postArtist = document.getElementById('postArtist').value;
       const postImage = document.getElementById('postImage').files[0];
@@ -274,16 +270,15 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      if (!postTitle || !postDate || !postArtist) {
-        adminFormMessage.textContent = 'Titre, Date et Artiste sont obligatoires!';
+      if (!postDate || !postArtist) {
+        adminFormMessage.textContent = 'Date et Artiste sont obligatoires!';
         adminFormMessage.style.color = 'red';
         return;
       }
 
       const formData = new FormData();
-      formData.append('title', postTitle);
+      formData.append('title', postArtist);
       formData.append('subtitle', postSubtitle);
-      formData.append('content', postContent);
       formData.append('date', postDate);
       formData.append('artist', postArtist);
       formData.append('link', postLink);

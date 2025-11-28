@@ -51,7 +51,6 @@ if ($post_index === -1) {
 // Update fields based on POST data
 $posts[$post_index]['title'] = $_POST['title'] ?? $posts[$post_index]['title'];
 $posts[$post_index]['subtitle'] = $_POST['subtitle'] ?? $posts[$post_index]['subtitle'];
-$posts[$post_index]['content'] = $_POST['content'] ?? $posts[$post_index]['content'];
 $posts[$post_index]['date'] = $_POST['date'] ?? $posts[$post_index]['date'];
 $posts[$post_index]['artist'] = $_POST['artist'] ?? $posts[$post_index]['artist'];
 $posts[$post_index]['link'] = $_POST['link'] ?? $posts[$post_index]['link'];
@@ -77,10 +76,21 @@ if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
     if (move_uploaded_file($_FILES['image']['tmp_name'], $target_file)) {
         // If there was an old image, you might want to delete it here
         // For simplicity, we are not deleting the old one in this script.
-        $posts[$post_index]['content'] = $target_file;
+        $posts[$post_index]['image'] = $target_file;
     } else {
         send_json_error('Erreur lors du téléchargement de l\'image.');
     }
+}
+
+// Migrate content to image if necessary
+if (isset($posts[$post_index]['content'])) {
+    // Basic check if content is a path
+    if (strpos($posts[$post_index]['content'], 'uploads/') === 0) {
+        if (empty($posts[$post_index]['image'])) { // Don't overwrite a newly uploaded image
+            $posts[$post_index]['image'] = $posts[$post_index]['content'];
+        }
+    }
+    unset($posts[$post_index]['content']);
 }
 
 // Write updated data back to the file
