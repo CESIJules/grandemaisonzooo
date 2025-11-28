@@ -104,6 +104,46 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Function to update a post
+  async function updatePost(formData) {
+    try {
+      const response = await fetch('update_post.php', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erreur du serveur: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      if (result.status === 'success') {
+        adminFormMessage.textContent = 'Post mis à jour avec succès!';
+        adminFormMessage.style.color = 'green';
+        adminTimelineForm.reset();
+        renderAdminPosts(); // Refresh admin list
+
+        // Remove the hidden field and reset button text
+        const editingIdField = adminTimelineForm.querySelector('input[name="editingPostId"]');
+        if (editingIdField) {
+          editingIdField.remove();
+        }
+        adminTimelineForm.querySelector('button[type="submit"]').textContent = 'Ajouter au Timeline';
+
+      } else {
+        throw new Error(result.message || 'Une erreur inconnue est survenue.');
+      }
+    } catch (error) {
+      adminFormMessage.textContent = `Erreur: ${error.message}`;
+      adminFormMessage.style.color = 'red';
+    } finally {
+      setTimeout(() => {
+        adminFormMessage.textContent = '';
+      }, 3000);
+    }
+  }
+
   // Function to delete a post
   async function deletePost(postId) {
     // Confirmation dialog to prevent accidental deletion
@@ -164,7 +204,10 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="post-info">
           <strong>${post.title}</strong> (${post.artist}) - <span>${new Date(post.date).toLocaleDateString('fr-FR')}</span>
         </div>
-        <button class="delete-btn" data-id="${post.id}">Supprimer</button>
+        <div>
+          <button class="edit-btn" data-id="${post.id}">Modifier</button>
+          <button class="delete-btn" data-id="${post.id}">Supprimer</button>
+        </div>
       `;
       postsManagementContainer.appendChild(postElement);
     });
@@ -175,6 +218,37 @@ document.addEventListener('DOMContentLoaded', () => {
         const postIdToDelete = e.target.getAttribute('data-id');
         deletePost(postIdToDelete);     
       });
+    });
+
+    // Add event listeners to edit buttons
+    document.querySelectorAll('.edit-btn').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const postIdToEdit = e.target.getAttribute('data-id');
+            const postToEdit = posts.find(p => p.id == postIdToEdit);
+
+            if (postToEdit) {
+                document.getElementById('postTitle').value = postToEdit.title;
+                document.getElementById('postSubtitle').value = postToEdit.subtitle || '';
+                document.getElementById('postLink').value = postToEdit.link || '';
+                document.getElementById('postContent').value = postToEdit.content || '';
+                document.getElementById('postDate').value = new Date(postToEdit.date).toISOString().split('T')[0];
+                document.getElementById('postArtist').value = postToEdit.artist;
+
+                // Add a hidden field to store the ID of the post being edited
+                let editingIdField = document.querySelector('input[name="editingPostId"]');
+                if (!editingIdField) {
+                    editingIdField = document.createElement('input');
+                    editingIdField.type = 'hidden';
+                    editingIdField.name = 'editingPostId';
+                    adminTimelineForm.appendChild(editingIdField);
+                }
+                editingIdField.value = postIdToEdit;
+
+                // Change button text and scroll to form
+                adminTimelineForm.querySelector('button[type="submit"]').textContent = 'Modifier le post';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
     });
       } catch (error) {
       postsManagementContainer.innerHTML = `<p style="color: red;">Impossible de charger les posts: ${error.message}</p>`;
@@ -212,14 +286,20 @@ document.addEventListener('DOMContentLoaded', () => {
       formData.append('content', postContent);
       formData.append('date', postDate);
       formData.append('artist', postArtist);
-      formData.append('id', Date.now()); // Assign a temporary unique ID
       formData.append('link', postLink);
 
       if (postImage) {
         formData.append('image', postImage);
       }
       
-      await addPost(formData);
+      const editingIdField = adminTimelineForm.querySelector('input[name="editingPostId"]');
+      if (editingIdField && editingIdField.value) {
+        formData.append('id', editingIdField.value);
+        await updatePost(formData);
+      } else {
+        formData.append('id', Date.now()); // Assign a temporary unique ID
+        await addPost(formData);
+      }
     });
   }
 
