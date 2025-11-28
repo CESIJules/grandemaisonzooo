@@ -100,7 +100,12 @@ document.addEventListener('DOMContentLoaded', () => {
           const logIndexHigh = logMin + (logMax - logMin) * highPercent;
 
           const frequencyIndex = Math.floor(Math.exp(logIndexLow));
-          const nextFrequencyIndex = Math.floor(Math.exp(logIndexHigh));
+          let nextFrequencyIndex = Math.floor(Math.exp(logIndexHigh));
+
+          // S'assurer qu'il y a au moins un bin de fréquence à analyser
+          if (nextFrequencyIndex <= frequencyIndex) {
+            nextFrequencyIndex = frequencyIndex + 1;
+          }
           
           // Moyenne des valeurs dans cette plage de fréquences
           let dataSum = 0;
@@ -114,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const normalizedValue = average / 255.0;
           const boostedValue = Math.pow(normalizedValue, 0.6); // Compression logarithmique
           
-          const barHeight = boostedValue * maxBarHeight * 2.2; // Boost global
+          const barHeight = boostedValue * maxBarHeight * 1.8; // Boost global (réduit pour éviter le clipping)
           const x = i * barWidth;
           
           // Opacité dynamique basée sur l'amplitude
