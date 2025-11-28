@@ -48,6 +48,120 @@
     .playing {
       color: red;
     }
+    /* Radio Control Styles */
+    .radio-control-section {
+      background-color: #1a1a1a;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .now-playing {
+      background-color: #222;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+    .now-playing h3 {
+      margin: 0 0 10px;
+      color: #888;
+      font-size: 0.9em;
+    }
+    .now-playing p {
+      margin: 0;
+      font-size: 1.2em;
+      color: #fff;
+      font-weight: bold;
+    }
+    .playback-controls {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .control-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      font-size: 1em;
+    }
+    .control-btn span {
+      font-size: 1.2em;
+    }
+    .queue-section {
+      background-color: #222;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+    .queue-section h3 {
+      margin: 0 0 10px;
+      color: #aaa;
+      font-size: 1em;
+    }
+    #queueContainer {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    #queueContainer p {
+      color: #666;
+      font-style: italic;
+      margin: 0;
+    }
+    #queueContainer ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    #queueContainer li {
+      padding: 8px 10px;
+      background-color: #333;
+      margin-bottom: 5px;
+      border-radius: 4px;
+      color: #eee;
+    }
+    .add-to-queue-section {
+      background-color: #222;
+      padding: 15px;
+      border-radius: 8px;
+    }
+    .add-to-queue-section h3 {
+      margin: 0 0 10px;
+      color: #aaa;
+      font-size: 1em;
+    }
+    .add-to-queue-section p {
+      color: #666;
+      margin: 0;
+      font-size: 0.9em;
+    }
+    .queue-btn {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-left: 8px;
+      font-size: 0.85em;
+    }
+    .queue-btn:hover {
+      background-color: #218838;
+    }
+    .rename-music-btn {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-left: 8px;
+      font-size: 0.85em;
+    }
+    .rename-music-btn:hover {
+      background-color: #0056b3;
+    }
   </style>
 </head>
 <body>
@@ -80,6 +194,31 @@
         <h2>Gérer les posts</h2>
         <div id="postsManagementContainer">
           <!-- Posts will be listed here -->
+        </div>
+
+        <hr style="margin: 40px 0;">
+
+        <h2>Contrôle de la Radio</h2>
+        <div id="radioControlContainer" class="radio-control-section">
+          <div class="now-playing">
+            <h3>En cours de lecture</h3>
+            <p id="currentPlayingSong">Chargement...</p>
+          </div>
+          <div class="playback-controls">
+            <button id="skipBtn" class="btn control-btn">
+              <span>⏭️</span> Passer au suivant
+            </button>
+          </div>
+          <div class="queue-section">
+            <h3>File d'attente (<span id="queueLength">0</span>)</h3>
+            <div id="queueContainer">
+              <p>Aucune chanson en file d'attente</p>
+            </div>
+          </div>
+          <div class="add-to-queue-section">
+            <h3>Ajouter à la file d'attente</h3>
+            <p>Sélectionnez une musique dans la liste ci-dessous et cliquez sur "Ajouter à la file"</p>
+          </div>
         </div>
 
         <hr style="margin: 40px 0;">
