@@ -34,23 +34,23 @@ radio = map_metadata(set_title_artist, radio)
 # Securite : silence si playlist vide
 radio = fallback(track_sensitive=false, [radio, blank()])
 
-# Variable pour stocker la source finale avec skip
-radio_output = source.on_track(radio, fun(m) -> log("Now playing: #{m["filename"]}"))
+# Source avec capacite de skip
+radio_skip = source.on_track(radio, fun(m) -> log("Now playing: #{m["filename"]}"))
 
 # Diffusion vers Icecast
-output_radio = output.icecast(
+output.icecast(
   %mp3,
   host     = "127.0.0.1",
   port     = 8000,
   password = "hacklaradio",
   mount    = "/stream",
   name     = "Radio GRANDE MAISON",
-  radio_output
+  radio_skip
 )
 
 # Commande pour passer au morceau suivant
 def skip_song(_) =
-  source.skip(radio_output)
+  source.skip(radio_skip)
   "Song skipped"
 end
 server.register("skip", skip_song)

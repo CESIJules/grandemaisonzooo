@@ -82,13 +82,25 @@ switch ($action) {
         }
         
         $fullPath = $musicDir . $safeFilename;
-        if (!file_exists($fullPath)) {
+        
+        // Verifier que le chemin resolu est bien dans le repertoire musique
+        $realPath = realpath($fullPath);
+        $realMusicDir = realpath($musicDir);
+        if ($realPath === false || $realMusicDir === false || strpos($realPath, $realMusicDir) !== 0) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Chemin de fichier invalide']);
+            exit;
+        }
+        
+        if (!file_exists($realPath) || !is_file($realPath)) {
             http_response_code(404);
             echo json_encode(['status' => 'error', 'message' => 'Fichier non trouve']);
             exit;
         }
         
-        $result = sendTelnetCommand('queue.push ' . $fullPath, $telnetHost, $telnetPort, $timeout);
+        // Echapper les caracteres speciaux pour la commande telnet
+        $escapedPath = addcslashes($realPath, "\n\r\t\\\"'");
+        $result = sendTelnetCommand('queue.push ' . $escapedPath, $telnetHost, $telnetPort, $timeout);
         if ($result === false) {
             http_response_code(503);
             echo json_encode(['status' => 'error', 'message' => 'Impossible de se connecter au serveur Liquidsoap']);
