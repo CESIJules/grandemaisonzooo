@@ -192,9 +192,10 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 #radio h2 {
   font-size: 4.5em;
   margin: 0;
-  position: static;
+  position: relative;
   line-height: 1;
   opacity: 0.325;
+  z-index: 2;
 }
 
 #currentSong {
@@ -222,11 +223,12 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 
 #visualizer {
   position: absolute;
-  top: 25px;
-  left: 30px;
-  width: 280px;
-  height: 80px;
-  z-index: -1;
+  top: 50%;
+  left: 0;
+  width: 320px;
+  height: 90px;
+  transform: translateY(-50%);
+  z-index: 1;
   pointer-events: none;
   border-radius: 0;
 }
