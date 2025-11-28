@@ -182,6 +182,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   position: absolute;
   top: 30px;
   left: 30px;
+  width: calc(100% - 60px);
   z-index: 20;
   display: flex;
   align-items: center;
@@ -197,15 +198,20 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 }
 
 #currentSong {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   font-family: 'Space Grotesk', sans-serif;
   font-size: 1.1rem;
   color: #aaa;
-  margin-left: 15px;
+  margin-left: 0;
   display: flex;
   align-items: center;
   gap: 6px;
   text-transform: uppercase;
   letter-spacing: 1px;
+  white-space: nowrap;
 }
 
 #currentSong .title {
@@ -276,6 +282,37 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   color: #aaa;
   font-size: 0.8em;
   z-index: 20;
+}
+
+.player {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.player-center {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 400px;
+  height: 400px;
+}
+
+#circularVisualizer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
 }
 
 .listeners {
