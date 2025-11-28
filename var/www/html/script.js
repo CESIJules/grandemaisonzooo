@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
         canvasCtx.clearRect(0, 0, WIDTH, HEIGHT);
 
         // Nombre de barres pour le visualiseur
-        const numBars = 70;
+        const numBars = 100;
         const barWidth = WIDTH / numBars;
         const maxBarHeight = HEIGHT * 0.45;
         
@@ -134,10 +134,10 @@ document.addEventListener('DOMContentLoaded', () => {
           canvasCtx.fillStyle = gradient;
           
           // Barre vers le haut
-          canvasCtx.fillRect(x, HEIGHT/2 - barHeight, barWidth - 0.5, barHeight);
+          canvasCtx.fillRect(x, HEIGHT/2 - barHeight, barWidth - 1, barHeight);
           
           // Barre vers le bas (miroir)
-          canvasCtx.fillRect(x, HEIGHT/2, barWidth - 0.5, barHeight);
+          canvasCtx.fillRect(x, HEIGHT/2, barWidth - 1, barHeight);
         }
         
         // Ligne centrale pour marquer le centre
