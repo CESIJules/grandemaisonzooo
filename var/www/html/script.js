@@ -56,6 +56,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const canvasCtx = visualizerCanvas.getContext('2d');
     const circularCtx = circularVisualizer ? circularVisualizer.getContext('2d') : null;
+    let waveTime = 0;
+    
     
     function resizeCanvas() {
         visualizerCanvas.width = visualizerCanvas.offsetWidth;
@@ -198,6 +200,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // --- Circular Visualizer (Button) ---
       if (circularCtx && circularVisualizer.width > 0) {
+        waveTime += 0.02; // Increment time for animation
+
         const w = circularVisualizer.width;
         const h = circularVisualizer.height;
         const cx = w / 2;
@@ -207,29 +211,60 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Calculate average volume (bass focused)
         let sum = 0;
-        const bassRange = Math.floor(bufferLength * 0.15); // Low frequencies
+        const bassRange = Math.floor(bufferLength * 0.1); // Focus on lower bass
         for(let i = 0; i < bassRange; i++) {
             sum += dataArray[i];
         }
-        const average = sum / bassRange;
+        let average = bassRange > 0 ? sum / bassRange : 0;
         const normalizedVol = average / 255;
 
-        // Draw concentric pulsing rings
-        const baseRadius = 88; // Increased size
-        
-        // Ring 1 (Main pulse)
+        // Draw organic, wavy rings
+        const baseRadius = 90;
+        const segments = 100; // Number of segments for the curve
+        const waveAmplitude = 5 + (normalizedVol * 20); // How much the wave moves
+        const waveFrequency = 5; // How many waves
+
+        // --- Ring 1 (Outer wave) ---
         circularCtx.beginPath();
-        // Increased reactivity
-        circularCtx.arc(cx, cy, baseRadius + (normalizedVol * 40), 0, 2 * Math.PI);
-        circularCtx.strokeStyle = `rgba(255, 255, 255, ${0.2 + (normalizedVol * 0.5)})`;
+        for (let i = 0; i <= segments; i++) {
+            const angle = (i / segments) * 2 * Math.PI;
+            const waveOffset = Math.sin(angle * waveFrequency + waveTime) * waveAmplitude;
+            const radius = baseRadius + waveOffset;
+            
+            const x = cx + Math.cos(angle) * radius;
+            const y = cy + Math.sin(angle) * radius;
+            
+            if (i === 0) {
+                circularCtx.moveTo(x, y);
+            } else {
+                circularCtx.lineTo(x, y);
+            }
+        }
+        circularCtx.closePath();
+        circularCtx.strokeStyle = `rgba(255, 255, 255, ${0.3 + (normalizedVol * 0.4)})`;
         circularCtx.lineWidth = 1.5;
         circularCtx.stroke();
 
-        // Ring 2 (Echo pulse)
+        // --- Ring 2 (Inner wave, slightly offset phase) ---
+        const innerWaveAmplitude = 3 + (normalizedVol * 15);
         circularCtx.beginPath();
-        // Increased reactivity
-        circularCtx.arc(cx, cy, baseRadius + 14 + (normalizedVol * 80), 0, 2 * Math.PI);
-        circularCtx.strokeStyle = `rgba(255, 255, 255, ${0.1 + (normalizedVol * 0.2)})`;
+        for (let i = 0; i <= segments; i++) {
+            const angle = (i / segments) * 2 * Math.PI;
+            // Offset phase with waveTime and angle frequency
+            const waveOffset = Math.sin(angle * (waveFrequency + 1) - waveTime * 1.2) * innerWaveAmplitude;
+            const radius = baseRadius - 20 + waveOffset; // Smaller base radius
+            
+            const x = cx + Math.cos(angle) * radius;
+            const y = cy + Math.sin(angle) * radius;
+            
+            if (i === 0) {
+                circularCtx.moveTo(x, y);
+            } else {
+                circularCtx.lineTo(x, y);
+            }
+        }
+        circularCtx.closePath();
+        circularCtx.strokeStyle = `rgba(255, 255, 255, ${0.15 + (normalizedVol * 0.3)})`;
         circularCtx.lineWidth = 1;
         circularCtx.stroke();
       }
