@@ -49,20 +49,23 @@ Ce système permet de contrôler la radio Liquidsoap depuis le panel d'administr
 ### 3. Ajouter un morceau à la file
 - Menu déroulant avec tous les fichiers musicaux
 - Bouton "Ajouter à la file"
-- Commande API: `POST radio_api.php?action=push&token=TOKEN`
+- Commande API: `POST radio_api.php?action=push`
   - Body JSON: `{"filename": "nom_du_fichier.mp3"}`
 
 ## Configuration
 
-### Token d'authentification
+### Authentification
+L'API utilise deux mécanismes d'authentification:
+
+1. **Referer (panel admin)**: Les appels depuis le même domaine sont autorisés
+2. **Token (intégrations externes)**: Utiliser le header `X-Radio-Token` ou le paramètre `token`
+
 Le token API est défini dans `var/www/html/radio_config.php`:
 ```php
 define('RADIO_API_TOKEN', 'grandemaison_radio_token_2024');
 ```
 
-Pour changer le token:
-1. Modifier `radio_config.php`
-2. Modifier la constante `RADIO_API_TOKEN` dans `admin.js`
+Pour changer le token, modifier uniquement `radio_config.php`.
 
 ### Ports et adresses
 Configuration par défaut dans `radio_config.php`:
@@ -89,9 +92,11 @@ quit                                  # Quitter
 ## Sécurité
 
 - Le serveur telnet écoute uniquement sur `127.0.0.1` (localhost)
-- L'API PHP requiert un token d'authentification
+- L'API PHP utilise la vérification du Referer (même origine) pour les appels du panel admin
+- Un token peut être utilisé pour les intégrations externes (header X-Radio-Token ou paramètre token)
 - Protection contre les attaques path traversal (basename validation)
 - Pas d'accès direct externe au telnet
+- Limite de boucle sur la lecture socket pour éviter les blocages
 
 ## Maintenance
 

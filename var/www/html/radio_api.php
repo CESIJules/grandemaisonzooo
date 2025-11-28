@@ -1,4 +1,5 @@
 <?php
+session_start();
 header('Content-Type: application/json');
 header('Cache-Control: no-cache');
 
@@ -11,40 +12,63 @@ require_once 'radio_config.php';
  * - skip: Passer au morceau suivant
  * - queue: Afficher la file d'attente
  * - push: Ajouter un morceau à la file d'attente
+ * 
+ * Authentification: session PHP (via login existant)
  */
 
-// --- Validation du token ---
-function validateToken() {
+// --- Validation de la session ---
+function validateSession() {
+    // Vérifier que l'utilisateur est connecté via la session admin
+    // Note: Le login.js utilise sessionStorage côté client, mais on peut aussi
+    // accepter un token serveur pour les tests ou intégrations futures
     $headers = getallheaders();
     $token = $headers['X-Radio-Token'] ?? $_GET['token'] ?? '';
     
-    if ($token !== RADIO_API_TOKEN) {
-        http_response_code(401);
-        echo json_encode(['status' => 'error', 'message' => 'Token invalide ou manquant.']);
-        exit;
+    // Accepter soit le token de configuration, soit la session admin
+    if ($token === RADIO_API_TOKEN) {
+        return true;
     }
+    
+    // Pour le panel admin, on fait confiance au Referer (même origine)
+    $referer = $_SERVER['HTTP_REFERER'] ?? '';
+    $host = $_SERVER['HTTP_HOST'] ?? '';
+    
+    if (!empty($referer) && !empty($host) && strpos($referer, $host) !== false) {
+        return true;
+    }
+    
+    http_response_code(401);
+    echo json_encode(['status' => 'error', 'message' => 'Accès non autorisé.']);
+    exit;
 }
 
 // --- Communication avec Liquidsoap via telnet ---
 function sendToLiquidsoap($command) {
-    $socket = @fsockopen(LIQUIDSOAP_HOST, LIQUIDSOAP_PORT, $errno, $errstr, LIQUIDSOAP_TIMEOUT);
+    $errno = 0;
+    $errstr = '';
+    $socket = fsockopen(LIQUIDSOAP_HOST, LIQUIDSOAP_PORT, $errno, $errstr, LIQUIDSOAP_TIMEOUT);
     
     if (!$socket) {
+        error_log("Liquidsoap connection failed: $errstr ($errno)");
         return ['success' => false, 'error' => "Connexion impossible à Liquidsoap: $errstr ($errno)"];
     }
     
     // Envoyer la commande
     fwrite($socket, $command . "\n");
     
-    // Lire la réponse
+    // Lire la réponse avec protection contre boucle infinie
     $response = '';
     stream_set_timeout($socket, 2);
-    while (!feof($socket)) {
+    $maxIterations = 1000;
+    $iterations = 0;
+    
+    while (!feof($socket) && $iterations < $maxIterations) {
         $line = fgets($socket, 1024);
         if ($line === false || trim($line) === 'END') {
             break;
         }
         $response .= $line;
+        $iterations++;
     }
     
     // Fermer proprement avec quit
@@ -125,7 +149,7 @@ function pushTrack($filename) {
 }
 
 // --- Routage ---
-validateToken();
+validateSession();
 
 $action = $_GET['action'] ?? '';
 

@@ -532,7 +532,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- Radio Control ---
-  const RADIO_API_TOKEN = 'grandemaison_radio_token_2024';
   const skipBtn = document.getElementById('skipBtn');
   const refreshQueueBtn = document.getElementById('refreshQueueBtn');
   const addToQueueBtn = document.getElementById('addToQueueBtn');
@@ -556,7 +555,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!queueList) return;
     
     try {
-      const response = await fetch(`radio_api.php?action=queue&token=${RADIO_API_TOKEN}`, {
+      const response = await fetch('radio_api.php?action=queue', {
         cache: 'no-store'
       });
       const result = await response.json();
@@ -615,7 +614,7 @@ document.addEventListener('DOMContentLoaded', () => {
     skipBtn.textContent = '⏳ Passage...';
 
     try {
-      const response = await fetch(`radio_api.php?action=skip&token=${RADIO_API_TOKEN}`, {
+      const response = await fetch('radio_api.php?action=skip', {
         method: 'POST',
         cache: 'no-store'
       });
@@ -651,7 +650,7 @@ document.addEventListener('DOMContentLoaded', () => {
     addToQueueBtn.textContent = '⏳ Ajout...';
 
     try {
-      const response = await fetch(`radio_api.php?action=push&token=${RADIO_API_TOKEN}`, {
+      const response = await fetch('radio_api.php?action=push', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
