@@ -198,6 +198,10 @@
         <div class="radio-header">
           <canvas id="visualizer"></canvas>
           <h2>RADIO</h2>
+          <div id="currentSong">
+            <span class="label">En cours de lecture : </span
+            ><span class="title">Chargement du titre...</span>
+          </div>
           <div class="volume-container">
             <button
               id="volumeToggle"
@@ -217,11 +221,6 @@
               />
             </div>
           </div>
-        </div>
-
-        <div id="currentSong">
-          <span class="label">En cours de lecture : </span
-          ><span class="title">Chargement du titre...</span>
         </div>
 
         <audio id="radioPlayer" crossorigin="anonymous">
