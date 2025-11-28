@@ -186,19 +186,14 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   display: flex;
   align-items: baseline;
   gap: 15px;
-  background-color: #000;
-  mix-blend-mode: screen;
-  padding: 10px;
 }
 
 #radio h2 {
   font-size: 4.5em;
   margin: 0;
-  position: relative;
+  position: static;
   line-height: 1;
-  opacity: 1;
-  color: #fff;
-  z-index: 1;
+  opacity: 0.325;
 }
 
 #visualizer {
@@ -207,10 +202,9 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   left: -10.5%;
   width: 93%;
   height: 125%;
-  z-index: 2;
+  z-index: -1;
   pointer-events: none; /* Make sure it doesn't block clicks */
   border-radius: 90px; /* Optional: adds a bit of style */
-  mix-blend-mode: multiply;
 }
 
 .volume-container {
@@ -219,7 +213,6 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   flex-direction: column;
   align-items: center;
   pointer-events: auto;
-  z-index: 3;
 }
 
 .btn-play {
