@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
         canvasCtx.clearRect(0, 0, WIDTH, HEIGHT);
 
         // Nombre de points pour la ligne ondulée
-        const numPoints = 120;
+        const numPoints = 150;
         const step = bufferLength / numPoints;
         
         // Créer deux lignes ondulées (effet stéréo/symétrique)
