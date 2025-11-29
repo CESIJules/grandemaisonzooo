@@ -357,8 +357,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // --- Circular Visualizer (Button) ---
       if (circularCtx && circularVisualizer.width > 0) {
-        waveTime += 0.02; // Increment time for animation
-
         const w = circularVisualizer.width;
         const h = circularVisualizer.height;
         const cx = w / 2;
@@ -366,64 +364,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
         circularCtx.clearRect(0, 0, w, h);
 
-        // Calculate average volume (bass focused)
-        let sum = 0;
-        const bassRange = Math.floor(bufferLength * 0.1); // Focus on lower bass
-        for(let i = 0; i < bassRange; i++) {
-            sum += dataArray[i];
-        }
-        let average = bassRange > 0 ? sum / bassRange : 0;
-        const normalizedVol = average / 255;
+        const numBars = 80; // Increased number of bars for a fuller look
+        const barWidth = 2.5;
+        const innerRadius = 110;
+        const maxBarHeight = 40;
 
-        // Draw organic, wavy rings
-        const baseRadius = 90;
-        const segments = 100; // Number of segments for the curve
-        const waveAmplitude = 5 + (normalizedVol * 20); // How much the wave moves
-        const waveFrequency = 5; // How many waves
+        const bassAvg = (dataArray[0] + dataArray[1] + dataArray[2]) / 3 / 255;
 
-        // --- Ring 1 (Outer wave) ---
-        circularCtx.beginPath();
-        for (let i = 0; i <= segments; i++) {
-            const angle = (i / segments) * 2 * Math.PI;
-            const waveOffset = Math.sin(angle * waveFrequency + waveTime) * waveAmplitude;
-            const radius = baseRadius + waveOffset;
-            
-            const x = cx + Math.cos(angle) * radius;
-            const y = cy + Math.sin(angle) * radius;
-            
-            if (i === 0) {
-                circularCtx.moveTo(x, y);
-            } else {
-                circularCtx.lineTo(x, y);
-            }
-        }
-        circularCtx.closePath();
-        circularCtx.strokeStyle = `rgba(255, 255, 255, ${0.3 + (normalizedVol * 0.4)})`;
-        circularCtx.lineWidth = 1.5;
-        circularCtx.stroke();
+        for (let i = 0; i < numBars; i++) {
+          const angle = (i / numBars) * 2 * Math.PI + (Math.PI / 2);
+          
+          const frequencyIndex = Math.floor(Math.pow(i / numBars, 2) * (bufferLength * 0.4));
+          const freqData = dataArray[frequencyIndex];
+          const normalizedValue = freqData / 255.0;
 
-        // --- Ring 2 (Inner wave, slightly offset phase) ---
-        const innerWaveAmplitude = 3 + (normalizedVol * 15);
-        circularCtx.beginPath();
-        for (let i = 0; i <= segments; i++) {
-            const angle = (i / segments) * 2 * Math.PI;
-            // Offset phase with waveTime and angle frequency
-            const waveOffset = Math.sin(angle * (waveFrequency + 1) - waveTime * 1.2) * innerWaveAmplitude;
-            const radius = baseRadius - 20 + waveOffset; // Smaller base radius
-            
-            const x = cx + Math.cos(angle) * radius;
-            const y = cy + Math.sin(angle) * radius;
-            
-            if (i === 0) {
-                circularCtx.moveTo(x, y);
-            } else {
-                circularCtx.lineTo(x, y);
-            }
+          const barHeight = (normalizedValue * maxBarHeight) + (bassAvg * 10);
+
+          const startX = cx + Math.cos(angle) * innerRadius;
+          const startY = cy + Math.sin(angle) * innerRadius;
+          const endX = cx + Math.cos(angle) * (innerRadius + barHeight);
+          const endY = cy + Math.sin(angle) * (innerRadius + barHeight);
+
+          circularCtx.beginPath();
+          circularCtx.moveTo(startX, startY);
+          circularCtx.lineTo(endX, endY);
+          
+          const opacity = Math.max(0.2, normalizedValue);
+          circularCtx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
+          circularCtx.lineWidth = barWidth;
+          circularCtx.lineCap = 'round';
+          circularCtx.stroke();
         }
-        circularCtx.closePath();
-        circularCtx.strokeStyle = `rgba(255, 255, 255, ${0.15 + (normalizedVol * 0.3)})`;
-        circularCtx.lineWidth = 1;
-        circularCtx.stroke();
       }
     }
 
