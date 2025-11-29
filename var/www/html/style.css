@@ -8,6 +8,54 @@ body {
   overflow: hidden; /* le scroll se fait sur main */
 }
 
+/* Video Landing Overlay */
+.video-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  transition: opacity 0.8s ease;
+}
+
+.video-overlay.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.video-overlay video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Background Video for Accueil Section */
+.background-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1;
+  opacity: 0.4; /* Adjust opacity so text is readable */
+}
+
+#accueil {
+  position: relative;
+}
+
+#accueil h1 {
+  position: relative;
+  z-index: 1;
+}
+
 /* One-scroll fluide global */
 main {
   height: 100vh;
