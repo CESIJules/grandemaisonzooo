@@ -775,6 +775,14 @@ document.addEventListener('DOMContentLoaded', () => {
       // On ne s'intéresse qu'au scroll vertical de la souris (deltaY)
       if (e.deltaY === 0) return;
 
+      // Vérifier si la section timeline est active (occupe l'écran)
+      const timelineSection = document.getElementById('timeline');
+      if (timelineSection) {
+        const rect = timelineSection.getBoundingClientRect();
+        // Si la section n'est pas alignée (tolérance 5px), on laisse le scroll vertical natif
+        if (Math.abs(rect.top) > 5) return;
+      }
+
       const isGoingDown = e.deltaY > 0;
       const isGoingUp = e.deltaY < 0;
 
@@ -804,7 +812,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       } else {
         // On est en butée horizontale, on gère le passage à la section suivante/précédente
-        const timelineSection = document.getElementById('timeline');
         
         if (timelineSection && mainContainer) {
             if (isGoingDown && !canScrollRight) {
@@ -1025,7 +1032,7 @@ document.addEventListener('DOMContentLoaded', () => {
              // Use custom smooth scroll with 1200ms duration
              smoothScrollTo(targetPosition, 1200);
         }
-      }, 150); // 150ms delay before snapping
+      }, 50); // 50ms delay before snapping
     }, { passive: true });
   }
   
