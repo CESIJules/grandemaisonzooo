@@ -903,7 +903,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (closestSection && minDistance > 2) { // Tolerance of 2px
              closestSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
-      }, 150); // 150ms delay before snapping
+      }, 250); // 150ms delay before snapping
     }, { passive: true });
   }
   
