@@ -1,4 +1,29 @@
 document.addEventListener('DOMContentLoaded', () => {
+  // --- Tab Navigation ---
+  const tabLinks = document.querySelectorAll('.tab-link');
+  const tabContents = document.querySelectorAll('.tab-content');
+
+  tabLinks.forEach(link => {
+    link.addEventListener('click', () => {
+      const tabId = link.getAttribute('data-tab');
+
+      // Update active state for links
+      tabLinks.forEach(innerLink => {
+        innerLink.classList.remove('active');
+      });
+      link.classList.add('active');
+
+      // Show/hide content
+      tabContents.forEach(content => {
+        if (content.id === tabId) {
+          content.classList.add('active');
+        } else {
+          content.classList.remove('active');
+        }
+      });
+    });
+  });
+
   const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 
   // --- Song Title Formatter ---
