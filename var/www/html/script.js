@@ -872,5 +872,39 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }, 500); // Small delay to ensure buttons are rendered
   }
+
+  // --- Custom Smooth Snap Scrolling ---
+  const mainContainer = document.querySelector('main');
+  let isScrolling;
+
+  if (mainContainer) {
+    mainContainer.addEventListener('scroll', () => {
+      // Clear the timeout while scrolling
+      window.clearTimeout(isScrolling);
+
+      // Set a timeout to run after scrolling ends
+      isScrolling = setTimeout(() => {
+        const sections = document.querySelectorAll('section');
+        let closestSection = null;
+        let minDistance = Infinity;
+
+        sections.forEach(section => {
+          const rect = section.getBoundingClientRect();
+          // Calculate distance from the top of the viewport
+          const distance = Math.abs(rect.top);
+          
+          if (distance < minDistance) {
+            minDistance = distance;
+            closestSection = section;
+          }
+        });
+
+        // Snap to the closest section if it's not already aligned
+        if (closestSection && minDistance > 2) { // Tolerance of 2px
+             closestSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 150); // 150ms delay before snapping
+    }, { passive: true });
+  }
   
 }); // End DOMContentLoaded

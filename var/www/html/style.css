@@ -70,7 +70,7 @@ body {
 main {
   height: 100vh;
   overflow-y: scroll;
-  scroll-snap-type: y mandatory; /* Snap précis sur chaque section */
+  /* scroll-snap-type: y mandatory;  Désactivé pour JS custom */
   scroll-behavior: smooth;
   scroll-padding-top: 0;
   -webkit-overflow-scrolling: touch; /* inertie sur mobile */
@@ -87,7 +87,7 @@ main { -ms-overflow-style: none; scrollbar-width: none; }
   align-items: center;
   justify-content: center;
   gap: 16px;
-  scroll-snap-align: start;
+  /* scroll-snap-align: start; Désactivé */
 }
 
 h1, h2, h3, h4, h5, h6 { 
@@ -691,7 +691,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   align-items: center;
   justify-content: flex-start; /* pas besoin de centrer verticalement */
   gap: 20px;
-  scroll-snap-align: start;
+  /* scroll-snap-align: start; Désactivé */
 }
 #artistes h2 {
   margin: 0 0 20px;
@@ -720,7 +720,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   align-items: center;
   padding: 40px;
   gap: 40px;
-  scroll-snap-align: start;
+  /* scroll-snap-align: start; Désactivé */
 }
 
 /* Colonne gauche: infos */
