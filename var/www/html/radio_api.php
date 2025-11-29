@@ -110,12 +110,57 @@ function getQueue() {
     }
     
     // Parser la réponse pour extraire les fichiers
+    // Format Liquidsoap attendu: "[request_id] /full/path/to/file.mp3" (un élément par ligne)
+    // Ou potentiellement: liste d'IDs séparés par des espaces sur une seule ligne
     $queue = [];
     $lines = explode("\n", $result['response']);
+    
     foreach ($lines as $line) {
         $line = trim($line);
-        if (!empty($line) && $line !== 'END') {
-            // Extraire le nom du fichier depuis le chemin
+        if (empty($line) || $line === 'END') {
+            continue;
+        }
+        
+        // Format 1: [rid] /path/to/file.mp3
+        // Chaque élément est sur sa propre ligne avec le request ID entre crochets
+        if (preg_match('/^\[(\d+)\]\s+(.+)$/', $line, $matches)) {
+            $requestId = $matches[1];
+            $path = $matches[2];
+            $filename = basename($path);
+            $queue[] = [
+                'rid' => $requestId,
+                'path' => $path,
+                'filename' => $filename
+            ];
+            continue;
+        }
+        
+        // Format 2: Liste d'IDs séparés par des espaces (ex: "35 36 37 38")
+        // Si la ligne contient uniquement des nombres séparés par des espaces, 
+        // ce sont des request IDs qu'il faut résoudre individuellement
+        // Note: This creates individual telnet connections per ID; acceptable for typical queue sizes
+        if (preg_match('/^[\d\s]+$/', $line)) {
+            $rids = preg_split('/\s+/', $line, -1, PREG_SPLIT_NO_EMPTY);
+            foreach ($rids as $rid) {
+                // Pour chaque request ID, obtenir les métadonnées via request.metadata
+                $metaResult = sendToLiquidsoap("request.metadata $rid");
+                if ($metaResult['success']) {
+                    $filename = extractFilenameFromMetadata($metaResult['response'], $rid);
+                } else {
+                    // Fallback si la requête de métadonnées échoue
+                    $filename = "Track #$rid";
+                }
+                $queue[] = [
+                    'rid' => $rid,
+                    'path' => null, // Path unknown when resolved from metadata
+                    'filename' => $filename
+                ];
+            }
+            continue;
+        }
+        
+        // Format 3: Chemin simple sans request ID
+        if (strpos($line, '/') !== false) {
             $filename = basename($line);
             $queue[] = [
                 'path' => $line,
@@ -125,6 +170,26 @@ function getQueue() {
     }
     
     return ['status' => 'success', 'queue' => $queue];
+}
+
+// Extraire le nom de fichier depuis les métadonnées Liquidsoap
+function extractFilenameFromMetadata($metadata, $fallbackRid) {
+    // Les métadonnées Liquidsoap sont au format "key=value" sur plusieurs lignes
+    $lines = explode("\n", $metadata);
+    foreach ($lines as $line) {
+        // Chercher le champ "filename" ou "source" ou "title"
+        if (preg_match('/^filename="(.+)"$/', trim($line), $matches)) {
+            return basename($matches[1]);
+        }
+        if (preg_match('/^source="(.+)"$/', trim($line), $matches)) {
+            return basename($matches[1]);
+        }
+        if (preg_match('/^title="(.+)"$/', trim($line), $matches)) {
+            return $matches[1];
+        }
+    }
+    // Fallback: retourner le request ID si aucun nom trouvé
+    return "Track #$fallbackRid";
 }
 
 // Ajouter un morceau à la file d'attente
@@ -189,11 +254,23 @@ function reorderQueue($newOrder) {
         $lines = explode("\n", $result['response']);
         foreach ($lines as $line) {
             $line = trim($line);
-            // Each line has format: [rid] path
-            // Extract the request ID if present
+            if (empty($line) || $line === 'END') {
+                continue;
+            }
+            
+            // Format 1: [rid] /path/to/file.mp3
             if (preg_match('/^\[(\d+)\]/', $line, $matches)) {
                 $rid = $matches[1];
                 sendToLiquidsoap("queue.ignore $rid");
+                continue;
+            }
+            
+            // Format 2: Liste d'IDs séparés par des espaces
+            if (preg_match('/^[\d\s]+$/', $line)) {
+                $rids = preg_split('/\s+/', $line, -1, PREG_SPLIT_NO_EMPTY);
+                foreach ($rids as $rid) {
+                    sendToLiquidsoap("queue.ignore $rid");
+                }
             }
         }
     }
