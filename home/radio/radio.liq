@@ -1,5 +1,5 @@
 # Playlist principale : lit les fichiers du dossier musique
-radio = playlist(mode="random", reload=30, "/home/radio/musique")
+radio = playlist(mode="random.smart", reload=30, "/home/radio/musique")
 
 # Fonction de mise a jour des metadonnees
 def set_title_artist(m) =

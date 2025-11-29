@@ -705,8 +705,28 @@ document.addEventListener('DOMContentLoaded', () => {
   const timelineContainer = document.querySelector('.timeline-container');
   const timelineFilters = document.querySelector('.timeline-filters');
 
-  // Gestion du scroll horizontal avec la molette
+  // Gestion du scroll horizontal avec la molette (Organique)
   if (timelineContainer) {
+    let targetScrollLeft = timelineContainer.scrollLeft;
+    let isAnimating = false;
+
+    const animateScroll = () => {
+      if (!timelineContainer) return;
+      
+      const currentScrollLeft = timelineContainer.scrollLeft;
+      const diff = targetScrollLeft - currentScrollLeft;
+      
+      // Interpolation (Lerp) pour un effet organique
+      if (Math.abs(diff) > 0.5) {
+        timelineContainer.scrollLeft = currentScrollLeft + diff * 0.08;
+        requestAnimationFrame(animateScroll);
+        isAnimating = true;
+      } else {
+        timelineContainer.scrollLeft = targetScrollLeft;
+        isAnimating = false;
+      }
+    };
+
     timelineContainer.addEventListener('wheel', (e) => {
       // On ne s'intéresse qu'au scroll vertical de la souris (deltaY)
       if (e.deltaY === 0) return;
@@ -718,17 +738,27 @@ document.addEventListener('DOMContentLoaded', () => {
       const maxScroll = scrollWidth - clientWidth;
 
       // Vérifier si on peut scroller horizontalement
-      // On utilise une petite marge (1px) pour gérer les arrondis
       const canScrollRight = isGoingDown && scrollLeft < maxScroll - 1;
       const canScrollLeft = isGoingUp && scrollLeft > 1;
 
       if (canScrollRight || canScrollLeft) {
         e.preventDefault();
-        // On transforme le scroll vertical en scroll horizontal
-        timelineContainer.scrollLeft += e.deltaY;
+        
+        // Sync target si on commence une nouvelle interaction
+        if (!isAnimating) {
+            targetScrollLeft = scrollLeft;
+        }
+
+        // Ajout du delta avec un multiplicateur pour la vitesse
+        targetScrollLeft += e.deltaY * 2;
+        
+        // Limites
+        targetScrollLeft = Math.max(0, Math.min(targetScrollLeft, maxScroll));
+
+        if (!isAnimating) {
+          requestAnimationFrame(animateScroll);
+        }
       }
-      // Si on est en butée, on laisse l'événement se propager
-      // Ce qui permet au scroll-snap vertical de la page de prendre le relais
     }, { passive: false });
   }
 
@@ -888,12 +918,12 @@ document.addEventListener('DOMContentLoaded', () => {
       if (startTime === null) startTime = currentTime;
       const timeElapsed = currentTime - startTime;
       
-      // Ease function (easeInOutQuad)
+      // Ease function (easeInOutCubic) - More pronounced acceleration/deceleration
       const ease = (t, b, c, d) => {
         t /= d / 2;
-        if (t < 1) return c / 2 * t * t + b;
-        t--;
-        return -c / 2 * (t * (t - 2) - 1) + b;
+        if (t < 1) return c / 2 * t * t * t + b;
+        t -= 2;
+        return c / 2 * (t * t * t + 2) + b;
       };
 
       const nextScrollTop = ease(timeElapsed, startPosition, distance, duration);
@@ -933,10 +963,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Snap to the closest section if it's not already aligned
         if (closestSection && minDistance > 2) { // Tolerance of 2px
-             // Use custom smooth scroll with 1000ms duration (slower than default)
-             smoothScrollTo(closestSection, 1000);
+             // Use custom smooth scroll with 1200ms duration for smoother effect
+             smoothScrollTo(closestSection, 1200);
         }
-      }, 500); // 500ms delay before snapping
+      }, 150); // 150ms delay before snapping
     }, { passive: true });
   }
   
