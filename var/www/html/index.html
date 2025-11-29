@@ -20,13 +20,13 @@
   <body>
     <!-- Video Landing Overlay -->
     <div id="videoOverlay" class="video-overlay">
-      <video id="landingVideo" autoplay muted playsinline>
+      <video id="landingVideo" autoplay playsinline>
         <source src="vid/landing.mp4" type="video/mp4">
       </video>
     </div>
 
     <!-- Burger -->
-    <button class="burger" id="burgerBtn" aria-label="Menu">☰</button>
+    <button class="burger" id="burgerBtn" aria-label="Menu" style="opacity: 0;">☰</button>
 
     <!-- Menu overlay -->
     <nav id="menu" class="menu hidden" aria-hidden="true">
@@ -53,9 +53,9 @@
       <!-- Section Accueil -->
       <section id="accueil" class="screen">
         <video id="backgroundVideo" class="background-video" loop muted playsinline>
-          <source src="landing.mp4" type="video/mp4">
+          <source src="vid/landing.mp4" type="video/mp4">
         </video>
-        <h1>GRANDEMAISON</h1>
+        <h1 id="titleAccueil" style="opacity: 0;">GRANDEMAISON</h1>
       </section>
 
       <!-- Nelson North -->
