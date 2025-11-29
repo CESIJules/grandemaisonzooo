@@ -479,67 +479,189 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 }
 
 /* Timeline */
-#timeline { justify-content: flex-start; padding-top: 80px; }
-#timeline h2 { margin-bottom: 20px; }
+#timeline { 
+  justify-content: flex-start; 
+  padding: 20px 0 0 0;
+  overflow: hidden;
+}
+
+.timeline-header-wrapper {
+  position: absolute;
+  top: 20px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 40px;
+  z-index: 10;
+}
+
+#timeline h2 { 
+  margin: 0;
+  font-size: 2em;
+  text-align: left;
+}
+
 .timeline-filters {
   display: flex;
-  justify-content: center;
   gap: 10px;
-  margin-bottom: 20px;
 }
+
 .filter-btn.active {
-  background-color: #007bff;
-  color: white;
+  background-color: #fff;
+  color: #111;
 }
+
 .timeline-container {
   position: relative;
   width: 100%;
-  max-width: 900px;
-  padding: 20px 0;
-  margin: 0 auto;
-  overflow-y: auto;
-  height: calc(100vh - 200px);
-  -ms-overflow-style: none; scrollbar-width: none;
+  height: 100%;
+  padding-top: 100px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  display: flex;
+  align-items: center;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
+
 .timeline-container::-webkit-scrollbar { display: none; }
-.timeline-container::after {
-  content: ''; position: absolute; width: 4px; background-color: #555;
-  top: 0; bottom: 0; left: 50%; margin-left: -2px; z-index: 1;
+
+.timeline-container::before {
+  content: '';
+  position: absolute;
+  height: 2px;
+  background-color: #555;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  z-index: 1;
 }
-.timeline-item { padding: 10px 0; position: relative; width: 50%; margin-bottom: 20px; z-index: 2; }
+
+.timeline-item { 
+  position: relative;
+  flex-shrink: 0;
+  width: 300px;
+  margin: 0 60px;
+  z-index: 2;
+}
+
 .timeline-item::after {
-  content: ''; position: absolute; width: 16px; height: 16px; background-color: #007bff;
-  border: 4px solid #333; top: 25px; border-radius: 50%; z-index: 3;
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background-color: #fff;
+  border: 3px solid #111;
+  border-radius: 50%;
+  z-index: 3;
+  left: 50%;
+  transform: translateX(-50%);
 }
-.timeline-item:nth-child(odd) { left: 0; padding-right: 30px; }
-.timeline-item:nth-child(odd)::after { right: -10px; }
-.timeline-content-left { background-color: #222; padding: 15px; border-radius: 8px; text-align: right; }
-.timeline-item:nth-child(even) { left: 50%; padding-left: 30px; }
-.timeline-item:nth-child(even)::after { left: -6px; }
-.timeline-content-right { background-color: #222; padding: 15px; border-radius: 8px; text-align: left; }
-.timeline-item h3 { color: #fff; margin: 0 0 5px; font-size: 1.5em; }
+
+.timeline-item:nth-child(odd) {
+  padding-bottom: calc(50vh - 50px);
+  padding-top: 0;
+}
+
+.timeline-item:nth-child(odd)::after {
+  bottom: calc(50vh - 100px);
+}
+
+.timeline-item:nth-child(even) {
+  padding-top: calc(50vh - 50px);
+  padding-bottom: 0;
+}
+
+.timeline-item:nth-child(even)::after {
+  top: calc(50vh - 100px);
+}
+
+.timeline-content,
+.timeline-content-left,
+.timeline-content-right { 
+  background-color: #222;
+  padding: 20px;
+  border-radius: 0;
+  text-align: center;
+  border: 1px solid #444;
+}
+
+.timeline-item h3 { 
+  color: #fff;
+  margin: 0 0 8px;
+  font-size: 1.3em;
+}
+
 .timeline-item h4 { 
   font-family: 'Outfit', sans-serif;
-  color: #aaa; 
-  margin: 0 0 10px; 
-  font-size: 0.9em; 
+  color: #999;
+  margin: 0 0 12px;
+  font-size: 0.85em;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
-.timeline-item p { color: #ccc; font-size: 0.9em; line-height: 1.5; margin-bottom: 10px; max-width: 100%; text-align: inherit; }
-.timeline-item img { max-width: 100%; height: auto; border-radius: 4px; margin-top: 10px; }
-.timeline-item a { color: #007bff; text-decoration: none; font-weight: bold; }
-.timeline-item a:hover { text-decoration: underline; }
-.timeline-date { display: block; font-size: 0.8em; color: #888; margin-top: 10px; font-weight: bold; }
+
+.timeline-item p { 
+  color: #ccc;
+  font-size: 0.9em;
+  line-height: 1.5;
+  margin-bottom: 10px;
+  max-width: 100%;
+  text-align: center;
+}
+
+.timeline-item img { 
+  max-width: 100%;
+  height: auto;
+  border-radius: 0;
+  margin-top: 10px;
+}
+
+.timeline-item a { 
+  color: #fff;
+  text-decoration: none;
+  font-weight: bold;
+  border-bottom: 1px solid #fff;
+}
+
+.timeline-item a:hover { 
+  color: #ccc;
+  border-bottom-color: #ccc;
+}
+
+.timeline-date { 
+  display: block;
+  font-size: 0.75em;
+  color: #777;
+  margin-top: 12px;
+  font-weight: normal;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
 
 @media (max-width: 768px) {
-  .timeline-container::after { left: 20px; }
-  .timeline-item { width: 100%; padding-left: 50px; }
-  .timeline-item:nth-child(odd) { left: 0; padding-right: 15px; text-align: left; }
-  .timeline-item:nth-child(odd)::after { left: 14px; right: auto; }
-  .timeline-item:nth-child(even) { left: 0; padding-left: 50px; }
-  .timeline-item:nth-child(even)::after { left: 14px; }
-  .timeline-content-left, .timeline-content-.timeline-content-right { text-align: left; }
+  .timeline-header-wrapper {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 0 20px;
+  }
+  
+  #timeline h2 {
+    font-size: 1.5em;
+  }
+  
+  .timeline-filters {
+    flex-wrap: wrap;
+  }
+  
+  .timeline-item {
+    width: 250px;
+    margin: 0 40px;
+  }
 }
 
 /* Section titre Artistes réduite */
