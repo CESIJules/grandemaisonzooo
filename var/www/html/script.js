@@ -3,31 +3,57 @@ document.addEventListener('DOMContentLoaded', () => {
   const videoOverlay = document.getElementById('videoOverlay');
   const landingVideo = document.getElementById('landingVideo');
   const backgroundVideo = document.getElementById('backgroundVideo');
+  const burgerBtn = document.getElementById('burgerBtn');
+  const titleAccueil = document.getElementById('titleAccueil');
 
-  if (landingVideo && videoOverlay && backgroundVideo) {
-    // When landing video ends, fade out overlay and start background loop
-    landingVideo.addEventListener('ended', () => {
-      videoOverlay.classList.add('fade-out');
+  // Flag pour s'assurer que l'intro ne se joue qu'une fois par session
+  const hasPlayedIntro = sessionStorage.getItem('introPlayed');
+
+  if (landingVideo && videoOverlay && backgroundVideo && burgerBtn && titleAccueil) {
+    if (hasPlayedIntro) {
+      // L'intro a déjà été jouée dans cette session, skip directement
+      videoOverlay.style.display = 'none';
+      burgerBtn.style.opacity = '1';
+      titleAccueil.style.opacity = '1';
+      backgroundVideo.play();
+    } else {
+      // Première visite de la session : jouer l'intro avec son
       
-      // Start background video after fade
+      // Afficher le burger et le titre après 4 secondes
       setTimeout(() => {
-        backgroundVideo.play();
-        videoOverlay.style.display = 'none';
-      }, 800); // Match transition duration in CSS
-    });
+        burgerBtn.style.opacity = '1';
+        titleAccueil.style.opacity = '1';
+      }, 4000);
 
-    // Fallback: if video fails to load or autoplay is blocked
-    landingVideo.addEventListener('error', () => {
-      videoOverlay.classList.add('fade-out');
-      setTimeout(() => {
-        backgroundVideo.play();
-        videoOverlay.style.display = 'none';
-      }, 800);
-    });
+      // Quand la vidéo se termine
+      landingVideo.addEventListener('ended', () => {
+        videoOverlay.classList.add('fade-out');
+        
+        // Marquer l'intro comme jouée
+        sessionStorage.setItem('introPlayed', 'true');
+        
+        // Démarrer la vidéo de fond (sans son) après la transition
+        setTimeout(() => {
+          backgroundVideo.play();
+          videoOverlay.style.display = 'none';
+        }, 300); // Transition rapide
+      });
+
+      // Fallback en cas d'erreur de chargement
+      landingVideo.addEventListener('error', () => {
+        videoOverlay.classList.add('fade-out');
+        burgerBtn.style.opacity = '1';
+        titleAccueil.style.opacity = '1';
+        sessionStorage.setItem('introPlayed', 'true');
+        setTimeout(() => {
+          backgroundVideo.play();
+          videoOverlay.style.display = 'none';
+        }, 300);
+      });
+    }
   }
 
   // Burger menu (ne pas toucher)
-  const burgerBtn = document.getElementById('burgerBtn');
   const menu = document.getElementById('menu');
 
   function toggleMenu() {
