@@ -227,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       postElement.innerHTML = `
         <div class="post-info">
-          <strong>${post.title}</strong> (${post.artist}) - <span>${new Date(post.date).toLocaleDateString('fr-FR')}</span>
+          <strong>${post.subtitle}</strong> (${post.artist}) - <span>${new Date(post.date).toLocaleDateString('fr-FR')}</span>
         </div>
         <div>
           <button class="edit-btn" data-id="${post.id}">Modifier</button>
