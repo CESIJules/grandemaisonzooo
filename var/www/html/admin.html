@@ -60,6 +60,35 @@
     .playing {
       color: red;
     }
+    /* Tab menu styles */
+    .tab-menu {
+      display: flex;
+      border-bottom: 2px solid #444;
+      margin-bottom: 20px;
+    }
+    .tab-link {
+      background: none;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+      color: #ccc;
+      font-size: 1.1em;
+      transition: all 0.2s ease-in-out;
+      border-bottom: 2px solid transparent;
+    }
+    .tab-link.active {
+      color: #fff;
+      border-bottom-color: #007bff;
+    }
+    .tab-link:hover {
+      background-color: #333;
+    }
+    .tab-content {
+      display: none; /* Hidden by default */
+    }
+    .tab-content.active {
+      display: block; /* Shown when active */
+    }
   </style>
 </head>
 <body>
@@ -72,43 +101,50 @@
   <main>
     <section id="admin-section" class="screen">
       <div class="admin-container">
-        <h2>Admin Timeline</h2>
-        <form id="adminTimelineForm" class="contact-form">
-          <input type="text" id="postSubtitle" placeholder="Titre du Projet">
-          <input type="url" id="postLink" placeholder="Lien (optionnel)">
-          <label for="postImage">Image du post</label>
-          <input type="file" id="postImage" accept="image/*">
-          <input type="date" id="postDate" required>
-          <select id="postArtist" required>
-            <option value="" disabled selected>Choisir un artiste</option>
-          </select>
-          <button type="submit" class="btn">Ajouter au Timeline</button>
-          <span id="adminFormMessage"></span>
-        </form>
-
-        <hr style="margin: 40px 0;">
-
-        <h2>Gérer les posts</h2>
-        <div id="postsManagementContainer">
-          <!-- Posts will be listed here -->
+        <div class="tab-menu">
+            <button class="tab-link active" data-tab="timeline">Timeline</button>
+            <button class="tab-link" data-tab="music">Musique</button>
         </div>
 
-        <hr style="margin: 40px 0;">
-
-        <h2>Gérer les musiques</h2>
-        <button id="refreshMusicBtn" class="btn">Rafraîchir la liste</button>
-        <div id="musicManagementContainer">
-          <!-- Music files will be listed here -->
+        <div id="timeline" class="tab-content active">
+            <h2>Admin Timeline</h2>
+            <form id="adminTimelineForm" class="contact-form">
+              <input type="text" id="postSubtitle" placeholder="Titre du Projet">
+              <input type="url" id="postLink" placeholder="Lien (optionnel)">
+              <label for="postImage">Image du post</label>
+              <input type="file" id="postImage" accept="image/*">
+              <input type="date" id="postDate" required>
+              <select id="postArtist" required>
+                <option value="" disabled selected>Choisir un artiste</option>
+              </select>
+              <button type="submit" class="btn">Ajouter au Timeline</button>
+              <span id="adminFormMessage"></span>
+            </form>
+    
+            <hr style="margin: 40px 0;">
+    
+            <h2>Gérer les posts</h2>
+            <div id="postsManagementContainer">
+              <!-- Posts will be listed here -->
+            </div>
         </div>
 
-        <hr style="margin: 40px 0;">
-
-        <h2>Télécharger depuis YouTube</h2>
-        <form id="youtubeDownloadForm" class="contact-form">
-          <input type="url" id="youtubeUrl" placeholder="https://www.youtube.com/watch?v=..." required>
-          <button type="submit" class="btn">Télécharger et convertir en MP3</button>
-          <span id="youtubeFormMessage"></span>
-        </form>
+        <div id="music" class="tab-content">
+            <h2>Gérer les musiques</h2>
+            <button id="refreshMusicBtn" class="btn">Rafraîchir la liste</button>
+            <div id="musicManagementContainer">
+              <!-- Music files will be listed here -->
+            </div>
+    
+            <hr style="margin: 40px 0;">
+    
+            <h2>Télécharger depuis YouTube</h2>
+            <form id="youtubeDownloadForm" class="contact-form">
+              <input type="url" id="youtubeUrl" placeholder="https://www.youtube.com/watch?v=..." required>
+              <button type="submit" class="btn">Télécharger et convertir en MP3</button>
+              <span id="youtubeFormMessage"></span>
+            </form>
+        </div>
       </div>
     </section>
   </main>
