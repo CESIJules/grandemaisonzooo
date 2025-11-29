@@ -1,4 +1,31 @@
 document.addEventListener('DOMContentLoaded', () => {
+  // --- Landing Video Overlay ---
+  const videoOverlay = document.getElementById('videoOverlay');
+  const landingVideo = document.getElementById('landingVideo');
+  const backgroundVideo = document.getElementById('backgroundVideo');
+
+  if (landingVideo && videoOverlay && backgroundVideo) {
+    // When landing video ends, fade out overlay and start background loop
+    landingVideo.addEventListener('ended', () => {
+      videoOverlay.classList.add('fade-out');
+      
+      // Start background video after fade
+      setTimeout(() => {
+        backgroundVideo.play();
+        videoOverlay.style.display = 'none';
+      }, 800); // Match transition duration in CSS
+    });
+
+    // Fallback: if video fails to load or autoplay is blocked
+    landingVideo.addEventListener('error', () => {
+      videoOverlay.classList.add('fade-out');
+      setTimeout(() => {
+        backgroundVideo.play();
+        videoOverlay.style.display = 'none';
+      }, 800);
+    });
+  }
+
   // Burger menu (ne pas toucher)
   const burgerBtn = document.getElementById('burgerBtn');
   const menu = document.getElementById('menu');
