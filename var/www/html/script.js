@@ -366,17 +366,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const numPoints = 120; // More points for a smoother curve
         const innerRadius = 110;
-        const maxBarHeight = 50;
+        const maxBarHeight = 60; // Increased max height slightly
 
         const points = [];
         for (let i = 0; i < numPoints; i++) {
           const angle = (i / numPoints) * 2 * Math.PI;
           
-          const frequencyIndex = Math.floor(Math.pow(i / numPoints, 1.5) * (bufferLength * 0.3));
+          // --- UPDATED FREQUENCY MAPPING ---
+          // Use a wider spectrum (up to 60%) and less aggressive power curve (0.8)
+          // This will make high frequencies more visible
+          const percent = i / numPoints;
+          const frequencyIndex = Math.floor(Math.pow(percent, 0.8) * (bufferLength * 0.6));
           const freqData = dataArray[frequencyIndex];
           const normalizedValue = freqData / 255.0;
 
-          const barHeight = Math.pow(normalizedValue, 2) * maxBarHeight;
+          // Use a different power curve for the height to make it feel more reactive
+          const barHeight = Math.pow(normalizedValue, 1.5) * maxBarHeight;
 
           const radius = innerRadius + barHeight;
           points.push({
@@ -400,17 +405,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
           circularCtx.closePath();
           
-          // --- Styling ---
-          // 1. Glow effect using shadow
+          // --- STYLING (WITH NEW GRADIENT FILL) ---
+          
+          // 1. Subtle Gradient Fill
+          const fillGradient = circularCtx.createRadialGradient(cx, cy, innerRadius, cx, cy, innerRadius + maxBarHeight);
+          fillGradient.addColorStop(0, 'rgba(255, 255, 255, 0.0)');   // Transparent near center
+          fillGradient.addColorStop(0.6, 'rgba(255, 255, 255, 0.15)');// Visible in the middle
+          fillGradient.addColorStop(1, 'rgba(255, 255, 255, 0.0)');   // Fades out at the peaks
+          circularCtx.fillStyle = fillGradient;
+          circularCtx.fill();
+
+          // 2. Glow effect using shadow
           circularCtx.shadowBlur = 12;
           circularCtx.shadowColor = 'rgba(255, 255, 255, 0.5)';
           
-          // 2. Main line
+          // 3. Main line
           circularCtx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
           circularCtx.lineWidth = 2;
           circularCtx.stroke();
 
-          // 3. A thinner, brighter inner line for more definition
+          // 4. A thinner, brighter inner line for more definition
           circularCtx.shadowBlur = 0; // Turn off shadow for this line
           circularCtx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
           circularCtx.lineWidth = 0.8;
