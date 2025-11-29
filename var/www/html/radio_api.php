@@ -138,19 +138,23 @@ function getQueue() {
         // Format 2: Liste d'IDs séparés par des espaces (ex: "35 36 37 38")
         // Si la ligne contient uniquement des nombres séparés par des espaces, 
         // ce sont des request IDs qu'il faut résoudre individuellement
+        // Note: This creates individual telnet connections per ID; acceptable for typical queue sizes
         if (preg_match('/^[\d\s]+$/', $line)) {
             $rids = preg_split('/\s+/', $line, -1, PREG_SPLIT_NO_EMPTY);
             foreach ($rids as $rid) {
-                // Pour chaque request ID, obtenir les métadonnées via queue.metadata
+                // Pour chaque request ID, obtenir les métadonnées via request.metadata
                 $metaResult = sendToLiquidsoap("request.metadata $rid");
                 if ($metaResult['success']) {
                     $filename = extractFilenameFromMetadata($metaResult['response'], $rid);
-                    $queue[] = [
-                        'rid' => $rid,
-                        'path' => '',
-                        'filename' => $filename
-                    ];
+                } else {
+                    // Fallback si la requête de métadonnées échoue
+                    $filename = "Track #$rid";
                 }
+                $queue[] = [
+                    'rid' => $rid,
+                    'path' => null, // Path unknown when resolved from metadata
+                    'filename' => $filename
+                ];
             }
             continue;
         }
