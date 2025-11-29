@@ -205,6 +205,8 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   padding-top: 0;
   position: relative;
   overflow: hidden;
+  background: url('images/radioback.png') no-repeat center center;
+  background-size: cover;
 }
 
 #noiseCanvas {
