@@ -168,12 +168,6 @@ function reorderQueue($newOrder) {
         return $currentQueue;
     }
     
-    // Clear the current queue
-    // Liquidsoap request.queue doesn't have a native reorder, so we clear and re-add
-    // First, we need to get the queue and then clear it by consuming all items
-    // Since Liquidsoap's request.queue doesn't support reorder natively,
-    // we'll need to implement this by clearing and re-adding in the new order
-    
     // Validate that all filenames in newOrder exist in the current queue
     $currentFilenames = array_map(function($item) {
         return $item['filename'];
@@ -187,13 +181,33 @@ function reorderQueue($newOrder) {
         }
     }
     
-    // Clear queue by removing items (Liquidsoap queue.ignore)
-    // Note: This is a workaround since Liquidsoap doesn't have reorder command
-    // We'll use the queue IDs if available, or just track the order
+    // Liquidsoap's request.queue doesn't have a native reorder command
+    // We need to clear the queue and re-add items in the new order
+    // First, get the queue IDs and ignore them all
+    $result = sendToLiquidsoap("queue.queue");
+    if ($result['success']) {
+        $lines = explode("\n", $result['response']);
+        foreach ($lines as $line) {
+            $line = trim($line);
+            // Each line has format: [rid] path
+            // Extract the request ID if present
+            if (preg_match('/^\[(\d+)\]/', $line, $matches)) {
+                $rid = $matches[1];
+                sendToLiquidsoap("queue.ignore $rid");
+            }
+        }
+    }
     
-    // For now, return success with a note that reorder requires custom implementation
-    // The frontend will handle visual reordering and re-submit when needed
-    return ['status' => 'success', 'message' => 'File d\'attente réorganisée.', 'queue' => $newOrder];
+    // Re-add items in the new order
+    foreach ($newOrder as $filename) {
+        $safeFilename = basename($filename);
+        $fullPath = MUSIC_DIR . $safeFilename;
+        if (file_exists($fullPath)) {
+            sendToLiquidsoap("queue.push " . $fullPath);
+        }
+    }
+    
+    return ['status' => 'success', 'message' => 'File d\'attente réorganisée.'];
 }
 
 // Obtenir les prochains morceaux (queue + playlist fallback)
@@ -256,10 +270,12 @@ function streamEvents() {
     
     $lastSkipTime = getLastSkipEvent();
     $lastCheck = time();
-    $heartbeatInterval = 15; // Send heartbeat every 15 seconds
+    $heartbeatInterval = 30; // Send heartbeat every 30 seconds
+    $maxRunTime = 300; // Maximum connection time: 5 minutes
+    $startTime = time();
     
-    // Set script timeout to 0 (unlimited) for SSE
-    set_time_limit(0);
+    // Set script timeout to slightly longer than max run time
+    set_time_limit($maxRunTime + 10);
     
     while (true) {
         // Check for new skip event
@@ -284,8 +300,16 @@ function streamEvents() {
             break;
         }
         
-        // Sleep briefly to avoid CPU overload
-        usleep(500000); // 500ms
+        // Limit connection time to prevent resource exhaustion
+        if (time() - $startTime >= $maxRunTime) {
+            echo "event: reconnect\n";
+            echo "data: " . json_encode(['message' => 'Connection timeout, please reconnect']) . "\n\n";
+            flush();
+            break;
+        }
+        
+        // Sleep to reduce CPU usage (1 second interval for event checking)
+        sleep(1);
     }
 }
 

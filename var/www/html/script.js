@@ -373,9 +373,6 @@ document.addEventListener('DOMContentLoaded', () => {
         progressInterval = setInterval(updateProgressBar, 250);
         if (progressInfo) progressInfo.classList.add('visible');
       }
-      
-      // Connect to SSE for real-time skip updates
-      connectToSkipEvents();
     });
     audio.addEventListener('pause', () => { 
       status.textContent = ''; 
@@ -446,6 +443,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initial fetch of song info and listeners
     fetchCurrentSong();
+    
+    // Connect to SSE for real-time skip updates (always, not just when playing)
+    connectToSkipEvents();
   }
 
   // --- SSE for real-time skip events ---
@@ -473,16 +473,23 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('SSE heartbeat received');
       });
       
+      eventSource.addEventListener('reconnect', (event) => {
+        // Server requested reconnection (timeout)
+        console.log('SSE reconnect requested:', event.data);
+        eventSource.close();
+        // Reconnect immediately
+        setTimeout(connectToSkipEvents, 1000);
+      });
+      
       eventSource.onerror = (err) => {
         console.error('SSE connection error:', err);
         eventSource.close();
-        // Reconnect after 5 seconds
+        // Reconnect after 5 seconds regardless of audio state
+        // Users should receive skip events even when paused
         if (!sseReconnectTimeout) {
           sseReconnectTimeout = setTimeout(() => {
             sseReconnectTimeout = null;
-            if (audio && !audio.paused) {
-              connectToSkipEvents();
-            }
+            connectToSkipEvents();
           }, 5000);
         }
       };
