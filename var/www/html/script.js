@@ -812,16 +812,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 const nextSection = timelineSection.nextElementSibling;
                 if (nextSection && nextSection.tagName === 'SECTION') {
                     e.preventDefault();
-                    const target = nextSection.getBoundingClientRect().top + mainContainer.scrollTop;
-                    smoothScrollTo(target, 1200);
+                    e.stopPropagation(); // Empêcher stopSnap d'annuler le scroll
+                    if (!isSnapping) {
+                        const target = nextSection.getBoundingClientRect().top + mainContainer.scrollTop;
+                        smoothScrollTo(target, 1200);
+                    }
                 }
             } else if (isGoingUp && !canScrollLeft) {
                 // Vers le haut, début de timeline -> Section précédente
                 const prevSection = timelineSection.previousElementSibling;
                 if (prevSection && prevSection.tagName === 'SECTION') {
                     e.preventDefault();
-                    const target = prevSection.getBoundingClientRect().top + mainContainer.scrollTop;
-                    smoothScrollTo(target, 1200);
+                    e.stopPropagation(); // Empêcher stopSnap d'annuler le scroll
+                    if (!isSnapping) {
+                        const target = prevSection.getBoundingClientRect().top + mainContainer.scrollTop;
+                        smoothScrollTo(target, 1200);
+                    }
                 }
             }
         }
