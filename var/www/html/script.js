@@ -877,6 +877,38 @@ document.addEventListener('DOMContentLoaded', () => {
   const mainContainer = document.querySelector('main');
   let isScrolling;
 
+  // Custom smooth scroll function
+  function smoothScrollTo(element, duration) {
+    const targetPosition = element.getBoundingClientRect().top + mainContainer.scrollTop;
+    const startPosition = mainContainer.scrollTop;
+    const distance = targetPosition - startPosition;
+    let startTime = null;
+
+    function animation(currentTime) {
+      if (startTime === null) startTime = currentTime;
+      const timeElapsed = currentTime - startTime;
+      
+      // Ease function (easeInOutQuad)
+      const ease = (t, b, c, d) => {
+        t /= d / 2;
+        if (t < 1) return c / 2 * t * t + b;
+        t--;
+        return -c / 2 * (t * (t - 2) - 1) + b;
+      };
+
+      const nextScrollTop = ease(timeElapsed, startPosition, distance, duration);
+      mainContainer.scrollTop = nextScrollTop;
+
+      if (timeElapsed < duration) {
+        requestAnimationFrame(animation);
+      } else {
+        mainContainer.scrollTop = targetPosition;
+      }
+    }
+
+    requestAnimationFrame(animation);
+  }
+
   if (mainContainer) {
     mainContainer.addEventListener('scroll', () => {
       // Clear the timeout while scrolling
@@ -901,9 +933,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Snap to the closest section if it's not already aligned
         if (closestSection && minDistance > 2) { // Tolerance of 2px
-             closestSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+             // Use custom smooth scroll with 1000ms duration (slower than default)
+             smoothScrollTo(closestSection, 1000);
         }
-      }, 250); // 150ms delay before snapping
+      }, 500); // 500ms delay before snapping
     }, { passive: true });
   }
   
