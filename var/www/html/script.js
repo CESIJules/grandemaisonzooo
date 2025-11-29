@@ -180,6 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const currentSong = document.getElementById('currentSong');
   const visualizerCanvas = document.getElementById('visualizer');
   const circularVisualizer = document.getElementById('circularVisualizer');
+  const vinylDisc = document.getElementById('vinyl-disc');
   // --- Progress Bar Elements ---
   const progressInfo = document.getElementById('progress-info');
   const progressBar = document.getElementById('progress-bar');
@@ -212,12 +213,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const canvasCtx = visualizerCanvas.getContext('2d');
     const circularCtx = circularVisualizer ? circularVisualizer.getContext('2d') : null;
+    let waveTime = 0;
     
-    // --- Radar Visualizer State ---
-    let sweepAngle = -Math.PI / 2;
-    const pings = [];
-    const beatThreshold = { bass: 230, mid: 200, treble: 180 };
-    const beatCooldown = { bass: 0, mid: 0, treble: 0 };
     
     function resizeCanvas() {
         visualizerCanvas.width = visualizerCanvas.offsetWidth;
@@ -236,97 +233,202 @@ document.addEventListener('DOMContentLoaded', () => {
 
       analyser.getByteFrequencyData(dataArray);
       
-      // --- Linear Visualizer (Background) - Unchanged ---
+      // --- Linear Visualizer (Background) ---
       const WIDTH = visualizerCanvas.width;
       const HEIGHT = visualizerCanvas.height;
 
       if (WIDTH > 0 && HEIGHT > 0) {
         canvasCtx.clearRect(0, 0, WIDTH, HEIGHT);
-        // ... [The linear visualizer code remains unchanged] ...
+
+        // Nombre de barres pour le visualiseur
+        const numBars = 100;
+        const barWidth = WIDTH / numBars;
+        const maxBarHeight = HEIGHT * 0.45;
+        
+        // Utiliser une échelle logarithmique pour mieux représenter les fréquences musicales
+        const logMax = Math.log(bufferLength);
+        const logMin = Math.log(1); // Éviter log(0)
+
+        // Dessiner les courbes avec effet symétrique vertical
+        canvasCtx.beginPath();
+        
+        const points = [];
+        for (let i = 0; i < numBars; i++) {
+          // --- Same logic to calculate average and barHeight ---
+          const lowPercent = i / numBars;
+          const highPercent = (i + 1) / numBars;
+          const logIndexLow = logMin + (logMax - logMin) * lowPercent;
+          const logIndexHigh = logMin + (logMax - logMin) * highPercent;
+          const frequencyIndex = Math.floor(Math.exp(logIndexLow));
+          let nextFrequencyIndex = Math.floor(Math.exp(logIndexHigh));
+          if (nextFrequencyIndex <= frequencyIndex) {
+            nextFrequencyIndex = frequencyIndex + 1;
+          }
+          let dataSum = 0;
+          const count = nextFrequencyIndex - frequencyIndex;
+          for (let j = frequencyIndex; j < nextFrequencyIndex && j < bufferLength; j++) {
+            dataSum += dataArray[j];
+          }
+          let average = count > 0 ? dataSum / count : 0;
+          const normalizedValue = average / 255.0;
+          const boostedValue = Math.pow(normalizedValue, 0.6);
+          const barHeight = boostedValue * maxBarHeight * 1.2;
+          // --- End of calculation ---
+
+          points.push({
+              x: i * barWidth + barWidth / 2, // Center of the bar
+              y: HEIGHT / 2 - barHeight
+          });
+        }
+
+        // --- Draw top curve ---
+        canvasCtx.moveTo(0, HEIGHT / 2);
+        if (points.length > 0) {
+            // Get to the first point
+            const firstXc = points[0].x / 2;
+            const firstYc = (points[0].y + HEIGHT / 2) / 2;
+            canvasCtx.quadraticCurveTo(0, HEIGHT / 2, firstXc, firstYc);
+
+            for (let i = 0; i < points.length - 1; i++) {
+                const xc = (points[i].x + points[i+1].x) / 2;
+                const yc = (points[i].y + points[i+1].y) / 2;
+                canvasCtx.quadraticCurveTo(points[i].x, points[i].y, xc, yc);
+            }
+            // Curve to the last point and then to the edge
+            const lastPoint = points[points.length - 1];
+            const lastXc = (lastPoint.x + WIDTH) / 2;
+            const lastYc = (lastPoint.y + HEIGHT / 2) / 2;
+            canvasCtx.quadraticCurveTo(lastPoint.x, lastPoint.y, lastXc, lastYc);
+            canvasCtx.quadraticCurveTo(lastXc, lastYc, WIDTH, HEIGHT/2);
+
+        }
+        canvasCtx.lineTo(WIDTH, HEIGHT / 2); // Close path at right-middle
+
+        // --- Draw bottom curve ---
+        if (points.length > 0) {
+            // Get to the first point
+            const firstBottomY = HEIGHT - points[0].y;
+            const firstXc = points[0].x / 2;
+            const firstYc = (firstBottomY + HEIGHT / 2) / 2;
+            canvasCtx.quadraticCurveTo(0, HEIGHT / 2, firstXc, firstYc);
+
+
+            for (let i = 0; i < points.length - 1; i++) {
+                const xc = (points[i].x + points[i+1].x) / 2;
+                const yc = ( (HEIGHT - points[i].y) + (HEIGHT - points[i+1].y) ) / 2;
+                canvasCtx.quadraticCurveTo(points[i].x, HEIGHT - points[i].y, xc, yc);
+            }
+            // Curve to the last point and then to the edge
+            const lastPoint = points[points.length - 1];
+            const lastBottomY = HEIGHT - lastPoint.y;
+            const lastXc = (lastPoint.x + WIDTH) / 2;
+            const lastYc = (lastBottomY + HEIGHT / 2) / 2;
+            canvasCtx.quadraticCurveTo(lastPoint.x, lastBottomY, lastXc, lastYc);
+            canvasCtx.quadraticCurveTo(lastXc, lastYc, WIDTH, HEIGHT/2);
+
+        }
+        canvasCtx.lineTo(0, HEIGHT / 2); // Close path at left-middle
+
+
+        // --- Fill and Style ---
+        const gradient = canvasCtx.createLinearGradient(0, 0, 0, HEIGHT);
+        gradient.addColorStop(0.3, 'rgba(238, 238, 238, 0)');
+        gradient.addColorStop(0.45, 'rgba(238, 238, 238, 0.4)');
+        gradient.addColorStop(0.5, 'rgba(238, 238, 238, 0.5)');
+        gradient.addColorStop(0.55, 'rgba(238, 238, 238, 0.4)');
+        gradient.addColorStop(0.7, 'rgba(238, 238, 238, 0)');
+
+        canvasCtx.fillStyle = gradient;
+        canvasCtx.fill();
+
+        // Also add a stroke for definition
+        canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+        canvasCtx.lineWidth = 1.5;
+        canvasCtx.stroke();
+        
+        // Ligne centrale pour marquer le centre
+        canvasCtx.beginPath();
+        canvasCtx.strokeStyle = 'rgba(238, 238, 238, 0.1)';
+        canvasCtx.lineWidth = 1;
+        canvasCtx.moveTo(0, HEIGHT / 2);
+        canvasCtx.lineTo(WIDTH, HEIGHT / 2);
+        canvasCtx.stroke();
       }
 
-      // --- Radar Visualizer (Replaces Circular) ---
+      // --- Circular Visualizer (Button) ---
       if (circularCtx && circularVisualizer.width > 0) {
         const w = circularVisualizer.width;
         const h = circularVisualizer.height;
         const cx = w / 2;
         const cy = h / 2;
-        const radius = Math.min(w, h) / 2 - 20;
 
-        // Clear canvas with a transparent black to create a slight fade effect on pings
-        circularCtx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-        circularCtx.fillRect(0, 0, w, h);
-        
-        // --- 1. Draw Radar Grid ---
-        circularCtx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-        circularCtx.lineWidth = 1;
-        [0.2, 0.4, 0.6, 0.8, 1.0].forEach(r => {
+        circularCtx.clearRect(0, 0, w, h);
+
+        const numPoints = 120; // More points for a smoother curve
+        const innerRadius = 110;
+        const maxBarHeight = 60; // Increased max height slightly
+
+        const points = [];
+        for (let i = 0; i < numPoints; i++) {
+          const angle = (i / numPoints) * 2 * Math.PI;
+          
+          // --- UPDATED FREQUENCY MAPPING ---
+          // Use a wider spectrum (up to 60%) and less aggressive power curve (0.8)
+          // This will make high frequencies more visible
+          const percent = i / numPoints;
+          const frequencyIndex = Math.floor(Math.pow(percent, 0.8) * (bufferLength * 0.6));
+          const freqData = dataArray[frequencyIndex];
+          const normalizedValue = freqData / 255.0;
+
+          // Use a different power curve for the height to make it feel more reactive
+          const barHeight = Math.pow(normalizedValue, 1.5) * maxBarHeight;
+
+          const radius = innerRadius + barHeight;
+          points.push({
+            x: cx + Math.cos(angle) * radius,
+            y: cy + Math.sin(angle) * radius
+          });
+        }
+
+        // Draw the curved path
+        if (points.length > 0) {
           circularCtx.beginPath();
-          circularCtx.arc(cx, cy, radius * r, 0, 2 * Math.PI);
+          circularCtx.moveTo((points[0].x + points[points.length - 1].x) / 2, (points[0].y + points[points.length - 1].y) / 2);
+
+          for (let i = 0; i < points.length - 1; i++) {
+            const xc = (points[i].x + points[i + 1].x) / 2;
+            const yc = (points[i].y + points[i + 1].y) / 2;
+            circularCtx.quadraticCurveTo(points[i].x, points[i].y, xc, yc);
+          }
+          // Curve back to the start
+          circularCtx.quadraticCurveTo(points[points.length - 1].x, points[points.length - 1].y, (points[points.length - 1].x + points[0].x) / 2, (points[points.length - 1].y + points[0].y) / 2);
+
+          circularCtx.closePath();
+          
+          // --- STYLING (WITH NEW GRADIENT FILL) ---
+          
+          // 1. Subtle Gradient Fill
+          const fillGradient = circularCtx.createRadialGradient(cx, cy, innerRadius, cx, cy, innerRadius + maxBarHeight);
+          fillGradient.addColorStop(0, 'rgba(255, 255, 255, 0.0)');   // Transparent near center
+          fillGradient.addColorStop(0.6, 'rgba(255, 255, 255, 0.15)');// Visible in the middle
+          fillGradient.addColorStop(1, 'rgba(255, 255, 255, 0.0)');   // Fades out at the peaks
+          circularCtx.fillStyle = fillGradient;
+          circularCtx.fill();
+
+          // 2. Glow effect using shadow
+          circularCtx.shadowBlur = 12;
+          circularCtx.shadowColor = 'rgba(255, 255, 255, 0.5)';
+          
+          // 3. Main line
+          circularCtx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+          circularCtx.lineWidth = 2;
           circularCtx.stroke();
-        });
-        for(let i = 0; i < 4; i++) {
-            const angle = i * Math.PI / 4;
-            circularCtx.beginPath();
-            circularCtx.moveTo(cx - Math.cos(angle) * radius, cy - Math.sin(angle) * radius);
-            circularCtx.lineTo(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius);
-            circularCtx.stroke();
-        }
 
-        // --- 2. Update and Draw Sweep ---
-        sweepAngle = (sweepAngle + 0.025) % (2 * Math.PI);
-        const sweepGradient = circularCtx.createRadialGradient(cx, cy, 0, cx, cy, radius);
-        sweepGradient.addColorStop(0, 'rgba(255, 255, 255, 0)');
-        sweepGradient.addColorStop(1, 'rgba(255, 255, 255, 0.2)');
-        
-        circularCtx.beginPath();
-        circularCtx.moveTo(cx, cy);
-        circularCtx.arc(cx, cy, radius, sweepAngle - Math.PI / 4, sweepAngle);
-        circularCtx.closePath();
-        circularCtx.fillStyle = sweepGradient;
-        circularCtx.fill();
-        
-        // --- 3. Detect Beats and Create Pings ---
-        const bassAvg = (dataArray[1] + dataArray[2] + dataArray[3]) / 3;
-        const midAvg = (dataArray[40] + dataArray[50] + dataArray[60]) / 3;
-        const trebleAvg = (dataArray[200] + dataArray[250] + dataArray[300]) / 3;
-
-        if (beatCooldown.bass > 0) beatCooldown.bass--;
-        if (beatCooldown.mid > 0) beatCooldown.mid--;
-        if (beatCooldown.treble > 0) beatCooldown.treble--;
-
-        if (bassAvg > beatThreshold.bass && beatCooldown.bass === 0) {
-            pings.push({ angle: sweepAngle, radius: radius * 0.3, life: 1, color: 'rgba(255, 100, 100, 1)' });
-            beatCooldown.bass = 20; // 20 frames cooldown
-        }
-        if (midAvg > beatThreshold.mid && beatCooldown.mid === 0) {
-            pings.push({ angle: sweepAngle, radius: radius * 0.6, life: 1, color: 'rgba(100, 255, 100, 1)' });
-            beatCooldown.mid = 30;
-        }
-        if (trebleAvg > beatThreshold.treble && beatCooldown.treble === 0) {
-            pings.push({ angle: sweepAngle, radius: radius * 0.9, life: 1, color: 'rgba(100, 100, 255, 1)' });
-            beatCooldown.treble = 40;
-        }
-        
-        // --- 4. Draw and Update Pings ---
-        for (let i = pings.length - 1; i >= 0; i--) {
-            const p = pings[i];
-            const x = cx + Math.cos(p.angle) * p.radius;
-            const y = cy + Math.sin(p.angle) * p.radius;
-            
-            p.life -= 0.02;
-            if (p.life <= 0) {
-                pings.splice(i, 1);
-                continue;
-            }
-
-            circularCtx.beginPath();
-            circularCtx.arc(x, y, 4, 0, 2 * Math.PI);
-            circularCtx.fillStyle = p.color.replace(/, 1\)$/, `, ${p.life})`);
-            circularCtx.shadowColor = p.color;
-            circularCtx.shadowBlur = 10;
-            circularCtx.fill();
-            circularCtx.shadowBlur = 0;
+          // 4. A thinner, brighter inner line for more definition
+          circularCtx.shadowBlur = 0; // Turn off shadow for this line
+          circularCtx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+          circularCtx.lineWidth = 0.8;
+          circularCtx.stroke();
         }
       }
     }
@@ -473,9 +575,11 @@ document.addEventListener('DOMContentLoaded', () => {
           audio.load();
           await audio.play();
           playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+          if (vinylDisc) vinylDisc.classList.add('playing');
         } else {
           audio.pause();
           playBtn.innerHTML = '<i class="fas fa-play"></i>';
+          if (vinylDisc) vinylDisc.classList.remove('playing');
         }
       } catch (err) {
         status.textContent = 'Lecture bloquée';
