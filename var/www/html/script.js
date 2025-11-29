@@ -1,4 +1,48 @@
 document.addEventListener('DOMContentLoaded', () => {
+  // --- Global Variables & Helpers ---
+  const mainContainer = document.querySelector('main');
+  let isScrolling;
+  let isSnapping = false;
+  let animationFrameId;
+
+  // Custom smooth scroll function (Easing à balle: easeInOutQuint)
+  function smoothScrollTo(targetPosition, duration) {
+    if (!mainContainer) return;
+    const startPosition = mainContainer.scrollTop;
+    const distance = targetPosition - startPosition;
+    let startTime = null;
+    
+    // Cancel any previous animation
+    if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    isSnapping = true;
+
+    function animation(currentTime) {
+      if (startTime === null) startTime = currentTime;
+      const timeElapsed = currentTime - startTime;
+      
+      // Ease function (easeInOutQuint) - Accélération/Décélération très marquée
+      const ease = (t, b, c, d) => {
+        t /= d / 2;
+        if (t < 1) return c / 2 * t * t * t * t * t + b;
+        t -= 2;
+        return c / 2 * (t * t * t * t * t + 2) + b;
+      };
+
+      const nextScrollTop = ease(timeElapsed, startPosition, distance, duration);
+      mainContainer.scrollTop = nextScrollTop;
+
+      if (timeElapsed < duration) {
+        animationFrameId = requestAnimationFrame(animation);
+      } else {
+        mainContainer.scrollTop = targetPosition;
+        isSnapping = false;
+        animationFrameId = null;
+      }
+    }
+
+    animationFrameId = requestAnimationFrame(animation);
+  }
+
   // --- Landing Video Overlay ---
   const videoOverlay = document.getElementById('videoOverlay');
   const landingVideo = document.getElementById('landingVideo');
@@ -737,9 +781,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const { scrollLeft, scrollWidth, clientWidth } = timelineContainer;
       const maxScroll = scrollWidth - clientWidth;
 
-      // Vérifier si on peut scroller horizontalement
-      const canScrollRight = isGoingDown && scrollLeft < maxScroll - 1;
-      const canScrollLeft = isGoingUp && scrollLeft > 1;
+      // Vérifier si on peut scroller horizontalement (avec marge de tolérance)
+      const canScrollRight = isGoingDown && scrollLeft < maxScroll - 2;
+      const canScrollLeft = isGoingUp && scrollLeft > 2;
 
       if (canScrollRight || canScrollLeft) {
         e.preventDefault();
@@ -757,6 +801,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!isAnimating) {
           requestAnimationFrame(animateScroll);
+        }
+      } else {
+        // On est en butée horizontale, on gère le passage à la section suivante/précédente
+        const timelineSection = document.getElementById('timeline');
+        
+        if (timelineSection && mainContainer) {
+            if (isGoingDown && !canScrollRight) {
+                // Vers le bas, fin de timeline -> Section suivante
+                const nextSection = timelineSection.nextElementSibling;
+                if (nextSection && nextSection.tagName === 'SECTION') {
+                    e.preventDefault();
+                    const target = nextSection.getBoundingClientRect().top + mainContainer.scrollTop;
+                    smoothScrollTo(target, 1200);
+                }
+            } else if (isGoingUp && !canScrollLeft) {
+                // Vers le haut, début de timeline -> Section précédente
+                const prevSection = timelineSection.previousElementSibling;
+                if (prevSection && prevSection.tagName === 'SECTION') {
+                    e.preventDefault();
+                    const target = prevSection.getBoundingClientRect().top + mainContainer.scrollTop;
+                    smoothScrollTo(target, 1200);
+                }
+            }
         }
       }
     }, { passive: false });
@@ -904,47 +971,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- Custom Smooth Snap Scrolling ---
-  const mainContainer = document.querySelector('main');
-  let isScrolling;
-  let isSnapping = false;
-  let animationFrameId;
-
-  // Custom smooth scroll function
-  function smoothScrollTo(targetPosition, duration) {
-    const startPosition = mainContainer.scrollTop;
-    const distance = targetPosition - startPosition;
-    let startTime = null;
-    
-    // Cancel any previous animation
-    if (animationFrameId) cancelAnimationFrame(animationFrameId);
-    isSnapping = true;
-
-    function animation(currentTime) {
-      if (startTime === null) startTime = currentTime;
-      const timeElapsed = currentTime - startTime;
-      
-      // Ease function (easeInOutCubic)
-      const ease = (t, b, c, d) => {
-        t /= d / 2;
-        if (t < 1) return c / 2 * t * t * t + b;
-        t -= 2;
-        return c / 2 * (t * t * t + 2) + b;
-      };
-
-      const nextScrollTop = ease(timeElapsed, startPosition, distance, duration);
-      mainContainer.scrollTop = nextScrollTop;
-
-      if (timeElapsed < duration) {
-        animationFrameId = requestAnimationFrame(animation);
-      } else {
-        mainContainer.scrollTop = targetPosition;
-        isSnapping = false;
-        animationFrameId = null;
-      }
-    }
-
-    animationFrameId = requestAnimationFrame(animation);
-  }
+  // (Variables et fonction smoothScrollTo déplacées en haut du fichier)
 
   if (mainContainer) {
     // Detect user interaction to cancel snap
@@ -989,8 +1016,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Snap to the closest section if it's not already aligned
         if (closestSection && minDistance > 2) { // Tolerance of 2px
              const targetPosition = closestSection.getBoundingClientRect().top + mainContainer.scrollTop;
-             // Use custom smooth scroll with 1000ms duration
-             smoothScrollTo(targetPosition, 1000);
+             // Use custom smooth scroll with 1200ms duration
+             smoothScrollTo(targetPosition, 1200);
         }
       }, 150); // 150ms delay before snapping
     }, { passive: true });
