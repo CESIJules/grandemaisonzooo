@@ -980,16 +980,20 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if (currentSection && currentSection.id === 'timeline' && timelineContainer) {
         const maxScroll = timelineContainer.scrollWidth - timelineContainer.clientWidth;
-        const currentScroll = timelineContainer.scrollLeft;
         
-        // Initialize target if not animating
+        // Sync target if not animating to ensure we start from current position
         if (!isAnimatingTimeline) {
-            timelineTargetScroll = currentScroll;
+            timelineTargetScroll = timelineContainer.scrollLeft;
         }
         
-        // Check boundaries to exit timeline
-        // If scrolling down (right) and at end
-        if (direction === 1 && currentScroll >= maxScroll - 5 && e.deltaY > 0) {
+        // Check if we are effectively at the boundaries based on TARGET
+        // This allows "scroll to end" then "next scroll exits" behavior
+        // Use a small epsilon for float comparison safety
+        const isAtEnd = timelineTargetScroll >= maxScroll - 1;
+        const isAtStart = timelineTargetScroll <= 1;
+        
+        // Logic: If we are pushing against the wall (target is at wall AND direction pushes further)
+        if (direction === 1 && isAtEnd) {
              // Go to next section
              if (currentSectionIndex < sections.length - 1) {
                  scrollToSection(currentSectionIndex + 1);
@@ -997,8 +1001,7 @@ document.addEventListener('DOMContentLoaded', () => {
              return;
         }
         
-        // If scrolling up (left) and at start
-        if (direction === -1 && currentScroll <= 5 && e.deltaY < 0) {
+        if (direction === -1 && isAtStart) {
              // Go to prev section
              if (currentSectionIndex > 0) {
                  scrollToSection(currentSectionIndex - 1);
@@ -1007,7 +1010,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // Otherwise, scroll timeline
-        timelineTargetScroll += e.deltaY * 2; // Speed multiplier
+        timelineTargetScroll += e.deltaY * 2.5; // Increased speed for better feel
         timelineTargetScroll = Math.max(0, Math.min(timelineTargetScroll, maxScroll));
         
         if (!isAnimatingTimeline) {
