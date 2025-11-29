@@ -63,6 +63,7 @@ body {
 #accueil h1 {
   position: relative;
   z-index: 1;
+  font-size: 3em;
 }
 
 /* One-scroll fluide global */
