@@ -401,16 +401,19 @@ document.addEventListener('DOMContentLoaded', () => {
           circularCtx.closePath();
           
           // --- Styling ---
-          const gradient = circularCtx.createRadialGradient(cx, cy, innerRadius - 10, cx, cy, innerRadius + maxBarHeight);
-          gradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)');
-          gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.4)');
-          gradient.addColorStop(1, 'rgba(255, 255, 255, 0.1)');
+          // 1. Glow effect using shadow
+          circularCtx.shadowBlur = 12;
+          circularCtx.shadowColor = 'rgba(255, 255, 255, 0.5)';
+          
+          // 2. Main line
+          circularCtx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+          circularCtx.lineWidth = 2;
+          circularCtx.stroke();
 
-          circularCtx.fillStyle = gradient;
-          circularCtx.fill();
-
-          circularCtx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-          circularCtx.lineWidth = 1.5;
+          // 3. A thinner, brighter inner line for more definition
+          circularCtx.shadowBlur = 0; // Turn off shadow for this line
+          circularCtx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+          circularCtx.lineWidth = 0.8;
           circularCtx.stroke();
         }
       }
