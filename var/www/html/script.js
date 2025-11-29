@@ -443,6 +443,63 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initial fetch of song info and listeners
     fetchCurrentSong();
+    
+    // Connect to SSE for real-time skip updates (always, not just when playing)
+    connectToSkipEvents();
+  }
+
+  // --- SSE for real-time skip events ---
+  let eventSource = null;
+  let sseReconnectTimeout = null;
+  
+  function connectToSkipEvents() {
+    // Don't reconnect if already connected
+    if (eventSource && eventSource.readyState !== EventSource.CLOSED) {
+      return;
+    }
+    
+    try {
+      eventSource = new EventSource('radio_api.php?action=events');
+      
+      eventSource.addEventListener('skip', (event) => {
+        console.log('Skip event received:', event.data);
+        // Force immediate refresh of song info
+        isFirstTitleLoad = true; // Reset to avoid delay
+        fetchCurrentSong();
+      });
+      
+      eventSource.addEventListener('heartbeat', (event) => {
+        // Keep-alive, no action needed
+        console.log('SSE heartbeat received');
+      });
+      
+      eventSource.addEventListener('reconnect', (event) => {
+        // Server requested reconnection (timeout)
+        console.log('SSE reconnect requested:', event.data);
+        eventSource.close();
+        // Reconnect immediately
+        setTimeout(connectToSkipEvents, 1000);
+      });
+      
+      eventSource.onerror = (err) => {
+        console.error('SSE connection error:', err);
+        eventSource.close();
+        // Reconnect after 5 seconds regardless of audio state
+        // Users should receive skip events even when paused
+        if (!sseReconnectTimeout) {
+          sseReconnectTimeout = setTimeout(() => {
+            sseReconnectTimeout = null;
+            connectToSkipEvents();
+          }, 5000);
+        }
+      };
+      
+      eventSource.onopen = () => {
+        console.log('SSE connection established');
+      };
+    } catch (err) {
+      console.error('Failed to connect to SSE:', err);
+    }
   }
 
   // 🔎 Récupération du titre depuis Icecast

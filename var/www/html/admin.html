@@ -106,6 +106,8 @@
       list-style: none;
       padding: 0;
       margin: 0;
+      display: flex;
+      flex-direction: column;
     }
     .queue-list li {
       padding: 8px 0;
@@ -118,6 +120,81 @@
     .queue-empty {
       color: #666;
       font-style: italic;
+    }
+    /* Queue item styles - vertical list with drag-and-drop */
+    .queue-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 15px;
+      background-color: #2a2a2a;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      transition: all 0.2s ease;
+      cursor: default;
+    }
+    .queue-item.draggable {
+      cursor: grab;
+    }
+    .queue-item.draggable:active {
+      cursor: grabbing;
+    }
+    .queue-item.dragging {
+      opacity: 0.5;
+      background-color: #3a3a3a;
+    }
+    .queue-item.drag-over {
+      border-top: 2px solid #007bff;
+      margin-top: -2px;
+    }
+    .queue-item.playlist-item {
+      background-color: #1f1f1f;
+      opacity: 0.7;
+    }
+    .drag-handle {
+      margin-right: 12px;
+      color: #666;
+      font-size: 14px;
+      cursor: grab;
+    }
+    .drag-handle:active {
+      cursor: grabbing;
+    }
+    .playlist-icon {
+      margin-right: 12px;
+      color: #555;
+      font-size: 14px;
+    }
+    .queue-index {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      background-color: #007bff;
+      color: white;
+      border-radius: 50%;
+      font-size: 12px;
+      font-weight: bold;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+    .queue-song-title {
+      flex: 1;
+      color: #eee;
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .queue-section-header {
+      padding: 8px 15px;
+      color: #888;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 15px;
+      margin-bottom: 5px;
+      border-bottom: 1px solid #333;
     }
     .add-queue-form {
       display: flex;

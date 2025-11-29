@@ -538,6 +538,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const musicSelect = document.getElementById('musicSelect');
   const queueList = document.getElementById('queueList');
   const radioMessage = document.getElementById('radioMessage');
+  
+  // Store current queue order for drag-and-drop
+  let currentQueueOrder = [];
+  let draggedItem = null;
 
   // Show message with auto-clear
   function showRadioMessage(message, isError = false) {
@@ -550,33 +554,204 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 4000);
   }
 
-  // Fetch queue from API
-  async function fetchQueue() {
+  // Fetch upcoming songs (queue + playlist)
+  async function fetchUpcoming() {
     if (!queueList) return;
     
     try {
-      const response = await fetch('radio_api.php?action=queue', {
+      const response = await fetch('radio_api.php?action=upcoming', {
         cache: 'no-store'
       });
       const result = await response.json();
 
       if (result.status === 'success') {
-        if (result.queue && result.queue.length > 0) {
-          queueList.innerHTML = '';
+        queueList.innerHTML = '';
+        currentQueueOrder = [];
+        
+        const hasQueueItems = result.queue && result.queue.length > 0;
+        const hasPlaylistItems = result.playlist && result.playlist.length > 0;
+        
+        // Display queue items (draggable)
+        if (hasQueueItems) {
           result.queue.forEach((item, index) => {
-            const li = document.createElement('li');
-            li.textContent = `${index + 1}. ${formatSongTitle(item.filename)}`;
+            const li = createQueueItem(item, index, true);
+            queueList.appendChild(li);
+            currentQueueOrder.push(item.filename);
+          });
+        }
+        
+        // If no queue items, show playlist items (not draggable)
+        if (!hasQueueItems && hasPlaylistItems) {
+          // Add a separator/header for playlist items
+          const header = document.createElement('li');
+          header.className = 'queue-section-header';
+          header.textContent = '🎵 Prochains morceaux (playlist automatique)';
+          queueList.appendChild(header);
+          
+          // Show first 10 playlist items
+          result.playlist.slice(0, 10).forEach((item, index) => {
+            const li = createQueueItem(item, index, false);
             queueList.appendChild(li);
           });
-        } else {
-          queueList.innerHTML = '<li class="queue-empty">La file d\'attente est vide (lecture de la playlist par défaut)</li>';
+        } else if (hasQueueItems && hasPlaylistItems) {
+          // Show separator and some playlist items after queue
+          const header = document.createElement('li');
+          header.className = 'queue-section-header';
+          header.textContent = '🎵 Ensuite (playlist automatique)';
+          queueList.appendChild(header);
+          
+          result.playlist.slice(0, 5).forEach((item, index) => {
+            const li = createQueueItem(item, index, false);
+            queueList.appendChild(li);
+          });
+        }
+        
+        if (!hasQueueItems && !hasPlaylistItems) {
+          queueList.innerHTML = '<li class="queue-empty">Aucun morceau disponible</li>';
         }
       } else {
         queueList.innerHTML = `<li class="queue-empty">Erreur: ${result.message}</li>`;
       }
     } catch (error) {
       queueList.innerHTML = `<li class="queue-empty">Erreur de connexion à l'API radio</li>`;
-      console.error('Error fetching queue:', error);
+      console.error('Error fetching upcoming:', error);
+    }
+  }
+
+  // Create a queue item element
+  function createQueueItem(item, index, isDraggable) {
+    const li = document.createElement('li');
+    li.className = 'queue-item';
+    if (item.source === 'playlist') {
+      li.classList.add('playlist-item');
+    }
+    
+    if (isDraggable) {
+      li.draggable = true;
+      li.dataset.filename = item.filename;
+      li.classList.add('draggable');
+      
+      // Drag events
+      li.addEventListener('dragstart', handleDragStart);
+      li.addEventListener('dragend', handleDragEnd);
+      li.addEventListener('dragover', handleDragOver);
+      li.addEventListener('dragenter', handleDragEnter);
+      li.addEventListener('dragleave', handleDragLeave);
+      li.addEventListener('drop', handleDrop);
+    }
+    
+    // Create content
+    const dragHandle = isDraggable ? '<span class="drag-handle">☰</span>' : '<span class="playlist-icon">♪</span>';
+    const songTitle = formatSongTitle(item.filename);
+    const indexDisplay = isDraggable ? `<span class="queue-index">${index + 1}</span>` : '';
+    
+    li.innerHTML = `
+      ${dragHandle}
+      ${indexDisplay}
+      <span class="queue-song-title">${songTitle}</span>
+    `;
+    
+    return li;
+  }
+
+  // Drag and Drop handlers
+  function handleDragStart(e) {
+    draggedItem = this;
+    this.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', this.dataset.filename);
+  }
+
+  function handleDragEnd(e) {
+    this.classList.remove('dragging');
+    document.querySelectorAll('.queue-item').forEach(item => {
+      item.classList.remove('drag-over');
+    });
+    draggedItem = null;
+  }
+
+  function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    return false;
+  }
+
+  function handleDragEnter(e) {
+    if (this.classList.contains('draggable') && this !== draggedItem) {
+      this.classList.add('drag-over');
+    }
+  }
+
+  function handleDragLeave(e) {
+    this.classList.remove('drag-over');
+  }
+
+  function handleDrop(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    if (draggedItem && this !== draggedItem && this.classList.contains('draggable')) {
+      // Get positions
+      const allItems = Array.from(queueList.querySelectorAll('.queue-item.draggable'));
+      const fromIndex = allItems.indexOf(draggedItem);
+      const toIndex = allItems.indexOf(this);
+      
+      // Reorder in DOM
+      if (fromIndex < toIndex) {
+        this.parentNode.insertBefore(draggedItem, this.nextSibling);
+      } else {
+        this.parentNode.insertBefore(draggedItem, this);
+      }
+      
+      // Update indices display
+      updateQueueIndices();
+      
+      // Update order array and send to server
+      updateQueueOrder();
+    }
+    
+    this.classList.remove('drag-over');
+    return false;
+  }
+
+  // Update queue indices after reorder
+  function updateQueueIndices() {
+    const items = queueList.querySelectorAll('.queue-item.draggable');
+    items.forEach((item, index) => {
+      const indexEl = item.querySelector('.queue-index');
+      if (indexEl) {
+        indexEl.textContent = index + 1;
+      }
+    });
+  }
+
+  // Send new queue order to server
+  async function updateQueueOrder() {
+    const items = queueList.querySelectorAll('.queue-item.draggable');
+    const newOrder = Array.from(items).map(item => item.dataset.filename);
+    
+    try {
+      const response = await fetch('radio_api.php?action=reorder', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ order: newOrder })
+      });
+      const result = await response.json();
+      
+      if (result.status === 'success') {
+        currentQueueOrder = newOrder;
+        showRadioMessage('✅ Ordre mis à jour');
+      } else {
+        showRadioMessage(`❌ ${result.message}`, true);
+        // Revert to original order
+        fetchUpcoming();
+      }
+    } catch (error) {
+      showRadioMessage('❌ Erreur lors de la mise à jour', true);
+      console.error('Error updating queue order:', error);
+      fetchUpcoming();
     }
   }
 
@@ -623,7 +798,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (result.status === 'success') {
         showRadioMessage('✅ Morceau passé avec succès!');
         // Refresh queue after skip
-        setTimeout(fetchQueue, 1000);
+        setTimeout(fetchUpcoming, 1000);
       } else {
         showRadioMessage(`❌ ${result.message}`, true);
       }
@@ -663,7 +838,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showRadioMessage(`✅ ${result.message}`);
         musicSelect.value = '';
         // Refresh queue after adding
-        fetchQueue();
+        fetchUpcoming();
       } else {
         showRadioMessage(`❌ ${result.message}`, true);
       }
@@ -682,7 +857,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (refreshQueueBtn) {
-    refreshQueueBtn.addEventListener('click', fetchQueue);
+    refreshQueueBtn.addEventListener('click', fetchUpcoming);
   }
 
   if (addToQueueBtn) {
@@ -692,8 +867,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial load for radio control
   if (queueList) {
     populateMusicSelect();
-    fetchQueue();
+    fetchUpcoming();
     // Auto-refresh queue every 30 seconds
-    setInterval(fetchQueue, 30000);
+    setInterval(fetchUpcoming, 30000);
   }
 });
