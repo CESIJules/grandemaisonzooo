@@ -775,6 +775,13 @@ document.addEventListener('DOMContentLoaded', () => {
       // On ne s'intéresse qu'au scroll vertical de la souris (deltaY)
       if (e.deltaY === 0) return;
 
+      // Si une animation est en cours, on bloque tout pour éviter l'interruption par stopSnap
+      if (isSnapping) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+
       // Vérifier si la section timeline est active (occupe l'écran)
       const timelineSection = document.getElementById('timeline');
       if (timelineSection) {
