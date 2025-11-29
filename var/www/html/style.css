@@ -484,6 +484,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   padding: 0;
   overflow: hidden;
   position: relative;
+  height: 100vh;
 }
 
 .timeline-header-wrapper {
@@ -522,7 +523,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 .timeline-container {
   position: relative;
   width: 100%;
-  height: 100%;
+  flex: 1;
   overflow-x: auto;
   overflow-y: hidden;
   display: flex;
