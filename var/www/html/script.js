@@ -9,47 +9,97 @@ document.addEventListener('DOMContentLoaded', () => {
   // Flag pour s'assurer que l'intro ne se joue qu'une fois par session
   const hasPlayedIntro = sessionStorage.getItem('introPlayed');
 
-  if (landingVideo && videoOverlay && backgroundVideo && burgerBtn && titleAccueil) {
+  // Fonction pour démarrer la vidéo de fond
+  function startBackgroundVideo() {
+    if (backgroundVideo) {
+      backgroundVideo.muted = true;
+      backgroundVideo.play().catch(err => {
+        console.log('Background video autoplay prevented:', err);
+      });
+    }
+  }
+
+  // Fonction pour afficher les éléments UI
+  function showUI() {
+    if (burgerBtn) burgerBtn.style.opacity = '1';
+    if (titleAccueil) titleAccueil.style.opacity = '1';
+  }
+
+  // Fonction pour terminer l'intro
+  function endIntro() {
+    videoOverlay.classList.add('fade-out');
+    sessionStorage.setItem('introPlayed', 'true');
+    
+    setTimeout(() => {
+      startBackgroundVideo();
+      videoOverlay.style.display = 'none';
+    }, 300);
+  }
+
+  if (landingVideo && videoOverlay && backgroundVideo) {
     if (hasPlayedIntro) {
       // L'intro a déjà été jouée dans cette session, skip directement
       videoOverlay.style.display = 'none';
-      burgerBtn.style.opacity = '1';
-      titleAccueil.style.opacity = '1';
-      backgroundVideo.play();
+      showUI();
+      startBackgroundVideo();
     } else {
-      // Première visite de la session : jouer l'intro avec son
+      // Première visite de la session : essayer de jouer l'intro avec son
       
-      // Afficher le burger et le titre après 4 secondes
-      setTimeout(() => {
-        burgerBtn.style.opacity = '1';
-        titleAccueil.style.opacity = '1';
-      }, 4000);
+      // Tenter la lecture avec son
+      const playPromise = landingVideo.play();
+      
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          // Lecture réussie avec son
+          console.log('Video playing with sound');
+          
+          // Afficher le burger et le titre après 4 secondes
+          setTimeout(() => {
+            showUI();
+          }, 4000);
 
-      // Quand la vidéo se termine
-      landingVideo.addEventListener('ended', () => {
-        videoOverlay.classList.add('fade-out');
-        
-        // Marquer l'intro comme jouée
-        sessionStorage.setItem('introPlayed', 'true');
-        
-        // Démarrer la vidéo de fond (sans son) après la transition
-        setTimeout(() => {
-          backgroundVideo.play();
-          videoOverlay.style.display = 'none';
-        }, 300); // Transition rapide
-      });
+          // Quand la vidéo se termine
+          landingVideo.addEventListener('ended', endIntro);
+          
+        }).catch(err => {
+          // Autoplay bloqué (souvent sur mobile ou navigateurs stricts)
+          console.log('Autoplay with sound blocked:', err);
+          
+          // Essayer en mode muet
+          landingVideo.muted = true;
+          landingVideo.play().then(() => {
+            console.log('Video playing muted as fallback');
+            
+            setTimeout(() => {
+              showUI();
+            }, 4000);
+
+            landingVideo.addEventListener('ended', endIntro);
+            
+          }).catch(mutedErr => {
+            // Même le mode muet échoue, skip l'intro
+            console.log('Even muted autoplay failed:', mutedErr);
+            showUI();
+            endIntro();
+          });
+        });
+      }
 
       // Fallback en cas d'erreur de chargement
-      landingVideo.addEventListener('error', () => {
-        videoOverlay.classList.add('fade-out');
-        burgerBtn.style.opacity = '1';
-        titleAccueil.style.opacity = '1';
-        sessionStorage.setItem('introPlayed', 'true');
-        setTimeout(() => {
-          backgroundVideo.play();
-          videoOverlay.style.display = 'none';
-        }, 300);
+      landingVideo.addEventListener('error', (e) => {
+        console.error('Video loading error:', e);
+        showUI();
+        endIntro();
       });
+      
+      // Timeout de sécurité : si la vidéo ne démarre pas après 2 secondes
+      setTimeout(() => {
+        if (landingVideo.paused && landingVideo.readyState < 2) {
+          console.log('Video loading timeout, skipping intro');
+          showUI();
+          endIntro();
+        }
+      }, 2000);
     }
   }
 
