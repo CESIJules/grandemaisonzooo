@@ -705,6 +705,33 @@ document.addEventListener('DOMContentLoaded', () => {
   const timelineContainer = document.querySelector('.timeline-container');
   const timelineFilters = document.querySelector('.timeline-filters');
 
+  // Gestion du scroll horizontal avec la molette
+  if (timelineContainer) {
+    timelineContainer.addEventListener('wheel', (e) => {
+      // On ne s'intéresse qu'au scroll vertical de la souris (deltaY)
+      if (e.deltaY === 0) return;
+
+      const isGoingDown = e.deltaY > 0;
+      const isGoingUp = e.deltaY < 0;
+
+      const { scrollLeft, scrollWidth, clientWidth } = timelineContainer;
+      const maxScroll = scrollWidth - clientWidth;
+
+      // Vérifier si on peut scroller horizontalement
+      // On utilise une petite marge (1px) pour gérer les arrondis
+      const canScrollRight = isGoingDown && scrollLeft < maxScroll - 1;
+      const canScrollLeft = isGoingUp && scrollLeft > 1;
+
+      if (canScrollRight || canScrollLeft) {
+        e.preventDefault();
+        // On transforme le scroll vertical en scroll horizontal
+        timelineContainer.scrollLeft += e.deltaY;
+      }
+      // Si on est en butée, on laisse l'événement se propager
+      // Ce qui permet au scroll-snap vertical de la page de prendre le relais
+    }, { passive: false });
+  }
+
   async function renderTimelinePosts(artist = 'Tous') {
     if (!timelineContainer) return;
 
