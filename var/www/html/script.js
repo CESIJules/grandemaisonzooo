@@ -1,12 +1,20 @@
 document.addEventListener('DOMContentLoaded', () => {
   // --- Global Variables & Helpers ---
   const mainContainer = document.querySelector('main');
+  const sections = document.querySelectorAll('section');
+  let currentSectionIndex = 0;
+  let isNavigating = false;
+  
+  // Timeline State
+  let timelineTargetScroll = 0;
+  let isAnimatingTimeline = false;
+
   let isScrolling;
   let isSnapping = false;
   let animationFrameId;
 
   // Custom smooth scroll function (Easing à balle: easeInOutQuint)
-  function smoothScrollTo(targetPosition, duration) {
+  function smoothScrollTo(targetPosition, duration, callback) {
     if (!mainContainer) return;
     const startPosition = mainContainer.scrollTop;
     const distance = targetPosition - startPosition;
@@ -37,6 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mainContainer.scrollTop = targetPosition;
         isSnapping = false;
         animationFrameId = null;
+        if (callback) callback();
       }
     }
 
@@ -749,105 +758,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const timelineContainer = document.querySelector('.timeline-container');
   const timelineFilters = document.querySelector('.timeline-filters');
 
-  // Gestion du scroll horizontal avec la molette (Organique)
-  if (timelineContainer) {
-    let targetScrollLeft = timelineContainer.scrollLeft;
-    let isAnimating = false;
 
-    const animateScroll = () => {
-      if (!timelineContainer) return;
-      
-      const currentScrollLeft = timelineContainer.scrollLeft;
-      const diff = targetScrollLeft - currentScrollLeft;
-      
-      // Interpolation (Lerp) pour un effet organique
-      if (Math.abs(diff) > 0.5) {
-        timelineContainer.scrollLeft = currentScrollLeft + diff * 0.08;
-        requestAnimationFrame(animateScroll);
-        isAnimating = true;
-      } else {
-        timelineContainer.scrollLeft = targetScrollLeft;
-        isAnimating = false;
-      }
-    };
-
-    timelineContainer.addEventListener('wheel', (e) => {
-      // On ne s'intéresse qu'au scroll vertical de la souris (deltaY)
-      if (e.deltaY === 0) return;
-
-      // Si une animation est en cours, on bloque tout pour éviter l'interruption par stopSnap
-      if (isSnapping) {
-        e.preventDefault();
-        e.stopPropagation();
-        return;
-      }
-
-      // Vérifier si la section timeline est active (occupe l'écran)
-      const timelineSection = document.getElementById('timeline');
-      if (timelineSection) {
-        const rect = timelineSection.getBoundingClientRect();
-        // Si la section n'est pas alignée (tolérance 5px), on laisse le scroll vertical natif
-        if (Math.abs(rect.top) > 5) return;
-      }
-
-      const isGoingDown = e.deltaY > 0;
-      const isGoingUp = e.deltaY < 0;
-
-      const { scrollLeft, scrollWidth, clientWidth } = timelineContainer;
-      const maxScroll = scrollWidth - clientWidth;
-
-      // Vérifier si on peut scroller horizontalement (avec marge de tolérance)
-      const canScrollRight = isGoingDown && scrollLeft < maxScroll - 2;
-      const canScrollLeft = isGoingUp && scrollLeft > 2;
-
-      if (canScrollRight || canScrollLeft) {
-        e.preventDefault();
-        
-        // Sync target si on commence une nouvelle interaction
-        if (!isAnimating) {
-            targetScrollLeft = scrollLeft;
-        }
-
-        // Ajout du delta avec un multiplicateur pour la vitesse
-        targetScrollLeft += e.deltaY * 2;
-        
-        // Limites
-        targetScrollLeft = Math.max(0, Math.min(targetScrollLeft, maxScroll));
-
-        if (!isAnimating) {
-          requestAnimationFrame(animateScroll);
-        }
-      } else {
-        // On est en butée horizontale, on gère le passage à la section suivante/précédente
-        
-        if (timelineSection && mainContainer) {
-            if (isGoingDown && !canScrollRight) {
-                // Vers le bas, fin de timeline -> Section suivante
-                const nextSection = timelineSection.nextElementSibling;
-                if (nextSection && nextSection.tagName === 'SECTION') {
-                    e.preventDefault();
-                    e.stopPropagation(); // Empêcher stopSnap d'annuler le scroll
-                    if (!isSnapping) {
-                        const target = nextSection.getBoundingClientRect().top + mainContainer.scrollTop;
-                        smoothScrollTo(target, 1200);
-                    }
-                }
-            } else if (isGoingUp && !canScrollLeft) {
-                // Vers le haut, début de timeline -> Section précédente
-                const prevSection = timelineSection.previousElementSibling;
-                if (prevSection && prevSection.tagName === 'SECTION') {
-                    e.preventDefault();
-                    e.stopPropagation(); // Empêcher stopSnap d'annuler le scroll
-                    if (!isSnapping) {
-                        const target = prevSection.getBoundingClientRect().top + mainContainer.scrollTop;
-                        smoothScrollTo(target, 1200);
-                    }
-                }
-            }
-        }
-      }
-    }, { passive: false });
-  }
 
   async function renderTimelinePosts(artist = 'Tous') {
     if (!timelineContainer) return;
@@ -969,12 +880,31 @@ document.addEventListener('DOMContentLoaded', () => {
         if (filterButton) {
           filterButton.click();
         }
-        document.querySelector('#timeline').scrollIntoView({ behavior: 'smooth' });
+        
+        const timelineIndex = Array.from(sections).findIndex(s => s.id === 'timeline');
+        if (timelineIndex !== -1) {
+            scrollToSection(timelineIndex);
+        }
       });
     });
   }
 
   handleArtistTimelineLinks();
+
+  // Intercept all anchor clicks for smooth scrolling
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+          const targetId = this.getAttribute('href').substring(1);
+          const targetSection = document.getElementById(targetId);
+          if (targetSection) {
+              e.preventDefault();
+              const index = Array.from(sections).findIndex(s => s === targetSection);
+              if (index !== -1) {
+                  scrollToSection(index);
+              }
+          }
+      });
+  });
 
   // Handle URL parameter for artist filter
   const urlParams = new URLSearchParams(window.location.search);
@@ -990,57 +920,163 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 500); // Small delay to ensure buttons are rendered
   }
 
-  // --- Custom Smooth Snap Scrolling ---
-  // (Variables et fonction smoothScrollTo déplacées en haut du fichier)
-
-  if (mainContainer) {
-    // Detect user interaction to cancel snap
-    const stopSnap = () => {
-      if (isSnapping) {
-        if (animationFrameId) cancelAnimationFrame(animationFrameId);
-        isSnapping = false;
-        animationFrameId = null;
+  // --- Custom Smooth Snap Scrolling (Global Wheel Hijack) ---
+  
+  // Initialize current section index based on scroll position
+  function updateCurrentSectionIndex() {
+    let minDistance = Infinity;
+    sections.forEach((section, index) => {
+      const rect = section.getBoundingClientRect();
+      if (Math.abs(rect.top) < minDistance) {
+        minDistance = Math.abs(rect.top);
+        currentSectionIndex = index;
       }
-    };
-    
-    // Add listeners to stop snapping on user interaction
-    mainContainer.addEventListener('wheel', stopSnap, { passive: true });
-    mainContainer.addEventListener('touchstart', stopSnap, { passive: true });
-    mainContainer.addEventListener('keydown', stopSnap, { passive: true });
-    mainContainer.addEventListener('mousedown', stopSnap, { passive: true });
-
-    mainContainer.addEventListener('scroll', () => {
-      // If we are snapping, ignore scroll events generated by the animation
-      if (isSnapping) return;
-
-      // Clear the timeout while scrolling
-      window.clearTimeout(isScrolling);
-
-      // Set a timeout to run after scrolling ends
-      isScrolling = setTimeout(() => {
-        const sections = document.querySelectorAll('section');
-        let closestSection = null;
-        let minDistance = Infinity;
-
-        sections.forEach(section => {
-          const rect = section.getBoundingClientRect();
-          // Calculate distance from the top of the viewport
-          const distance = Math.abs(rect.top);
-          
-          if (distance < minDistance) {
-            minDistance = distance;
-            closestSection = section;
-          }
-        });
-
-        // Snap to the closest section if it's not already aligned
-        if (closestSection && minDistance > 2) { // Tolerance of 2px
-             const targetPosition = closestSection.getBoundingClientRect().top + mainContainer.scrollTop;
-             // Use custom smooth scroll with 1200ms duration
-             smoothScrollTo(targetPosition, 1200);
-        }
-      }, 50); // 50ms delay before snapping
-    }, { passive: true });
+    });
   }
+  
+  // Initial check
+  updateCurrentSectionIndex();
+
+  // Timeline Animation Loop
+  const animateTimeline = () => {
+    if (!timelineContainer) return;
+    
+    const currentScrollLeft = timelineContainer.scrollLeft;
+    const diff = timelineTargetScroll - currentScrollLeft;
+    
+    if (Math.abs(diff) > 0.5) {
+      timelineContainer.scrollLeft = currentScrollLeft + diff * 0.08;
+      requestAnimationFrame(animateTimeline);
+      isAnimatingTimeline = true;
+    } else {
+      timelineContainer.scrollLeft = timelineTargetScroll;
+      isAnimatingTimeline = false;
+    }
+  };
+
+  function scrollToSection(index) {
+      if (index < 0 || index >= sections.length) return;
+      
+      isNavigating = true;
+      const target = sections[index].offsetTop;
+      
+      smoothScrollTo(target, 1000, () => {
+          isNavigating = false;
+          currentSectionIndex = index;
+      });
+  }
+
+  // Global Wheel Handler
+  window.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    
+    if (isNavigating) return;
+
+    // Determine direction
+    const direction = e.deltaY > 0 ? 1 : -1;
+    
+    // Check if we are in Timeline
+    const currentSection = sections[currentSectionIndex];
+    
+    if (currentSection && currentSection.id === 'timeline' && timelineContainer) {
+        const maxScroll = timelineContainer.scrollWidth - timelineContainer.clientWidth;
+        const currentScroll = timelineContainer.scrollLeft;
+        
+        // Initialize target if not animating
+        if (!isAnimatingTimeline) {
+            timelineTargetScroll = currentScroll;
+        }
+        
+        // Check boundaries to exit timeline
+        // If scrolling down (right) and at end
+        if (direction === 1 && currentScroll >= maxScroll - 5 && e.deltaY > 0) {
+             // Go to next section
+             if (currentSectionIndex < sections.length - 1) {
+                 scrollToSection(currentSectionIndex + 1);
+             }
+             return;
+        }
+        
+        // If scrolling up (left) and at start
+        if (direction === -1 && currentScroll <= 5 && e.deltaY < 0) {
+             // Go to prev section
+             if (currentSectionIndex > 0) {
+                 scrollToSection(currentSectionIndex - 1);
+             }
+             return;
+        }
+        
+        // Otherwise, scroll timeline
+        timelineTargetScroll += e.deltaY * 2; // Speed multiplier
+        timelineTargetScroll = Math.max(0, Math.min(timelineTargetScroll, maxScroll));
+        
+        if (!isAnimatingTimeline) {
+            requestAnimationFrame(animateTimeline);
+        }
+        
+    } else {
+        // Normal Section Navigation
+        // Use a threshold to avoid accidental triggers
+        if (Math.abs(e.deltaY) > 10) {
+            const nextIndex = currentSectionIndex + direction;
+            if (nextIndex >= 0 && nextIndex < sections.length) {
+                scrollToSection(nextIndex);
+            }
+        }
+    }
+  }, { passive: false });
+
+  // --- Touch Support (Mobile) ---
+  let touchStartY = 0;
+  let touchStartX = 0;
+  let isTouchTriggered = false;
+  
+  window.addEventListener('touchstart', (e) => {
+      touchStartY = e.touches[0].clientY;
+      touchStartX = e.touches[0].clientX;
+      isTouchTriggered = false;
+  }, { passive: false });
+  
+  window.addEventListener('touchmove', (e) => {
+      e.preventDefault(); // Prevent native scroll
+      
+      if (isNavigating) return;
+      
+      const touchY = e.touches[0].clientY;
+      const touchX = e.touches[0].clientX;
+      
+      const deltaY = touchStartY - touchY;
+      const deltaX = touchStartX - touchX;
+      
+      // Determine dominant axis
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+          // Horizontal Swipe
+          const currentSection = sections[currentSectionIndex];
+          if (currentSection && currentSection.id === 'timeline' && timelineContainer) {
+               // Scroll timeline directly
+               timelineContainer.scrollLeft += deltaX;
+               timelineTargetScroll = timelineContainer.scrollLeft;
+               touchStartX = touchX; // Continuous scroll
+          }
+      } else {
+          // Vertical Swipe
+          if (!isTouchTriggered && Math.abs(deltaY) > 50) { // Threshold
+              const direction = deltaY > 0 ? 1 : -1;
+              const nextIndex = currentSectionIndex + direction;
+              
+              // Check if we are in timeline and trying to exit
+              const currentSection = sections[currentSectionIndex];
+              if (currentSection && currentSection.id === 'timeline' && timelineContainer) {
+                  // Allow exit regardless of horizontal position on mobile vertical swipe?
+                  // Yes, usually better UX.
+              }
+
+              if (nextIndex >= 0 && nextIndex < sections.length) {
+                  scrollToSection(nextIndex);
+                  isTouchTriggered = true;
+              }
+          }
+      }
+  }, { passive: false });
   
 }); // End DOMContentLoaded
