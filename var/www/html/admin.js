@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+  const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
   // --- Song Title Formatter ---
   function formatSongTitle(title) {
@@ -290,7 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const postLink = document.getElementById('postLink').value;
 
       if (postImage && postImage.size > MAX_FILE_SIZE) {
-        adminFormMessage.textContent = 'Le fichier est trop volumineux (max 2MB)';
+        adminFormMessage.textContent = 'Le fichier est trop volumineux (max 20MB)';
         adminFormMessage.style.color = 'red';
         return;
       }
