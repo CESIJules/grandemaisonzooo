@@ -69,11 +69,10 @@ body {
 /* One-scroll fluide global */
 main {
   height: 100vh;
-  overflow-y: scroll;
+  overflow: hidden; /* Full JS control */
   /* scroll-snap-type: y mandatory;  Désactivé pour JS custom */
-  scroll-behavior: smooth;
+  scroll-behavior: auto; /* Handled by JS */
   scroll-padding-top: 0;
-  -webkit-overflow-scrolling: touch; /* inertie sur mobile */
 }
 main::-webkit-scrollbar { display: none; }
 main { -ms-overflow-style: none; scrollbar-width: none; }
