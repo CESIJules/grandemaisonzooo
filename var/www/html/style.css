@@ -551,31 +551,37 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   width: 300px;
   margin: 0 60px;
   z-index: 2;
-  display: flex;
-  flex-direction: column;
 }
 
 .timeline-item::after {
   content: '';
   position: absolute;
-  width: 3px;
-  height: 20px;
+  width: 12px;
+  height: 12px;
   background-color: #fff;
-  border-radius: 2px;
+  border: 3px solid #111;
+  border-radius: 50%;
   z-index: 3;
   left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
 }
 
 .timeline-item:nth-child(odd) {
-  justify-content: flex-end;
-  padding-bottom: calc(50% + 30px);
+  padding-bottom: calc(50vh - 50px);
+  padding-top: 0;
+}
+
+.timeline-item:nth-child(odd)::after {
+  bottom: calc(50vh - 100px);
 }
 
 .timeline-item:nth-child(even) {
-  justify-content: flex-start;
-  padding-top: calc(50% + 30px);
+  padding-top: calc(50vh - 50px);
+  padding-bottom: 0;
+}
+
+.timeline-item:nth-child(even)::after {
+  top: calc(50vh - 100px);
 }
 
 .timeline-content,
