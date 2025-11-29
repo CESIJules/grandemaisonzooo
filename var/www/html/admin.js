@@ -252,7 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const postToEdit = posts.find(p => p.id == postIdToEdit);
 
             if (postToEdit) {
-                document.getElementById('postSubtitle').value = postToEdit.subtitle || '';
+                document.getElementById('postSubtitle').value = postToEdit.title || '';
                 document.getElementById('postLink').value = postToEdit.link || '';
                 document.getElementById('postDate').value = new Date(postToEdit.date).toISOString().split('T')[0];
                 document.getElementById('postArtist').value = postToEdit.artist;
@@ -283,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
     adminTimelineForm.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const postSubtitle = document.getElementById('postSubtitle').value;
+      const postTitle = document.getElementById('postSubtitle').value;
       const postDate = document.getElementById('postDate').value;
       const postArtist = document.getElementById('postArtist').value;
       const postImage = document.getElementById('postImage').files[0];
@@ -295,15 +295,15 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      if (!postDate || !postArtist) {
-        adminFormMessage.textContent = 'Date et Artiste sont obligatoires!';
+      if (!postTitle || !postDate || !postArtist) {
+        adminFormMessage.textContent = 'Titre, Date et Artiste sont obligatoires!';
         adminFormMessage.style.color = 'red';
         return;
       }
 
       const formData = new FormData();
-      formData.append('title', postArtist);
-      formData.append('subtitle', postSubtitle);
+      formData.append('title', postTitle);
+      formData.append('subtitle', ''); // No subtitle field in the form
       formData.append('date', postDate);
       formData.append('artist', postArtist);
       formData.append('link', postLink);
