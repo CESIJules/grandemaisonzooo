@@ -492,9 +492,9 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   left: 0;
   right: 0;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 20px;
+  justify-content: center;
   padding: 0 40px;
   z-index: 10;
   pointer-events: none;
@@ -503,8 +503,12 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 #timeline h2 { 
   margin: 0;
   font-size: 2em;
-  text-align: center;
+  text-align: left;
   pointer-events: none;
+  position: absolute;
+  left: 40px;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .timeline-filters {
@@ -669,6 +673,8 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   
   #timeline h2 {
     font-size: 1.5em;
+    position: static;
+    transform: none;
   }
   
   .timeline-filters {
