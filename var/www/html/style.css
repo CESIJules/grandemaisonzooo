@@ -530,21 +530,11 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   align-items: stretch;
   -ms-overflow-style: none;
   scrollbar-width: none;
+  /* Infinite line */
+  background: linear-gradient(#555, #555) repeat-x left 50% / 1px 2px local;
 }
 
 .timeline-container::-webkit-scrollbar { display: none; }
-
-.timeline-container::before {
-  content: '';
-  position: absolute;
-  height: 2px;
-  background-color: #555;
-  top: 50%;
-  left: 0;
-  right: 0;
-  transform: translateY(-50%);
-  z-index: 1;
-}
 
 .timeline-item { 
   position: relative;
