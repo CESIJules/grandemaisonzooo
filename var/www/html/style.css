@@ -861,45 +861,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   justify-content: center;
 }
 
-#vinyl-disc {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: #1a1a1a; /* Fond gris très foncé */
-  background-image: radial-gradient(circle at center, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 60%); /* Effet de brillance subtil */
-  box-shadow:
-    inset 0 0 0 2px rgba(0, 0, 0, 0.6), /* Inner shadow for depth */
-    0 0 0 5px #1a1a1a, /* Simule le bord du disque */
-    /* Sillons stylisés (plus visibles) */
-    inset 0 0 0 30px rgba(0,0,0,0.15),
-    inset 0 0 0 32px rgba(255,255,255,0.04),
-    inset 0 0 0 60px rgba(0,0,0,0.15),
-    inset 0 0 0 62px rgba(255,255,255,0.04),
-    inset 0 0 0 90px rgba(0,0,0,0.15),
-    inset 0 0 0 92px rgba(255,255,255,0.04),
-    inset 0 0 0 120px rgba(0,0,0,0.15),
-    inset 0 0 0 122px rgba(255,255,255,0.04),
-    inset 0 0 0 150px rgba(0,0,0,0.15),
-    inset 0 0 0 152px rgba(255,255,255,0.04);
-  transition: transform 0.5s ease;
-  overflow: hidden; /* To contain the pseudo-element */
-}
-
-#vinyl-disc::after {
-  content: '';
-  position: absolute;
-  top: -20%;
-  left: -20%;
-  width: 140%;
-  height: 140%;
-  background: conic-gradient(from 180deg at 50% 50%, transparent 0deg, transparent 240deg, rgba(255,255,255,0.1) 270deg, transparent 300deg, transparent 360deg);
-  opacity: 0.8;
-}
-
-#vinyl-disc.playing {
-  animation: spin 20s linear infinite;
-}
+/* The vinyl disc styles have been removed to make way for the new radar visualizer. */
 
 @keyframes spin {
   from {
