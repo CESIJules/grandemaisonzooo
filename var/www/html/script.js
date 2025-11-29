@@ -364,35 +364,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
         circularCtx.clearRect(0, 0, w, h);
 
-        const numBars = 80; // Increased number of bars for a fuller look
-        const barWidth = 2.5;
+        const numPoints = 120; // More points for a smoother curve
         const innerRadius = 110;
-        const maxBarHeight = 40;
+        const maxBarHeight = 50;
 
-        const bassAvg = (dataArray[0] + dataArray[1] + dataArray[2]) / 3 / 255;
-
-        for (let i = 0; i < numBars; i++) {
-          const angle = (i / numBars) * 2 * Math.PI + (Math.PI / 2);
+        const points = [];
+        for (let i = 0; i < numPoints; i++) {
+          const angle = (i / numPoints) * 2 * Math.PI;
           
-          const frequencyIndex = Math.floor(Math.pow(i / numBars, 2) * (bufferLength * 0.4));
+          const frequencyIndex = Math.floor(Math.pow(i / numPoints, 1.5) * (bufferLength * 0.3));
           const freqData = dataArray[frequencyIndex];
           const normalizedValue = freqData / 255.0;
 
-          const barHeight = (normalizedValue * maxBarHeight) + (bassAvg * 10);
+          const barHeight = Math.pow(normalizedValue, 2) * maxBarHeight;
 
-          const startX = cx + Math.cos(angle) * innerRadius;
-          const startY = cy + Math.sin(angle) * innerRadius;
-          const endX = cx + Math.cos(angle) * (innerRadius + barHeight);
-          const endY = cy + Math.sin(angle) * (innerRadius + barHeight);
+          const radius = innerRadius + barHeight;
+          points.push({
+            x: cx + Math.cos(angle) * radius,
+            y: cy + Math.sin(angle) * radius
+          });
+        }
 
+        // Draw the curved path
+        if (points.length > 0) {
           circularCtx.beginPath();
-          circularCtx.moveTo(startX, startY);
-          circularCtx.lineTo(endX, endY);
+          circularCtx.moveTo((points[0].x + points[points.length - 1].x) / 2, (points[0].y + points[points.length - 1].y) / 2);
+
+          for (let i = 0; i < points.length - 1; i++) {
+            const xc = (points[i].x + points[i + 1].x) / 2;
+            const yc = (points[i].y + points[i + 1].y) / 2;
+            circularCtx.quadraticCurveTo(points[i].x, points[i].y, xc, yc);
+          }
+          // Curve back to the start
+          circularCtx.quadraticCurveTo(points[points.length - 1].x, points[points.length - 1].y, (points[points.length - 1].x + points[0].x) / 2, (points[points.length - 1].y + points[0].y) / 2);
+
+          circularCtx.closePath();
           
-          const opacity = Math.max(0.2, normalizedValue);
-          circularCtx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
-          circularCtx.lineWidth = barWidth;
-          circularCtx.lineCap = 'round';
+          // --- Styling ---
+          const gradient = circularCtx.createRadialGradient(cx, cy, innerRadius - 10, cx, cy, innerRadius + maxBarHeight);
+          gradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)');
+          gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.4)');
+          gradient.addColorStop(1, 'rgba(255, 255, 255, 0.1)');
+
+          circularCtx.fillStyle = gradient;
+          circularCtx.fill();
+
+          circularCtx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+          circularCtx.lineWidth = 1.5;
           circularCtx.stroke();
         }
       }
