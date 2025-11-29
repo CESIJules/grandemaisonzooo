@@ -180,6 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const currentSong = document.getElementById('currentSong');
   const visualizerCanvas = document.getElementById('visualizer');
   const circularVisualizer = document.getElementById('circularVisualizer');
+  const vinylDisc = document.getElementById('vinyl-disc');
   // --- Progress Bar Elements ---
   const progressInfo = document.getElementById('progress-info');
   const progressBar = document.getElementById('progress-bar');
@@ -568,9 +569,11 @@ document.addEventListener('DOMContentLoaded', () => {
           audio.load();
           await audio.play();
           playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+          if (vinylDisc) vinylDisc.classList.add('playing');
         } else {
           audio.pause();
           playBtn.innerHTML = '<i class="fas fa-play"></i>';
+          if (vinylDisc) vinylDisc.classList.remove('playing');
         }
       } catch (err) {
         status.textContent = 'Lecture bloquée';
