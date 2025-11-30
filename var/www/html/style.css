@@ -54,7 +54,7 @@ body {
   object-fit: cover;
   z-index: 0;
   opacity: 1;
-  mix-blend-mode: normal; /* Changed from screen to normal for better visibility */
+  mix-blend-mode: screen;
 }
 
 #accueil {
@@ -68,16 +68,14 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); /* Dark overlay */
-  opacity: 1; /* Always visible */
-  z-index: 1; /* Above video */
-  backdrop-filter: blur(2px); /* Subtle blur for depth */
+  background-color: #111;
+  opacity: 0;
+  z-index: -1;
 }
 
 #accueil h1 {
   position: relative;
   z-index: 2; /* Above overlay */
-  font-family: 'Space Grotesk', sans-serif; /* More digital font */
   font-size: 5em; /* Slightly larger */
   letter-spacing: -2px;
   color: #fff;
