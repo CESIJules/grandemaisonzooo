@@ -103,8 +103,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 .burger {
   position: fixed;
   top: 30px;
-  left: 30px;
-  right: auto;
+  right: 30px;
   z-index: 1000;
   
   /* Size & Layout (Matching Volume Button) */
@@ -299,8 +298,8 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 .radio-header {
   position: absolute;
   top: 30px;
-  left: 120px;
-  width: calc(100% - 150px);
+  left: 30px;
+  width: calc(100% - 60px);
   z-index: 20;
   display: flex;
   align-items: center;
@@ -309,10 +308,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 
 /* Circular Volume Control */
 .volume-container {
-  position: fixed;
-  top: 100px;
-  left: 30px;
-  z-index: 1000;
+  position: relative;
   width: 60px;
   height: 60px;
   display: flex;
@@ -321,27 +317,6 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-
-  /* Glassmorphism Style (Matching Burger) */
-  background-color: rgba(20, 20, 20, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
-  border-radius: 50%;
-
-  /* Animation */
-  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), 
-              box-shadow 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
-              background-color 0.4s ease,
-              border-color 0.4s ease;
-}
-
-.volume-container:hover {
-  transform: scale(1.05) translateY(-3px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.9), 0 0 15px rgba(255, 255, 255, 0.15);
-  background-color: rgba(35, 35, 35, 0.8);
-  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .volume-ring {
@@ -372,11 +347,13 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 
 .volume-floating {
   position: fixed !important;
-  top: 100px !important;
-  left: 30px !important;
-  right: auto !important;
+  top: 70px;
+  right: 16px;
+  left: auto !important;
   z-index: 1001;
-  /* Styles are now inherited from .volume-container, just ensuring position */
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  backdrop-filter: blur(5px);
 }
 
 #radio h2 {
@@ -900,7 +877,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   justify-content: center;
   gap: 16px;
   text-align: left;
-  padding-left: 120px;   /* décalage vers la droite */
+  padding-left: 40px;   /* décalage vers la droite */
 }
 
 .artiste-info h3 { 
