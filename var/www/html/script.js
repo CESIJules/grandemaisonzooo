@@ -514,6 +514,63 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // ============================================================================
+  // ASCII BACKGROUND INITIALIZATION
+  // ============================================================================
+  // The ASCII background provides animated scenes behind the radio player.
+  // Scenes change automatically when a new track starts playing.
+  // Available scenes: 'clouds', 'neurons', 'eyes'
+  // 
+  // To customize scene behavior, use window.AsciiBackground:
+  //   - AsciiBackground.setScene('neurons') - manually change scene
+  //   - AsciiBackground.updateConfig({ speed: 1.5 }) - update config
+  //   - AsciiBackground.listScenes() - list available scenes
+  // ============================================================================
+  
+  const asciiCanvas = document.getElementById('asciiCanvas');
+  let asciiBackgroundInitialized = false;
+  
+  function initAsciiBackground() {
+    if (asciiBackgroundInitialized || !asciiCanvas) return;
+    
+    // Check if AsciiBackground is available
+    if (typeof AsciiBackground !== 'undefined') {
+      // Initialize with the clouds scene by default
+      AsciiBackground.init(asciiCanvas, 'clouds');
+      asciiBackgroundInitialized = true;
+      console.log('ASCII Background initialized. Use window.AsciiBackground to control.');
+    } else {
+      console.warn('AsciiBackground not loaded');
+    }
+  }
+  
+  // Initialize ASCII background when radio section becomes visible
+  // This helps with performance by not running animations until needed
+  if (asciiCanvas) {
+    // Initialize immediately for simplicity (alternatively could use IntersectionObserver)
+    initAsciiBackground();
+  }
+  
+  /**
+   * Change ASCII background scene on track change
+   * This function is called when a new song starts playing.
+   * You can modify this to use specific scenes for specific songs/genres.
+   * 
+   * Current behavior: Cycles through scenes in order, never repeating the same scene twice.
+   * Alternative: Use AsciiBackground.getRandomScene() for random selection.
+   */
+  function changeAsciiSceneOnTrackChange() {
+    if (!asciiBackgroundInitialized || typeof AsciiBackground === 'undefined') return;
+    
+    // Get next scene in rotation (avoids repeating current scene)
+    const nextScene = AsciiBackground.getNextScene();
+    
+    // Change scene with transition
+    AsciiBackground.setScene(nextScene, true);
+    
+    console.log('ASCII scene changed to:', nextScene);
+  }
+
   if (audio && playBtn && status && volumeControl && volumeToggle) {
     // Volume initial
     audio.volume = parseFloat(volumeControl.value || '1');
@@ -717,6 +774,14 @@ document.addEventListener('DOMContentLoaded', () => {
         pendingTitleTimeout = setTimeout(() => {
             updateTitleUI(title);
             if (rawTitle) fetchAndSetProgress(rawTitle); // Lancer la progression en même temps que le titre
+            
+            // ============================================================================
+            // HOOK: ASCII Background Scene Change on Track Change
+            // When a new track starts, change the ASCII background scene.
+            // Modify changeAsciiSceneOnTrackChange() to customize behavior.
+            // ============================================================================
+            changeAsciiSceneOnTrackChange();
+            
             pendingTitle = null;
             pendingTitleTimeout = null;
         }, totalDelay);
