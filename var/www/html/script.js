@@ -917,7 +917,9 @@ document.addEventListener('DOMContentLoaded', () => {
         contentDiv.classList.add('timeline-content');
         contentDiv.classList.add(index % 2 === 0 ? 'timeline-content-left' : 'timeline-content-right');
 
-        const titleElement = `<h3>${post.title}</h3>`;
+        const titleElement = post.link 
+          ? `<a href="${post.link}" target="_blank" rel="noopener noreferrer" class="timeline-title-link"><h3>${post.title}</h3></a>`
+          : `<h3>${post.title}</h3>`;
 
         const subtitleElement = post.link && post.subtitle
           ? `<a href="${post.link}" target="_blank" rel="noopener noreferrer"><h4>${post.subtitle}</h4></a>`
@@ -926,7 +928,9 @@ document.addEventListener('DOMContentLoaded', () => {
             : '';
 
         const imageElement = post.image
-          ? `<img src="${post.image}" alt="${post.title}" class="timeline-image">`
+          ? (post.link 
+              ? `<a href="${post.link}" target="_blank" rel="noopener noreferrer" class="timeline-image-link"><img src="${post.image}" alt="${post.title}" class="timeline-image"></a>`
+              : `<img src="${post.image}" alt="${post.title}" class="timeline-image">`)
           : '';
 
         contentDiv.innerHTML = `
@@ -1083,6 +1087,21 @@ document.addEventListener('DOMContentLoaded', () => {
   function scrollToSection(index) {
       if (index < 0 || index >= sections.length) return;
       
+      // Handle Timeline Entry Position (Right-to-Left Flow)
+      const targetSection = sections[index];
+      if (targetSection && targetSection.id === 'timeline' && timelineContainer) {
+          if (index > currentSectionIndex) {
+              // Coming from above (scrolling down) -> Start at Right (End)
+              const maxScroll = timelineContainer.scrollWidth - timelineContainer.clientWidth;
+              timelineContainer.scrollLeft = maxScroll;
+              timelineTargetScroll = maxScroll;
+          } else if (index < currentSectionIndex) {
+              // Coming from below (scrolling up) -> Start at Left (Start)
+              timelineContainer.scrollLeft = 0;
+              timelineTargetScroll = 0;
+          }
+      }
+
       isNavigating = true;
       const target = sections[index].offsetTop;
       
@@ -1120,16 +1139,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const isAtStart = timelineTargetScroll <= 1;
         
         // Logic: If we are pushing against the wall (target is at wall AND direction pushes further)
-        if (direction === 1 && isAtEnd) {
-             // Go to next section
+        // INVERTED LOGIC: Scroll Down (1) moves Left (towards Start). Scroll Up (-1) moves Right (towards End).
+        
+        if (direction === 1 && isAtStart) {
+             // Go to next section (Radio)
              if (currentSectionIndex < sections.length - 1) {
                  scrollToSection(currentSectionIndex + 1);
              }
              return;
         }
         
-        if (direction === -1 && isAtStart) {
-             // Go to prev section
+        if (direction === -1 && isAtEnd) {
+             // Go to prev section (Artists)
              if (currentSectionIndex > 0) {
                  scrollToSection(currentSectionIndex - 1);
              }
@@ -1137,7 +1158,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // Otherwise, scroll timeline
-        timelineTargetScroll += e.deltaY * 2.5; // Increased speed for better feel
+        // Invert direction: Subtract deltaY
+        timelineTargetScroll -= e.deltaY * 2.5; 
         timelineTargetScroll = Math.max(0, Math.min(timelineTargetScroll, maxScroll));
         
         if (!isAnimatingTimeline) {
