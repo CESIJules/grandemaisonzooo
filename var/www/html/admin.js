@@ -329,16 +329,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- Music Management ---
-  const musicFileSelect = document.getElementById('musicFileSelect');
-  const musicStatus = document.getElementById('musicStatus');
+  const musicManagementContainer = document.getElementById('musicManagementContainer');
   const refreshMusicBtn = document.getElementById('refreshMusicBtn');
-  const renameMusicBtn = document.getElementById('renameMusicBtn');
-  const deleteMusicBtn = document.getElementById('deleteMusicBtn');
+  const showMoreMusicBtn = document.getElementById('showMoreMusicBtn');
 
   // Function to render music files in the management area
   async function renderMusicFiles() {
-    if (!musicFileSelect) return;
-
     try {
       // Fetch current song and music files in parallel
       const [currentSong, musicFilesResponse] = await Promise.all([
@@ -355,45 +351,72 @@ document.addEventListener('DOMContentLoaded', () => {
         throw new Error(result.message);
       }
 
-      // Save current selection
-      const currentSelection = musicFileSelect.value;
-
-      musicFileSelect.innerHTML = '<option value="" disabled selected>Choisir un fichier...</option>'; // Clear existing files
+      musicManagementContainer.innerHTML = ''; // Clear existing files
 
       if (result.files.length === 0) {
-        if (musicStatus) musicStatus.innerHTML = `<p>${result.message || 'Aucun fichier de musique trouvé.'}</p>`;
+        musicManagementContainer.innerHTML = `<p>${result.message || 'Aucun fichier de musique trouvé.'}</p>`;
+        if (showMoreMusicBtn) showMoreMusicBtn.style.display = 'none';
         return;
-      } else {
-        if (musicStatus) musicStatus.innerHTML = '';
       }
 
       // Sort files alphabetically
       result.files.sort((a, b) => a.localeCompare(b));
 
-      result.files.forEach(file => {
-        const option = document.createElement('option');
-        option.value = file;
+      const ul = document.createElement('ul');
+      result.files.forEach((file, index) => {
+        const li = document.createElement('li');
+        li.style.display = 'flex';
+        li.style.justifyContent = 'space-between';
+        li.style.alignItems = 'center';
+        li.style.marginBottom = '8px';
         
-        const formattedTitle = formatSongTitle(file);
-        let displayText = formattedTitle;
-        
-        if (currentSong && formattedTitle === currentSong) {
-          displayText += ' (En cours)';
+        // Hide items beyond the first 8
+        if (index >= 8) {
+            li.classList.add('hidden-music-item');
+            li.style.display = 'none';
         }
-        
-        option.textContent = displayText;
-        musicFileSelect.appendChild(option);
-      });
 
-      // Restore selection if it still exists
-      if (currentSelection && result.files.includes(currentSelection)) {
-          musicFileSelect.value = currentSelection;
+        const formattedTitle = formatSongTitle(file);
+        const span = document.createElement('span');
+        span.textContent = formattedTitle;
+
+        if (currentSong && formattedTitle === currentSong) {
+          li.classList.add('playing');
+        }
+
+        const buttonsDiv = document.createElement('div');
+
+        const renameBtn = document.createElement('button');
+        renameBtn.textContent = 'Renommer';
+        renameBtn.classList.add('rename-music-btn');
+        renameBtn.dataset.filename = file;
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Supprimer';
+        deleteBtn.classList.add('delete-btn', 'delete-music-btn'); // Reuse existing .delete-btn style
+        deleteBtn.dataset.filename = file; // Store original filename
+
+        li.appendChild(span);
+        buttonsDiv.appendChild(renameBtn);
+        buttonsDiv.appendChild(deleteBtn);
+        li.appendChild(buttonsDiv);
+        ul.appendChild(li);
+      });
+      musicManagementContainer.appendChild(ul);
+
+      // Show/Hide "Show More" button
+      if (result.files.length > 8) {
+          if (showMoreMusicBtn) {
+              showMoreMusicBtn.style.display = 'inline-block';
+              showMoreMusicBtn.textContent = 'Voir plus ▼';
+              // Reset button state if needed, though re-rendering resets the list
+          }
+      } else {
+          if (showMoreMusicBtn) showMoreMusicBtn.style.display = 'none';
       }
 
     } catch (error) {
-      if (musicStatus) {
-        musicStatus.innerHTML = `<p style="color: red;">Impossible de charger les fichiers de musique: ${error.message}</p>`;
-      }
+      musicManagementContainer.innerHTML = `<p style="color: red;">Impossible de charger les fichiers de musique: ${error.message}</p>`;
     }
   }
 
@@ -468,32 +491,37 @@ document.addEventListener('DOMContentLoaded', () => {
     refreshMusicBtn.addEventListener('click', renderMusicFiles);
   }
 
-  // Rename button
-  if (renameMusicBtn) {
-      renameMusicBtn.addEventListener('click', () => {
-          const filename = musicFileSelect.value;
-          if (filename) {
-              renameMusicFile(filename);
-          } else {
-              alert('Veuillez sélectionner un fichier à renommer.');
-          }
+  // Show More button
+  if (showMoreMusicBtn) {
+      showMoreMusicBtn.addEventListener('click', () => {
+          const hiddenItems = document.querySelectorAll('.hidden-music-item');
+          hiddenItems.forEach(item => {
+              item.style.display = 'flex'; // Restore flex display
+              item.classList.remove('hidden-music-item');
+          });
+          showMoreMusicBtn.style.display = 'none'; // Hide button after expanding
       });
   }
 
-  // Delete button
-  if (deleteMusicBtn) {
-      deleteMusicBtn.addEventListener('click', () => {
-          const filename = musicFileSelect.value;
-          if (filename) {
-              deleteMusicFile(filename);
-          } else {
-              alert('Veuillez sélectionner un fichier à supprimer.');
-          }
-      });
+  // Delegated listener for music file delete buttons
+  if (musicManagementContainer) {
+    musicManagementContainer.addEventListener('click', (e) => {
+      if (e.target.classList.contains('delete-music-btn')) {
+        const filename = e.target.dataset.filename;
+        if (filename) {
+          deleteMusicFile(filename);
+        }
+      } else if (e.target.classList.contains('rename-music-btn')) {
+        const filename = e.target.dataset.filename;
+        if (filename) {
+          renameMusicFile(filename);
+        }
+      }
+    });
   }
 
   // Initial and periodic load of music files
-  if (musicFileSelect) {
+  if (musicManagementContainer) {
     renderMusicFiles(); // Initial load
     setInterval(renderMusicFiles, 20000); // Refresh every 20 seconds
   }
