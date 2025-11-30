@@ -314,7 +314,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 
   /* Style "Timeline Post" */
   background-color: rgba(20, 20, 20, 0.6);
-  padding: 10px 5px 30px 20px;
+  padding: 10px 20px 30px 20px;
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
