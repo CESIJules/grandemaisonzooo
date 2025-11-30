@@ -115,7 +115,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   padding: 0;
 
   /* Glassmorphism Style */
-  background-color: rgba(20, 20, 20, 0.6);
+  background-color: rgba(20, 20, 20, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -201,7 +201,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   text-transform: uppercase;
   
   /* Glassmorphism Style (Matching Timeline Cards) */
-  background-color: rgba(20, 20, 20, 0.6);
+  background-color: rgba(20, 20, 20, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -353,7 +353,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   z-index: 1001;
   
   /* Glassmorphism Style (Matching Burger) */
-  background-color: rgba(20, 20, 20, 0.6);
+  background-color: rgba(20, 20, 20, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -406,7 +406,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   white-space: nowrap;
 
   /* Style "Timeline Post" */
-  background-color: rgba(20, 20, 20, 0.6);
+  background-color: rgba(20, 20, 20, 0.3);
   padding: 10px 20px 30px 20px;
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -725,7 +725,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   position: absolute;
   left: 0;
   width: 100%;
-  background-color: rgba(20, 20, 20, 0.6);
+  background-color: rgba(20, 20, 20, 0.3);
   padding: 20px;
   border-radius: 20px;
   text-align: center;

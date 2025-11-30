@@ -629,9 +629,19 @@ document.addEventListener('DOMContentLoaded', () => {
       const isRadioSection = currentSection && currentSection.id === 'radio';
       
       if (isRadioPlaying && !isRadioSection) {
-          circularVolumeContainer.classList.add('volume-floating');
+          if (!circularVolumeContainer.classList.contains('volume-floating')) {
+              circularVolumeContainer.classList.remove('volume-floating-exit');
+              circularVolumeContainer.classList.add('volume-floating');
+          }
       } else {
-          circularVolumeContainer.classList.remove('volume-floating');
+          if (circularVolumeContainer.classList.contains('volume-floating')) {
+              circularVolumeContainer.classList.remove('volume-floating');
+              circularVolumeContainer.classList.add('volume-floating-exit');
+              
+              setTimeout(() => {
+                  circularVolumeContainer.classList.remove('volume-floating-exit');
+              }, 350);
+          }
       }
   }
 
