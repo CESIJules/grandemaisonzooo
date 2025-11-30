@@ -415,6 +415,11 @@ const AsciiBackground = (function() {
       connectionColor: '#333366'
     },
     
+    // Helper function to wrap coordinates (avoids double modulo in loops)
+    wrapCoord(val, max) {
+      return ((val % max) + max) % max;
+    },
+    
     init(gridRef, globalConfig) {
       this.state.time = 0;
       this.state.nodes = [];
@@ -519,9 +524,9 @@ const AsciiBackground = (function() {
         const x = Math.floor(ax + (bx - ax) * t);
         const y = Math.floor(ay + (by - ay) * t);
         
-        // Wrap around
-        const gx = ((x % gridRef.cols) + gridRef.cols) % gridRef.cols;
-        const gy = ((y % gridRef.rows) + gridRef.rows) % gridRef.rows;
+        // Wrap around using helper function
+        const gx = this.wrapCoord(x, gridRef.cols);
+        const gy = this.wrapCoord(y, gridRef.rows);
         
         const idx = gy * gridRef.cols + gx;
         
@@ -558,15 +563,15 @@ const AsciiBackground = (function() {
       const px = nodeA.x + (nodeB.x - nodeA.x) * progress - this.state.cameraOffset.x;
       const py = nodeA.y + (nodeB.y - nodeA.y) * progress - this.state.cameraOffset.y;
       
-      // Wrap around
-      const gx = Math.floor(((px % gridRef.cols) + gridRef.cols) % gridRef.cols);
-      const gy = Math.floor(((py % gridRef.rows) + gridRef.rows) % gridRef.rows);
+      // Wrap around using helper function
+      const gx = Math.floor(this.wrapCoord(px, gridRef.cols));
+      const gy = Math.floor(this.wrapCoord(py, gridRef.rows));
       
       // Draw pulse with glow
       for (let dy = -1; dy <= 1; dy++) {
         for (let dx = -1; dx <= 1; dx++) {
-          const x = ((gx + dx) % gridRef.cols + gridRef.cols) % gridRef.cols;
-          const y = ((gy + dy) % gridRef.rows + gridRef.rows) % gridRef.rows;
+          const x = this.wrapCoord(gx + dx, gridRef.cols);
+          const y = this.wrapCoord(gy + dy, gridRef.rows);
           const idx = y * gridRef.cols + x;
           
           const dist = Math.sqrt(dx * dx + dy * dy);
@@ -587,9 +592,9 @@ const AsciiBackground = (function() {
       const x = node.x - this.state.cameraOffset.x;
       const y = node.y - this.state.cameraOffset.y;
       
-      // Wrap around
-      const gx = Math.floor(((x % gridRef.cols) + gridRef.cols) % gridRef.cols);
-      const gy = Math.floor(((y % gridRef.rows) + gridRef.rows) % gridRef.rows);
+      // Wrap around using helper function
+      const gx = Math.floor(this.wrapCoord(x, gridRef.cols));
+      const gy = Math.floor(this.wrapCoord(y, gridRef.rows));
       
       const nodeChars = ['o', 'O', '@'];
       const color = this.config.palette[node.colorIndex];
@@ -608,8 +613,8 @@ const AsciiBackground = (function() {
           for (let dx = -1; dx <= 1; dx++) {
             if (dx === 0 && dy === 0) continue;
             
-            const nx = ((gx + dx) % gridRef.cols + gridRef.cols) % gridRef.cols;
-            const ny = ((gy + dy) % gridRef.rows + gridRef.rows) % gridRef.rows;
+            const nx = this.wrapCoord(gx + dx, gridRef.cols);
+            const ny = this.wrapCoord(gy + dy, gridRef.rows);
             const nidx = ny * gridRef.cols + nx;
             
             if (gridRef.cells[nidx].intensity < 0.5) {
@@ -675,6 +680,7 @@ const AsciiBackground = (function() {
           targetOffsetX: 0,
           targetOffsetY: 0,
           blinkTimer: Math.random() * 5,
+          blinkDuration: 0,
           isBlinking: false
         });
       }
@@ -690,12 +696,20 @@ const AsciiBackground = (function() {
       
       // Update eyes
       for (const eye of this.state.eyes) {
-        // Blink logic
+        // Blink logic - use frame-based timing instead of setTimeout
         eye.blinkTimer -= deltaTime;
-        if (eye.blinkTimer <= 0) {
+        if (eye.blinkTimer <= 0 && !eye.isBlinking) {
           eye.isBlinking = true;
+          eye.blinkDuration = 0.15; // 150ms blink duration
           eye.blinkTimer = 3 + Math.random() * 4;
-          setTimeout(() => { eye.isBlinking = false; }, 150);
+        }
+        
+        // Update blink state based on duration
+        if (eye.isBlinking) {
+          eye.blinkDuration -= deltaTime;
+          if (eye.blinkDuration <= 0) {
+            eye.isBlinking = false;
+          }
         }
         
         // Calculate target pupil position
@@ -1025,14 +1039,6 @@ const AsciiBackground = (function() {
     const deltaTime = Math.min((timestamp - lastFrameTime) / 1000, 0.1); // Cap at 100ms
     lastFrameTime = timestamp;
     
-    // Frame rate limiting
-    const frameInterval = 1000 / config.fps;
-    if (timestamp - lastFrameTime < frameInterval - 16) {
-      // Skip frame if too early (with 16ms tolerance)
-      // Actually we already set lastFrameTime, so this check is off
-      // Let's use a different approach - track last render time
-    }
-    
     // Handle transition
     if (transitionState) {
       updateTransition(deltaTime);
@@ -1094,8 +1100,8 @@ const AsciiBackground = (function() {
     ctx.fillStyle = config.backgroundColor;
     ctx.fillRect(0, 0, logicalWidth, logicalHeight);
     
-    // Set font
-    ctx.font = `${config.cellSize * 0.9}px monospace`;
+    // Set font - use specific monospace fonts for consistent ASCII rendering
+    ctx.font = `${config.cellSize * 0.9}px "Courier New", Consolas, "Liberation Mono", monospace`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     
