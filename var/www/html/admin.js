@@ -409,7 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (showMoreMusicBtn) {
               showMoreMusicBtn.style.display = 'inline-block';
               showMoreMusicBtn.textContent = 'Voir plus ▼';
-              // Reset button state if needed, though re-rendering resets the list
+              showMoreMusicBtn.setAttribute('data-expanded', 'false');
           }
       } else {
           if (showMoreMusicBtn) showMoreMusicBtn.style.display = 'none';
@@ -494,12 +494,27 @@ document.addEventListener('DOMContentLoaded', () => {
   // Show More button
   if (showMoreMusicBtn) {
       showMoreMusicBtn.addEventListener('click', () => {
+          const isExpanded = showMoreMusicBtn.getAttribute('data-expanded') === 'true';
           const hiddenItems = document.querySelectorAll('.hidden-music-item');
-          hiddenItems.forEach(item => {
-              item.style.display = 'flex'; // Restore flex display
-              item.classList.remove('hidden-music-item');
-          });
-          showMoreMusicBtn.style.display = 'none'; // Hide button after expanding
+          
+          if (!isExpanded) {
+              // Expand
+              hiddenItems.forEach(item => {
+                  item.style.display = 'flex';
+              });
+              showMoreMusicBtn.textContent = 'Voir moins ▲';
+              showMoreMusicBtn.setAttribute('data-expanded', 'true');
+          } else {
+              // Collapse
+              hiddenItems.forEach(item => {
+                  item.style.display = 'none';
+              });
+              showMoreMusicBtn.textContent = 'Voir plus ▼';
+              showMoreMusicBtn.setAttribute('data-expanded', 'false');
+              
+              // Scroll back to the top of the list or button to keep context
+              musicManagementContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
       });
   }
 

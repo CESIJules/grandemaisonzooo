@@ -489,7 +489,6 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   font-size: 2em;
   text-align: left;
   pointer-events: none;
-  position: absolute;
   left: 40px;
   top: 50%;
   transform: translateY(-50%);
