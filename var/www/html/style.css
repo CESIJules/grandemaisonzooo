@@ -1,14 +1,8 @@
 /* Base */
 @font-face {
   font-family: 'Thunder';
-  src: url('font/THUNDER/Fonts/OpenType-TT/Thunder-BoldLC.ttf') format('truetype');
+  src: url('font/THUNDER/Fonts/OpenType-TT/Thunder-ExtraBoldHC.ttf') format('truetype');
   font-weight: 700;
-  font-style: normal;
-}
-@font-face {
-  font-family: 'Thunder';
-  src: url('font/THUNDER/Fonts/OpenType-TT/Thunder-LC.ttf') format('truetype');
-  font-weight: 400;
   font-style: normal;
 }
 
@@ -121,7 +115,7 @@ main { -ms-overflow-style: none; scrollbar-width: none; }
 }
 
 h1, h2, h3, h4, h5, h6 { 
-  font-family: 'Thunder', sans-serif;
+  font-family: 'Thunder';
   font-weight: 700; 
   margin: 0 0 12px; 
   color: #f5f5f5; 
@@ -188,7 +182,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 .menu ul { list-style: none; margin: 0; padding: 0; text-align: center; }
 .menu li { margin: 12px 0; }
 .menu a {
-  font-family: 'Thunder', sans-serif;
+  font-family: 'Thunder';
   font-weight: 700;
   color: #eee;
   text-decoration: none;
