@@ -314,7 +314,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 
   /* Style "Timeline Post" */
   background-color: rgba(20, 20, 20, 0.6);
-  padding: 10px 20px;
+  padding: 10px 5px 0px 20px;
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
@@ -853,9 +853,11 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 
 /* Barre de progression de la radio */
 #progress-info {
+  opacity: 1;
+  pointer-events: auto;
   position: absolute;
   left: 50%;
-  top: calc(50% + 30px); /* Juste en dessous du titre */
+  top: calc(50% + 5px); /* Juste en dessous du titre */
   transform: translateX(-50%);
   display: flex;
   align-items: center;
@@ -863,9 +865,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   gap: 12px;
   width: 400px;
   max-width: 80%;
-  opacity: 0; /* Caché par défaut, affiché via JS */
   transition: opacity 0.5s ease;
-  pointer-events: none;
 }
 
 #radio.playing #progress-info.visible {
