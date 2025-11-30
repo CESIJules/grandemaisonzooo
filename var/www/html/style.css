@@ -1089,12 +1089,14 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   -webkit-backdrop-filter: blur(5px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   
-  /* Radar Grid (Subtle) */
+  /* Radar Grid (More visible lines + Diagonals) */
   background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    radial-gradient(circle, transparent 20%, rgba(255, 255, 255, 0.05) 20%, rgba(255, 255, 255, 0.05) 21%, transparent 21%, transparent 40%, rgba(255, 255, 255, 0.05) 40%, rgba(255, 255, 255, 0.05) 41%, transparent 41%, transparent 60%, rgba(255, 255, 255, 0.05) 60%, rgba(255, 255, 255, 0.05) 61%, transparent 61%, transparent 80%, rgba(255, 255, 255, 0.05) 80%, rgba(255, 255, 255, 0.05) 81%, transparent 81%);
-  background-size: 50px 50px, 50px 50px, 100% 100%;
+    linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(45deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+    radial-gradient(circle closest-side, transparent 20%, rgba(255, 255, 255, 0.15) 20%, rgba(255, 255, 255, 0.15) 21%, transparent 21%, transparent 40%, rgba(255, 255, 255, 0.15) 40%, rgba(255, 255, 255, 0.15) 41%, transparent 41%, transparent 60%, rgba(255, 255, 255, 0.15) 60%, rgba(255, 255, 255, 0.15) 61%, transparent 61%, transparent 80%, rgba(255, 255, 255, 0.15) 80%, rgba(255, 255, 255, 0.15) 81%, transparent 81%);
+  background-size: 50px 50px, 50px 50px, 50px 50px, 50px 50px, 100% 100%;
   background-position: center center;
   
   /* Electric Glow Shadow */
@@ -1137,11 +1139,11 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 }
 
 #vinyl-disc.playing {
-  /* Pulse effect with white glow - More intense */
+  /* Pulse effect with white glow - Faded global glow */
   box-shadow: 
     0 0 30px rgba(0, 0, 0, 0.8),
-    inset 0 0 50px rgba(255, 255, 255, 0.15),
-    0 0 60px rgba(255, 255, 255, 0.4);
+    inset 0 0 50px rgba(255, 255, 255, 0.1),
+    0 0 60px rgba(255, 255, 255, 0.15);
   transition: box-shadow 2s ease-in-out;
 }
 
@@ -1163,8 +1165,8 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 #playRadio {
   position: relative; /* Pour être au-dessus du disque */
   z-index: 2;
-  width: 90px;
-  height: 90px;
+  width: 80px;
+  height: 80px;
   font-size: 36px;
   background-color: transparent; /* Fond transparent pour se fondre avec l'ASCII */
   border: 2px solid rgba(255,255,255,0.1);
