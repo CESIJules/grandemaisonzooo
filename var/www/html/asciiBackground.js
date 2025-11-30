@@ -24,6 +24,10 @@
   // ==========================================
   // CONFIGURATION
   // ==========================================
+  
+  // Mobile breakpoint for responsive adjustments
+  const MOBILE_BREAKPOINT = 768;
+  
   const DEFAULT_CONFIG = {
     // Character set for ASCII rendering (from sparse to dense)
     charset: [' ', '.', ':', '+', '*', 'o', 'O', '#', '@'],
@@ -558,11 +562,14 @@
           if (distFromCenter <= 1) {
             // Inside the eye
             if (distFromCenter > 0.8) {
-              // Eye outline
-              let char = '*';
+              // Eye outline - select character based on position
+              // Top/bottom of eye use '-', left/right use '(' and ')'
+              let char;
               if (Math.abs(normalizedY) > Math.abs(normalizedX) * 0.5) {
-                char = y < 0 ? '-' : '-';
+                // Top or bottom edge
+                char = '-';
               } else {
+                // Left or right edge
                 char = x < 0 ? '(' : ')';
               }
               grid.setCell(gx, gy, char, this.config.palette.outline);
@@ -682,7 +689,7 @@
      * Setup canvas size and resolution
      */
     setupCanvas() {
-      const isMobile = window.innerWidth < 768;
+      const isMobile = window.innerWidth < MOBILE_BREAKPOINT;
       const scaleFactor = isMobile ? this.config.mobileScaleFactor : 1;
       
       // Get actual pixel dimensions
@@ -878,7 +885,7 @@
       this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
       
       // Set font
-      const fontSize = this.config.fontSize * this.dpr * (window.innerWidth < 768 ? this.config.mobileScaleFactor : 1);
+      const fontSize = this.config.fontSize * this.dpr * (window.innerWidth < MOBILE_BREAKPOINT ? this.config.mobileScaleFactor : 1);
       this.ctx.font = `${fontSize}px ${this.config.fontFamily}`;
       this.ctx.textBaseline = 'top';
       
