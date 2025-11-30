@@ -615,37 +615,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Circular Volume Control Logic ---
   const circularVolumeContainer = document.getElementById('circularVolume');
-  const ringProgress = document.querySelector('.ring-progress');
-  const volumeIcon = document.getElementById('volumeIcon');
+  const floatingVolumeContainer = document.getElementById('floatingVolume');
+  const volumeContainers = [circularVolumeContainer, floatingVolumeContainer].filter(Boolean);
   
-  // Note: volumeControl is now a hidden input, but we still use it for state
-  // volumeToggle is removed from HTML, so we check if it exists before using
+  const ringProgresses = document.querySelectorAll('.ring-progress');
+  const volumeIcons = document.querySelectorAll('.volume-icon-center i');
   
-  // Function to update volume button position
+  // Function to update volume button position (Now handles visibility of floating button)
   function updateVolumeButtonPosition() {
-      if (!circularVolumeContainer) return;
       const currentSection = sections[currentSectionIndex];
       const isRadioPlaying = audio && !audio.paused;
       const isRadioSection = currentSection && currentSection.id === 'radio';
       
       if (isRadioPlaying && !isRadioSection) {
-          if (!circularVolumeContainer.classList.contains('volume-floating')) {
-              circularVolumeContainer.classList.remove('volume-floating-exit');
-              circularVolumeContainer.classList.add('volume-floating');
+          if (floatingVolumeContainer) {
+              floatingVolumeContainer.classList.remove('hidden');
+              // Small delay to allow display:block to apply before opacity transition
+              requestAnimationFrame(() => {
+                  floatingVolumeContainer.classList.add('visible');
+              });
           }
       } else {
-          if (circularVolumeContainer.classList.contains('volume-floating')) {
-              circularVolumeContainer.classList.remove('volume-floating');
-              circularVolumeContainer.classList.add('volume-floating-exit');
-              
+          if (floatingVolumeContainer) {
+              floatingVolumeContainer.classList.remove('visible');
+              // Wait for transition to finish before hiding
               setTimeout(() => {
-                  circularVolumeContainer.classList.remove('volume-floating-exit');
-              }, 350);
+                  if (!floatingVolumeContainer.classList.contains('visible')) {
+                      floatingVolumeContainer.classList.add('hidden');
+                  }
+              }, 500);
           }
       }
   }
 
-  if (audio && playBtn && status && volumeControl && circularVolumeContainer) {
+  if (audio && playBtn && status && volumeControl && volumeContainers.length > 0) {
     // Volume initial (Load from localStorage)
     const savedVolume = localStorage.getItem('radioVolume');
     let currentVolume = savedVolume !== null ? parseFloat(savedVolume) : 1;
@@ -662,24 +665,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // Arc length is 270 degrees (3/4 of circle)
     const arcLength = circumference * 0.75;
     
-    // stroke-dasharray: arcLength, circumference
-    // stroke-dashoffset: arcLength * (1 - volume)
-    
     function updateVolumeUI(vol) {
-        // Invert volume for offset calculation because we want it to fill up
-        // Offset = arcLength means empty
-        // Offset = 0 means full
         const offset = arcLength * (1 - vol);
-        ringProgress.style.strokeDashoffset = offset;
         
-        // Update Icon
-        if (vol === 0) {
-            volumeIcon.className = 'fas fa-volume-mute';
-        } else if (vol < 0.5) {
-            volumeIcon.className = 'fas fa-volume-down';
-        } else {
-            volumeIcon.className = 'fas fa-volume-up';
-        }
+        ringProgresses.forEach(ring => {
+            ring.style.strokeDashoffset = offset;
+        });
+        
+        volumeIcons.forEach(icon => {
+            if (vol === 0) {
+                icon.className = 'fas fa-volume-mute';
+            } else if (vol < 0.5) {
+                icon.className = 'fas fa-volume-down';
+            } else {
+                icon.className = 'fas fa-volume-up';
+            }
+        });
     }
     
     updateVolumeUI(currentVolume);
@@ -699,19 +700,29 @@ document.addEventListener('DOMContentLoaded', () => {
         updateVolumeUI(vol);
     }
 
-    circularVolumeContainer.addEventListener('mousedown', (e) => {
-        isDraggingVolume = true;
-        circularVolumeContainer.classList.add('dragging');
-        startY = e.clientY;
-        startVolume = parseFloat(volumeControl.value);
-        e.preventDefault(); // Prevent text selection
+    volumeContainers.forEach(container => {
+        container.addEventListener('mousedown', (e) => {
+            isDraggingVolume = true;
+            container.classList.add('dragging');
+            startY = e.clientY;
+            startVolume = parseFloat(volumeControl.value);
+            e.preventDefault(); 
+        });
+        
+        container.addEventListener('touchstart', (e) => {
+            isDraggingVolume = true;
+            container.classList.add('dragging');
+            startY = e.touches[0].clientY;
+            startVolume = parseFloat(volumeControl.value);
+            e.preventDefault();
+        }, { passive: false });
     });
 
     window.addEventListener('mousemove', (e) => {
         if (isDraggingVolume) {
             e.preventDefault();
-            const deltaY = startY - e.clientY; // Up is positive delta
-            const sensitivity = 0.005; // Adjust for speed
+            const deltaY = startY - e.clientY; 
+            const sensitivity = 0.005; 
             
             let newVol = startVolume + (deltaY * sensitivity);
             setVolume(newVol);
@@ -721,25 +732,15 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('mouseup', () => {
         if (isDraggingVolume) {
             isDraggingVolume = false;
-            circularVolumeContainer.classList.remove('dragging');
+            volumeContainers.forEach(c => c.classList.remove('dragging'));
         }
     });
-
-    
-    // Touch support
-    circularVolumeContainer.addEventListener('touchstart', (e) => {
-        isDraggingVolume = true;
-        circularVolumeContainer.classList.add('dragging');
-        startY = e.touches[0].clientY;
-        startVolume = parseFloat(volumeControl.value);
-        e.preventDefault();
-    }, { passive: false });
 
     window.addEventListener('touchmove', (e) => {
         if (isDraggingVolume) {
             e.preventDefault();
             const deltaY = startY - e.touches[0].clientY;
-            const sensitivity = 0.005;
+            const sensitivity = 0.005; 
             
             let newVol = startVolume + (deltaY * sensitivity);
             setVolume(newVol);
@@ -748,9 +749,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('touchend', () => {
         isDraggingVolume = false;
-        circularVolumeContainer.classList.remove('dragging');
+        volumeContainers.forEach(c => c.classList.remove('dragging'));
     });
-
 
     // Statuts
     audio.addEventListener('playing', () => { 

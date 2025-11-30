@@ -33,6 +33,40 @@
       ☰
     </button>
 
+    <!-- Floating Volume Button (Hidden by default) -->
+    <div class="volume-container volume-floating hidden" id="floatingVolume">
+      <svg class="volume-ring" width="60" height="60" viewBox="0 0 60 60">
+        <circle
+          class="ring-bg"
+          cx="30"
+          cy="30"
+          r="26"
+          stroke-width="4"
+          fill="none"
+          stroke="rgba(255,255,255,0.2)"
+          stroke-linecap="round"
+          stroke-dasharray="122.52 163.36"
+          transform="rotate(135 30 30)"
+        ></circle>
+        <circle
+          class="ring-progress"
+          cx="30"
+          cy="30"
+          r="26"
+          stroke-width="4"
+          fill="none"
+          stroke="#fff"
+          stroke-linecap="round"
+          stroke-dasharray="122.52 163.36"
+          stroke-dashoffset="122.52"
+          transform="rotate(135 30 30)"
+        ></circle>
+      </svg>
+      <div class="volume-icon-center">
+        <i class="fas fa-volume-up" id="floatingVolumeIcon"></i>
+      </div>
+    </div>
+
     <!-- Menu overlay -->
     <nav id="menu" class="menu hidden" aria-hidden="true">
       <ul>
