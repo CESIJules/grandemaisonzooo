@@ -205,8 +205,19 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   padding-top: 0;
   position: relative;
   overflow: hidden;
+}
+
+#radio::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   background: url('images/radioback.png') no-repeat center center;
   background-size: cover;
+  opacity: 0.5;
+  z-index: -1;
 }
 
 #noiseCanvas {
@@ -529,14 +540,25 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 
 /* Timeline */
 #timeline { 
-  background: url(images/TEXTURE_ASCII_2.png) no-repeat center center;
-  background-size: cover;
-  background-attachment: fixed;
   justify-content: flex-start; 
   padding: 0;
   overflow: hidden;
   position: relative;
   height: 100vh;
+}
+
+#timeline::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url(images/TEXTURE_ASCII_2.png) no-repeat center center;
+  background-size: cover;
+  background-attachment: fixed;
+  opacity: 0.5;
+  z-index: -1;
 }
 
 .timeline-header-wrapper {
@@ -694,19 +716,29 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   margin-top: 10px;
 }
 
+/* Remove old generic link style that might conflict */
 .timeline-item a { 
-  color: #fff;
+  /* color: #fff;  Removed to allow inherit */
   text-decoration: none;
-  font-weight: bold;
-  border-bottom: 1px solid #fff;
+  /* font-weight: bold; Removed, h3 is already bold */
+  /* border-bottom: 1px solid #fff; Removed, handled by specific selectors */
 }
 
-.timeline-item a:hover { 
+.timeline-item h3 a,
+.timeline-item h4 a { 
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+  transition: color 0.2s, border-bottom-color 0.2s;
+}
+
+.timeline-item h3 a:hover,
+.timeline-item h4 a:hover { 
   color: #ccc;
-  border-bottom-color: #ccc;
 }
 
 .timeline-item a.timeline-image-link {
+  display: block;
   border-bottom: none;
 }
 
