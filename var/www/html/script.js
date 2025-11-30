@@ -514,9 +514,138 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  if (audio && playBtn && status && volumeControl && volumeToggle) {
-    // Volume initial
-    audio.volume = parseFloat(volumeControl.value || '1');
+  // --- Circular Volume Control Logic ---
+  const circularVolumeContainer = document.getElementById('circularVolume');
+  const ringProgress = document.querySelector('.ring-progress');
+  const volumeIcon = document.getElementById('volumeIcon');
+  
+  // Note: volumeControl is now a hidden input, but we still use it for state
+  // volumeToggle is removed from HTML, so we check if it exists before using
+  
+  if (audio && playBtn && status && volumeControl && circularVolumeContainer) {
+    // Volume initial (Load from localStorage)
+    const savedVolume = localStorage.getItem('radioVolume');
+    let currentVolume = savedVolume !== null ? parseFloat(savedVolume) : 1;
+    
+    // Clamp volume
+    currentVolume = Math.max(0, Math.min(1, currentVolume));
+
+    audio.volume = currentVolume;
+    volumeControl.value = currentVolume;
+
+    // Update Ring UI
+    const radius = 26;
+    const circumference = 2 * Math.PI * radius;
+    // stroke-dasharray is set in HTML/CSS to circumference (approx 163.36)
+    // stroke-dashoffset = circumference * (1 - volume)
+    // But we want 0 at top (full offset?) No.
+    // If dasharray = circumference.
+    // Volume 1 (full) -> offset 0.
+    // Volume 0 (empty) -> offset circumference.
+    
+    function updateVolumeUI(vol) {
+        const offset = circumference * (1 - vol);
+        ringProgress.style.strokeDashoffset = offset;
+        
+        // Update Icon
+        if (vol === 0) {
+            volumeIcon.className = 'fas fa-volume-mute';
+        } else if (vol < 0.5) {
+            volumeIcon.className = 'fas fa-volume-down';
+        } else {
+            volumeIcon.className = 'fas fa-volume-up';
+        }
+    }
+    
+    updateVolumeUI(currentVolume);
+
+    // Interaction
+    let isDraggingVolume = false;
+
+    function calculateVolumeFromEvent(e) {
+        const rect = circularVolumeContainer.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+        // Calculate angle relative to center
+        // atan2(y, x) returns angle in radians from X axis (right)
+        // We want 0 at Top (-90 deg)
+        const x = clientX - centerX;
+        const y = clientY - centerY;
+        
+        // Angle in degrees, 0 at Right, 90 at Bottom, 180 at Left, -90 at Top
+        let angleDeg = Math.atan2(y, x) * (180 / Math.PI);
+        
+        // Shift so Top is 0 and goes clockwise
+        // Current: Top is -90.
+        // Add 90 -> Top is 0. Right is 90. Bottom is 180. Left is 270.
+        angleDeg += 90;
+        
+        if (angleDeg < 0) {
+            angleDeg += 360;
+        }
+        
+        // Now angleDeg is 0 to 360 starting from Top clockwise
+        let vol = angleDeg / 360;
+        
+        // Clamp to 0-1
+        vol = Math.max(0, Math.min(1, vol));
+        
+        return vol;
+    }
+
+    function setVolume(vol) {
+        audio.volume = vol;
+        volumeControl.value = vol;
+        localStorage.setItem('radioVolume', vol);
+        updateVolumeUI(vol);
+    }
+
+    circularVolumeContainer.addEventListener('mousedown', (e) => {
+        isDraggingVolume = true;
+        circularVolumeContainer.classList.add('dragging');
+        const vol = calculateVolumeFromEvent(e);
+        setVolume(vol);
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (isDraggingVolume) {
+            e.preventDefault(); // Prevent selection
+            const vol = calculateVolumeFromEvent(e);
+            setVolume(vol);
+        }
+    });
+
+    window.addEventListener('mouseup', () => {
+        if (isDraggingVolume) {
+            isDraggingVolume = false;
+            circularVolumeContainer.classList.remove('dragging');
+        }
+    });
+    
+    // Touch support
+    circularVolumeContainer.addEventListener('touchstart', (e) => {
+        isDraggingVolume = true;
+        circularVolumeContainer.classList.add('dragging');
+        const vol = calculateVolumeFromEvent(e);
+        setVolume(vol);
+    }, { passive: false });
+
+    window.addEventListener('touchmove', (e) => {
+        if (isDraggingVolume) {
+            e.preventDefault();
+            const vol = calculateVolumeFromEvent(e);
+            setVolume(vol);
+        }
+    }, { passive: false });
+
+    window.addEventListener('touchend', () => {
+        isDraggingVolume = false;
+        circularVolumeContainer.classList.remove('dragging');
+    });
+
 
     // Statuts
     audio.addEventListener('playing', () => { 
@@ -587,24 +716,14 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Fader de volume
-    volumeControl.addEventListener('input', () => {
-      audio.volume = parseFloat(volumeControl.value || '1');
-    });
+    // Fader de volume (Old listener removed, logic handled above)
+    // volumeControl.addEventListener('input', ...);
 
-    // Toggle volume control visibility
-    volumeToggle.addEventListener('click', (e) => {
-      e.stopPropagation(); // Prevent click from bubbling to the document
-      volumeContainer.classList.toggle('hidden');
-    });
+    // Toggle volume control visibility (Removed)
+    // volumeToggle.addEventListener('click', ...);
 
-    // Hide volume control when clicking outside
-    document.addEventListener('click', (e) => {
-      const volContainer = document.querySelector('.volume-container');
-      if (volContainer && !volContainer.contains(e.target)) {
-        volumeContainer.classList.add('hidden');
-      }
-    });
+    // Hide volume control when clicking outside (Removed)
+    // document.addEventListener('click', ...);
 
     // Initial fetch of song info and listeners
     fetchCurrentSong();

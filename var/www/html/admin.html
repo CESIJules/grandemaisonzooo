@@ -100,6 +100,12 @@
         height: auto !important;
         overflow: visible !important;
       }
+      #admin-section.screen {
+        display: block !important;
+        height: auto !important;
+        min-height: 100vh;
+        padding-bottom: 50px;
+      }
     </style>
   </head>
   <body>
@@ -113,13 +119,13 @@
       <section id="admin-section" class="screen">
         <div class="admin-container">
           <div class="tab-menu">
-            <button class="tab-link active" data-tab="timeline">
+            <button class="tab-link active" data-tab="admin-timeline">
               Timeline
             </button>
             <button class="tab-link" data-tab="music">Musique</button>
           </div>
 
-          <div id="timeline" class="tab-content active">
+          <div id="admin-timeline" class="tab-content active">
             <h2>Admin Timeline</h2>
             <form id="adminTimelineForm" class="contact-form">
               <input
