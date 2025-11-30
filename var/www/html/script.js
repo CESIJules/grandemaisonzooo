@@ -566,13 +566,14 @@ document.addEventListener('DOMContentLoaded', () => {
           let gasIntensity = (noise + 3) / 6;
           
           // Smooth thresholding for "beaux dégradés"
-          if (gasIntensity < 0.4) {
+          // Lower threshold for wider, softer edges
+          if (gasIntensity < 0.3) { 
               gasIntensity = 0;
           } else {
-              // Remap 0.4..1.0 to 0..1.0
-              gasIntensity = (gasIntensity - 0.4) / 0.6;
-              // Smooth curve for nice gradients
-              gasIntensity = Math.pow(gasIntensity, 2); 
+              // Remap 0.3..1.0 to 0..1.0
+              gasIntensity = (gasIntensity - 0.3) / 0.7;
+              // Softer curve (power 1.5 instead of 2) for more linear/gradual fade
+              gasIntensity = Math.pow(gasIntensity, 1.5); 
           }
 
           // --- 2. Mouse Calculation (Restored "Animation d'avant") ---
@@ -591,7 +592,8 @@ document.addEventListener('DOMContentLoaded', () => {
               
               if (dist < maxRadius) {
                  mouseIntensity = 1 - (dist / maxRadius);
-                 mouseIntensity = Math.pow(mouseIntensity, 4); 
+                 // Softer falloff for mouse too
+                 mouseIntensity = Math.pow(mouseIntensity, 3); 
               }
           }
           
@@ -616,8 +618,50 @@ document.addEventListener('DOMContentLoaded', () => {
                  ctx.shadowBlur = 0;
              }
              
+             // --- Glitch & Words Logic ---
+             let displayChar = grid[x][y];
+             
+             // 1. Random Glitch (High intensity = more glitch)
+             if (intensity > 0.3 && Math.random() < 0.15) {
+                 displayChar = chars[Math.floor(Math.random() * chars.length)];
+             }
+             
+             // 2. Words "GM" and "S&S"
+             // Only in the core of the mouse effect
+             if (intensity > 0.6) {
+                 const mouseCol = Math.floor(mouse.x / charSize);
+                 const mouseRow = Math.floor(mouse.y / charSize);
+                 const relX = x - mouseCol;
+                 const relY = y - mouseRow;
+                 
+                 // Time-based triggers (Loop every 6 seconds)
+                 const cycle = time % 6; 
+                 
+                 // Show GM between 1.5s and 2.2s
+                 if (cycle > 1.5 && cycle < 2.2) {
+                     if (relY === 0) {
+                         if (relX === -1) displayChar = 'G';
+                         if (relX === 0) displayChar = 'M';
+                     }
+                 }
+                 // Show S&S between 4.0s and 4.7s
+                 else if (cycle > 4.0 && cycle < 4.7) {
+                     if (relY === 0) {
+                         if (relX === -1) displayChar = 'S';
+                         if (relX === 0) displayChar = '&';
+                         if (relX === 1) displayChar = 'S';
+                     }
+                 }
+                 
+                 // Add some "glitch" to the words themselves (flicker)
+                 // If it's a word char, sometimes show random char instead to keep it "subtle"
+                 if (['G','M','S','&'].includes(displayChar) && Math.random() < 0.1) {
+                     displayChar = chars[Math.floor(Math.random() * chars.length)];
+                 }
+             }
+             
              const offset = (charSize * scale - charSize) / 2;
-             ctx.fillText(grid[x][y], px - offset, py - offset);
+             ctx.fillText(displayChar, px - offset, py - offset);
              
              // Reset context
              ctx.shadowBlur = 0;
