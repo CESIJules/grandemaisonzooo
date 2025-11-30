@@ -462,57 +462,97 @@ document.addEventListener('DOMContentLoaded', () => {
     remainingTimeEl.textContent = formatTime(remaining);
   }
 
-  // Noise Effect (Canvas)
-  const noiseCanvas = document.getElementById('noiseCanvas');
-  let noiseCtx;
-  let noiseAnimationId;
-  let lastNoiseTime = 0;
-  const noiseFps = 12; // 12 FPS for organic/stop-motion feel
+  // --- ASCII Background Effect ---
+  const asciiCanvas = document.getElementById('asciiBg');
+  
+  function initAsciiBackground() {
+    if (!asciiCanvas) return;
+    const ctx = asciiCanvas.getContext('2d');
+    let width, height;
+    let cols, rows;
+    const charSize = 14; 
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$#@%&?!<>"; 
+    
+    let mouse = { x: -1000, y: -1000 };
+    let targetMouse = { x: -1000, y: -1000 };
 
-  function resizeNoise() {
-    if (noiseCanvas) {
-      noiseCanvas.width = noiseCanvas.offsetWidth;
-      noiseCanvas.height = noiseCanvas.offsetHeight;
+    window.addEventListener('mousemove', (e) => {
+      targetMouse.x = e.clientX;
+      targetMouse.y = e.clientY;
+    });
+
+    function resize() {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      asciiCanvas.width = width;
+      asciiCanvas.height = height;
+      cols = Math.ceil(width / charSize);
+      rows = Math.ceil(height / charSize);
+      ctx.font = `${charSize}px 'Courier New', monospace`;
     }
-  }
-  window.addEventListener('resize', resizeNoise);
-  resizeNoise();
+    window.addEventListener('resize', resize);
+    resize();
 
-  function drawNoise(time) {
-    noiseAnimationId = requestAnimationFrame(drawNoise);
+    function draw(t) {
+      requestAnimationFrame(() => draw(Date.now()));
+      
+      mouse.x += (targetMouse.x - mouse.x) * 0.1;
+      mouse.y += (targetMouse.y - mouse.y) * 0.1;
 
-    if (time - lastNoiseTime < 1000 / noiseFps) return;
-    lastNoiseTime = time;
+      ctx.fillStyle = '#050505'; 
+      ctx.fillRect(0, 0, width, height);
 
-    if (!noiseCanvas) return;
-    if (!noiseCtx) noiseCtx = noiseCanvas.getContext('2d');
+      ctx.textBaseline = 'top';
+      
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          const px = x * charSize;
+          const py = y * charSize;
+          
+          const dx = px - mouse.x;
+          const dy = py - mouse.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          
+          const radius = 300;
+          let intensity = 0;
+          
+          if (dist < radius) {
+            intensity = 1 - dist / radius;
+          }
 
-    const w = noiseCanvas.width;
-    const h = noiseCanvas.height;
+          // Base pattern
+          let charIndex = (x + y + Math.floor(t * 0.0002)) % chars.length;
+          let char = chars[charIndex];
+          let color = '#1a1a1a'; 
+          
+          // Random ambient glitch
+          if (Math.random() < 0.002) {
+             color = '#333';
+             char = chars[Math.floor(Math.random() * chars.length)];
+          }
 
-    noiseCtx.clearRect(0, 0, w, h);
+          // Mouse interaction
+          if (intensity > 0) {
+            // Glow
+            const brightness = Math.floor(intensity * 200 + 26);
+            color = `rgb(${brightness}, ${brightness}, ${brightness})`;
+            
+            // Glitch near mouse
+            if (Math.random() < intensity * 0.4) {
+               char = chars[Math.floor(Math.random() * chars.length)];
+               color = '#fff';
+            }
+          }
 
-    // Settings for "scattered" and "glitchy"
-    const numParticles = 15; // Very sparse
-    noiseCtx.fillStyle = 'rgba(255, 255, 255, 0.15)'; // Low opacity
-
-    for (let i = 0; i < numParticles; i++) {
-      const x = Math.random() * w;
-      const y = Math.random() * h;
-      const size = Math.random() * 3 + 1;
-
-      if (Math.random() > 0.95) {
-        // Vertical scratch line
-        noiseCtx.fillRect(x, 0, 1, h);
-      } else if (Math.random() > 0.9) {
-        // Horizontal glitch block
-        noiseCtx.fillRect(x, y, size * 20, size);
-      } else {
-        // Random dust speck
-        noiseCtx.fillRect(x, y, size, size);
+          ctx.fillStyle = color;
+          ctx.fillText(char, px, py);
+        }
       }
     }
+    draw(Date.now());
   }
+  
+  initAsciiBackground();
 
   // --- Circular Volume Control Logic ---
   const circularVolumeContainer = document.getElementById('circularVolume');
@@ -647,7 +687,6 @@ document.addEventListener('DOMContentLoaded', () => {
     audio.addEventListener('playing', () => { 
       status.textContent = ''; 
       document.getElementById('radio').classList.add('playing');
-      if (!noiseAnimationId) drawNoise(0); // Start noise
       
       if (!fetchInterval) {
           fetchCurrentSong(); // Fetch immediately on play
@@ -665,11 +704,7 @@ document.addEventListener('DOMContentLoaded', () => {
     audio.addEventListener('pause', () => { 
       status.textContent = ''; 
       document.getElementById('radio').classList.remove('playing');
-      if (noiseAnimationId) {
-        cancelAnimationFrame(noiseAnimationId);
-        noiseAnimationId = null;
-        if (noiseCtx) noiseCtx.clearRect(0, 0, noiseCanvas.width, noiseCanvas.height);
-      }
+      
       if (fetchInterval) {
           clearInterval(fetchInterval);
           fetchInterval = null;
