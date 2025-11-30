@@ -80,23 +80,10 @@ body {
   font-family: 'Space Grotesk', sans-serif; /* More digital font */
   font-size: 5em; /* Slightly larger */
   letter-spacing: -2px;
-  color: rgba(255, 255, 255, 0.05); /* Glassy transparent fill */
-  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.3); /* Glass edge */
+  color: #fff;
   /* Base shadow, will be overridden by JS for reactivity */
   text-shadow: 0 0 20px rgba(255, 255, 255, 0.4), 0 20px 50px rgba(0, 0, 0, 0.9);
   transition: text-shadow 0.1s ease-out, opacity 0.8s ease, letter-spacing 0.8s ease;
-  
-  /* Digital Glitch Animation */
-  animation: digital-pulse 5s infinite;
-  animation-delay: 4s; /* Wait for intro fade in */
-}
-
-@keyframes digital-pulse {
-  0%, 90%, 100% { transform: scale(1); filter: blur(0); }
-  91% { transform: scale(1.02) skewX(1deg); filter: blur(1px); }
-  92% { transform: scale(1); filter: blur(0); }
-  93% { transform: scale(0.99) skewX(-1deg); filter: blur(0); }
-  94% { transform: scale(1); filter: blur(0); }
 }
 
 /* One-scroll fluide global */
@@ -435,11 +422,8 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   margin: 0;
   position: relative;
   line-height: 1;
-  opacity: 0.8; /* Increased opacity for visibility with glass effect */
+  opacity: 0.5;
   z-index: 2;
-  color: rgba(255, 255, 255, 0.05); /* Glassy transparent fill */
-  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.3); /* Glass edge */
-  text-shadow: 0 0 20px rgba(0, 0, 0, 0.5); /* Shadow for depth */
 }
 
 #currentSong {
@@ -694,9 +678,6 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   left: 40px;
   top: 50%;
   transform: translateY(-50%);
-  color: rgba(255, 255, 255, 0.05); /* Glassy transparent fill */
-  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.3); /* Glass edge */
-  text-shadow: 0 0 20px rgba(0, 0, 0, 0.5); /* Shadow for depth */
 }
 
 .timeline-filters {
@@ -964,9 +945,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   margin: 0; 
   font-size: 4rem; /* Beaucoup plus gros pour l'impact */
   line-height: 0.9;
-  color: rgba(255, 255, 255, 0.05); /* Glassy transparent fill */
-  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.3); /* Glass edge */
-  text-shadow: 0 0 20px rgba(0, 0, 0, 0.5); /* Shadow for depth */
+  color: #f5f5f5; 
 }
 .artiste-info .localisation {
   font-family: 'Lexend', sans-serif;
