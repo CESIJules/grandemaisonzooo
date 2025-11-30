@@ -1,11 +1,4 @@
 /* Base */
-@font-face {
-  font-family: 'Thunder';
-  src: url('font/THUNDER/Fonts/OpenType-TT/Thunder-ExtraBoldHC.ttf') format('truetype');
-  font-weight: 700;
-  font-style: normal;
-}
-
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
 body {
@@ -115,12 +108,12 @@ main { -ms-overflow-style: none; scrollbar-width: none; }
 }
 
 h1, h2, h3, h4, h5, h6 { 
-  font-family: 'Thunder';
-  font-weight: 700; 
+  font-family: 'Syne', sans-serif;
+  font-weight: 800; 
   margin: 0 0 12px; 
   color: #f5f5f5; 
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: -1px;
 }
 p { max-width: 800px; text-align: center; color: #ccc; }
 
@@ -182,7 +175,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 .menu ul { list-style: none; margin: 0; padding: 0; text-align: center; }
 .menu li { margin: 12px 0; }
 .menu a {
-  font-family: 'Thunder';
+  font-family: 'Syne', sans-serif;
   font-weight: 700;
   color: #eee;
   text-decoration: none;
