@@ -58,6 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const backgroundVideo = document.getElementById('backgroundVideo');
   const burgerBtn = document.getElementById('burgerBtn');
   const titleAccueil = document.getElementById('titleAccueil');
+  const unmuteBtn = document.getElementById('unmuteBtn');
 
   // Flag pour s'assurer que l'intro ne se joue qu'une fois par session
   const hasPlayedIntro = sessionStorage.getItem('introPlayed');
@@ -89,6 +90,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 300);
   }
 
+  if (unmuteBtn) {
+    unmuteBtn.addEventListener('click', () => {
+      landingVideo.muted = false;
+      landingVideo.currentTime = 0; // Restart
+      landingVideo.play();
+      unmuteBtn.style.display = 'none';
+    });
+  }
+
   if (landingVideo && videoOverlay && backgroundVideo) {
     if (hasPlayedIntro) {
       // L'intro a déjà été jouée dans cette session, skip directement
@@ -118,6 +128,9 @@ document.addEventListener('DOMContentLoaded', () => {
           // Autoplay bloqué (souvent sur mobile ou navigateurs stricts)
           console.log('Autoplay with sound blocked:', err);
           
+          // Show unmute button
+          if (unmuteBtn) unmuteBtn.style.display = 'flex';
+
           // Essayer en mode muet
           landingVideo.muted = true;
           landingVideo.play().then(() => {
@@ -232,6 +245,23 @@ document.addEventListener('DOMContentLoaded', () => {
       requestAnimationFrame(draw);
 
       analyser.getByteFrequencyData(dataArray);
+      
+      // --- Reactivity for Radar ---
+      if (vinylDisc && !audio.paused) {
+          let sum = 0;
+          // Use low frequencies for bass kick reactivity (first 1/8th of spectrum)
+          const bassCount = Math.floor(bufferLength * 0.125); 
+          for(let i = 0; i < bassCount; i++) {
+              sum += dataArray[i];
+          }
+          const average = sum / bassCount;
+          
+          // Scale between 1.0 and 1.05 based on bass
+          const scale = 1 + (average / 255) * 0.05;
+          vinylDisc.style.transform = `scale(${scale})`;
+      } else if (vinylDisc) {
+          vinylDisc.style.transform = 'scale(1)';
+      }
       
       // --- Linear Visualizer (Background) ---
       const WIDTH = visualizerCanvas.width;
@@ -526,7 +556,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Default font
       ctx.font = `${charSize}px 'Courier New', monospace`;
       
-      const maxRadius = 250; 
+      const maxRadius = 450; 
 
       for (let x = 0; x < cols; x++) {
         offsets[x] += speeds[x];
@@ -545,7 +575,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const absDxMouse = Math.abs(dxMouse);
 
         // Cloud Noise Calculation (Horizontal Movement)
-        const noiseX = x * 0.04 + time * 0.2; 
+        // Reduced frequency for wider, smoother gradients (0.04 -> 0.025)
+        const noiseX = x * 0.025 + time * 0.15; 
         
         for (let y = 0; y < rows; y++) {
           const py = y * charSize + offsets[x] - charSize; 
@@ -555,7 +586,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const centerY = py + charSize/2;
           
           // --- 1. Gas/Cloud Calculation (Optimized Noise) ---
-          const noiseY = y * 0.04;
+          const noiseY = y * 0.025;
           
           // Organic noise approximation
           let noise = Math.sin(noiseX) + Math.cos(noiseY * 0.8);
@@ -565,15 +596,15 @@ document.addEventListener('DOMContentLoaded', () => {
           // Normalize roughly to 0..1
           let gasIntensity = (noise + 3) / 6;
           
-          // Smooth thresholding for "beaux dégradés"
-          // Lower threshold for wider, softer edges
-          if (gasIntensity < 0.3) { 
+          // Ultra smooth thresholding
+          // Very low threshold to avoid hard cuts
+          if (gasIntensity < 0.1) { 
               gasIntensity = 0;
           } else {
-              // Remap 0.3..1.0 to 0..1.0
-              gasIntensity = (gasIntensity - 0.3) / 0.7;
-              // Softer curve (power 1.5 instead of 2) for more linear/gradual fade
-              gasIntensity = Math.pow(gasIntensity, 1.5); 
+              // Remap 0.1..1.0 to 0..1.0
+              gasIntensity = (gasIntensity - 0.1) / 0.9;
+              // Squared curve for soft ease-in from black
+              gasIntensity = gasIntensity * gasIntensity; 
           }
 
           // --- 2. Mouse Calculation (Restored "Animation d'avant") ---
@@ -593,7 +624,7 @@ document.addEventListener('DOMContentLoaded', () => {
               if (dist < maxRadius) {
                  mouseIntensity = 1 - (dist / maxRadius);
                  // Softer falloff for mouse too
-                 mouseIntensity = Math.pow(mouseIntensity, 3); 
+                 mouseIntensity = Math.pow(mouseIntensity, 1.5); 
               }
           }
           
@@ -615,8 +646,8 @@ document.addEventListener('DOMContentLoaded', () => {
              ctx.font = `${charSize * scale}px 'Courier New', monospace`;
              
              // Glow: Only mouse core triggers glow
-             if (mouseIntensity > 0.5) { 
-                 ctx.shadowBlur = 15 * mouseIntensity;
+             if (mouseIntensity > 0.1) { 
+                 ctx.shadowBlur = 50 * mouseIntensity;
                  ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
              } else {
                  ctx.shadowBlur = 0;
