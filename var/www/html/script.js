@@ -901,7 +901,8 @@ document.addEventListener('DOMContentLoaded', () => {
         posts = [];
       }
 
-      posts.sort((a, b) => new Date(b.date) - new Date(a.date));
+      // Sort Ascending (Oldest -> Newest) so Newest is at the Right (End)
+      posts.sort((a, b) => new Date(a.date) - new Date(b.date));
       timelineContainer.innerHTML = '';
 
       if (posts.length === 0) {
@@ -918,11 +919,11 @@ document.addEventListener('DOMContentLoaded', () => {
         contentDiv.classList.add(index % 2 === 0 ? 'timeline-content-left' : 'timeline-content-right');
 
         const titleElement = post.link 
-          ? `<a href="${post.link}" target="_blank" rel="noopener noreferrer" class="timeline-title-link"><h3>${post.title}</h3></a>`
+          ? `<h3><a href="${post.link}" target="_blank" rel="noopener noreferrer" class="timeline-title-link">${post.title}</a></h3>`
           : `<h3>${post.title}</h3>`;
 
         const subtitleElement = post.link && post.subtitle
-          ? `<a href="${post.link}" target="_blank" rel="noopener noreferrer"><h4>${post.subtitle}</h4></a>`
+          ? `<h4><a href="${post.link}" target="_blank" rel="noopener noreferrer" class="timeline-subtitle-link">${post.subtitle}</a></h4>`
           : post.subtitle
             ? `<h4>${post.subtitle}</h4>`
             : '';
