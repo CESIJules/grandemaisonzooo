@@ -1058,7 +1058,6 @@ document.addEventListener('DOMContentLoaded', () => {
         currentSectionIndex = index;
       }
     });
-    if (typeof updateVolumeButtonPosition === 'function') updateVolumeButtonPosition();
   }
   
   // Initial check
