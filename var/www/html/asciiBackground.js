@@ -28,7 +28,21 @@ const AsciiBackground = (function() {
   const DEFAULT_CONFIG = {
     // Grid settings
     cellSize: 14,           // Size of each ASCII cell in pixels
-    charset: ['.', ':', '+', '*', 'o', 'O', '#', '@'],
+    // Extended ASCII charset - full range of printable ASCII characters
+    charset: [
+      ' ', '!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '-', '.', '/',
+      '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '<', '=', '>', '?',
+      '@', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+      'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '[', '\\', ']', '^', '_',
+      '`', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
+      'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '{', '|', '}', '~'
+    ],
+    // Density-based charset (sorted by visual density for gradients)
+    densityCharset: [
+      ' ', '.', '`', "'", ',', ':', ';', '-', '~', '+', '=', '*', '!', '?', '%', '#',
+      'i', 'l', 't', 'f', 'j', 'r', 'x', 'n', 'u', 'v', 'c', 'z', 's', 'k', 'e', 'a',
+      'o', 'Y', 'X', 'Z', 'U', 'J', 'C', 'L', 'Q', '0', 'O', 'W', 'M', 'N', 'B', '@', '#'
+    ],
     
     // Animation
     fps: 30,                // Target frames per second
@@ -39,14 +53,14 @@ const AsciiBackground = (function() {
     
     // Transition settings
     transitionDuration: 1500, // ms
-    transitionType: 'fade',   // 'fade' or 'glitch'
+    transitionType: 'morph',   // 'fade', 'glitch', or 'morph' (fluid character movement)
     
     // Performance
     mobileScaleFactor: 0.6,  // Reduce grid density on mobile
     
     // Mouse interaction
-    mouseInfluenceRadius: 150,
-    mouseStrength: 0.5
+    mouseInfluenceRadius: 200,
+    mouseStrength: 1.5
   };
 
   // ============================================================================
@@ -243,7 +257,7 @@ const AsciiBackground = (function() {
   
   /**
    * Scene: Clouds/Bubbles
-   * Floating ASCII bubbles with noise-based movement
+   * Floating ASCII bubbles with organic interactions, fusion, and cursor reactivity
    */
   const CloudsScene = {
     name: 'clouds',
@@ -251,16 +265,23 @@ const AsciiBackground = (function() {
     // Scene-specific state
     state: {
       time: 0,
-      bubbles: []
+      bubbles: [],
+      gridCols: 0,
+      gridRows: 0
     },
     
     // Scene-specific config
     config: {
-      speed: 0.3,
-      noiseScale: 0.02,
-      bubbleCount: 15,
-      bubbleMinSize: 3,
-      bubbleMaxSize: 8,
+      speed: 1.2,           // Much faster speed
+      noiseScale: 0.03,     // More noise variation
+      bubbleCount: 25,      // More bubbles
+      bubbleMinSize: 2,
+      bubbleMaxSize: 10,
+      fusionDistance: 6,    // Distance at which bubbles start merging
+      repelDistance: 4,     // Distance at which bubbles push each other
+      mouseForce: 15,       // Strong mouse influence
+      mouseDecay: 0.85,     // How fast mouse influence fades
+      organicDeformation: 0.3, // Amount of shape deformation
       palette: [
         '#FF6B35',  // Orange
         '#F7931E',  // Amber
@@ -274,20 +295,31 @@ const AsciiBackground = (function() {
     init(gridRef, globalConfig) {
       this.state.time = 0;
       this.state.bubbles = [];
+      this.state.gridCols = gridRef.cols;
+      this.state.gridRows = gridRef.rows;
       
-      // Create bubbles
+      // Create bubbles with velocity
       const count = isMobile ? Math.floor(this.config.bubbleCount * 0.6) : this.config.bubbleCount;
       for (let i = 0; i < count; i++) {
         this.state.bubbles.push({
           x: Math.random() * gridRef.cols,
           y: Math.random() * gridRef.rows,
-          baseX: Math.random() * gridRef.cols,
-          baseY: Math.random() * gridRef.rows,
-          size: this.config.bubbleMinSize + Math.random() * (this.config.bubbleMaxSize - this.config.bubbleMinSize),
-          speed: 0.5 + Math.random() * 0.5,
+          vx: (Math.random() - 0.5) * 2,  // Velocity X
+          vy: (Math.random() - 0.5) * 2,  // Velocity Y
+          baseSize: this.config.bubbleMinSize + Math.random() * (this.config.bubbleMaxSize - this.config.bubbleMinSize),
+          size: 0, // Current size (affected by interactions)
+          targetSize: 0,
+          speed: 0.8 + Math.random() * 0.8,
           phase: Math.random() * Math.PI * 2,
-          colorIndex: Math.floor(Math.random() * this.config.palette.length)
+          colorIndex: Math.floor(Math.random() * this.config.palette.length),
+          deformX: 1, // Horizontal deformation factor
+          deformY: 1, // Vertical deformation factor
+          pulse: 0,   // Pulsing effect from interactions
+          mass: 1     // For physics calculations
         });
+        this.state.bubbles[this.state.bubbles.length - 1].size = this.state.bubbles[this.state.bubbles.length - 1].baseSize;
+        this.state.bubbles[this.state.bubbles.length - 1].targetSize = this.state.bubbles[this.state.bubbles.length - 1].baseSize;
+        this.state.bubbles[this.state.bubbles.length - 1].mass = this.state.bubbles[this.state.bubbles.length - 1].baseSize;
       }
     },
     
@@ -299,41 +331,123 @@ const AsciiBackground = (function() {
       const mouseRadius = globalConfig.mouseInfluenceRadius / globalConfig.cellSize;
       const mouseActive = mouse.active && (Date.now() - mouse.lastMove < 3000);
       
-      // Update bubble positions
-      for (const bubble of this.state.bubbles) {
-        // Noise-based movement
+      // Update bubble physics
+      for (let i = 0; i < this.state.bubbles.length; i++) {
+        const bubble = this.state.bubbles[i];
+        
+        // Noise-based organic movement
         const noiseX = SimplexNoise.noise3D(
-          bubble.baseX * this.config.noiseScale,
-          bubble.baseY * this.config.noiseScale,
-          this.state.time * 0.5
+          bubble.x * this.config.noiseScale,
+          bubble.y * this.config.noiseScale,
+          this.state.time * 0.8
         );
         const noiseY = SimplexNoise.noise3D(
-          bubble.baseX * this.config.noiseScale + 100,
-          bubble.baseY * this.config.noiseScale + 100,
-          this.state.time * 0.5
+          bubble.x * this.config.noiseScale + 100,
+          bubble.y * this.config.noiseScale + 100,
+          this.state.time * 0.8
         );
         
-        bubble.x = bubble.baseX + noiseX * 5;
-        bubble.y = bubble.baseY + noiseY * 5 + Math.sin(this.state.time + bubble.phase) * 2;
+        // Add noise to velocity
+        bubble.vx += noiseX * deltaTime * 3;
+        bubble.vy += noiseY * deltaTime * 3;
         
-        // Slow drift upward
-        bubble.baseY -= deltaTime * bubble.speed * 0.3;
-        if (bubble.baseY < -bubble.size) {
-          bubble.baseY = gridRef.rows + bubble.size;
-          bubble.baseX = Math.random() * gridRef.cols;
+        // Gentle upward drift
+        bubble.vy -= deltaTime * bubble.speed * 0.5;
+        
+        // Bubble-to-bubble interactions
+        for (let j = i + 1; j < this.state.bubbles.length; j++) {
+          const other = this.state.bubbles[j];
+          const dx = other.x - bubble.x;
+          const dy = other.y - bubble.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const minDist = bubble.size + other.size;
+          
+          if (dist < minDist && dist > 0) {
+            // Collision/interaction
+            const overlap = minDist - dist;
+            const nx = dx / dist;
+            const ny = dy / dist;
+            
+            // Push apart (repulsion)
+            const pushForce = overlap * 0.3;
+            bubble.vx -= nx * pushForce;
+            bubble.vy -= ny * pushForce;
+            other.vx += nx * pushForce;
+            other.vy += ny * pushForce;
+            
+            // Organic deformation on collision
+            bubble.deformX = 1 + Math.abs(nx) * this.config.organicDeformation;
+            bubble.deformY = 1 + Math.abs(ny) * this.config.organicDeformation;
+            other.deformX = 1 + Math.abs(nx) * this.config.organicDeformation;
+            other.deformY = 1 + Math.abs(ny) * this.config.organicDeformation;
+            
+            // Pulse effect
+            bubble.pulse = 0.5;
+            other.pulse = 0.5;
+            
+            // Fusion effect - temporarily increase size when close
+            if (dist < this.config.fusionDistance) {
+              const fusionFactor = 1 - dist / this.config.fusionDistance;
+              bubble.targetSize = bubble.baseSize * (1 + fusionFactor * 0.5);
+              other.targetSize = other.baseSize * (1 + fusionFactor * 0.5);
+            }
+          }
         }
         
-        // Mouse interaction - push bubbles away
+        // Mouse interaction - strong displacement
         if (mouseActive) {
           const dx = bubble.x - mouseGridX;
           const dy = bubble.y - mouseGridY;
           const dist = Math.sqrt(dx * dx + dy * dy);
           
-          if (dist < mouseRadius && dist > 0) {
-            const force = (1 - dist / mouseRadius) * globalConfig.mouseStrength * 3;
-            bubble.x += (dx / dist) * force;
-            bubble.y += (dy / dist) * force;
+          if (dist < mouseRadius && dist > 0.1) {
+            const force = Math.pow(1 - dist / mouseRadius, 2) * this.config.mouseForce;
+            bubble.vx += (dx / dist) * force * deltaTime;
+            bubble.vy += (dy / dist) * force * deltaTime;
+            
+            // Deform away from cursor
+            bubble.deformX = 1 + Math.abs(dx / dist) * this.config.organicDeformation * 2;
+            bubble.deformY = 1 + Math.abs(dy / dist) * this.config.organicDeformation * 2;
+            bubble.pulse = Math.max(bubble.pulse, force * 0.1);
           }
+        }
+        
+        // Apply velocity with damping
+        bubble.x += bubble.vx * deltaTime * 10;
+        bubble.y += bubble.vy * deltaTime * 10;
+        bubble.vx *= 0.95; // Damping
+        bubble.vy *= 0.95;
+        
+        // Clamp velocity
+        const maxVel = 5;
+        const vel = Math.sqrt(bubble.vx * bubble.vx + bubble.vy * bubble.vy);
+        if (vel > maxVel) {
+          bubble.vx = (bubble.vx / vel) * maxVel;
+          bubble.vy = (bubble.vy / vel) * maxVel;
+        }
+        
+        // Smooth size transition
+        bubble.size += (bubble.targetSize - bubble.size) * 0.1;
+        bubble.targetSize = bubble.baseSize; // Reset target
+        
+        // Decay deformation back to normal
+        bubble.deformX += (1 - bubble.deformX) * 0.1;
+        bubble.deformY += (1 - bubble.deformY) * 0.1;
+        bubble.pulse *= 0.9;
+        
+        // Wrap around screen edges
+        if (bubble.y < -bubble.size * 2) {
+          bubble.y = gridRef.rows + bubble.size;
+          bubble.x = Math.random() * gridRef.cols;
+        }
+        if (bubble.y > gridRef.rows + bubble.size * 2) {
+          bubble.y = -bubble.size;
+        }
+        if (bubble.x < -bubble.size * 2) {
+          bubble.x = gridRef.cols + bubble.size;
+        }
+        if (bubble.x > gridRef.cols + bubble.size * 2) {
+          bubble.x = -bubble.size;
         }
       }
       
@@ -349,13 +463,22 @@ const AsciiBackground = (function() {
     },
     
     renderBubble(gridRef, bubble, globalConfig) {
-      const charset = globalConfig.charset;
+      const charset = globalConfig.densityCharset || globalConfig.charset;
       const color = this.config.palette[bubble.colorIndex];
+      const pulseBoost = 1 + bubble.pulse;
       
-      for (let dy = -bubble.size; dy <= bubble.size; dy++) {
-        for (let dx = -bubble.size; dx <= bubble.size; dx++) {
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist > bubble.size) continue;
+      const sizeX = bubble.size * bubble.deformX * pulseBoost;
+      const sizeY = bubble.size * bubble.deformY * pulseBoost;
+      const maxSize = Math.max(sizeX, sizeY);
+      
+      for (let dy = -maxSize - 1; dy <= maxSize + 1; dy++) {
+        for (let dx = -maxSize - 1; dx <= maxSize + 1; dx++) {
+          // Ellipse distance with deformation
+          const normX = dx / sizeX;
+          const normY = dy / sizeY;
+          const dist = Math.sqrt(normX * normX + normY * normY);
+          
+          if (dist > 1.2) continue;
           
           const gx = Math.floor(bubble.x + dx);
           const gy = Math.floor(bubble.y + dy);
@@ -363,15 +486,28 @@ const AsciiBackground = (function() {
           if (gx < 0 || gx >= gridRef.cols || gy < 0 || gy >= gridRef.rows) continue;
           
           const idx = gy * gridRef.cols + gx;
-          const intensity = 1 - (dist / bubble.size);
+          
+          // Organic edge with noise
+          const edgeNoise = SimplexNoise.noise2D(
+            (bubble.x + dx) * 0.3 + this.state.time,
+            (bubble.y + dy) * 0.3
+          ) * 0.2;
+          
+          const effectiveDist = dist + edgeNoise;
+          if (effectiveDist > 1) continue;
+          
+          const intensity = Math.pow(1 - effectiveDist, 0.7);
           const charIndex = Math.floor(intensity * (charset.length - 1));
           
-          // Blend with existing cell
-          if (intensity > gridRef.cells[idx].intensity) {
+          // Blend with existing cell (additive blending for overlaps)
+          const existingIntensity = gridRef.cells[idx].intensity;
+          const newIntensity = Math.min(1, intensity + existingIntensity * 0.3);
+          
+          if (newIntensity > existingIntensity) {
             gridRef.cells[idx] = {
-              char: charset[charIndex],
+              char: charset[Math.min(charIndex, charset.length - 1)],
               color: color,
-              intensity: intensity
+              intensity: newIntensity
             };
           }
         }
@@ -385,7 +521,7 @@ const AsciiBackground = (function() {
 
   /**
    * Scene: Neurons/Network
-   * Neural network visualization with pulses
+   * Neural network visualization with 3D camera movement through the network
    */
   const NeuronsScene = {
     name: 'neurons',
@@ -395,29 +531,59 @@ const AsciiBackground = (function() {
       nodes: [],
       connections: [],
       pulses: [],
-      cameraOffset: { x: 0, y: 0 }
+      camera: { x: 0, y: 0, z: 0, targetX: 0, targetY: 0, targetZ: 0 },
+      worldSize: { width: 0, height: 0, depth: 200 }
     },
     
     config: {
-      nodeCount: 25,
-      connectionProbability: 0.15,
-      pulseSpeed: 8,
-      cameraSpeed: 0.3,
+      nodeCount: 60,          // More nodes for denser network
+      connectionProbability: 0.12,
+      pulseSpeed: 12,
+      pulseFrequency: 0.08,   // More frequent pulses
+      cameraSpeed: 0.5,
+      cameraWander: 0.3,
+      nodeMinSize: 1.5,
+      nodeMaxSize: 4,
+      connectionThickness: 2, // Thicker connections
       palette: [
-        '#4A90D9',  // Blue
-        '#7B68EE',  // Medium purple
-        '#6A5ACD',  // Slate blue
-        '#9370DB',  // Medium orchid
-        '#8A2BE2',  // Blue violet
-        '#5D6DB8'   // Periwinkle
+        '#6FA8DC',  // Light blue
+        '#9FC5E8',  // Sky blue
+        '#76A5AF',  // Teal
+        '#A4C2F4',  // Pale blue
+        '#B4A7D6',  // Light purple
+        '#8E7CC3'   // Medium purple
       ],
       pulseColor: '#FFFFFF',
-      connectionColor: '#333366'
+      connectionColor: '#445588',
+      nodeChars: ['o', 'O', '@', '0', '*', '#'],
+      connectionChars: {
+        horizontal: '─═━',
+        vertical: '│║┃',
+        diagonal1: '╱/',
+        diagonal2: '╲\\',
+        cross: '┼╳+'
+      }
     },
     
-    // Helper function to wrap coordinates (avoids double modulo in loops)
+    // Helper function to wrap coordinates
     wrapCoord(val, max) {
       return ((val % max) + max) % max;
+    },
+    
+    // Project 3D point to 2D screen with perspective
+    project(x, y, z, gridRef) {
+      const perspective = 400;
+      const cameraZ = this.state.camera.z;
+      const relZ = z - cameraZ;
+      
+      // Avoid division by zero or negative z
+      const depth = Math.max(relZ, 10);
+      const scale = perspective / (perspective + depth);
+      
+      const screenX = (x - this.state.camera.x) * scale + gridRef.cols / 2;
+      const screenY = (y - this.state.camera.y) * scale + gridRef.rows / 2;
+      
+      return { x: screenX, y: screenY, scale: scale, depth: depth };
     },
     
     init(gridRef, globalConfig) {
@@ -425,29 +591,48 @@ const AsciiBackground = (function() {
       this.state.nodes = [];
       this.state.connections = [];
       this.state.pulses = [];
-      this.state.cameraOffset = { x: 0, y: 0 };
+      this.state.worldSize = {
+        width: gridRef.cols * 2,
+        height: gridRef.rows * 2,
+        depth: 300
+      };
+      this.state.camera = { 
+        x: gridRef.cols / 2, 
+        y: gridRef.rows / 2, 
+        z: -50,
+        targetX: gridRef.cols / 2,
+        targetY: gridRef.rows / 2,
+        targetZ: -50,
+        vx: 0,
+        vy: 0,
+        vz: 0.3 // Moving forward through the network
+      };
       
-      const nodeCount = isMobile ? Math.floor(this.config.nodeCount * 0.6) : this.config.nodeCount;
+      const nodeCount = isMobile ? Math.floor(this.config.nodeCount * 0.5) : this.config.nodeCount;
       
-      // Create nodes spread across the grid
+      // Create nodes in 3D space
       for (let i = 0; i < nodeCount; i++) {
         this.state.nodes.push({
-          x: Math.random() * gridRef.cols * 1.5 - gridRef.cols * 0.25,
-          y: Math.random() * gridRef.rows * 1.5 - gridRef.rows * 0.25,
-          size: 1 + Math.random() * 2,
+          x: (Math.random() - 0.5) * this.state.worldSize.width + gridRef.cols / 2,
+          y: (Math.random() - 0.5) * this.state.worldSize.height + gridRef.rows / 2,
+          z: Math.random() * this.state.worldSize.depth,
+          size: this.config.nodeMinSize + Math.random() * (this.config.nodeMaxSize - this.config.nodeMinSize),
           colorIndex: Math.floor(Math.random() * this.config.palette.length),
-          brightness: 0.5 + Math.random() * 0.5
+          brightness: 0.6 + Math.random() * 0.4,
+          pulse: 0,
+          charIndex: Math.floor(Math.random() * this.config.nodeChars.length)
         });
       }
       
-      // Create connections between nearby nodes
+      // Create connections between nearby nodes in 3D
       for (let i = 0; i < this.state.nodes.length; i++) {
         for (let j = i + 1; j < this.state.nodes.length; j++) {
           const dx = this.state.nodes[i].x - this.state.nodes[j].x;
           const dy = this.state.nodes[i].y - this.state.nodes[j].y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
+          const dz = this.state.nodes[i].z - this.state.nodes[j].z;
+          const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
           
-          const maxDist = Math.max(gridRef.cols, gridRef.rows) * 0.4;
+          const maxDist = Math.max(gridRef.cols, gridRef.rows) * 0.6;
           if (dist < maxDist && Math.random() < this.config.connectionProbability) {
             this.state.connections.push({
               from: i,
@@ -462,33 +647,76 @@ const AsciiBackground = (function() {
     update(gridRef, globalConfig, time, deltaTime) {
       this.state.time += deltaTime;
       
-      // Move camera
-      this.state.cameraOffset.x += deltaTime * this.config.cameraSpeed;
-      this.state.cameraOffset.y += Math.sin(this.state.time * 0.2) * deltaTime * this.config.cameraSpeed * 0.5;
+      // Camera movement - slowly flying through the neural network
+      const cam = this.state.camera;
       
-      // Spawn new pulses randomly
-      if (Math.random() < 0.02 && this.state.connections.length > 0) {
+      // Wander target with noise
+      cam.targetX += SimplexNoise.noise2D(this.state.time * 0.1, 0) * this.config.cameraWander;
+      cam.targetY += SimplexNoise.noise2D(0, this.state.time * 0.1) * this.config.cameraWander;
+      cam.targetZ += deltaTime * 20; // Constant forward movement
+      
+      // Wrap camera in Z (loop through network)
+      if (cam.targetZ > this.state.worldSize.depth) {
+        cam.targetZ = 0;
+        cam.z = -50;
+        // Regenerate nodes in front
+        for (const node of this.state.nodes) {
+          if (node.z < cam.z + 20) {
+            node.z += this.state.worldSize.depth;
+          }
+        }
+      }
+      
+      // Smooth camera movement
+      cam.x += (cam.targetX - cam.x) * this.config.cameraSpeed * deltaTime * 2;
+      cam.y += (cam.targetY - cam.y) * this.config.cameraSpeed * deltaTime * 2;
+      cam.z += (cam.targetZ - cam.z) * this.config.cameraSpeed * deltaTime * 2;
+      
+      // Spawn new pulses
+      if (Math.random() < this.config.pulseFrequency && this.state.connections.length > 0) {
         const conn = this.state.connections[Math.floor(Math.random() * this.state.connections.length)];
         this.state.pulses.push({
           connection: conn,
           progress: 0,
-          speed: this.config.pulseSpeed + Math.random() * 4,
-          reverse: Math.random() > 0.5
+          speed: this.config.pulseSpeed + Math.random() * 6,
+          reverse: Math.random() > 0.5,
+          size: 1 + Math.random()
         });
+        
+        // Light up connected nodes
+        this.state.nodes[conn.from].pulse = 1;
+        this.state.nodes[conn.to].pulse = 0.5;
       }
       
       // Update pulses
       this.state.pulses = this.state.pulses.filter(pulse => {
         pulse.progress += (deltaTime * pulse.speed) / pulse.connection.length;
+        
+        // Light up nodes as pulse passes
+        if (pulse.progress > 0.9) {
+          const targetNode = pulse.reverse ? pulse.connection.from : pulse.connection.to;
+          this.state.nodes[targetNode].pulse = Math.max(this.state.nodes[targetNode].pulse, 0.8);
+        }
+        
         return pulse.progress < 1;
       });
+      
+      // Decay node pulses
+      for (const node of this.state.nodes) {
+        node.pulse *= 0.92;
+      }
       
       // Clear grid
       for (let i = 0; i < gridRef.cells.length; i++) {
         gridRef.cells[i] = { char: ' ', color: globalConfig.backgroundColor, intensity: 0 };
       }
       
-      // Render connections
+      // Sort nodes by depth for proper rendering (back to front)
+      const sortedNodes = this.state.nodes
+        .map((node, idx) => ({ node, idx }))
+        .sort((a, b) => b.node.z - a.node.z);
+      
+      // Render connections (behind nodes)
       for (const conn of this.state.connections) {
         this.renderConnection(gridRef, conn, globalConfig);
       }
@@ -498,8 +726,8 @@ const AsciiBackground = (function() {
         this.renderPulse(gridRef, pulse, globalConfig);
       }
       
-      // Render nodes
-      for (const node of this.state.nodes) {
+      // Render nodes (front to back, so closer ones override)
+      for (const { node } of sortedNodes) {
         this.renderNode(gridRef, node, globalConfig);
       }
     },
@@ -508,47 +736,52 @@ const AsciiBackground = (function() {
       const nodeA = this.state.nodes[conn.from];
       const nodeB = this.state.nodes[conn.to];
       
-      const ax = nodeA.x - this.state.cameraOffset.x;
-      const ay = nodeA.y - this.state.cameraOffset.y;
-      const bx = nodeB.x - this.state.cameraOffset.x;
-      const by = nodeB.y - this.state.cameraOffset.y;
+      const projA = this.project(nodeA.x, nodeA.y, nodeA.z, gridRef);
+      const projB = this.project(nodeB.x, nodeB.y, nodeB.z, gridRef);
+      
+      // Skip if behind camera or too far
+      if (projA.depth < 0 || projB.depth < 0) return;
+      if (projA.depth > 250 && projB.depth > 250) return;
       
       // Bresenham-like line drawing
-      const steps = Math.max(Math.abs(bx - ax), Math.abs(by - ay));
-      if (steps === 0) return;
+      const dx = projB.x - projA.x;
+      const dy = projB.y - projA.y;
+      const steps = Math.max(Math.abs(dx), Math.abs(dy), 1);
       
-      const connectionChars = ['-', '|', '/', '\\'];
+      if (steps > 100) return; // Skip very long lines
       
-      for (let i = 0; i <= steps; i += 2) {
+      const avgDepth = (projA.depth + projB.depth) / 2;
+      const depthFade = Math.max(0, 1 - avgDepth / 200);
+      
+      for (let i = 0; i <= steps; i += 1) {
         const t = i / steps;
-        const x = Math.floor(ax + (bx - ax) * t);
-        const y = Math.floor(ay + (by - ay) * t);
+        const x = Math.floor(projA.x + dx * t);
+        const y = Math.floor(projA.y + dy * t);
         
-        // Wrap around using helper function
-        const gx = this.wrapCoord(x, gridRef.cols);
-        const gy = this.wrapCoord(y, gridRef.rows);
+        if (x < 0 || x >= gridRef.cols || y < 0 || y >= gridRef.rows) continue;
         
-        const idx = gy * gridRef.cols + gx;
+        const idx = y * gridRef.cols + x;
         
-        // Determine character based on angle
-        const angle = Math.atan2(by - ay, bx - ax);
-        let charIdx;
+        // Determine connection character based on angle
+        const angle = Math.atan2(dy, dx);
+        let char;
         const absAngle = Math.abs(angle);
-        if (absAngle < Math.PI / 4 || absAngle > 3 * Math.PI / 4) {
-          charIdx = 0; // -
-        } else if (absAngle > Math.PI / 4 && absAngle < 3 * Math.PI / 4) {
-          charIdx = 1; // |
+        if (absAngle < Math.PI / 6 || absAngle > 5 * Math.PI / 6) {
+          char = this.config.connectionChars.horizontal[0];
+        } else if (absAngle > Math.PI / 3 && absAngle < 2 * Math.PI / 3) {
+          char = this.config.connectionChars.vertical[0];
         } else if (angle > 0) {
-          charIdx = angle < Math.PI / 2 ? 2 : 3; // / or \
+          char = angle < Math.PI / 2 ? this.config.connectionChars.diagonal2[0] : this.config.connectionChars.diagonal1[0];
         } else {
-          charIdx = angle > -Math.PI / 2 ? 3 : 2;
+          char = angle > -Math.PI / 2 ? this.config.connectionChars.diagonal1[0] : this.config.connectionChars.diagonal2[0];
         }
         
-        if (gridRef.cells[idx].intensity < 0.3) {
+        const intensity = 0.3 * depthFade;
+        if (gridRef.cells[idx].intensity < intensity) {
           gridRef.cells[idx] = {
-            char: connectionChars[charIdx],
+            char: char,
             color: this.config.connectionColor,
-            intensity: 0.3
+            intensity: intensity
           };
         }
       }
@@ -560,26 +793,39 @@ const AsciiBackground = (function() {
       
       const progress = pulse.reverse ? 1 - pulse.progress : pulse.progress;
       
-      const px = nodeA.x + (nodeB.x - nodeA.x) * progress - this.state.cameraOffset.x;
-      const py = nodeA.y + (nodeB.y - nodeA.y) * progress - this.state.cameraOffset.y;
+      // Interpolate position in 3D
+      const px = nodeA.x + (nodeB.x - nodeA.x) * progress;
+      const py = nodeA.y + (nodeB.y - nodeA.y) * progress;
+      const pz = nodeA.z + (nodeB.z - nodeA.z) * progress;
       
-      // Wrap around using helper function
-      const gx = Math.floor(this.wrapCoord(px, gridRef.cols));
-      const gy = Math.floor(this.wrapCoord(py, gridRef.rows));
+      const proj = this.project(px, py, pz, gridRef);
+      
+      if (proj.depth < 0 || proj.depth > 200) return;
+      
+      const gx = Math.floor(proj.x);
+      const gy = Math.floor(proj.y);
+      
+      const depthFade = Math.max(0, 1 - proj.depth / 180);
+      const size = Math.ceil(pulse.size * proj.scale * 2);
       
       // Draw pulse with glow
-      for (let dy = -1; dy <= 1; dy++) {
-        for (let dx = -1; dx <= 1; dx++) {
-          const x = this.wrapCoord(gx + dx, gridRef.cols);
-          const y = this.wrapCoord(gy + dy, gridRef.rows);
-          const idx = y * gridRef.cols + x;
-          
+      for (let dy = -size; dy <= size; dy++) {
+        for (let dx = -size; dx <= size; dx++) {
           const dist = Math.sqrt(dx * dx + dy * dy);
-          const intensity = dist === 0 ? 1 : 0.5 / dist;
+          if (dist > size) continue;
+          
+          const x = gx + dx;
+          const y = gy + dy;
+          
+          if (x < 0 || x >= gridRef.cols || y < 0 || y >= gridRef.rows) continue;
+          
+          const idx = y * gridRef.cols + x;
+          const intensity = (1 - dist / size) * depthFade;
           
           if (intensity > gridRef.cells[idx].intensity) {
+            const char = dist < size * 0.3 ? '@' : (dist < size * 0.6 ? '*' : '+');
             gridRef.cells[idx] = {
-              char: dist === 0 ? '*' : '+',
+              char: char,
               color: this.config.pulseColor,
               intensity: intensity
             };
@@ -589,41 +835,53 @@ const AsciiBackground = (function() {
     },
     
     renderNode(gridRef, node, globalConfig) {
-      const x = node.x - this.state.cameraOffset.x;
-      const y = node.y - this.state.cameraOffset.y;
+      const proj = this.project(node.x, node.y, node.z, gridRef);
       
-      // Wrap around using helper function
-      const gx = Math.floor(this.wrapCoord(x, gridRef.cols));
-      const gy = Math.floor(this.wrapCoord(y, gridRef.rows));
+      if (proj.depth < 0 || proj.depth > 220) return;
       
-      const nodeChars = ['o', 'O', '@'];
+      const gx = Math.floor(proj.x);
+      const gy = Math.floor(proj.y);
+      
+      if (gx < -5 || gx >= gridRef.cols + 5 || gy < -5 || gy >= gridRef.rows + 5) return;
+      
+      const depthFade = Math.max(0.1, 1 - proj.depth / 200);
+      const size = Math.max(1, Math.ceil(node.size * proj.scale));
       const color = this.config.palette[node.colorIndex];
+      const pulseBoost = 1 + node.pulse * 2;
       
-      // Draw node center
-      const idx = gy * gridRef.cols + gx;
-      gridRef.cells[idx] = {
-        char: nodeChars[Math.floor(node.size)],
-        color: color,
-        intensity: node.brightness
-      };
-      
-      // Draw surrounding glow
-      if (node.size > 1) {
-        for (let dy = -1; dy <= 1; dy++) {
-          for (let dx = -1; dx <= 1; dx++) {
-            if (dx === 0 && dy === 0) continue;
-            
-            const nx = this.wrapCoord(gx + dx, gridRef.cols);
-            const ny = this.wrapCoord(gy + dy, gridRef.rows);
-            const nidx = ny * gridRef.cols + nx;
-            
-            if (gridRef.cells[nidx].intensity < 0.5) {
-              gridRef.cells[nidx] = {
-                char: '.',
-                color: color,
-                intensity: 0.5
-              };
+      // Draw node as filled circle
+      for (let dy = -size; dy <= size; dy++) {
+        for (let dx = -size; dx <= size; dx++) {
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist > size) continue;
+          
+          const x = gx + dx;
+          const y = gy + dy;
+          
+          if (x < 0 || x >= gridRef.cols || y < 0 || y >= gridRef.rows) continue;
+          
+          const idx = y * gridRef.cols + x;
+          const intensity = (1 - dist / (size + 0.5)) * depthFade * node.brightness * pulseBoost;
+          
+          if (intensity > gridRef.cells[idx].intensity) {
+            // Choose character based on intensity and size
+            let char;
+            if (dist < size * 0.3) {
+              char = node.pulse > 0.3 ? '@' : this.config.nodeChars[node.charIndex];
+            } else if (dist < size * 0.6) {
+              char = node.pulse > 0.3 ? 'O' : 'o';
+            } else {
+              char = node.pulse > 0.3 ? '*' : '.';
             }
+            
+            // Pulse color override
+            const displayColor = node.pulse > 0.3 ? this.config.pulseColor : color;
+            
+            gridRef.cells[idx] = {
+              char: char,
+              color: displayColor,
+              intensity: Math.min(1, intensity)
+            };
           }
         }
       }
@@ -636,7 +894,7 @@ const AsciiBackground = (function() {
 
   /**
    * Scene: Eyes
-   * ASCII eyes that follow the cursor
+   * Multiple ASCII eyes randomly distributed that follow the cursor in 3D
    */
   const EyesScene = {
     name: 'eyes',
@@ -648,17 +906,33 @@ const AsciiBackground = (function() {
     },
     
     config: {
-      eyeCount: 3,
-      eyeRadius: 6,
-      pupilRadius: 2,
-      maxPupilOffset: 3,
-      trackingSpeed: 0.15,
-      idleSpeed: 0.5,
+      eyeCount: 12,          // More eyes
+      eyeMinRadius: 4,
+      eyeMaxRadius: 8,
+      pupilRadiusRatio: 0.35, // Pupil size relative to eye
+      maxPupilOffset: 0.6,   // Maximum pupil offset as ratio of eye radius
+      trackingSpeed: 0.12,
+      idleSpeed: 0.3,
+      eyeDepthRange: 100,    // Z-depth range for parallax effect
       palette: {
         outline: '#AAAAAA',
-        iris: '#668866',
-        pupil: '#222222',
+        sclera: '#DDDDDD',
+        iris: ['#558855', '#5588AA', '#885555', '#666688', '#888866'],
+        pupil: '#111111',
         highlight: '#FFFFFF'
+      },
+      eyeChars: {
+        pupil: ['@', '#', '8', '●'],
+        iris: ['O', '0', 'o', '◉'],
+        sclera: ['.', '°', '·'],
+        outline: {
+          top: ['^', '~', '-'],
+          bottom: ['_', '~', '-'],
+          left: ['(', '[', '{'],
+          right: [')', ']', '}'],
+          corners: ['/', '\\', '`', "'"]
+        },
+        blink: ['-', '=', '_']
       }
     },
     
@@ -667,21 +941,58 @@ const AsciiBackground = (function() {
       this.state.eyes = [];
       this.state.idleAngle = 0;
       
-      const count = isMobile ? Math.min(2, this.config.eyeCount) : this.config.eyeCount;
+      const count = isMobile ? Math.min(6, this.config.eyeCount) : this.config.eyeCount;
       
-      // Position eyes across the grid
-      const spacing = gridRef.cols / (count + 1);
+      // Distribute eyes randomly across the screen with some constraints
+      const minDistance = Math.min(gridRef.cols, gridRef.rows) * 0.15;
+      
       for (let i = 0; i < count; i++) {
+        let attempts = 0;
+        let x, y, valid;
+        
+        do {
+          x = this.config.eyeMaxRadius + Math.random() * (gridRef.cols - this.config.eyeMaxRadius * 2);
+          y = this.config.eyeMaxRadius + Math.random() * (gridRef.rows - this.config.eyeMaxRadius * 2);
+          valid = true;
+          
+          // Check distance from other eyes
+          for (const eye of this.state.eyes) {
+            const dx = eye.x - x;
+            const dy = eye.y - y;
+            if (Math.sqrt(dx * dx + dy * dy) < minDistance) {
+              valid = false;
+              break;
+            }
+          }
+          attempts++;
+        } while (!valid && attempts < 50);
+        
+        const radius = this.config.eyeMinRadius + Math.random() * (this.config.eyeMaxRadius - this.config.eyeMinRadius);
+        
         this.state.eyes.push({
-          x: spacing * (i + 1),
-          y: gridRef.rows / 2,
+          x: x,
+          y: y,
+          z: Math.random() * this.config.eyeDepthRange, // Depth for parallax
+          radius: radius,
+          pupilRadius: radius * this.config.pupilRadiusRatio,
+          // Current pupil position (offset from center)
           pupilOffsetX: 0,
           pupilOffsetY: 0,
+          // Target pupil position
           targetOffsetX: 0,
           targetOffsetY: 0,
-          blinkTimer: Math.random() * 5,
-          blinkDuration: 0,
-          isBlinking: false
+          // 3D rotation angles
+          rotationX: 0,  // Pitch - looking up/down
+          rotationY: 0,  // Yaw - looking left/right
+          targetRotationX: 0,
+          targetRotationY: 0,
+          // Blinking
+          blinkTimer: 2 + Math.random() * 5,
+          blinkProgress: 0, // 0 = open, 1 = closed
+          isBlinking: false,
+          // Visual variation
+          irisColorIndex: Math.floor(Math.random() * this.config.palette.iris.length),
+          charVariant: Math.floor(Math.random() * 3)
         });
       }
     },
@@ -696,41 +1007,65 @@ const AsciiBackground = (function() {
       
       // Update eyes
       for (const eye of this.state.eyes) {
-        // Blink logic - use frame-based timing instead of setTimeout
+        // Blink logic
         eye.blinkTimer -= deltaTime;
         if (eye.blinkTimer <= 0 && !eye.isBlinking) {
           eye.isBlinking = true;
-          eye.blinkDuration = 0.15; // 150ms blink duration
-          eye.blinkTimer = 3 + Math.random() * 4;
+          eye.blinkTimer = 3 + Math.random() * 5;
         }
         
-        // Update blink state based on duration
+        // Update blink animation
         if (eye.isBlinking) {
-          eye.blinkDuration -= deltaTime;
-          if (eye.blinkDuration <= 0) {
+          eye.blinkProgress += deltaTime * 8; // Speed of blink
+          if (eye.blinkProgress >= 2) { // Full blink cycle (0->1->0)
             eye.isBlinking = false;
+            eye.blinkProgress = 0;
           }
         }
         
-        // Calculate target pupil position
+        // Calculate 3D look direction
         if (mouseActive) {
           const dx = mouseGridX - eye.x;
           const dy = mouseGridY - eye.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
           
           if (dist > 0) {
-            const maxOffset = this.config.maxPupilOffset;
-            const factor = Math.min(1, dist / 30);
-            eye.targetOffsetX = (dx / dist) * maxOffset * factor;
-            eye.targetOffsetY = (dy / dist) * maxOffset * factor;
+            // Calculate rotation angles for 3D effect
+            // Normalize and convert to rotation angles
+            const maxRotation = Math.PI / 3; // 60 degrees max rotation
+            const distFactor = Math.min(1, dist / 40); // How much the distance affects rotation
+            
+            // Yaw (left-right rotation)
+            eye.targetRotationY = Math.atan2(dx, 30) * distFactor;
+            eye.targetRotationY = Math.max(-maxRotation, Math.min(maxRotation, eye.targetRotationY));
+            
+            // Pitch (up-down rotation)
+            eye.targetRotationX = Math.atan2(dy, 30) * distFactor;
+            eye.targetRotationX = Math.max(-maxRotation, Math.min(maxRotation, eye.targetRotationX));
+            
+            // Pupil offset based on rotation
+            const maxOffset = eye.radius * this.config.maxPupilOffset;
+            eye.targetOffsetX = Math.sin(eye.targetRotationY) * maxOffset;
+            eye.targetOffsetY = Math.sin(eye.targetRotationX) * maxOffset;
           }
         } else {
-          // Idle movement - look around slowly
-          eye.targetOffsetX = Math.cos(this.state.idleAngle + eye.x * 0.1) * this.config.maxPupilOffset * 0.5;
-          eye.targetOffsetY = Math.sin(this.state.idleAngle * 0.7 + eye.y * 0.1) * this.config.maxPupilOffset * 0.3;
+          // Idle movement - slow wandering gaze
+          const idleX = Math.cos(this.state.idleAngle + eye.x * 0.1) * 0.3;
+          const idleY = Math.sin(this.state.idleAngle * 0.7 + eye.y * 0.1) * 0.2;
+          
+          eye.targetRotationY = idleX * Math.PI / 6;
+          eye.targetRotationX = idleY * Math.PI / 6;
+          
+          const maxOffset = eye.radius * this.config.maxPupilOffset * 0.5;
+          eye.targetOffsetX = Math.sin(eye.targetRotationY) * maxOffset;
+          eye.targetOffsetY = Math.sin(eye.targetRotationX) * maxOffset;
         }
         
-        // Smooth interpolation
+        // Smooth interpolation for rotation
+        eye.rotationX += (eye.targetRotationX - eye.rotationX) * this.config.trackingSpeed;
+        eye.rotationY += (eye.targetRotationY - eye.rotationY) * this.config.trackingSpeed;
+        
+        // Smooth interpolation for pupil
         eye.pupilOffsetX += (eye.targetOffsetX - eye.pupilOffsetX) * this.config.trackingSpeed;
         eye.pupilOffsetY += (eye.targetOffsetY - eye.pupilOffsetY) * this.config.trackingSpeed;
       }
@@ -740,20 +1075,32 @@ const AsciiBackground = (function() {
         gridRef.cells[i] = { char: ' ', color: globalConfig.backgroundColor, intensity: 0 };
       }
       
-      // Render eyes
-      for (const eye of this.state.eyes) {
+      // Render eyes (sorted by z for proper depth)
+      const sortedEyes = [...this.state.eyes].sort((a, b) => b.z - a.z);
+      for (const eye of sortedEyes) {
         this.renderEye(gridRef, eye, globalConfig);
       }
     },
     
     renderEye(gridRef, eye, globalConfig) {
-      const radius = this.config.eyeRadius;
-      const pupilRadius = this.config.pupilRadius;
+      const radius = eye.radius;
       const palette = this.config.palette;
+      const chars = this.config.eyeChars;
+      
+      // Calculate blink factor (0 = open, 1 = closed)
+      let blinkFactor = 0;
+      if (eye.isBlinking) {
+        // Smooth blink: 0->1->0
+        blinkFactor = eye.blinkProgress < 1 ? eye.blinkProgress : 2 - eye.blinkProgress;
+      }
+      
+      // 3D deformation based on rotation
+      const cosY = Math.cos(eye.rotationY);
+      const cosX = Math.cos(eye.rotationX);
       
       // Draw eye shape
-      for (let dy = -radius - 1; dy <= radius + 1; dy++) {
-        for (let dx = -radius - 2; dx <= radius + 2; dx++) {
+      for (let dy = -radius - 2; dy <= radius + 2; dy++) {
+        for (let dx = -radius - 3; dx <= radius + 3; dx++) {
           const gx = Math.floor(eye.x + dx);
           const gy = Math.floor(eye.y + dy);
           
@@ -761,69 +1108,97 @@ const AsciiBackground = (function() {
           
           const idx = gy * gridRef.cols + gx;
           
-          // Eye shape (ellipse)
-          const normalizedX = dx / (radius + 1);
-          const normalizedY = dy / radius;
+          // 3D ellipse with rotation foreshortening
+          const scaleX = 1.3 * cosY; // Horizontal compression when looking sideways
+          const scaleY = 0.9 * cosX; // Vertical compression when looking up/down (blink reduces this)
+          
+          // Apply blink (squish vertically)
+          const effectiveScaleY = scaleY * (1 - blinkFactor * 0.9);
+          
+          const normalizedX = dx / (radius * scaleX);
+          const normalizedY = dy / (radius * effectiveScaleY);
           const distFromCenter = normalizedX * normalizedX + normalizedY * normalizedY;
           
-          // Blink - close eye
-          if (eye.isBlinking) {
-            if (Math.abs(dy) <= 1 && Math.abs(dx) <= radius) {
+          // Completely closed eye during blink
+          if (blinkFactor > 0.8) {
+            if (Math.abs(dy) <= 1 && Math.abs(dx) <= radius * scaleX) {
               gridRef.cells[idx] = {
-                char: '-',
+                char: chars.blink[eye.charVariant % chars.blink.length],
                 color: palette.outline,
-                intensity: 0.8
+                intensity: 0.9
               };
             }
             continue;
           }
           
-          // Determine what to draw at this position
+          // Calculate pupil distance
           const pupilX = eye.pupilOffsetX;
-          const pupilY = eye.pupilOffsetY;
+          const pupilY = eye.pupilOffsetY * (1 - blinkFactor * 0.5);
           const distFromPupil = Math.sqrt((dx - pupilX) ** 2 + (dy - pupilY) ** 2);
           
-          if (distFromPupil < pupilRadius * 0.6) {
-            // Pupil center
+          // Iris size varies with 3D rotation (looks like it shrinks when looking away)
+          const irisRadius = eye.pupilRadius * 2.5 * Math.max(0.6, cosY * cosX);
+          const pupilSize = eye.pupilRadius * Math.max(0.5, cosY * cosX);
+          
+          if (distFromPupil < pupilSize * 0.5) {
+            // Pupil center - darkest
             gridRef.cells[idx] = {
-              char: '@',
+              char: chars.pupil[eye.charVariant % chars.pupil.length],
               color: palette.pupil,
               intensity: 1
             };
-          } else if (distFromPupil < pupilRadius) {
+          } else if (distFromPupil < pupilSize) {
             // Pupil edge
             gridRef.cells[idx] = {
               char: '#',
               color: palette.pupil,
-              intensity: 0.9
+              intensity: 0.95
             };
-          } else if (distFromPupil < pupilRadius + 1.5) {
-            // Iris
+          } else if (distFromPupil < irisRadius * 0.6) {
+            // Iris inner
             gridRef.cells[idx] = {
-              char: 'O',
-              color: palette.iris,
+              char: chars.iris[eye.charVariant % chars.iris.length],
+              color: palette.iris[eye.irisColorIndex],
+              intensity: 0.85
+            };
+          } else if (distFromPupil < irisRadius) {
+            // Iris outer
+            gridRef.cells[idx] = {
+              char: 'o',
+              color: palette.iris[eye.irisColorIndex],
               intensity: 0.7
             };
-          } else if (distFromCenter < 0.85) {
-            // White of eye
+          } else if (distFromCenter < 0.75) {
+            // Sclera (white of eye)
             gridRef.cells[idx] = {
-              char: '.',
-              color: '#DDDDDD',
-              intensity: 0.4
+              char: chars.sclera[eye.charVariant % chars.sclera.length],
+              color: palette.sclera,
+              intensity: 0.5
             };
-          } else if (distFromCenter < 1.1) {
+          } else if (distFromCenter < 1.15) {
             // Eye outline
-            let outlineChar = 'o';
+            let outlineChar;
             
             // Determine outline character based on position
-            if (Math.abs(normalizedX) > 0.7) {
-              outlineChar = normalizedX > 0 ? ')' : '(';
-            } else if (Math.abs(normalizedY) > 0.7) {
-              outlineChar = '-';
-            } else if (normalizedX * normalizedY > 0) {
-              outlineChar = normalizedY > 0 ? '\\' : '/';
+            const absNormX = Math.abs(normalizedX);
+            const absNormY = Math.abs(normalizedY);
+            
+            if (absNormY > absNormX * 1.5) {
+              // Top or bottom
+              outlineChar = normalizedY < 0 ? 
+                chars.outline.top[eye.charVariant % chars.outline.top.length] :
+                chars.outline.bottom[eye.charVariant % chars.outline.bottom.length];
+            } else if (absNormX > absNormY * 1.5) {
+              // Left or right
+              outlineChar = normalizedX < 0 ?
+                chars.outline.left[eye.charVariant % chars.outline.left.length] :
+                chars.outline.right[eye.charVariant % chars.outline.right.length];
             } else {
-              outlineChar = normalizedY > 0 ? '/' : '\\';
+              // Corners
+              if (normalizedX < 0 && normalizedY < 0) outlineChar = '/';
+              else if (normalizedX > 0 && normalizedY < 0) outlineChar = '\\';
+              else if (normalizedX < 0 && normalizedY > 0) outlineChar = '\\';
+              else outlineChar = '/';
             }
             
             gridRef.cells[idx] = {
@@ -833,8 +1208,12 @@ const AsciiBackground = (function() {
             };
           }
           
-          // Add highlight
-          if (dx === Math.floor(pupilX - 1) && dy === Math.floor(pupilY - 1)) {
+          // Add highlight reflection
+          const highlightX = pupilX - eye.pupilRadius * 0.8;
+          const highlightY = pupilY - eye.pupilRadius * 0.8;
+          const distFromHighlight = Math.sqrt((dx - highlightX) ** 2 + (dy - highlightY) ** 2);
+          
+          if (distFromHighlight < 1.2 && blinkFactor < 0.3) {
             gridRef.cells[idx] = {
               char: '*',
               color: palette.highlight,
@@ -989,14 +1368,41 @@ const AsciiBackground = (function() {
     const newScene = SCENES[sceneName];
     
     if (transition && currentScene && config.transitionDuration > 0) {
+      // Store current cell positions for morph transition
+      const morphCells = [];
+      for (let y = 0; y < grid.rows; y++) {
+        for (let x = 0; x < grid.cols; x++) {
+          const idx = y * grid.cols + x;
+          const cell = grid.cells[idx];
+          if (cell.char !== ' ' && cell.intensity > 0.1) {
+            morphCells.push({
+              fromX: x,
+              fromY: y,
+              toX: x, // Will be updated once new scene renders
+              toY: y,
+              currentX: x,
+              currentY: y,
+              char: cell.char,
+              color: cell.color,
+              intensity: cell.intensity,
+              vx: (Math.random() - 0.5) * 2, // Random initial velocity
+              vy: (Math.random() - 0.5) * 2,
+              assigned: false
+            });
+          }
+        }
+      }
+      
       // Start transition
       transitionState = {
         fromScene: currentScene,
         toScene: newScene,
         fromGrid: JSON.parse(JSON.stringify(grid.cells)),
+        morphCells: morphCells,
         progress: 0,
         duration: config.transitionDuration,
-        type: config.transitionType
+        type: config.transitionType,
+        targetsAssigned: false
       };
       
       // Initialize new scene
@@ -1052,7 +1458,7 @@ const AsciiBackground = (function() {
   }
   
   /**
-   * Update transition between scenes
+   * Update transition between scenes - supports morph (fluid character movement)
    */
   function updateTransition(deltaTime) {
     transitionState.progress += (deltaTime * 1000) / transitionState.duration;
@@ -1065,14 +1471,148 @@ const AsciiBackground = (function() {
       return;
     }
     
-    // Update both scenes
+    // Update new scene to get target positions
     transitionState.toScene.update(grid, config, performance.now() / 1000, deltaTime);
     
-    // Apply transition effect
     const progress = transitionState.progress;
-    const fromGrid = transitionState.fromGrid;
     
-    if (transitionState.type === 'glitch') {
+    if (transitionState.type === 'morph') {
+      // Morph transition - fluid character movement
+      const morphCells = transitionState.morphCells;
+      
+      // Assign target positions on first frame
+      if (!transitionState.targetsAssigned) {
+        // Collect target cells from new scene
+        const targetCells = [];
+        for (let y = 0; y < grid.rows; y++) {
+          for (let x = 0; x < grid.cols; x++) {
+            const idx = y * grid.cols + x;
+            const cell = grid.cells[idx];
+            if (cell.char !== ' ' && cell.intensity > 0.1) {
+              targetCells.push({ x, y, char: cell.char, color: cell.color, intensity: cell.intensity, assigned: false });
+            }
+          }
+        }
+        
+        // Match morphCells to nearest targetCells
+        for (const mc of morphCells) {
+          let minDist = Infinity;
+          let closest = null;
+          
+          for (const tc of targetCells) {
+            if (tc.assigned) continue;
+            const dx = tc.x - mc.fromX;
+            const dy = tc.y - mc.fromY;
+            const dist = dx * dx + dy * dy;
+            if (dist < minDist) {
+              minDist = dist;
+              closest = tc;
+            }
+          }
+          
+          if (closest) {
+            mc.toX = closest.x;
+            mc.toY = closest.y;
+            mc.targetChar = closest.char;
+            mc.targetColor = closest.color;
+            mc.targetIntensity = closest.intensity;
+            closest.assigned = true;
+            mc.assigned = true;
+          } else {
+            // No target - fade out (scatter)
+            mc.toX = mc.fromX + (Math.random() - 0.5) * grid.cols * 0.5;
+            mc.toY = mc.fromY + (Math.random() - 0.5) * grid.rows * 0.5;
+            mc.fadeOut = true;
+          }
+        }
+        
+        // Add new cells that weren't matched
+        for (const tc of targetCells) {
+          if (!tc.assigned) {
+            morphCells.push({
+              fromX: tc.x + (Math.random() - 0.5) * grid.cols * 0.5,
+              fromY: tc.y + (Math.random() - 0.5) * grid.rows * 0.5,
+              toX: tc.x,
+              toY: tc.y,
+              currentX: tc.x + (Math.random() - 0.5) * grid.cols * 0.5,
+              currentY: tc.y + (Math.random() - 0.5) * grid.rows * 0.5,
+              char: tc.char,
+              color: tc.color,
+              intensity: 0,
+              targetChar: tc.char,
+              targetColor: tc.color,
+              targetIntensity: tc.intensity,
+              vx: 0,
+              vy: 0,
+              fadeIn: true,
+              assigned: true
+            });
+          }
+        }
+        
+        transitionState.targetsAssigned = true;
+      }
+      
+      // Ease function for smooth animation
+      const easeInOutCubic = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      const eased = easeInOutCubic(progress);
+      
+      // Clear grid for rendering
+      for (let i = 0; i < grid.cells.length; i++) {
+        grid.cells[i] = { char: ' ', color: config.backgroundColor, intensity: 0 };
+      }
+      
+      // Update and render morph cells
+      for (const mc of morphCells) {
+        // Interpolate position with easing
+        mc.currentX = mc.fromX + (mc.toX - mc.fromX) * eased;
+        mc.currentY = mc.fromY + (mc.toY - mc.fromY) * eased;
+        
+        // Add some swirl/turbulence for organic feel
+        const turbulence = Math.sin(progress * Math.PI) * (1 - progress);
+        const noise = SimplexNoise.noise2D(mc.currentX * 0.1, mc.currentY * 0.1 + progress * 5);
+        mc.currentX += noise * turbulence * 3;
+        mc.currentY += Math.cos(progress * Math.PI * 2 + mc.fromX) * turbulence * 2;
+        
+        // Calculate display position
+        const gx = Math.floor(mc.currentX);
+        const gy = Math.floor(mc.currentY);
+        
+        if (gx >= 0 && gx < grid.cols && gy >= 0 && gy < grid.rows) {
+          const idx = gy * grid.cols + gx;
+          
+          // Interpolate intensity
+          let intensity = mc.intensity;
+          if (mc.fadeOut) {
+            intensity = mc.intensity * (1 - progress);
+          } else if (mc.fadeIn) {
+            intensity = mc.targetIntensity * progress;
+          } else {
+            intensity = mc.intensity + (mc.targetIntensity - mc.intensity) * progress;
+          }
+          
+          // Interpolate color if different
+          let color = mc.color;
+          if (mc.targetColor && progress > 0.5) {
+            color = mc.targetColor;
+          }
+          
+          // Choose character - transition at midpoint
+          let char = mc.char;
+          if (mc.targetChar && progress > 0.4 + Math.random() * 0.2) {
+            char = mc.targetChar;
+          }
+          
+          if (intensity > grid.cells[idx].intensity) {
+            grid.cells[idx] = {
+              char: char,
+              color: color,
+              intensity: Math.min(1, intensity)
+            };
+          }
+        }
+      }
+    } else if (transitionState.type === 'glitch') {
       // Glitch transition - mix characters randomly
       const glitchChars = ['█', '▓', '▒', '░', '/', '\\', '|', '-', '+', '*'];
       
@@ -1082,11 +1622,11 @@ const AsciiBackground = (function() {
           grid.cells[i].color = Math.random() > 0.5 ? '#FFFFFF' : grid.cells[i].color;
         }
       }
+      transitionState.opacity = progress;
+    } else {
+      // Default fade transition
+      transitionState.opacity = progress;
     }
-    
-    // Fade effect (always applied)
-    // The opacity will be handled in render
-    transitionState.opacity = progress;
   }
   
   /**
@@ -1105,9 +1645,9 @@ const AsciiBackground = (function() {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     
-    // Calculate opacity for transition
+    // Calculate opacity for transition (not used for morph transitions)
     let globalOpacity = 1;
-    if (transitionState) {
+    if (transitionState && transitionState.type !== 'morph' && transitionState.opacity !== undefined) {
       globalOpacity = transitionState.opacity;
     }
     
