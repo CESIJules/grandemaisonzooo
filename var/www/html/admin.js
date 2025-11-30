@@ -491,44 +491,6 @@ document.addEventListener('DOMContentLoaded', () => {
     refreshMusicBtn.addEventListener('click', renderMusicFiles);
   }
 
-  // Fetch Covers Button
-  const fetchCoversBtn = document.getElementById('fetchCoversBtn');
-  const fetchCoversMessage = document.getElementById('fetchCoversMessage');
-
-  if (fetchCoversBtn) {
-    fetchCoversBtn.addEventListener('click', async () => {
-      fetchCoversBtn.disabled = true;
-      const originalText = fetchCoversBtn.textContent;
-      fetchCoversBtn.textContent = 'Traitement en cours...';
-      fetchCoversMessage.textContent = '';
-
-      try {
-        const response = await fetch('fetch_covers.php');
-        const data = await response.json();
-        
-        if (data.status === 'success') {
-            fetchCoversMessage.textContent = data.message;
-            fetchCoversMessage.style.color = '#4caf50'; // Green
-        } else {
-            fetchCoversMessage.textContent = 'Erreur: ' + data.message;
-            fetchCoversMessage.style.color = '#f44336'; // Red
-        }
-        
-        if (data.details && data.details.length > 0) {
-            console.log('Détails des erreurs fetch_covers:', data.details);
-        }
-
-      } catch (error) {
-        console.error(error);
-        fetchCoversMessage.textContent = 'Erreur réseau ou serveur.';
-        fetchCoversMessage.style.color = '#f44336';
-      } finally {
-        fetchCoversBtn.disabled = false;
-        fetchCoversBtn.textContent = originalText;
-      }
-    });
-  }
-
   // Show More button
   if (showMoreMusicBtn) {
       showMoreMusicBtn.addEventListener('click', () => {
