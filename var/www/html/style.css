@@ -197,6 +197,17 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 .contact-form textarea { min-height: 120px; }
 .contact-form .btn { margin-top: 8px; }
 
+/* ASCII Background Canvas */
+#asciiBg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: auto; /* Allow mouse interaction */
+}
+
 /* Radio Section */
 #radio {
   display: flex;
@@ -205,44 +216,6 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   padding-top: 0;
   position: relative;
   overflow: hidden;
-}
-
-@keyframes flicker {
-  0% { opacity: 0.5; filter: brightness(1) contrast(1); }
-  5% { opacity: 0.55; filter: brightness(1.3) contrast(1.1); }
-  10% { opacity: 0.5; filter: brightness(1) contrast(1); }
-  15% { opacity: 0.6; filter: brightness(1.5) contrast(1.2); }
-  20% { opacity: 0.5; filter: brightness(1) contrast(1); }
-  25% { opacity: 0.52; filter: brightness(1.2) contrast(1.1); }
-  30% { opacity: 0.5; filter: brightness(1) contrast(1); }
-  35% { opacity: 0.58; filter: brightness(1.4) contrast(1.1); }
-  40% { opacity: 0.5; filter: brightness(1) contrast(1); }
-  45% { opacity: 0.53; filter: brightness(1.2) contrast(1.1); }
-  50% { opacity: 0.5; filter: brightness(1) contrast(1); }
-  55% { opacity: 0.65; filter: brightness(1.6) contrast(1.3); }
-  60% { opacity: 0.5; filter: brightness(1) contrast(1); }
-  65% { opacity: 0.54; filter: brightness(1.3) contrast(1.1); }
-  70% { opacity: 0.5; filter: brightness(1) contrast(1); }
-  75% { opacity: 0.56; filter: brightness(1.4) contrast(1.2); }
-  80% { opacity: 0.5; filter: brightness(1) contrast(1); }
-  85% { opacity: 0.52; filter: brightness(1.2) contrast(1.1); }
-  90% { opacity: 0.5; filter: brightness(1) contrast(1); }
-  95% { opacity: 0.55; filter: brightness(1.3) contrast(1.1); }
-  100% { opacity: 0.5; filter: brightness(1) contrast(1); }
-}
-
-#radio::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: url('images/radioback.png') no-repeat center center;
-  background-size: cover;
-  opacity: 0.5;
-  z-index: -1;
-  animation: flicker 4s infinite steps(10);
 }
 
 #noiseCanvas {
@@ -570,21 +543,6 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   overflow: hidden;
   position: relative;
   height: 100vh;
-}
-
-#timeline::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: url(images/TEXTURE_ASCII_2.png) no-repeat center center;
-  background-size: cover;
-  background-attachment: fixed;
-  opacity: 0.5;
-  z-index: -1;
-  animation: flicker 5s infinite steps(12) reverse;
 }
 
 .timeline-header-wrapper {
