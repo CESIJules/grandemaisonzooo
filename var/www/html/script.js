@@ -62,6 +62,34 @@ document.addEventListener('DOMContentLoaded', () => {
   // Flag pour s'assurer que l'intro ne se joue qu'une fois par session
   const hasPlayedIntro = sessionStorage.getItem('introPlayed');
 
+  // --- Interactive Title Shadow (Accueil) ---
+  if (titleAccueil) {
+    document.addEventListener('mousemove', (e) => {
+      // Only calculate if we are on the accueil section to save performance
+      if (currentSectionIndex !== 0) return;
+
+      const { clientX, clientY } = e;
+      const { innerWidth, innerHeight } = window;
+      
+      // Calculate position relative to center (-1 to 1)
+      const x = (clientX / innerWidth - 0.5) * 2; 
+      const y = (clientY / innerHeight - 0.5) * 2;
+      
+      // Max shadow offset in pixels
+      const maxOffset = 30; 
+      
+      // Invert direction for "light source" feel or keep same for "floating" feel
+      // Here we invert to make the text feel like it's floating above the shadow
+      const shadowX = x * maxOffset * -1; 
+      const shadowY = y * maxOffset * -1;
+      
+      titleAccueil.style.textShadow = `
+        0 0 20px rgba(255, 255, 255, 0.4),
+        ${shadowX}px ${shadowY}px 40px rgba(0, 0, 0, 0.9)
+      `;
+    });
+  }
+
   // Fonction pour démarrer la vidéo de fond
   function startBackgroundVideo() {
     if (backgroundVideo) {
@@ -278,9 +306,9 @@ document.addEventListener('DOMContentLoaded', () => {
           radarCtx.clearRect(0, 0, w, h);
 
           // Calculate current radar angle based on time
-          // CSS animation is 10s linear infinite
+          // CSS animation is 15s linear infinite (Synced with CSS)
           const elapsed = (Date.now() - radarStartTime) / 1000;
-          const cycle = 10.0; 
+          const cycle = 15.0; 
           const progress = (elapsed % cycle) / cycle; // 0..1
           const currentAngle = progress * 2 * Math.PI; // 0..2PI
           
@@ -288,12 +316,12 @@ document.addEventListener('DOMContentLoaded', () => {
           // If CSS starts at Top (0deg), then at t=0, angle is -PI/2 in Canvas.
           const sweepAngle = currentAngle - Math.PI / 2; 
           
-          const fov = Math.PI / 4; // Reduced FOV for tighter trail
+          const fov = Math.PI / 1.5; // Wider FOV so points stay longer
 
-          // Electric Effect Setup
-          radarCtx.shadowBlur = 10;
-          radarCtx.shadowColor = '#ffffff'; // White Glow
-          radarCtx.fillStyle = '#ffffff';   // White
+          // Electric Effect Setup - Brighter
+          radarCtx.shadowBlur = 20;
+          radarCtx.shadowColor = '#ffffff'; 
+          radarCtx.fillStyle = '#ffffff';   
 
           radarPoints.forEach(p => {
               // Normalize point angle to match sweepAngle range
@@ -321,17 +349,17 @@ document.addEventListener('DOMContentLoaded', () => {
                   
                   // Lower threshold for visibility
                   if (intensity > 0.05) {
-                      // Glitch / Twitch Effect
-                      const jitterX = (Math.random() - 0.5) * 5; // +/- 2.5px jitter
-                      const jitterY = (Math.random() - 0.5) * 5;
+                      // Glitch / Twitch Effect - Reduced amplitude (Shortened)
+                      const jitterX = (Math.random() - 0.5) * 1.5; 
+                      const jitterY = (Math.random() - 0.5) * 1.5;
                       
                       const x = cx + Math.cos(p.theta) * (p.r * maxRadius) + jitterX;
                       const y = cy + Math.sin(p.theta) * (p.r * maxRadius) + jitterY;
                       
                       // Alpha fades out as it gets further from sweep line
-                      // Sharper fade for "only during sweep" feel
+                      // Smoother fade for "stay longer"
                       let fade = 1 - (diff / fov);
-                      fade = Math.pow(fade, 4); // Very sharp falloff
+                      fade = Math.pow(fade, 2); // Less sharp falloff than before (was 4)
                       
                       // Random glitch flicker
                       if (Math.random() < 0.1) fade *= 0.5;
