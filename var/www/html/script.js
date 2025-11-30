@@ -336,8 +336,8 @@ document.addEventListener('DOMContentLoaded', () => {
           
           // --- Rotating Sweep Bar (Variable Length) ---
           // Length reacts to volume (filling/emptying)
-          // Min length 10% of radius so it's always visible
-          const currentBarLength = (0.1 + smoothedBarHeight * 0.9) * maxRadius; 
+          // Increased length as requested (starts at 50%, can go up to 150% of radius)
+          const currentBarLength = (0.5 + smoothedBarHeight * 1.0) * maxRadius; 
           
           radarCtx.beginPath();
           radarCtx.moveTo(cx, cy);
