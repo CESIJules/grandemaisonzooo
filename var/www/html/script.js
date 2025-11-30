@@ -245,6 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const circularCtx = circularVisualizer ? circularVisualizer.getContext('2d') : null;
     const radarCtx = radarCanvas ? radarCanvas.getContext('2d') : null;
     let waveTime = 0;
+    let smoothedBarHeight = 0;
     
     // Radar Points Initialization
     const radarPoints = [];
@@ -288,10 +289,10 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           const average = sum / bassCount;
           
-          // Scale between 1.0 and 1.12 based on bass (More reactive)
+          // Scale between 1.0 and 1.15 based on bass (More reactive)
           // Use power curve to emphasize kicks
-          const bassIntensity = Math.pow(average / 255, 1.5); 
-          const scale = 1 + bassIntensity * 0.12;
+          const bassIntensity = Math.pow(average / 255, 1.2); 
+          const scale = 1 + bassIntensity * 0.15;
           vinylDisc.style.transform = `scale(${scale})`;
       } else if (vinylDisc) {
           vinylDisc.style.transform = 'scale(1)';
@@ -318,22 +319,31 @@ document.addEventListener('DOMContentLoaded', () => {
           // If CSS starts at Top (0deg), then at t=0, angle is -PI/2 in Canvas.
           const sweepAngle = currentAngle - Math.PI / 2; 
           
-          const fov = Math.PI / 1.5; // Wider FOV so points stay longer
+          const fov = Math.PI / 4; // Reduced FOV as requested
 
-          // --- Reactive Bar ---
+          // --- Vertical Reactive Bar (Replaces Sweep Line) ---
           let rSum = 0;
-          const rCount = Math.floor(bufferLength * 0.2); // Focus on bass
-          for(let i = 0; i < rCount; i++) rSum += dataArray[i];
-          const rVal = Math.pow((rSum / rCount) / 255, 2.5); // Slightly less sharp curve for more activity
+          // Use full spectrum for the bar to be more representative of overall volume
+          for(let i = 0; i < bufferLength; i++) rSum += dataArray[i];
+          const rAvg = rSum / bufferLength;
+          
+          // Calculate target height (normalized 0..1)
+          // Use a power curve to make it more dynamic
+          const targetHeightVal = Math.pow(rAvg / 255, 1.2); 
+          
+          // Smooth the height
+          smoothedBarHeight += (targetHeightVal - smoothedBarHeight) * 0.2;
+          
+          const barMaxHeight = h * 0.8; // 80% of canvas height
+          const currentBarHeight = smoothedBarHeight * barMaxHeight;
+          const barWidth = 4; // Thin bar
 
-          radarCtx.beginPath();
-          radarCtx.moveTo(cx, cy);
-          radarCtx.lineTo(cx + Math.cos(sweepAngle) * maxRadius, cy + Math.sin(sweepAngle) * maxRadius);
-          radarCtx.strokeStyle = `rgba(255, 255, 255, ${0.5 + rVal * 0.5})`;
-          radarCtx.lineWidth = 2 + rVal * 12; // Thicker
-          radarCtx.shadowBlur = 10 + rVal * 50; // More glow
-          radarCtx.shadowColor = '#fff';
-          radarCtx.stroke();
+          radarCtx.fillStyle = '#fff';
+          radarCtx.shadowBlur = 15;
+          radarCtx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+          
+          // Draw centered vertical bar
+          radarCtx.fillRect(cx - barWidth / 2, cy - currentBarHeight / 2, barWidth, currentBarHeight);
 
           // Electric Effect Setup - Red & Shiny
           radarCtx.shadowColor = '#ff0000'; 
@@ -361,10 +371,11 @@ document.addEventListener('DOMContentLoaded', () => {
                   // Normalize 0..1
                   let normalized = val / 255;
                   // Power curve < 1 boosts low values (e.g. 0.1^0.5 = 0.31)
-                  let intensity = Math.pow(normalized, 0.6);
+                  // Made even more sensitive (0.4 -> 0.3)
+                  let intensity = Math.pow(normalized, 0.3);
                   
                   // Lower threshold for visibility
-                  if (intensity > 0.05) {
+                  if (intensity > 0.01) {
                       // Glitch / Twitch Effect - Reduced amplitude (Shortened)
                       const jitterX = (Math.random() - 0.5) * 1.5; 
                       const jitterY = (Math.random() - 0.5) * 1.5;
@@ -375,7 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
                       // Alpha fades out as it gets further from sweep line
                       // Smoother fade for "stay longer"
                       let fade = 1 - (diff / fov);
-                      fade = Math.pow(fade, 2); // Less sharp falloff than before (was 4)
+                      fade = Math.pow(fade, 1.5); // Less sharp falloff than before (was 4)
                       
                       // Random glitch flicker
                       if (Math.random() < 0.1) fade *= 0.5;
@@ -383,11 +394,11 @@ document.addEventListener('DOMContentLoaded', () => {
                       radarCtx.globalAlpha = intensity * fade;
                       
                       const glitchSize = Math.random() > 0.9 ? 1.5 : 1;
-                      // Increased size multiplier for more reactivity
-                      const radius = p.size * (0.5 + intensity * 5.0) * glitchSize;
+                      // Increased size multiplier for more reactivity (8.0 -> 12.0)
+                      const radius = p.size * (0.5 + intensity * 12.0) * glitchSize;
 
-                      // 1. Red Glow (Outer)
-                      radarCtx.shadowBlur = 20 + intensity * 40; // Intense glow
+                      // 1. Red Glow (Outer) - More diffuse
+                      radarCtx.shadowBlur = 30 + intensity * 60; // More diffuse glow
                       radarCtx.shadowColor = '#ff0000';
                       radarCtx.fillStyle = '#ff0000';
                       
@@ -396,7 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
                       radarCtx.fill();
 
                       // 2. White Hot Core (Inner)
-                      radarCtx.shadowBlur = 5;
+                      radarCtx.shadowBlur = 10; // Slightly more diffuse inner glow
                       radarCtx.shadowColor = '#ffffff';
                       radarCtx.fillStyle = '#ffffff';
                       
