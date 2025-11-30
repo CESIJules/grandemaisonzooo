@@ -522,6 +522,20 @@ document.addEventListener('DOMContentLoaded', () => {
   // Note: volumeControl is now a hidden input, but we still use it for state
   // volumeToggle is removed from HTML, so we check if it exists before using
   
+  // Function to update volume button position
+  function updateVolumeButtonPosition() {
+      if (!circularVolumeContainer) return;
+      const currentSection = sections[currentSectionIndex];
+      const isRadioPlaying = audio && !audio.paused;
+      const isRadioSection = currentSection && currentSection.id === 'radio';
+      
+      if (isRadioPlaying && !isRadioSection) {
+          circularVolumeContainer.classList.add('volume-floating');
+      } else {
+          circularVolumeContainer.classList.remove('volume-floating');
+      }
+  }
+
   if (audio && playBtn && status && volumeControl && circularVolumeContainer) {
     // Volume initial (Load from localStorage)
     const savedVolume = localStorage.getItem('radioVolume');
@@ -601,6 +615,7 @@ document.addEventListener('DOMContentLoaded', () => {
             circularVolumeContainer.classList.remove('dragging');
         }
     });
+
     
     // Touch support
     circularVolumeContainer.addEventListener('touchstart', (e) => {
@@ -686,10 +701,12 @@ document.addEventListener('DOMContentLoaded', () => {
           await audio.play();
           playBtn.innerHTML = '<i class="fas fa-pause"></i>';
           if (vinylDisc) vinylDisc.classList.add('playing');
+          updateVolumeButtonPosition();
         } else {
           audio.pause();
           playBtn.innerHTML = '<i class="fas fa-play"></i>';
           if (vinylDisc) vinylDisc.classList.remove('playing');
+          updateVolumeButtonPosition();
         }
       } catch (err) {
         status.textContent = 'Lecture bloquée';
@@ -1072,6 +1089,7 @@ document.addEventListener('DOMContentLoaded', () => {
       smoothScrollTo(target, 1000, () => {
           isNavigating = false;
           currentSectionIndex = index;
+          if (typeof updateVolumeButtonPosition === 'function') updateVolumeButtonPosition();
       });
   }
 
