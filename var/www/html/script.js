@@ -475,14 +475,21 @@ document.addEventListener('DOMContentLoaded', () => {
     
     let mouse = { x: -1000, y: -1000 };
     
-    // Cloud / Gas Entity (Organic & Anarchic)
-    let cloud = {
-        x: window.innerWidth / 2,
-        y: window.innerHeight / 2,
-        vx: 1,
-        vy: 0.5,
-        baseRadius: 250
-    };
+    // Fog / Cloud Entities (Organic & Anarchic)
+    const cloudCount = 6; 
+    let clouds = [];
+    
+    for(let i=0; i<cloudCount; i++) {
+        clouds.push({
+            x: Math.random() * window.innerWidth,
+            y: Math.random() * window.innerHeight,
+            vx: (Math.random() - 0.5) * 0.5, // Slow drift
+            vy: (Math.random() - 0.5) * 0.5,
+            baseRadius: Math.max(window.innerWidth, window.innerHeight) * 0.25 + Math.random() * 150, // Large: 25-35% of screen min
+            phaseOffset: Math.random() * Math.PI * 2,
+            speedFactor: 0.2 + Math.random() * 0.3 // Individual animation speed
+        });
+    }
 
     // Grid state
     let grid = []; // grid[x][y] = char
@@ -527,33 +534,35 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const time = Date.now() * 0.001;
       
-      // Update Cloud Position (Organic & Anarchic)
-      // Random acceleration changes
-      if (Math.random() < 0.05) {
-          cloud.vx += (Math.random() - 0.5) * 0.5;
-          cloud.vy += (Math.random() - 0.5) * 0.5;
-      }
-      
-      // Limit speed
-      const maxSpeed = 2.5;
-      const speed = Math.sqrt(cloud.vx*cloud.vx + cloud.vy*cloud.vy);
-      if (speed > maxSpeed) {
-          cloud.vx = (cloud.vx / speed) * maxSpeed;
-          cloud.vy = (cloud.vy / speed) * maxSpeed;
-      }
+      // Update Clouds
+      clouds.forEach(cloud => {
+          // Random acceleration changes (drifting)
+          if (Math.random() < 0.02) {
+              cloud.vx += (Math.random() - 0.5) * 0.2;
+              cloud.vy += (Math.random() - 0.5) * 0.2;
+          }
+          
+          // Limit speed (keep it slow and foggy)
+          const maxSpeed = 1.0;
+          const speed = Math.sqrt(cloud.vx*cloud.vx + cloud.vy*cloud.vy);
+          if (speed > maxSpeed) {
+              cloud.vx = (cloud.vx / speed) * maxSpeed;
+              cloud.vy = (cloud.vy / speed) * maxSpeed;
+          }
 
-      cloud.x += cloud.vx;
-      cloud.y += cloud.vy;
-      
-      // Wrap around screen with buffer
-      const buffer = 400;
-      if (cloud.x < -buffer) cloud.x = width + buffer;
-      if (cloud.x > width + buffer) cloud.x = -buffer;
-      if (cloud.y < -buffer) cloud.y = height + buffer;
-      if (cloud.y > height + buffer) cloud.y = -buffer;
-
-      // Pulsating radius for the cloud
-      const cloudRadius = cloud.baseRadius + Math.sin(time * 0.7) * 60 + Math.cos(time * 1.1) * 40;
+          cloud.x += cloud.vx;
+          cloud.y += cloud.vy;
+          
+          // Wrap around screen with large buffer
+          const buffer = cloud.baseRadius * 1.5;
+          if (cloud.x < -buffer) cloud.x = width + buffer;
+          if (cloud.x > width + buffer) cloud.x = -buffer;
+          if (cloud.y < -buffer) cloud.y = height + buffer;
+          if (cloud.y > height + buffer) cloud.y = -buffer;
+          
+          // Pulsating radius
+          cloud.currentRadius = cloud.baseRadius + Math.sin(time * cloud.speedFactor + cloud.phaseOffset) * 50;
+      });
 
       // Motion blur effect: clear with semi-transparent black
       // Lower opacity = more trails/blur (0.25 allows trails to persist longer)
@@ -581,11 +590,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const dxMouse = mouse.x - centerX;
         const absDxMouse = Math.abs(dxMouse);
         
-        const dxCloud = cloud.x - centerX;
-        const absDxCloud = Math.abs(dxCloud);
-        
-        // Cloud bounding box (generous)
-        const cloudBox = cloudRadius + 80;
+        // Optimization: Check if we are near ANY cloud or mouse
+        // Since clouds are huge, this optimization is less effective but still useful for empty corners
+        let nearAnyCloud = false;
+        for (const cloud of clouds) {
+            if (Math.abs(cloud.x - centerX) < cloud.currentRadius + 100) {
+                nearAnyCloud = true;
+                break;
+            }
+        }
 
         for (let y = 0; y < rows; y++) {
           const py = y * charSize + offsets[x] - charSize; 
@@ -599,15 +612,10 @@ document.addEventListener('DOMContentLoaded', () => {
           const dyMouse = mouse.y - centerY;
           const absDyMouse = Math.abs(dyMouse);
           
-          const dyCloud = cloud.y - centerY;
-          const absDyCloud = Math.abs(dyCloud);
-          
-          // Check proximity
           const nearMouse = (absDxMouse < maxRadius && absDyMouse < maxRadius);
-          const nearCloud = (absDxCloud < cloudBox && absDyCloud < cloudBox);
           
           // Optimization: Skip expensive math if far from both
-          if (!nearMouse && !nearCloud) {
+          if (!nearMouse && !nearAnyCloud) {
              ctx.fillStyle = '#1a1a1a';
              if (Math.random() < 0.0005) ctx.fillStyle = '#333';
              ctx.fillText(char, px, py);
@@ -632,22 +640,33 @@ document.addEventListener('DOMContentLoaded', () => {
               }
           }
           
-          // 2. Cloud Influence
-          if (nearCloud) {
-              const angle = Math.atan2(dyCloud, dxCloud);
-              // More chaotic/anarchic distortion for the cloud
-              const distortion = Math.sin(angle * 4 - time * 0.9) * 40 
-                               + Math.cos(angle * 3 + time * 1.4) * 30
-                               + Math.sin(angle * 9 + time * 2.5) * 15;
-              
-              const dist = Math.sqrt(dxCloud*dxCloud + dyCloud*dyCloud) + distortion;
-              
-              if (dist < cloudRadius) {
-                 let cInt = 1 - (dist / cloudRadius);
-                 cInt = Math.pow(cInt, 3); // Slightly softer falloff than mouse
-                 if (cInt > intensity) intensity = cInt;
+          // 2. Clouds Influence (Accumulate for fog effect)
+          let fogIntensity = 0;
+          
+          // Only check clouds if we are horizontally near one (optimization from outer loop)
+          if (nearAnyCloud) {
+              for (const cloud of clouds) {
+                  const dx = cloud.x - centerX;
+                  const dy = cloud.y - centerY;
+                  
+                  // Quick bounding box check
+                  if (Math.abs(dx) > cloud.currentRadius || Math.abs(dy) > cloud.currentRadius) continue;
+
+                  const distSq = dx*dx + dy*dy;
+                  const radSq = cloud.currentRadius * cloud.currentRadius;
+                  
+                  if (distSq < radSq) {
+                      const dist = Math.sqrt(distSq);
+                      // Soft gradient
+                      let val = 1 - (dist / cloud.currentRadius);
+                      val = Math.pow(val, 2); // Softer falloff for fog
+                      fogIntensity += val * 0.6; // Accumulate
+                  }
               }
           }
+          
+          // Combine mouse and fog
+          intensity = Math.max(intensity, Math.min(1, fogIntensity));
           
           if (intensity > 0.01) {
              // Reduced scale factor significantly (was 0.12)
