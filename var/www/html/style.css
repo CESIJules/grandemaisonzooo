@@ -371,6 +371,24 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   left: auto !important;
   z-index: 1001;
   margin: 0;
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.8);
+  transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.5s ease;
+}
+
+.volume-floating.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1);
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.2), 0 0 10px rgba(255, 255, 255, 0.1);
+}
+
+.volume-floating:hover {
+  transform: scale(1.05) translateY(-3px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.9), 0 0 20px rgba(255, 255, 255, 0.3);
+  background-color: rgba(35, 35, 35, 0.8);
+  border-color: rgba(255, 255, 255, 0.6);
 }
 
 .volume-floating .volume-ring {
