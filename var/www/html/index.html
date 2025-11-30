@@ -220,6 +220,7 @@
           <h2>RADIO</h2>
           <div class="volume-container" id="circularVolume">
             <svg class="volume-ring" width="60" height="60" viewBox="0 0 60 60">
+              <!-- Background Arc (270 degrees) -->
               <circle
                 class="ring-bg"
                 cx="30"
@@ -228,7 +229,11 @@
                 stroke-width="4"
                 fill="none"
                 stroke="rgba(255,255,255,0.2)"
+                stroke-linecap="round"
+                stroke-dasharray="122.52 163.36"
+                transform="rotate(135 30 30)"
               ></circle>
+              <!-- Progress Arc -->
               <circle
                 class="ring-progress"
                 cx="30"
@@ -238,9 +243,9 @@
                 fill="none"
                 stroke="#fff"
                 stroke-linecap="round"
-                stroke-dasharray="163.36"
-                stroke-dashoffset="0"
-                transform="rotate(-90 30 30)"
+                stroke-dasharray="122.52 163.36"
+                stroke-dashoffset="122.52"
+                transform="rotate(135 30 30)"
               ></circle>
             </svg>
             <div class="volume-icon-center">

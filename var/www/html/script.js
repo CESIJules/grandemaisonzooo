@@ -536,15 +536,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update Ring UI
     const radius = 26;
     const circumference = 2 * Math.PI * radius;
-    // stroke-dasharray is set in HTML/CSS to circumference (approx 163.36)
-    // stroke-dashoffset = circumference * (1 - volume)
-    // But we want 0 at top (full offset?) No.
-    // If dasharray = circumference.
-    // Volume 1 (full) -> offset 0.
-    // Volume 0 (empty) -> offset circumference.
+    // Arc length is 270 degrees (3/4 of circle)
+    const arcLength = circumference * 0.75;
+    
+    // stroke-dasharray: arcLength, circumference
+    // stroke-dashoffset: arcLength * (1 - volume)
     
     function updateVolumeUI(vol) {
-        const offset = circumference * (1 - vol);
+        // Invert volume for offset calculation because we want it to fill up
+        // Offset = arcLength means empty
+        // Offset = 0 means full
+        const offset = arcLength * (1 - vol);
         ringProgress.style.strokeDashoffset = offset;
         
         // Update Icon
@@ -561,42 +563,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Interaction
     let isDraggingVolume = false;
-
-    function calculateVolumeFromEvent(e) {
-        const rect = circularVolumeContainer.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
-        // Calculate angle relative to center
-        // atan2(y, x) returns angle in radians from X axis (right)
-        // We want 0 at Top (-90 deg)
-        const x = clientX - centerX;
-        const y = clientY - centerY;
-        
-        // Angle in degrees, 0 at Right, 90 at Bottom, 180 at Left, -90 at Top
-        let angleDeg = Math.atan2(y, x) * (180 / Math.PI);
-        
-        // Shift so Top is 0 and goes clockwise
-        // Current: Top is -90.
-        // Add 90 -> Top is 0. Right is 90. Bottom is 180. Left is 270.
-        angleDeg += 90;
-        
-        if (angleDeg < 0) {
-            angleDeg += 360;
-        }
-        
-        // Now angleDeg is 0 to 360 starting from Top clockwise
-        let vol = angleDeg / 360;
-        
-        // Clamp to 0-1
-        vol = Math.max(0, Math.min(1, vol));
-        
-        return vol;
-    }
+    let startY = 0;
+    let startVolume = 0;
 
     function setVolume(vol) {
+        // Clamp
+        vol = Math.max(0, Math.min(1, vol));
+        
         audio.volume = vol;
         volumeControl.value = vol;
         localStorage.setItem('radioVolume', vol);
@@ -606,15 +579,19 @@ document.addEventListener('DOMContentLoaded', () => {
     circularVolumeContainer.addEventListener('mousedown', (e) => {
         isDraggingVolume = true;
         circularVolumeContainer.classList.add('dragging');
-        const vol = calculateVolumeFromEvent(e);
-        setVolume(vol);
+        startY = e.clientY;
+        startVolume = parseFloat(volumeControl.value);
+        e.preventDefault(); // Prevent text selection
     });
 
     window.addEventListener('mousemove', (e) => {
         if (isDraggingVolume) {
-            e.preventDefault(); // Prevent selection
-            const vol = calculateVolumeFromEvent(e);
-            setVolume(vol);
+            e.preventDefault();
+            const deltaY = startY - e.clientY; // Up is positive delta
+            const sensitivity = 0.005; // Adjust for speed
+            
+            let newVol = startVolume + (deltaY * sensitivity);
+            setVolume(newVol);
         }
     });
 
@@ -629,15 +606,19 @@ document.addEventListener('DOMContentLoaded', () => {
     circularVolumeContainer.addEventListener('touchstart', (e) => {
         isDraggingVolume = true;
         circularVolumeContainer.classList.add('dragging');
-        const vol = calculateVolumeFromEvent(e);
-        setVolume(vol);
+        startY = e.touches[0].clientY;
+        startVolume = parseFloat(volumeControl.value);
+        e.preventDefault();
     }, { passive: false });
 
     window.addEventListener('touchmove', (e) => {
         if (isDraggingVolume) {
             e.preventDefault();
-            const vol = calculateVolumeFromEvent(e);
-            setVolume(vol);
+            const deltaY = startY - e.touches[0].clientY;
+            const sensitivity = 0.005;
+            
+            let newVol = startVolume + (deltaY * sensitivity);
+            setVolume(newVol);
         }
     }, { passive: false });
 

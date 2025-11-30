@@ -542,6 +542,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 #timeline h2 { 
   margin: 0;
   font-size: 2em;
+  position: absolute;
   text-align: left;
   pointer-events: none;
   left: 40px;
