@@ -23,9 +23,6 @@
       <video id="landingVideo" playsinline preload="auto" webkit-playsinline>
         <source src="vid/landing.mp4" type="video/mp4" />
       </video>
-      <button id="unmuteBtn" class="unmute-btn" style="display: none;">
-        <i class="fas fa-volume-up"></i> ACTIVER LE SON
-      </button>
     </div>
 
     <!-- Global ASCII Background -->
@@ -312,6 +309,7 @@
         <div class="player">
           <div id="vinyl-disc-container">
             <div id="vinyl-disc">
+              <canvas id="radarPoints"></canvas>
               <canvas id="circularVisualizer"></canvas>
             </div>
             <button
