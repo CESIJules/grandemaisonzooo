@@ -1,26 +1,60 @@
 <?php
 // fetch_covers.php
-error_reporting(0); // Disable error reporting to avoid breaking JSON
+
+// Enable error reporting for debugging (will be captured by shutdown function if fatal)
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+error_reporting(E_ALL);
+
 header('Content-Type: application/json');
+
+// Catch fatal errors
+register_shutdown_function(function() {
+    $error = error_get_last();
+    if ($error !== NULL && ($error['type'] === E_ERROR || $error['type'] === E_PARSE || $error['type'] === E_CORE_ERROR || $error['type'] === E_COMPILE_ERROR)) {
+        // Clear any previous output
+        if (ob_get_length()) ob_clean();
+        echo json_encode(['status' => 'error', 'message' => 'Fatal Error: ' . $error['message'] . ' on line ' . $error['line']]);
+    }
+});
+
+// Start output buffering to prevent unwanted output
+ob_start();
+
 // Increase time limit for processing many files
 set_time_limit(300); 
 
 $musicDir = '/home/radio/musique';
 $coversDir = __DIR__ . '/covers'; // /var/www/html/covers
 
+// Check extensions
+if (!extension_loaded('curl')) {
+    ob_clean();
+    echo json_encode(['status' => 'error', 'message' => 'Extension PHP CURL manquante.']);
+    exit;
+}
+
 if (!file_exists($coversDir)) {
     if (!mkdir($coversDir, 0777, true)) {
-        echo json_encode(['status' => 'error', 'message' => 'Impossible de créer le dossier covers.']);
+        ob_clean();
+        echo json_encode(['status' => 'error', 'message' => 'Impossible de créer le dossier covers. Vérifiez les permissions.']);
         exit;
     }
 }
 
 if (!is_dir($musicDir)) {
-    echo json_encode(['status' => 'error', 'message' => 'Dossier musique introuvable.']);
+    ob_clean();
+    echo json_encode(['status' => 'error', 'message' => 'Dossier musique introuvable: ' . $musicDir]);
     exit;
 }
 
 $files = scandir($musicDir);
+if ($files === false) {
+    ob_clean();
+    echo json_encode(['status' => 'error', 'message' => 'Impossible de lire le dossier musique.']);
+    exit;
+}
+
 $processed = 0;
 $downloaded = 0;
 $errors = [];
@@ -62,11 +96,13 @@ foreach ($files as $file) {
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10); // Total timeout
     // Set User-Agent to avoid being blocked
     curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
     
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($ch);
     curl_close($ch);
 
     if ($response && $httpCode == 200) {
@@ -87,7 +123,7 @@ foreach ($files as $file) {
              $errors[] = "Aucun résultat iTunes pour : $filename";
         }
     } else {
-        $errors[] = "Erreur API iTunes pour : $filename";
+        $errors[] = "Erreur API iTunes pour : $filename (HTTP $httpCode, $curlError)";
     }
     
     $processed++;
@@ -104,9 +140,10 @@ function utf8ize($d) {
     } else if (is_string($d)) {
         if (function_exists('mb_convert_encoding')) {
             return mb_convert_encoding($d, 'UTF-8', 'UTF-8');
-        } else {
-            // Fallback for older PHP or missing mbstring
+        } else if (function_exists('iconv')) {
             return iconv('ISO-8859-1', 'UTF-8', $d);
+        } else {
+            return $d; // Hope for the best
         }
     }
     return $d;
@@ -119,6 +156,10 @@ $response = [
 ];
 
 $json = json_encode(utf8ize($response));
+
+// Clear buffer and output
+ob_end_clean();
+
 if ($json === false) {
     echo json_encode([
         'status' => 'error',
