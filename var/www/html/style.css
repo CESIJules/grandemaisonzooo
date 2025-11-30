@@ -76,8 +76,8 @@ body {
 #accueil h1 {
   position: relative;
   z-index: 1;
-  font-size: 9em;
-  text-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+  font-size: 4.5em;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.3), 0 10px 30px rgba(0, 0, 0, 0.8);
 }
 
 /* One-scroll fluide global */
@@ -1113,13 +1113,13 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  /* Radar Sweep - Electric Blueish */
+  /* Radar Sweep - White */
   background: conic-gradient(
     from 0deg, 
     transparent 0deg, 
     transparent 280deg, 
-    rgba(100, 200, 255, 0.05) 300deg, 
-    rgba(150, 230, 255, 0.3) 360deg
+    rgba(255, 255, 255, 0.05) 300deg, 
+    rgba(255, 255, 255, 0.3) 360deg
   );
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -1129,15 +1129,15 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 
 #vinyl-disc.playing::after {
   opacity: 1;
-  animation: radar-spin 4s linear infinite;
+  animation: radar-spin 10s linear infinite;
 }
 
 #vinyl-disc.playing {
-  /* Pulse effect with electric glow */
+  /* Pulse effect with white glow */
   box-shadow: 
     0 0 20px rgba(0, 0, 0, 0.5),
     inset 0 0 30px rgba(255, 255, 255, 0.1),
-    0 0 30px rgba(100, 200, 255, 0.3);
+    0 0 30px rgba(255, 255, 255, 0.3);
 }
 
 @keyframes radar-spin {
@@ -1161,6 +1161,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   width: 90px;
   height: 90px;
   font-size: 36px;
-  background-color: #111; /* Fond plein pour l'étiquette centrale */
+  background-color: transparent; /* Fond transparent pour se fondre avec l'ASCII */
   border: 2px solid rgba(255,255,255,0.1);
+  backdrop-filter: blur(2px);
 }

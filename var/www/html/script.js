@@ -220,7 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Radar Points Initialization
     const radarPoints = [];
-    const numRadarPoints = 80;
+    const numRadarPoints = 30;
     for (let i = 0; i < numRadarPoints; i++) {
         radarPoints.push({
             r: Math.random(), // Normalized radius 0..1
@@ -278,9 +278,9 @@ document.addEventListener('DOMContentLoaded', () => {
           radarCtx.clearRect(0, 0, w, h);
 
           // Calculate current radar angle based on time
-          // CSS animation is 4s linear infinite
+          // CSS animation is 10s linear infinite
           const elapsed = (Date.now() - radarStartTime) / 1000;
-          const cycle = 4.0; 
+          const cycle = 10.0; 
           const progress = (elapsed % cycle) / cycle; // 0..1
           const currentAngle = progress * 2 * Math.PI; // 0..2PI
           
@@ -288,12 +288,12 @@ document.addEventListener('DOMContentLoaded', () => {
           // If CSS starts at Top (0deg), then at t=0, angle is -PI/2 in Canvas.
           const sweepAngle = currentAngle - Math.PI / 2; 
           
-          const fov = Math.PI / 3; // 60 degrees FOV trailing behind the sweep
+          const fov = Math.PI / 4; // Reduced FOV for tighter trail
 
           // Electric Effect Setup
           radarCtx.shadowBlur = 10;
-          radarCtx.shadowColor = '#00f3ff'; // Electric Cyan Glow
-          radarCtx.fillStyle = '#e0ffff';   // Bright Cyan/White
+          radarCtx.shadowColor = '#ffffff'; // White Glow
+          radarCtx.fillStyle = '#ffffff';   // White
 
           radarPoints.forEach(p => {
               // Normalize point angle to match sweepAngle range
@@ -321,16 +321,26 @@ document.addEventListener('DOMContentLoaded', () => {
                   
                   // Lower threshold for visibility
                   if (intensity > 0.05) {
-                      const x = cx + Math.cos(p.theta) * (p.r * maxRadius);
-                      const y = cy + Math.sin(p.theta) * (p.r * maxRadius);
+                      // Glitch / Twitch Effect
+                      const jitterX = (Math.random() - 0.5) * 5; // +/- 2.5px jitter
+                      const jitterY = (Math.random() - 0.5) * 5;
+                      
+                      const x = cx + Math.cos(p.theta) * (p.r * maxRadius) + jitterX;
+                      const y = cy + Math.sin(p.theta) * (p.r * maxRadius) + jitterY;
                       
                       // Alpha fades out as it gets further from sweep line
-                      const fade = 1 - (diff / fov);
+                      // Sharper fade for "only during sweep" feel
+                      let fade = 1 - (diff / fov);
+                      fade = Math.pow(fade, 4); // Very sharp falloff
                       
+                      // Random glitch flicker
+                      if (Math.random() < 0.1) fade *= 0.5;
+
                       radarCtx.globalAlpha = intensity * fade;
                       radarCtx.beginPath();
-                      // Dynamic size based on intensity
-                      radarCtx.arc(x, y, p.size * (0.5 + intensity * 2.5), 0, 2 * Math.PI);
+                      // Dynamic size based on intensity + random glitch size
+                      const glitchSize = Math.random() > 0.9 ? 1.5 : 1;
+                      radarCtx.arc(x, y, p.size * (0.5 + intensity * 2.5) * glitchSize, 0, 2 * Math.PI);
                       radarCtx.fill();
                   }
               }
