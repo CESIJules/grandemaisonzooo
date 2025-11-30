@@ -489,16 +489,14 @@ document.addEventListener('DOMContentLoaded', () => {
       grid = [];
       offsets = [];
       speeds = [];
-      // Extra columns for diagonal drift buffer
-      const totalCols = cols + 20; 
-      for (let x = 0; x < totalCols; x++) {
+      for (let x = 0; x < cols; x++) {
         let col = [];
-        for (let y = 0; y < rows + 5; y++) { 
+        for (let y = 0; y < rows + 2; y++) { 
           col.push(chars[Math.floor(Math.random() * chars.length)]);
         }
         grid.push(col);
         offsets.push(Math.random() * charSize);
-        speeds.push(Math.random() * 0.5 + 0.5); 
+        speeds.push(Math.random() * 0.8 + 0.2); 
       }
     }
 
@@ -525,12 +523,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       ctx.textBaseline = 'top';
       
-      // Diagonal drift (move right)
-      const driftX = time * 30; 
-      const totalCols = grid.length;
-      const totalGridWidth = totalCols * charSize;
-
-      for (let x = 0; x < totalCols; x++) {
+      for (let x = 0; x < cols; x++) {
         offsets[x] += speeds[x];
         
         if (offsets[x] >= charSize) {
@@ -539,14 +532,8 @@ document.addEventListener('DOMContentLoaded', () => {
            grid[x].unshift(chars[Math.floor(Math.random() * chars.length)]);
         }
 
-        // Calculate render X with wrap-around
-        let px = (x * charSize + driftX) % totalGridWidth;
-        if (px < -charSize) px += totalGridWidth;
-        
-        // Optimization: Skip if off-screen
-        if (px > width) continue;
-
         for (let y = 0; y < rows; y++) {
+          const px = x * charSize;
           const py = y * charSize + offsets[x] - charSize; 
           
           if (py > height) continue;
@@ -559,19 +546,19 @@ document.addEventListener('DOMContentLoaded', () => {
           
           // Organic/Anarchic Shape (Wobbly distortion)
           const angle = Math.atan2(dy, dx);
-          const distortion = Math.sin(angle * 3 + time * 2) * 30 
-                           + Math.cos(angle * 5 - time * 1.5) * 20
-                           + Math.sin(angle * 7 + time * 4) * 10;
+          const distortion = Math.sin(angle * 3 + time * 2) * 20 
+                           + Math.cos(angle * 5 - time * 1.5) * 10
+                           + Math.sin(angle * 7 + time * 4) * 5;
           
           const dist = Math.sqrt(dx*dx + dy*dy) + distortion;
           
-          const maxRadius = 250; // Extended fade radius
+          const maxRadius = 100; // Reduced radius
           let intensity = 0;
           
           if (dist < maxRadius) {
              intensity = 1 - (dist / maxRadius);
-             // "Réduit bien la taille du surlignage" -> Sharp curve (power 4)
-             intensity = Math.pow(intensity, 4); 
+             // Tighter highlight
+             intensity = Math.pow(intensity, 6); 
           }
           
           if (intensity > 0.01) {
