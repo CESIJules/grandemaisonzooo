@@ -317,9 +317,11 @@ const AsciiBackground = (function() {
           pulse: 0,   // Pulsing effect from interactions
           mass: 1     // For physics calculations
         });
-        this.state.bubbles[this.state.bubbles.length - 1].size = this.state.bubbles[this.state.bubbles.length - 1].baseSize;
-        this.state.bubbles[this.state.bubbles.length - 1].targetSize = this.state.bubbles[this.state.bubbles.length - 1].baseSize;
-        this.state.bubbles[this.state.bubbles.length - 1].mass = this.state.bubbles[this.state.bubbles.length - 1].baseSize;
+        // Initialize size-dependent properties
+        const bubble = this.state.bubbles[this.state.bubbles.length - 1];
+        bubble.size = bubble.baseSize;
+        bubble.targetSize = bubble.baseSize;
+        bubble.mass = bubble.baseSize;
       }
     },
     
@@ -562,7 +564,11 @@ const AsciiBackground = (function() {
         diagonal1: '╱/',
         diagonal2: '╲\\',
         cross: '┼╳+'
-      }
+      },
+      // Rendering constants
+      minDepth: 10,           // Minimum depth for projection
+      maxLineSteps: 100,      // Maximum steps for line drawing
+      perspectiveFactor: 400  // Perspective projection factor
     },
     
     // Helper function to wrap coordinates
@@ -572,12 +578,12 @@ const AsciiBackground = (function() {
     
     // Project 3D point to 2D screen with perspective
     project(x, y, z, gridRef) {
-      const perspective = 400;
+      const perspective = this.config.perspectiveFactor;
       const cameraZ = this.state.camera.z;
       const relZ = z - cameraZ;
       
       // Avoid division by zero or negative z
-      const depth = Math.max(relZ, 10);
+      const depth = Math.max(relZ, this.config.minDepth);
       const scale = perspective / (perspective + depth);
       
       const screenX = (x - this.state.camera.x) * scale + gridRef.cols / 2;
@@ -748,7 +754,7 @@ const AsciiBackground = (function() {
       const dy = projB.y - projA.y;
       const steps = Math.max(Math.abs(dx), Math.abs(dy), 1);
       
-      if (steps > 100) return; // Skip very long lines
+      if (steps > this.config.maxLineSteps) return; // Skip very long lines
       
       const avgDepth = (projA.depth + projB.depth) / 2;
       const depthFade = Math.max(0, 1 - avgDepth / 200);
@@ -914,6 +920,10 @@ const AsciiBackground = (function() {
       trackingSpeed: 0.12,
       idleSpeed: 0.3,
       eyeDepthRange: 100,    // Z-depth range for parallax effect
+      // Eye tracking constants
+      maxEyeRotation: Math.PI / 3,  // 60 degrees max rotation
+      eyeTrackingDistance: 40,      // Distance factor for tracking
+      eyeMinDistanceRatio: 0.15,    // Minimum distance between eyes as ratio of screen
       palette: {
         outline: '#AAAAAA',
         sclera: '#DDDDDD',
@@ -944,7 +954,7 @@ const AsciiBackground = (function() {
       const count = isMobile ? Math.min(6, this.config.eyeCount) : this.config.eyeCount;
       
       // Distribute eyes randomly across the screen with some constraints
-      const minDistance = Math.min(gridRef.cols, gridRef.rows) * 0.15;
+      const minDistance = Math.min(gridRef.cols, gridRef.rows) * this.config.eyeMinDistanceRatio;
       
       for (let i = 0; i < count; i++) {
         let attempts = 0;
@@ -1032,8 +1042,8 @@ const AsciiBackground = (function() {
           if (dist > 0) {
             // Calculate rotation angles for 3D effect
             // Normalize and convert to rotation angles
-            const maxRotation = Math.PI / 3; // 60 degrees max rotation
-            const distFactor = Math.min(1, dist / 40); // How much the distance affects rotation
+            const maxRotation = this.config.maxEyeRotation;
+            const distFactor = Math.min(1, dist / this.config.eyeTrackingDistance);
             
             // Yaw (left-right rotation)
             eye.targetRotationY = Math.atan2(dx, 30) * distFactor;
