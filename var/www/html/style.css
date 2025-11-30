@@ -35,6 +35,34 @@ body {
   object-fit: cover;
 }
 
+.unmute-btn {
+  position: absolute;
+  z-index: 10000;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  padding: 15px 30px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 1.2rem;
+  cursor: pointer;
+  border-radius: 30px;
+  backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.unmute-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.05);
+}
+
+.unmute-btn.hidden {
+  display: none !important;
+}
+
 /* Animations pour le burger et le titre */
 .burger {
   transition: opacity 0.6s ease;
@@ -54,10 +82,23 @@ body {
   object-fit: cover;
   z-index: -1;
   opacity: 0.4; /* Adjust opacity so text is readable */
+  mix-blend-mode: multiply;
 }
 
 #accueil {
   position: relative;
+}
+
+#accueil::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #111;
+  opacity: 0.7;
+  z-index: -1;
 }
 
 #accueil h1 {
@@ -1050,7 +1091,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   margin-top: 10px;
 }
 
-/* Vinyl Disc Styles */
+/* Radar Disc Styles */
 #vinyl-disc-container {
   position: relative;
   width: 400px;
@@ -1065,48 +1106,62 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: #1a1a1a; /* Fond gris très foncé */
-  background-image: radial-gradient(circle at center, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 60%); /* Effet de brillance subtil */
-  box-shadow:
-    inset 0 0 0 2px rgba(0, 0, 0, 0.6), /* Inner shadow for depth */
-    0 0 0 5px #1a1a1a, /* Simule le bord du disque */
-    /* Sillons stylisés (plus visibles) */
-    inset 0 0 0 30px rgba(0,0,0,0.15),
-    inset 0 0 0 32px rgba(255,255,255,0.04),
-    inset 0 0 0 60px rgba(0,0,0,0.15),
-    inset 0 0 0 62px rgba(255,255,255,0.04),
-    inset 0 0 0 90px rgba(0,0,0,0.15),
-    inset 0 0 0 92px rgba(255,255,255,0.04),
-    inset 0 0 0 120px rgba(0,0,0,0.15),
-    inset 0 0 0 122px rgba(255,255,255,0.04),
-    inset 0 0 0 150px rgba(0,0,0,0.15),
-    inset 0 0 0 152px rgba(255,255,255,0.04);
-  transition: transform 0.5s ease;
-  overflow: hidden; /* To contain the pseudo-element */
+  background: #1a1a1a;
+  /* Radar Grid */
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    radial-gradient(circle, transparent 20%, rgba(255, 255, 255, 0.1) 20%, rgba(255, 255, 255, 0.1) 21%, transparent 21%, transparent 40%, rgba(255, 255, 255, 0.1) 40%, rgba(255, 255, 255, 0.1) 41%, transparent 41%, transparent 60%, rgba(255, 255, 255, 0.1) 60%, rgba(255, 255, 255, 0.1) 61%, transparent 61%, transparent 80%, rgba(255, 255, 255, 0.1) 80%, rgba(255, 255, 255, 0.1) 81%, transparent 81%);
+  background-size: 50px 50px, 50px 50px, 100% 100%;
+  background-position: center center;
+  
+  box-shadow: 
+    0 0 0 5px #1a1a1a,
+    0 0 30px rgba(0, 0, 0, 0.8),
+    inset 0 0 50px rgba(0, 0, 0, 0.8);
+    
+  transition: transform 0.1s ease, box-shadow 0.3s ease; /* Faster transform for audio reactivity */
+  overflow: hidden;
 }
 
 #vinyl-disc::after {
   content: '';
   position: absolute;
-  top: -20%;
-  left: -20%;
-  width: 140%;
-  height: 140%;
-  background: conic-gradient(from 180deg at 50% 50%, transparent 0deg, transparent 240deg, rgba(255,255,255,0.1) 270deg, transparent 300deg, transparent 360deg);
-  opacity: 0.8;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  /* Radar Sweep */
+  background: conic-gradient(
+    from 0deg, 
+    transparent 0deg, 
+    transparent 280deg, 
+    rgba(255, 255, 255, 0.05) 300deg, 
+    rgba(255, 255, 255, 0.4) 360deg
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+#vinyl-disc.playing::after {
+  opacity: 1;
+  animation: radar-spin 2s linear infinite;
 }
 
 #vinyl-disc.playing {
-  animation: spin 20s linear infinite;
+  /* Pulse effect */
+  box-shadow: 
+    0 0 0 5px #1a1a1a,
+    0 0 40px rgba(255, 255, 255, 0.15),
+    inset 0 0 50px rgba(0, 0, 0, 0.8);
 }
 
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+@keyframes radar-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 #circularVisualizer {
