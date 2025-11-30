@@ -152,25 +152,14 @@
               Rafraîchir la liste
             </button>
 
-            <div
-              class="music-controls"
-              style="margin-top: 20px; margin-bottom: 20px"
-            >
-              <select
-                id="musicFileSelect"
-                style="
-                  padding: 8px;
-                  margin-right: 10px;
-                  min-width: 300px;
-                  max-width: 100%;
-                "
-              >
-                <option value="" disabled selected>Chargement...</option>
-              </select>
-              <button id="renameMusicBtn" class="edit-btn">Renommer</button>
-              <button id="deleteMusicBtn" class="delete-btn">Supprimer</button>
+            <div id="musicManagementContainer">
+              <!-- Music files will be listed here -->
             </div>
-            <div id="musicStatus"></div>
+            <div style="text-align: center; margin-top: 10px">
+              <button id="showMoreMusicBtn" class="btn" style="display: none">
+                Voir plus ▼
+              </button>
+            </div>
 
             <hr style="margin: 40px 0" />
 
