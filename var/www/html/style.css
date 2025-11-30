@@ -3,7 +3,7 @@
 html, body { height: 100%; margin: 0; }
 body {
   font-family: 'Space Grotesk', sans-serif;
-  background: #111;
+  background: transparent;
   color: #eee;
   overflow: hidden; /* le scroll se fait sur main */
 }
@@ -76,7 +76,8 @@ body {
 #accueil h1 {
   position: relative;
   z-index: 1;
-  font-size: 3em;
+  font-size: 9em;
+  text-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
 }
 
 /* One-scroll fluide global */
@@ -268,6 +269,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   height: 100%;
   z-index: -1;
   pointer-events: auto; /* Allow mouse interaction */
+  background-color: #111;
 }
 
 /* Radio Section */
@@ -1078,19 +1080,26 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: #1a1a1a;
-  /* Radar Grid */
+  
+  /* Glassmorphism Style */
+  background-color: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  
+  /* Radar Grid (Subtle) */
   background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    radial-gradient(circle, transparent 20%, rgba(255, 255, 255, 0.1) 20%, rgba(255, 255, 255, 0.1) 21%, transparent 21%, transparent 40%, rgba(255, 255, 255, 0.1) 40%, rgba(255, 255, 255, 0.1) 41%, transparent 41%, transparent 60%, rgba(255, 255, 255, 0.1) 60%, rgba(255, 255, 255, 0.1) 61%, transparent 61%, transparent 80%, rgba(255, 255, 255, 0.1) 80%, rgba(255, 255, 255, 0.1) 81%, transparent 81%);
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    radial-gradient(circle, transparent 20%, rgba(255, 255, 255, 0.05) 20%, rgba(255, 255, 255, 0.05) 21%, transparent 21%, transparent 40%, rgba(255, 255, 255, 0.05) 40%, rgba(255, 255, 255, 0.05) 41%, transparent 41%, transparent 60%, rgba(255, 255, 255, 0.05) 60%, rgba(255, 255, 255, 0.05) 61%, transparent 61%, transparent 80%, rgba(255, 255, 255, 0.05) 80%, rgba(255, 255, 255, 0.05) 81%, transparent 81%);
   background-size: 50px 50px, 50px 50px, 100% 100%;
   background-position: center center;
   
+  /* Electric Glow Shadow */
   box-shadow: 
-    0 0 0 5px #1a1a1a,
-    0 0 30px rgba(0, 0, 0, 0.8),
-    inset 0 0 50px rgba(0, 0, 0, 0.8);
+    0 0 20px rgba(0, 0, 0, 0.5),
+    inset 0 0 30px rgba(255, 255, 255, 0.05),
+    0 0 15px rgba(100, 200, 255, 0.1);
     
   transition: transform 0.1s ease, box-shadow 0.3s ease; /* Faster transform for audio reactivity */
   overflow: hidden;
@@ -1104,13 +1113,13 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  /* Radar Sweep */
+  /* Radar Sweep - Electric Blueish */
   background: conic-gradient(
     from 0deg, 
     transparent 0deg, 
     transparent 280deg, 
-    rgba(255, 255, 255, 0.05) 300deg, 
-    rgba(255, 255, 255, 0.4) 360deg
+    rgba(100, 200, 255, 0.05) 300deg, 
+    rgba(150, 230, 255, 0.3) 360deg
   );
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -1120,15 +1129,15 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 
 #vinyl-disc.playing::after {
   opacity: 1;
-  animation: radar-spin 2s linear infinite;
+  animation: radar-spin 4s linear infinite;
 }
 
 #vinyl-disc.playing {
-  /* Pulse effect */
+  /* Pulse effect with electric glow */
   box-shadow: 
-    0 0 0 5px #1a1a1a,
-    0 0 40px rgba(255, 255, 255, 0.15),
-    inset 0 0 50px rgba(0, 0, 0, 0.8);
+    0 0 20px rgba(0, 0, 0, 0.5),
+    inset 0 0 30px rgba(255, 255, 255, 0.1),
+    0 0 30px rgba(100, 200, 255, 0.3);
 }
 
 @keyframes radar-spin {
@@ -1143,16 +1152,6 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   width: 100%;
   height: 100%;
   z-index: 1;
-  pointer-events: none;
-}
-
-#circularVisualizer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1; /* Au-dessus du disque mais sous le bouton */
   pointer-events: none;
 }
 
