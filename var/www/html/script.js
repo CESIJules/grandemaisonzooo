@@ -470,31 +470,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const ctx = asciiCanvas.getContext('2d');
     let width, height;
     let cols, rows;
-    const charSize = 18; // Increased size for better performance (fewer characters)
+    const charSize = 18; 
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$#@%&?!<>"; 
     
     let mouse = { x: -1000, y: -1000 };
     
-    // Fog / Cloud Entities (Organic & Anarchic)
-    const cloudCount = 6; 
-    let clouds = [];
-    
-    for(let i=0; i<cloudCount; i++) {
-        clouds.push({
-            x: Math.random() * window.innerWidth,
-            y: Math.random() * window.innerHeight,
-            vx: (Math.random() - 0.5) * 0.5, // Slow drift
-            vy: (Math.random() - 0.5) * 0.5,
-            baseRadius: Math.max(window.innerWidth, window.innerHeight) * 0.25 + Math.random() * 150, // Large: 25-35% of screen min
-            phaseOffset: Math.random() * Math.PI * 2,
-            speedFactor: 0.2 + Math.random() * 0.3 // Individual animation speed
-        });
-    }
-
     // Grid state
-    let grid = []; // grid[x][y] = char
-    let offsets = []; // offsets[x] = float y shift
-    let speeds = []; // speeds[x] = float speed
+    let grid = []; 
+    let offsets = []; 
+    let speeds = []; 
 
     window.addEventListener('mousemove', (e) => {
       mouse.x = e.clientX;
@@ -534,45 +518,16 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const time = Date.now() * 0.001;
       
-      // Update Clouds
-      clouds.forEach(cloud => {
-          // Random acceleration changes (drifting)
-          if (Math.random() < 0.02) {
-              cloud.vx += (Math.random() - 0.5) * 0.2;
-              cloud.vy += (Math.random() - 0.5) * 0.2;
-          }
-          
-          // Limit speed (keep it slow and foggy)
-          const maxSpeed = 1.0;
-          const speed = Math.sqrt(cloud.vx*cloud.vx + cloud.vy*cloud.vy);
-          if (speed > maxSpeed) {
-              cloud.vx = (cloud.vx / speed) * maxSpeed;
-              cloud.vy = (cloud.vy / speed) * maxSpeed;
-          }
-
-          cloud.x += cloud.vx;
-          cloud.y += cloud.vy;
-          
-          // Wrap around screen with large buffer
-          const buffer = cloud.baseRadius * 1.5;
-          if (cloud.x < -buffer) cloud.x = width + buffer;
-          if (cloud.x > width + buffer) cloud.x = -buffer;
-          if (cloud.y < -buffer) cloud.y = height + buffer;
-          if (cloud.y > height + buffer) cloud.y = -buffer;
-          
-          // Pulsating radius
-          cloud.currentRadius = cloud.baseRadius + Math.sin(time * cloud.speedFactor + cloud.phaseOffset) * 50;
-      });
-
-      // Motion blur effect: clear with semi-transparent black
-      // Lower opacity = more trails/blur (0.25 allows trails to persist longer)
+      // Clear with transparency for trails
       ctx.fillStyle = 'rgba(5, 5, 5, 0.25)'; 
       ctx.fillRect(0, 0, width, height);
       
       ctx.textBaseline = 'top';
+      // Fixed font size for performance (no scaling per char)
       ctx.font = `${charSize}px 'Courier New', monospace`;
       
-      const maxRadius = 250; // Mouse radius
+      const maxRadius = 250; 
+      const maxRadiusSq = maxRadius * maxRadius;
 
       for (let x = 0; x < cols; x++) {
         offsets[x] += speeds[x];
@@ -585,116 +540,74 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const px = x * charSize;
         const centerX = px + charSize/2;
-
-        // Distances
-        const dxMouse = mouse.x - centerX;
-        const absDxMouse = Math.abs(dxMouse);
         
-        // Optimization: Check if we are near ANY cloud or mouse
-        // Since clouds are huge, this optimization is less effective but still useful for empty corners
-        let nearAnyCloud = false;
-        for (const cloud of clouds) {
-            if (Math.abs(cloud.x - centerX) < cloud.currentRadius + 100) {
-                nearAnyCloud = true;
-                break;
-            }
-        }
+        // Mouse calc
+        const dxMouse = mouse.x - centerX;
+        const dxMouseSq = dxMouse * dxMouse;
 
+        // Cloud Noise Calculation (Horizontal Movement)
+        // Use coordinates relative to grid for simpler math
+        // x * scale + time * speed
+        // Low frequency for large clouds
+        const noiseX = x * 0.04 + time * 0.2; 
+        
         for (let y = 0; y < rows; y++) {
           const py = y * charSize + offsets[x] - charSize; 
           
-          // Optimization: Stop drawing if below screen
           if (py > height) break;
 
-          const char = grid[x][y];
           const centerY = py + charSize/2;
           
-          const dyMouse = mouse.y - centerY;
-          const absDyMouse = Math.abs(dyMouse);
+          // 1. Calculate Cloud Intensity (The "Fog")
+          // Simple superposition of sine waves is much faster than distance checks
+          const noiseY = y * 0.04;
           
-          const nearMouse = (absDxMouse < maxRadius && absDyMouse < maxRadius);
+          // Organic noise approximation
+          let noise = Math.sin(noiseX) + Math.cos(noiseY * 0.8);
+          noise += Math.sin(noiseX * 2.1 + time * 0.1) * 0.5;
+          noise += Math.cos(noiseY * 1.7) * 0.5;
           
-          // Optimization: Skip expensive math if far from both
-          if (!nearMouse && !nearAnyCloud) {
-             ctx.fillStyle = '#1a1a1a';
-             if (Math.random() < 0.0005) ctx.fillStyle = '#333';
-             ctx.fillText(char, px, py);
-             continue;
+          // Normalize roughly to 0..1 (range is approx -3 to 3)
+          let cloudIntensity = (noise + 3) / 6;
+          
+          // Thresholding to create "islands" or "clouds" like the image
+          // Sharpen the edges
+          if (cloudIntensity < 0.45) {
+              cloudIntensity = 0;
+          } else {
+              cloudIntensity = (cloudIntensity - 0.45) * 1.8; // Remap
+              cloudIntensity = Math.pow(cloudIntensity, 2); // Smooth curve
           }
-          
-          let intensity = 0;
-          
-          // 1. Mouse Influence
-          if (nearMouse) {
-              const angle = Math.atan2(dyMouse, dxMouse);
-              const distortion = Math.sin(angle * 3 + time * 2) * 20 
-                               + Math.cos(angle * 5 - time * 1.5) * 10
-                               + Math.sin(angle * 7 + time * 4) * 5;
-              
-              const dist = Math.sqrt(dxMouse*dxMouse + dyMouse*dyMouse) + distortion;
-              
-              if (dist < maxRadius) {
-                 let mInt = 1 - (dist / maxRadius);
-                 mInt = Math.pow(mInt, 4); 
-                 if (mInt > intensity) intensity = mInt;
-              }
-          }
-          
-          // 2. Clouds Influence (Accumulate for fog effect)
-          let fogIntensity = 0;
-          
-          // Only check clouds if we are horizontally near one (optimization from outer loop)
-          if (nearAnyCloud) {
-              for (const cloud of clouds) {
-                  const dx = cloud.x - centerX;
-                  const dy = cloud.y - centerY;
-                  
-                  // Quick bounding box check
-                  if (Math.abs(dx) > cloud.currentRadius || Math.abs(dy) > cloud.currentRadius) continue;
 
-                  const distSq = dx*dx + dy*dy;
-                  const radSq = cloud.currentRadius * cloud.currentRadius;
-                  
-                  if (distSq < radSq) {
-                      const dist = Math.sqrt(distSq);
-                      // Soft gradient
-                      let val = 1 - (dist / cloud.currentRadius);
-                      val = Math.pow(val, 2); // Softer falloff for fog
-                      fogIntensity += val * 0.6; // Accumulate
-                  }
+          // 2. Mouse Interaction
+          let mouseIntensity = 0;
+          if (dxMouseSq < maxRadiusSq) {
+              const dyMouse = mouse.y - centerY;
+              const distSq = dxMouseSq + dyMouse * dyMouse;
+              if (distSq < maxRadiusSq) {
+                  mouseIntensity = 1 - (Math.sqrt(distSq) / maxRadius);
+                  mouseIntensity = Math.pow(mouseIntensity, 3);
               }
           }
           
-          // Combine mouse and fog
-          intensity = Math.max(intensity, Math.min(1, fogIntensity));
+          // Combine intensities
+          const totalIntensity = Math.max(cloudIntensity, mouseIntensity);
           
-          if (intensity > 0.01) {
-             // Reduced scale factor significantly (was 0.12)
-             const scale = 1 + intensity * 0.02; 
-             
-             // Color interpolation (Dark Grey -> White)
-             const val = Math.floor(26 + intensity * (255 - 26));
+          if (totalIntensity > 0.05) {
+             // High intensity: Bright
+             const val = Math.floor(30 + totalIntensity * 225);
              ctx.fillStyle = `rgb(${val}, ${val}, ${val})`;
              
-             ctx.font = `${charSize * scale}px 'Courier New', monospace`;
+             // No shadowBlur for performance
+             // No font scaling for performance
              
-             if (intensity > 0.6) { // Glow only for core
-                 ctx.shadowBlur = 10 * intensity;
-                 ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
-             } else {
-                 ctx.shadowBlur = 0;
-             }
-             
-             const offset = (charSize * scale - charSize) / 2;
-             ctx.fillText(char, px - offset, py - offset);
-             
-             // Reset
-             ctx.shadowBlur = 0;
-             ctx.font = `${charSize}px 'Courier New', monospace`;
+             ctx.fillText(grid[x][y], px, py);
           } else {
-             ctx.fillStyle = '#1a1a1a';
-             if (Math.random() < 0.0005) ctx.fillStyle = '#333';
-             ctx.fillText(char, px, py);
+             // Background (Rain)
+             // Draw darker/fainter
+             ctx.fillStyle = '#111'; 
+             if (Math.random() < 0.01) ctx.fillStyle = '#222';
+             ctx.fillText(grid[x][y], px, py);
           }
         }
       }
