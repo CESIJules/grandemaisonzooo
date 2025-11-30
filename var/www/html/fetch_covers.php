@@ -28,9 +28,9 @@ $musicDir = '/home/radio/musique';
 $coversDir = __DIR__ . '/covers'; // /var/www/html/covers
 
 // Check extensions
-if (!extension_loaded('curl')) {
+if (!extension_loaded('curl') && !ini_get('allow_url_fopen')) {
     ob_clean();
-    echo json_encode(['status' => 'error', 'message' => 'Extension PHP CURL manquante.']);
+    echo json_encode(['status' => 'error', 'message' => 'Extension PHP CURL manquante et allow_url_fopen désactivé. Impossible de faire des requêtes HTTP.']);
     exit;
 }
 
@@ -92,27 +92,16 @@ foreach ($files as $file) {
     // Call iTunes API
     $url = 'https://itunes.apple.com/search?term=' . urlencode($searchTerm) . '&entity=song&limit=1';
     
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10); // Total timeout
-    // Set User-Agent to avoid being blocked
-    curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
-    
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $curlError = curl_error($ch);
-    curl_close($ch);
+    $response = fetchUrl($url);
 
-    if ($response && $httpCode == 200) {
+    if ($response) {
         $data = json_decode($response, true);
         if (isset($data['results']) && count($data['results']) > 0) {
             $artworkUrl = $data['results'][0]['artworkUrl100'];
             // Get higher res (600x600)
             $artworkUrl = str_replace('100x100bb', '600x600bb', $artworkUrl);
             
-            $imageContent = @file_get_contents($artworkUrl);
+            $imageContent = fetchUrl($artworkUrl);
             if ($imageContent) {
                 file_put_contents($coverPathJpg, $imageContent);
                 $downloaded++;
@@ -123,12 +112,37 @@ foreach ($files as $file) {
              $errors[] = "Aucun résultat iTunes pour : $filename";
         }
     } else {
-        $errors[] = "Erreur API iTunes pour : $filename (HTTP $httpCode, $curlError)";
+        $errors[] = "Erreur API iTunes (ou réseau) pour : $filename";
     }
     
     $processed++;
     // Be nice to the API
     usleep(200000); // 200ms
+}
+
+function fetchUrl($url) {
+    if (extension_loaded('curl')) {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        return ($httpCode == 200) ? $response : false;
+    } elseif (ini_get('allow_url_fopen')) {
+        $options = [
+            'http' => [
+                'method' => 'GET',
+                'header' => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36\r\n"
+            ]
+        ];
+        $context = stream_context_create($options);
+        return @file_get_contents($url, false, $context);
+    }
+    return false;
 }
 
 // Ensure UTF-8 for JSON
