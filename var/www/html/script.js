@@ -599,64 +599,69 @@ document.addEventListener('DOMContentLoaded', () => {
           
           // --- Drawing ---
           
-          // Priority to Mouse Effect (it has scaling/glow)
-          if (mouseIntensity > 0.01) {
-             const intensity = mouseIntensity;
+          // Blending: Avoid dark ring by taking max of mouse and gas
+          // Gas is capped at ~75% brightness to keep mouse brighter
+          const combinedIntensity = Math.max(mouseIntensity, gasIntensity * 0.75);
+
+          if (combinedIntensity > 0.05) {
              
-             // Restored Scaling & Glow
-             const scale = 1 + intensity * 0.2; 
+             // Scale: Only mouse affects scale
+             const scale = 1 + mouseIntensity * 0.2; 
              
-             const val = Math.floor(26 + intensity * (255 - 26));
+             // Color: Based on combined intensity
+             const val = Math.floor(26 + combinedIntensity * (255 - 26));
              ctx.fillStyle = `rgb(${val}, ${val}, ${val})`;
              
              ctx.font = `${charSize * scale}px 'Courier New', monospace`;
              
-             if (intensity > 0.5) { 
-                 ctx.shadowBlur = 15 * intensity;
+             // Glow: Only mouse core triggers glow
+             if (mouseIntensity > 0.5) { 
+                 ctx.shadowBlur = 15 * mouseIntensity;
                  ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
              } else {
                  ctx.shadowBlur = 0;
              }
              
-             // --- Glitch & Words Logic ---
+             // --- Glitch & Words Logic (Mouse Only) ---
              let displayChar = grid[x][y];
              
-             // 1. Random Glitch (High intensity = more glitch)
-             if (intensity > 0.3 && Math.random() < 0.15) {
-                 displayChar = chars[Math.floor(Math.random() * chars.length)];
-             }
-             
-             // 2. Words "GM" and "S&S"
-             // Only in the core of the mouse effect
-             if (intensity > 0.6) {
-                 const mouseCol = Math.floor(mouse.x / charSize);
-                 const mouseRow = Math.floor(mouse.y / charSize);
-                 const relX = x - mouseCol;
-                 const relY = y - mouseRow;
-                 
-                 // Time-based triggers (Loop every 6 seconds)
-                 const cycle = time % 6; 
-                 
-                 // Show GM between 1.5s and 2.2s
-                 if (cycle > 1.5 && cycle < 2.2) {
-                     if (relY === 0) {
-                         if (relX === -1) displayChar = 'G';
-                         if (relX === 0) displayChar = 'M';
-                     }
-                 }
-                 // Show S&S between 4.0s and 4.7s
-                 else if (cycle > 4.0 && cycle < 4.7) {
-                     if (relY === 0) {
-                         if (relX === -1) displayChar = 'S';
-                         if (relX === 0) displayChar = '&';
-                         if (relX === 1) displayChar = 'S';
-                     }
-                 }
-                 
-                 // Add some "glitch" to the words themselves (flicker)
-                 // If it's a word char, sometimes show random char instead to keep it "subtle"
-                 if (['G','M','S','&'].includes(displayChar) && Math.random() < 0.1) {
+             if (mouseIntensity > 0.01) {
+                 // 1. Random Glitch (High intensity = more glitch)
+                 if (mouseIntensity > 0.3 && Math.random() < 0.15) {
                      displayChar = chars[Math.floor(Math.random() * chars.length)];
+                 }
+                 
+                 // 2. Words "GM" and "S&S"
+                 if (mouseIntensity > 0.6) {
+                     const mouseCol = Math.floor(mouse.x / charSize);
+                     const mouseRow = Math.floor(mouse.y / charSize);
+                     const relX = x - mouseCol;
+                     const relY = y - mouseRow;
+                     
+                     // Longer cycle (8s) for longer display times
+                     const cycle = time % 8; 
+                     
+                     // Show GM (2.5 seconds duration)
+                     if (cycle > 1.0 && cycle < 3.5) {
+                         if (relY === 0) {
+                             if (relX === -1) displayChar = 'G';
+                             if (relX === 0) displayChar = 'M';
+                         }
+                     }
+                     // Show S&S (2.5 seconds duration)
+                     else if (cycle > 5.0 && cycle < 7.5) {
+                         if (relY === 0) {
+                             if (relX === -1) displayChar = 'S';
+                             if (relX === 0) displayChar = '&';
+                             if (relX === 1) displayChar = 'S';
+                         }
+                     }
+                     
+                     // Very subtle glitch on words (reduced from 0.1 to 0.02)
+                     // Makes them much more readable/stable
+                     if (['G','M','S','&'].includes(displayChar) && Math.random() < 0.02) {
+                         displayChar = chars[Math.floor(Math.random() * chars.length)];
+                     }
                  }
              }
              
@@ -667,17 +672,6 @@ document.addEventListener('DOMContentLoaded', () => {
              ctx.shadowBlur = 0;
              ctx.font = `${charSize}px 'Courier New', monospace`;
 
-          } else if (gasIntensity > 0.05) {
-             // Gas Effect (Optimized: No scale, No blur, just smooth brightness gradient)
-             
-             // Map intensity to brightness (Dark Grey to Light Grey)
-             const minVal = 20;
-             const maxVal = 180; 
-             const val = Math.floor(minVal + gasIntensity * (maxVal - minVal));
-             
-             ctx.fillStyle = `rgb(${val}, ${val}, ${val})`;
-             ctx.fillText(grid[x][y], px, py);
-             
           } else {
              // Background Rain
              ctx.fillStyle = '#111'; 
