@@ -552,17 +552,18 @@ document.addEventListener('DOMContentLoaded', () => {
           
           const dist = Math.sqrt(dx*dx + dy*dy) + distortion;
           
-          const maxRadius = 100; // Reduced radius
+          const maxRadius = 250; // Restored larger radius
           let intensity = 0;
           
           if (dist < maxRadius) {
              intensity = 1 - (dist / maxRadius);
-             // Tighter highlight
-             intensity = Math.pow(intensity, 6); 
+             // Smooth fade
+             intensity = Math.pow(intensity, 4); 
           }
           
           if (intensity > 0.01) {
-             const scale = 1 + intensity * 1.2; 
+             // Reduced scale factor (was 1.2)
+             const scale = 1 + intensity * 0.5; 
              
              // Color interpolation (Dark Grey -> White)
              const val = Math.floor(26 + intensity * (255 - 26));
