@@ -321,37 +321,6 @@ document.addEventListener('DOMContentLoaded', () => {
           
           const fov = Math.PI / 4; // Reduced FOV as requested
 
-          // --- Vertical Reactive Bar (Replaces Sweep Line) ---
-          let rSum = 0;
-          // Use full spectrum for the bar to be more representative of overall volume
-          for(let i = 0; i < bufferLength; i++) rSum += dataArray[i];
-          const rAvg = rSum / bufferLength;
-          
-          // Calculate target height (normalized 0..1)
-          // Use a power curve to make it more dynamic
-          const targetHeightVal = Math.pow(rAvg / 255, 1.2); 
-          
-          // Smooth the height
-          smoothedBarHeight += (targetHeightVal - smoothedBarHeight) * 0.2;
-          
-          // --- Rotating Sweep Bar (Variable Length) ---
-          // Length reacts to volume (filling/emptying)
-          // Increased length as requested (starts at 50%, can go up to 150% of radius)
-          const currentBarLength = (0.5 + smoothedBarHeight * 1.0) * maxRadius; 
-          
-          radarCtx.beginPath();
-          radarCtx.moveTo(cx, cy);
-          radarCtx.lineTo(cx + Math.cos(sweepAngle) * currentBarLength, cy + Math.sin(sweepAngle) * currentBarLength);
-          
-          radarCtx.strokeStyle = '#fff';
-          radarCtx.lineWidth = 4; 
-          radarCtx.lineCap = 'round';
-          
-          radarCtx.shadowBlur = 15 + smoothedBarHeight * 20;
-          radarCtx.shadowColor = 'rgba(255, 255, 255, 0.9)';
-          
-          radarCtx.stroke();
-
           // Electric Effect Setup - Red & Shiny
           radarCtx.shadowColor = '#ff0000'; 
           radarCtx.fillStyle = '#ff0000';   
