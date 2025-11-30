@@ -918,9 +918,7 @@ document.addEventListener('DOMContentLoaded', () => {
         contentDiv.classList.add('timeline-content');
         contentDiv.classList.add(index % 2 === 0 ? 'timeline-content-left' : 'timeline-content-right');
 
-        const titleElement = post.link 
-          ? `<h3><a href="${post.link}" target="_blank" rel="noopener noreferrer" class="timeline-title-link">${post.title}</a></h3>`
-          : `<h3>${post.title}</h3>`;
+        const titleElement = `<h3>${post.title}</h3>`;
 
         const subtitleElement = post.link && post.subtitle
           ? `<h4><a href="${post.link}" target="_blank" rel="noopener noreferrer" class="timeline-subtitle-link">${post.subtitle}</a></h4>`

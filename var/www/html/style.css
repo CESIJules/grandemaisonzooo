@@ -207,6 +207,30 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   overflow: hidden;
 }
 
+@keyframes flicker {
+  0% { opacity: 0.5; }
+  5% { opacity: 0.55; }
+  10% { opacity: 0.5; }
+  15% { opacity: 0.6; }
+  20% { opacity: 0.5; }
+  25% { opacity: 0.52; }
+  30% { opacity: 0.5; }
+  35% { opacity: 0.58; }
+  40% { opacity: 0.5; }
+  45% { opacity: 0.53; }
+  50% { opacity: 0.5; }
+  55% { opacity: 0.65; }
+  60% { opacity: 0.5; }
+  65% { opacity: 0.54; }
+  70% { opacity: 0.5; }
+  75% { opacity: 0.56; }
+  80% { opacity: 0.5; }
+  85% { opacity: 0.52; }
+  90% { opacity: 0.5; }
+  95% { opacity: 0.55; }
+  100% { opacity: 0.5; }
+}
+
 #radio::before {
   content: '';
   position: absolute;
@@ -218,6 +242,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   background-size: cover;
   opacity: 0.5;
   z-index: -1;
+  animation: flicker 4s infinite steps(10);
 }
 
 #noiseCanvas {
@@ -559,6 +584,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   background-attachment: fixed;
   opacity: 0.5;
   z-index: -1;
+  animation: flicker 5s infinite steps(12) reverse;
 }
 
 .timeline-header-wrapper {
