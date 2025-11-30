@@ -523,11 +523,10 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.fillRect(0, 0, width, height);
       
       ctx.textBaseline = 'top';
-      // Fixed font size for performance (no scaling per char)
+      // Default font
       ctx.font = `${charSize}px 'Courier New', monospace`;
       
       const maxRadius = 250; 
-      const maxRadiusSq = maxRadius * maxRadius;
 
       for (let x = 0; x < cols; x++) {
         offsets[x] += speeds[x];
@@ -541,14 +540,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const px = x * charSize;
         const centerX = px + charSize/2;
         
-        // Mouse calc
+        // Mouse calc (Pre-check x distance)
         const dxMouse = mouse.x - centerX;
-        const dxMouseSq = dxMouse * dxMouse;
+        const absDxMouse = Math.abs(dxMouse);
 
         // Cloud Noise Calculation (Horizontal Movement)
-        // Use coordinates relative to grid for simpler math
-        // x * scale + time * speed
-        // Low frequency for large clouds
         const noiseX = x * 0.04 + time * 0.2; 
         
         for (let y = 0; y < rows; y++) {
@@ -558,8 +554,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
           const centerY = py + charSize/2;
           
-          // 1. Calculate Cloud Intensity (The "Fog")
-          // Simple superposition of sine waves is much faster than distance checks
+          // --- 1. Gas/Cloud Calculation (Optimized Noise) ---
           const noiseY = y * 0.04;
           
           // Organic noise approximation
@@ -567,46 +562,82 @@ document.addEventListener('DOMContentLoaded', () => {
           noise += Math.sin(noiseX * 2.1 + time * 0.1) * 0.5;
           noise += Math.cos(noiseY * 1.7) * 0.5;
           
-          // Normalize roughly to 0..1 (range is approx -3 to 3)
-          let cloudIntensity = (noise + 3) / 6;
+          // Normalize roughly to 0..1
+          let gasIntensity = (noise + 3) / 6;
           
-          // Thresholding to create "islands" or "clouds" like the image
-          // Sharpen the edges
-          if (cloudIntensity < 0.45) {
-              cloudIntensity = 0;
+          // Smooth thresholding for "beaux dégradés"
+          if (gasIntensity < 0.4) {
+              gasIntensity = 0;
           } else {
-              cloudIntensity = (cloudIntensity - 0.45) * 1.8; // Remap
-              cloudIntensity = Math.pow(cloudIntensity, 2); // Smooth curve
+              // Remap 0.4..1.0 to 0..1.0
+              gasIntensity = (gasIntensity - 0.4) / 0.6;
+              // Smooth curve for nice gradients
+              gasIntensity = Math.pow(gasIntensity, 2); 
           }
 
-          // 2. Mouse Interaction
+          // --- 2. Mouse Calculation (Restored "Animation d'avant") ---
           let mouseIntensity = 0;
-          if (dxMouseSq < maxRadiusSq) {
-              const dyMouse = mouse.y - centerY;
-              const distSq = dxMouseSq + dyMouse * dyMouse;
-              if (distSq < maxRadiusSq) {
-                  mouseIntensity = 1 - (Math.sqrt(distSq) / maxRadius);
-                  mouseIntensity = Math.pow(mouseIntensity, 3);
+          const dyMouse = mouse.y - centerY;
+          const absDyMouse = Math.abs(dyMouse);
+
+          if (absDxMouse < maxRadius && absDyMouse < maxRadius) {
+              // Organic Distortion Logic
+              const angle = Math.atan2(dyMouse, dxMouse);
+              const distortion = Math.sin(angle * 3 + time * 2) * 20 
+                               + Math.cos(angle * 5 - time * 1.5) * 10
+                               + Math.sin(angle * 7 + time * 4) * 5;
+              
+              const dist = Math.sqrt(dxMouse*dxMouse + dyMouse*dyMouse) + distortion;
+              
+              if (dist < maxRadius) {
+                 mouseIntensity = 1 - (dist / maxRadius);
+                 mouseIntensity = Math.pow(mouseIntensity, 4); 
               }
           }
           
-          // Combine intensities
-          const totalIntensity = Math.max(cloudIntensity, mouseIntensity);
+          // --- Drawing ---
           
-          if (totalIntensity > 0.05) {
-             // High intensity: Bright
-             const val = Math.floor(30 + totalIntensity * 225);
+          // Priority to Mouse Effect (it has scaling/glow)
+          if (mouseIntensity > 0.01) {
+             const intensity = mouseIntensity;
+             
+             // Restored Scaling & Glow
+             const scale = 1 + intensity * 0.2; 
+             
+             const val = Math.floor(26 + intensity * (255 - 26));
              ctx.fillStyle = `rgb(${val}, ${val}, ${val})`;
              
-             // No shadowBlur for performance
-             // No font scaling for performance
+             ctx.font = `${charSize * scale}px 'Courier New', monospace`;
              
+             if (intensity > 0.5) { 
+                 ctx.shadowBlur = 15 * intensity;
+                 ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+             } else {
+                 ctx.shadowBlur = 0;
+             }
+             
+             const offset = (charSize * scale - charSize) / 2;
+             ctx.fillText(grid[x][y], px - offset, py - offset);
+             
+             // Reset context
+             ctx.shadowBlur = 0;
+             ctx.font = `${charSize}px 'Courier New', monospace`;
+
+          } else if (gasIntensity > 0.05) {
+             // Gas Effect (Optimized: No scale, No blur, just smooth brightness gradient)
+             
+             // Map intensity to brightness (Dark Grey to Light Grey)
+             const minVal = 20;
+             const maxVal = 180; 
+             const val = Math.floor(minVal + gasIntensity * (maxVal - minVal));
+             
+             ctx.fillStyle = `rgb(${val}, ${val}, ${val})`;
              ctx.fillText(grid[x][y], px, py);
+             
           } else {
-             // Background (Rain)
-             // Draw darker/fainter
+             // Background Rain
              ctx.fillStyle = '#111'; 
-             if (Math.random() < 0.01) ctx.fillStyle = '#222';
+             if (Math.random() < 0.001) ctx.fillStyle = '#222';
              ctx.fillText(grid[x][y], px, py);
           }
         }
