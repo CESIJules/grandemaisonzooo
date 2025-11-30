@@ -489,15 +489,16 @@ document.addEventListener('DOMContentLoaded', () => {
       grid = [];
       offsets = [];
       speeds = [];
-      for (let x = 0; x < cols; x++) {
+      // Extra columns for diagonal drift buffer
+      const totalCols = cols + 20; 
+      for (let x = 0; x < totalCols; x++) {
         let col = [];
-        for (let y = 0; y < rows + 2; y++) { // +2 buffer for smooth scrolling
+        for (let y = 0; y < rows + 5; y++) { 
           col.push(chars[Math.floor(Math.random() * chars.length)]);
         }
         grid.push(col);
         offsets.push(Math.random() * charSize);
-        // Random speed for "rain" effect
-        speeds.push(Math.random() * 0.8 + 0.2); 
+        speeds.push(Math.random() * 0.5 + 0.5); 
       }
     }
 
@@ -517,29 +518,37 @@ document.addEventListener('DOMContentLoaded', () => {
     function draw() {
       requestAnimationFrame(draw);
       
+      const time = Date.now() * 0.001;
+      
       ctx.fillStyle = '#050505'; 
       ctx.fillRect(0, 0, width, height);
       
       ctx.textBaseline = 'top';
       
-      for (let x = 0; x < cols; x++) {
-        // Update column offset (Rain effect)
+      // Diagonal drift (move right)
+      const driftX = time * 30; 
+      const totalCols = grid.length;
+      const totalGridWidth = totalCols * charSize;
+
+      for (let x = 0; x < totalCols; x++) {
         offsets[x] += speeds[x];
         
-        // If moved down by one char size, shift grid
         if (offsets[x] >= charSize) {
            offsets[x] -= charSize;
            grid[x].pop();
            grid[x].unshift(chars[Math.floor(Math.random() * chars.length)]);
         }
 
+        // Calculate render X with wrap-around
+        let px = (x * charSize + driftX) % totalGridWidth;
+        if (px < -charSize) px += totalGridWidth;
+        
+        // Optimization: Skip if off-screen
+        if (px > width) continue;
+
         for (let y = 0; y < rows; y++) {
-          const px = x * charSize;
-          // Calculate Y position with offset
-          // We start drawing from -1 index effectively to handle the scroll in
           const py = y * charSize + offsets[x] - charSize; 
           
-          // Skip if out of view
           if (py > height) continue;
 
           const char = grid[x][y];
@@ -547,31 +556,49 @@ document.addEventListener('DOMContentLoaded', () => {
           // Mouse interaction
           const dx = mouse.x - (px + charSize/2);
           const dy = mouse.y - (py + charSize/2);
-          const dist = Math.sqrt(dx*dx + dy*dy);
           
-          // "Surligne" & "Grossir" effect
-          const isHover = dist < charSize * 2; // Interaction radius
+          // Organic/Anarchic Shape (Wobbly distortion)
+          const angle = Math.atan2(dy, dx);
+          const distortion = Math.sin(angle * 3 + time * 2) * 30 
+                           + Math.cos(angle * 5 - time * 1.5) * 20
+                           + Math.sin(angle * 7 + time * 4) * 10;
           
-          if (isHover) {
-             const scale = 1.8;
-             ctx.font = `bold ${charSize * scale}px 'Courier New', monospace`;
-             ctx.fillStyle = '#fff';
+          const dist = Math.sqrt(dx*dx + dy*dy) + distortion;
+          
+          const maxRadius = 250; // Extended fade radius
+          let intensity = 0;
+          
+          if (dist < maxRadius) {
+             intensity = 1 - (dist / maxRadius);
+             // "Réduit bien la taille du surlignage" -> Sharp curve (power 4)
+             intensity = Math.pow(intensity, 4); 
+          }
+          
+          if (intensity > 0.01) {
+             const scale = 1 + intensity * 1.2; 
              
-             // "Briller" effect
-             ctx.shadowBlur = 15;
-             ctx.shadowColor = 'rgba(255, 255, 255, 0.9)';
+             // Color interpolation (Dark Grey -> White)
+             const val = Math.floor(26 + intensity * (255 - 26));
+             ctx.fillStyle = `rgb(${val}, ${val}, ${val})`;
              
-             // Center the larger char
+             ctx.font = `${charSize * scale}px 'Courier New', monospace`;
+             
+             if (intensity > 0.6) { // Glow only for core
+                 ctx.shadowBlur = 15 * intensity;
+                 ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+             } else {
+                 ctx.shadowBlur = 0;
+             }
+             
              const offset = (charSize * scale - charSize) / 2;
              ctx.fillText(char, px - offset, py - offset);
              
-             // Reset shadow for next chars
+             // Reset
              ctx.shadowBlur = 0;
-             ctx.font = `${charSize}px 'Courier New', monospace`; // Reset font
+             ctx.font = `${charSize}px 'Courier New', monospace`;
           } else {
              ctx.fillStyle = '#1a1a1a';
-             // Occasional random flicker in background
-             if (Math.random() < 0.001) ctx.fillStyle = '#333';
+             if (Math.random() < 0.0005) ctx.fillStyle = '#333';
              ctx.fillText(char, px, py);
           }
         }
