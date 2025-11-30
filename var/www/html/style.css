@@ -287,6 +287,17 @@ p { max-width: 800px; text-align: center; color: #ccc; }
     transform: scale(1.1);
 }
 
+.volume-floating {
+  position: fixed !important;
+  top: 70px;
+  right: 16px;
+  left: auto !important;
+  z-index: 1001;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  backdrop-filter: blur(5px);
+}
+
 #radio h2 {
   font-size: 4.5em;
   margin: 0;
@@ -520,6 +531,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 #timeline { 
   background: url(images/TEXTURE_ASCII_2.png) no-repeat center center;
   background-size: cover;
+  background-attachment: fixed;
   justify-content: flex-start; 
   padding: 0;
   overflow: hidden;
