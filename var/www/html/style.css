@@ -706,6 +706,14 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   border-bottom-color: #ccc;
 }
 
+.timeline-item a.timeline-image-link {
+  border-bottom: none;
+}
+
+.timeline-item a.timeline-image-link:hover {
+  border-bottom: none;
+}
+
 .timeline-date { 
   display: block;
   font-size: 0.75em;
