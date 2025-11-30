@@ -248,6 +248,45 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   gap: 15px;
 }
 
+/* Circular Volume Control */
+.volume-container {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.volume-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none; /* Clicks pass through to container */
+}
+
+.volume-container:hover .volume-ring,
+.volume-container.dragging .volume-ring {
+  opacity: 1;
+}
+
+.volume-icon-center {
+  font-size: 20px;
+  color: #fff;
+  z-index: 2;
+  pointer-events: none;
+  transition: transform 0.2s ease;
+}
+
+.volume-container:hover .volume-icon-center {
+    transform: scale(1.1);
+}
+
 #radio h2 {
   font-size: 4.5em;
   margin: 0;
@@ -272,6 +311,22 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   text-transform: uppercase;
   letter-spacing: 1px;
   white-space: nowrap;
+
+  /* Style "Timeline Post" */
+  background-color: rgba(20, 20, 20, 0.6);
+  padding: 10px 20px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+  
+  /* Adaptation longueur */
+  width: auto;
+  max-width: 60vw; /* Limite pour éviter le débordement sur petits écrans */
+  justify-content: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 #currentSong .title {

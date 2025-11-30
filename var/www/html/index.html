@@ -21,12 +21,14 @@
     <!-- Video Landing Overlay -->
     <div id="videoOverlay" class="video-overlay">
       <video id="landingVideo" playsinline preload="auto" webkit-playsinline>
-        <source src="vid/landing.mp4" type="video/mp4">
+        <source src="vid/landing.mp4" type="video/mp4" />
       </video>
     </div>
 
     <!-- Burger -->
-    <button class="burger" id="burgerBtn" aria-label="Menu" style="opacity: 0;">☰</button>
+    <button class="burger" id="burgerBtn" aria-label="Menu" style="opacity: 0">
+      ☰
+    </button>
 
     <!-- Menu overlay -->
     <nav id="menu" class="menu hidden" aria-hidden="true">
@@ -52,10 +54,16 @@
     <main>
       <!-- Section Accueil -->
       <section id="accueil" class="screen">
-        <video id="backgroundVideo" class="background-video" loop muted playsinline>
-          <source src="vid/introboucle.mp4" type="video/mp4">
+        <video
+          id="backgroundVideo"
+          class="background-video"
+          loop
+          muted
+          playsinline
+        >
+          <source src="vid/introboucle.mp4" type="video/mp4" />
         </video>
-        <h1 id="titleAccueil" style="opacity: 0;">GRANDEMAISON</h1>
+        <h1 id="titleAccueil" style="opacity: 0">GRANDEMAISON</h1>
       </section>
 
       <!-- Nelson North -->
@@ -94,6 +102,9 @@
 
       <!-- Req1 -->
       <section id="req1" class="screen artiste">
+        <div class="artiste-image">
+          <img src="images/req1.png" alt="Req1" />
+        </div>
         <div class="artiste-info">
           <h3 class="nom-scene">Req1</h3>
           <p class="localisation">Marseille, France</p>
@@ -118,9 +129,6 @@
             ></a>
             <a href="#contact"><i class="fas fa-envelope"></i></a>
           </div>
-        </div>
-        <div class="artiste-image">
-          <img src="images/req1.png" alt="Req1" />
         </div>
       </section>
 
@@ -158,6 +166,9 @@
 
       <!-- SHOREBREAK -->
       <section id="shorebreak" class="screen artiste">
+        <div class="artiste-image">
+          <img src="images/shorebreak.png" alt="SHOREBREAK" />
+        </div>
         <div class="artiste-info">
           <h3 class="nom-scene">SHOREBREAK</h3>
           <p class="localisation">SUDEST, France</p>
@@ -185,9 +196,6 @@
             <a href="#contact"><i class="fas fa-envelope"></i></a>
           </div>
         </div>
-        <div class="artiste-image">
-          <img src="images/shorebreak.png" alt="SHOREBREAK" />
-        </div>
       </section>
 
       <!-- Timeline -->
@@ -210,24 +218,35 @@
         <div class="radio-header">
           <canvas id="visualizer"></canvas>
           <h2>RADIO</h2>
-          <div class="volume-container">
-            <button
-              id="volumeToggle"
-              class="btn-play"
-              style="width: 40px; height: 40px; font-size: 18px"
-            >
-              <i class="fas fa-volume-up"></i>
-            </button>
-            <div class="volume hidden">
-              <input
-                type="range"
-                id="volumeControl"
-                min="0"
-                max="1"
-                step="0.01"
-                value="1"
-              />
+          <div class="volume-container" id="circularVolume">
+            <svg class="volume-ring" width="60" height="60" viewBox="0 0 60 60">
+              <circle
+                class="ring-bg"
+                cx="30"
+                cy="30"
+                r="26"
+                stroke-width="4"
+                fill="none"
+                stroke="rgba(255,255,255,0.2)"
+              ></circle>
+              <circle
+                class="ring-progress"
+                cx="30"
+                cy="30"
+                r="26"
+                stroke-width="4"
+                fill="none"
+                stroke="#fff"
+                stroke-linecap="round"
+                stroke-dasharray="163.36"
+                stroke-dashoffset="0"
+                transform="rotate(-90 30 30)"
+              ></circle>
+            </svg>
+            <div class="volume-icon-center">
+              <i class="fas fa-volume-up" id="volumeIcon"></i>
             </div>
+            <input type="hidden" id="volumeControl" value="1" />
           </div>
           <div id="currentSong">
             <span class="label">En cours de lecture : </span
