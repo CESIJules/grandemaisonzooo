@@ -562,8 +562,8 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           
           if (intensity > 0.01) {
-             // Reduced scale factor (was 1.2)
-             const scale = 1 + intensity * 0.5; 
+             // Reduced scale factor (was 0.5)
+             const scale = 1 + intensity * 0.3; 
              
              // Color interpolation (Dark Grey -> White)
              const val = Math.floor(26 + intensity * (255 - 26));
