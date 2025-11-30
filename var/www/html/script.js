@@ -278,9 +278,9 @@ document.addEventListener('DOMContentLoaded', () => {
           radarCtx.clearRect(0, 0, w, h);
 
           // Calculate current radar angle based on time
-          // CSS animation is 2s linear infinite
+          // CSS animation is 4s linear infinite
           const elapsed = (Date.now() - radarStartTime) / 1000;
-          const cycle = 2.0; 
+          const cycle = 4.0; 
           const progress = (elapsed % cycle) / cycle; // 0..1
           const currentAngle = progress * 2 * Math.PI; // 0..2PI
           
@@ -290,7 +290,10 @@ document.addEventListener('DOMContentLoaded', () => {
           
           const fov = Math.PI / 3; // 60 degrees FOV trailing behind the sweep
 
-          radarCtx.fillStyle = '#fff';
+          // Electric Effect Setup
+          radarCtx.shadowBlur = 10;
+          radarCtx.shadowColor = '#00f3ff'; // Electric Cyan Glow
+          radarCtx.fillStyle = '#e0ffff';   // Bright Cyan/White
 
           radarPoints.forEach(p => {
               // Normalize point angle to match sweepAngle range
@@ -309,9 +312,15 @@ document.addEventListener('DOMContentLoaded', () => {
                   // Inner = Low freq, Outer = High freq
                   const freqIndex = Math.floor(p.r * (bufferLength * 0.5)); // Use half spectrum
                   const val = dataArray[freqIndex] || 0;
-                  const intensity = val / 255;
                   
-                  if (intensity > 0.1) {
+                  // Boost sensitivity for low volume/values
+                  // Normalize 0..1
+                  let normalized = val / 255;
+                  // Power curve < 1 boosts low values (e.g. 0.1^0.5 = 0.31)
+                  let intensity = Math.pow(normalized, 0.6);
+                  
+                  // Lower threshold for visibility
+                  if (intensity > 0.05) {
                       const x = cx + Math.cos(p.theta) * (p.r * maxRadius);
                       const y = cy + Math.sin(p.theta) * (p.r * maxRadius);
                       
@@ -320,12 +329,14 @@ document.addEventListener('DOMContentLoaded', () => {
                       
                       radarCtx.globalAlpha = intensity * fade;
                       radarCtx.beginPath();
-                      radarCtx.arc(x, y, p.size * (1 + intensity * 2), 0, 2 * Math.PI);
+                      // Dynamic size based on intensity
+                      radarCtx.arc(x, y, p.size * (0.5 + intensity * 2.5), 0, 2 * Math.PI);
                       radarCtx.fill();
                   }
               }
           });
           radarCtx.globalAlpha = 1.0;
+          radarCtx.shadowBlur = 0; // Reset
       } else if (radarCtx) {
           radarCtx.clearRect(0, 0, radarCanvas.width, radarCanvas.height);
       }
