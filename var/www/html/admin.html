@@ -1,22 +1,25 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <title>Admin - GRANDE MAISON</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-  <style>
-    /* Additional styles for admin page */
-    .admin-container {
-      width: 100%;
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    .post-management {
+  <head>
+    <meta charset="UTF-8" />
+    <title>Admin - GRANDE MAISON</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;700&family=Syne:wght@400;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      /* Additional styles for admin page */
+      .admin-container {
+        width: 100%;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .post-management {
         background-color: #222;
         padding: 15px;
         border-radius: 8px;
@@ -24,22 +27,22 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-    }
-    .post-management .post-info {
+      }
+      .post-management .post-info {
         text-align: left;
-    }
-    .delete-btn {
+      }
+      .delete-btn {
         background-color: #dc3545;
         color: white;
         border: none;
         padding: 8px 12px;
         border-radius: 4px;
         cursor: pointer;
-    }
-    .delete-btn:hover {
+      }
+      .delete-btn:hover {
         background-color: #c82333;
-    }
-    .edit-btn {
+      }
+      .edit-btn {
         background-color: #007bff;
         color: white;
         border: none;
@@ -47,107 +50,147 @@
         border-radius: 4px;
         cursor: pointer;
         margin-right: 5px;
-    }
-    .edit-btn:hover {
+      }
+      .edit-btn:hover {
         background-color: #0056b3;
-    }
-    #logoutBtn {
+      }
+      #logoutBtn {
         position: fixed;
         top: 16px;
         right: 16px;
         z-index: 1000;
-    }
-    .playing {
-      color: red;
-    }
-    /* Tab menu styles */
-    .tab-menu {
-      display: flex;
-      border-bottom: 2px solid #444;
-      margin-bottom: 20px;
-    }
-    .tab-link {
-      background: none;
-      border: none;
-      padding: 10px 20px;
-      cursor: pointer;
-      color: #ccc;
-      font-size: 1.1em;
-      transition: all 0.2s ease-in-out;
-      border-bottom: 2px solid transparent;
-    }
-    .tab-link.active {
-      color: #fff;
-      border-bottom-color: #007bff;
-    }
-    .tab-link:hover {
-      background-color: #333;
-    }
-    .tab-content {
-      display: none; /* Hidden by default */
-    }
-    .tab-content.active {
-      display: block; /* Shown when active */
-    }
-  </style>
-</head>
-<body>
-  <script>
-    if (!sessionStorage.getItem('loggedIn')) {
-      window.location.href = 'login.html';
-    }
-  </script>
-  <button id="logoutBtn" class="btn">Logout</button>
-  <main>
-    <section id="admin-section" class="screen">
-      <div class="admin-container">
-        <div class="tab-menu">
-            <button class="tab-link active" data-tab="timeline">Timeline</button>
+      }
+      .playing {
+        color: red;
+      }
+      /* Tab menu styles */
+      .tab-menu {
+        display: flex;
+        border-bottom: 2px solid #444;
+        margin-bottom: 20px;
+      }
+      .tab-link {
+        background: none;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        color: #ccc;
+        font-size: 1.1em;
+        transition: all 0.2s ease-in-out;
+        border-bottom: 2px solid transparent;
+      }
+      .tab-link.active {
+        color: #fff;
+        border-bottom-color: #007bff;
+      }
+      .tab-link:hover {
+        background-color: #333;
+      }
+      .tab-content {
+        display: none; /* Hidden by default */
+      }
+      .tab-content.active {
+        display: block; /* Shown when active */
+      }
+      /* Fix scrolling */
+      body {
+        overflow-y: auto !important;
+      }
+      main {
+        height: auto !important;
+        overflow: visible !important;
+      }
+    </style>
+  </head>
+  <body>
+    <script>
+      if (!sessionStorage.getItem("loggedIn")) {
+        window.location.href = "login.html";
+      }
+    </script>
+    <button id="logoutBtn" class="btn">Logout</button>
+    <main>
+      <section id="admin-section" class="screen">
+        <div class="admin-container">
+          <div class="tab-menu">
+            <button class="tab-link active" data-tab="timeline">
+              Timeline
+            </button>
             <button class="tab-link" data-tab="music">Musique</button>
-        </div>
+          </div>
 
-        <div id="timeline" class="tab-content active">
+          <div id="timeline" class="tab-content active">
             <h2>Admin Timeline</h2>
             <form id="adminTimelineForm" class="contact-form">
-              <input type="text" id="postSubtitle" placeholder="Titre du Projet">
-              <input type="url" id="postLink" placeholder="Lien (optionnel)">
+              <input
+                type="text"
+                id="postSubtitle"
+                placeholder="Titre du Projet"
+              />
+              <input type="url" id="postLink" placeholder="Lien (optionnel)" />
               <label for="postImage">Image du post</label>
-              <input type="file" id="postImage" accept="image/*">
-              <input type="date" id="postDate" required>
+              <input type="file" id="postImage" accept="image/*" />
+              <input type="date" id="postDate" required />
               <select id="postArtist" required>
                 <option value="" disabled selected>Choisir un artiste</option>
               </select>
               <button type="submit" class="btn">Ajouter au Timeline</button>
               <span id="adminFormMessage"></span>
             </form>
-    
-            <hr style="margin: 40px 0;">
-    
+
+            <hr style="margin: 40px 0" />
+
             <h2>Gérer les posts</h2>
             <div id="postsManagementContainer">
               <!-- Posts will be listed here -->
             </div>
-        </div>
+          </div>
 
-        <div id="music" class="tab-content">
+          <div id="music" class="tab-content">
             <h2>Gérer les musiques</h2>
-            <button id="refreshMusicBtn" class="btn">Rafraîchir la liste</button>
-            <div id="musicManagementContainer">
-              <!-- Music files will be listed here -->
+            <button id="refreshMusicBtn" class="btn">
+              Rafraîchir la liste
+            </button>
+
+            <div
+              class="music-controls"
+              style="margin-top: 20px; margin-bottom: 20px"
+            >
+              <select
+                id="musicFileSelect"
+                style="
+                  padding: 8px;
+                  margin-right: 10px;
+                  min-width: 300px;
+                  max-width: 100%;
+                "
+              >
+                <option value="" disabled selected>Chargement...</option>
+              </select>
+              <button id="renameMusicBtn" class="edit-btn">Renommer</button>
+              <button id="deleteMusicBtn" class="delete-btn">Supprimer</button>
             </div>
-    
-            <hr style="margin: 40px 0;">
-    
+            <div id="musicStatus"></div>
+
+            <hr style="margin: 40px 0" />
+
             <h2>Télécharger depuis YouTube</h2>
             <form id="youtubeDownloadForm" class="contact-form">
-              <input type="url" id="youtubeUrl" placeholder="https://www.youtube.com/watch?v=..." required>
-              <button type="submit" class="btn">Télécharger et convertir en MP3</button>
+              <input
+                type="url"
+                id="youtubeUrl"
+                placeholder="https://www.youtube.com/watch?v=..."
+                required
+              />
+              <button type="submit" class="btn">
+                Télécharger et convertir en MP3
+              </button>
               <span id="youtubeFormMessage"></span>
             </form>
+          </div>
         </div>
-      </div>
-    </section>
-  </main>
-  <script src="admin.js"></script>
-</body>
+      </section>
+    </main>
+    <script src="admin.js"></script>
+  </body>
 </html>
