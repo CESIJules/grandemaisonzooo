@@ -556,7 +556,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Default font
       ctx.font = `${charSize}px 'Courier New', monospace`;
       
-      const maxRadius = 450; 
+      const maxRadius = 200; 
 
       for (let x = 0; x < cols; x++) {
         offsets[x] += speeds[x];
@@ -578,6 +578,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reduced frequency for wider, smoother gradients (0.04 -> 0.025)
         const noiseX = x * 0.025 + time * 0.15; 
         
+        // Pre-calculate X noise parts
+        const noisePartX1 = Math.sin(noiseX);
+        const noisePartX2 = Math.sin(noiseX * 2.1 + time * 0.1) * 0.5;
+        
         for (let y = 0; y < rows; y++) {
           const py = y * charSize + offsets[x] - charSize; 
           
@@ -589,8 +593,8 @@ document.addEventListener('DOMContentLoaded', () => {
           const noiseY = y * 0.025;
           
           // Organic noise approximation
-          let noise = Math.sin(noiseX) + Math.cos(noiseY * 0.8);
-          noise += Math.sin(noiseX * 2.1 + time * 0.1) * 0.5;
+          let noise = noisePartX1 + Math.cos(noiseY * 0.8);
+          noise += noisePartX2;
           noise += Math.cos(noiseY * 1.7) * 0.5;
           
           // Normalize roughly to 0..1
@@ -645,13 +649,8 @@ document.addEventListener('DOMContentLoaded', () => {
              
              ctx.font = `${charSize * scale}px 'Courier New', monospace`;
              
-             // Glow: Only mouse core triggers glow
-             if (mouseIntensity > 0.1) { 
-                 ctx.shadowBlur = 50 * mouseIntensity;
-                 ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
-             } else {
-                 ctx.shadowBlur = 0;
-             }
+             // Glow: Removed for performance
+             ctx.shadowBlur = 0;
              
              // --- Glitch & Words Logic (Mouse Only) ---
              let displayChar = grid[x][y];
