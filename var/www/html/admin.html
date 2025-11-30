@@ -24,9 +24,13 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
     }
     .post-management .post-info {
         text-align: left;
+        flex: 1;
+        min-width: 200px;
     }
     .delete-btn {
         background-color: #dc3545;
@@ -35,6 +39,7 @@
         padding: 8px 12px;
         border-radius: 4px;
         cursor: pointer;
+        min-height: 44px;
     }
     .delete-btn:hover {
         background-color: #c82333;
@@ -47,6 +52,7 @@
         border-radius: 4px;
         cursor: pointer;
         margin-right: 5px;
+        min-height: 44px;
     }
     .edit-btn:hover {
         background-color: #0056b3;
@@ -65,6 +71,7 @@
       display: flex;
       border-bottom: 2px solid #444;
       margin-bottom: 20px;
+      flex-wrap: wrap;
     }
     .tab-link {
       background: none;
@@ -75,6 +82,7 @@
       font-size: 1.1em;
       transition: all 0.2s ease-in-out;
       border-bottom: 2px solid transparent;
+      min-height: 44px;
     }
     .tab-link.active {
       color: #fff;
@@ -89,6 +97,110 @@
     .tab-content.active {
       display: block; /* Shown when active */
     }
+    
+    /* Admin Responsive Styles */
+    @media (max-width: 768px) {
+      #admin-section {
+        padding: 20px 10px;
+        min-height: auto;
+      }
+      
+      .admin-container {
+        padding: 10px;
+      }
+      
+      .admin-container h2 {
+        font-size: 1.5rem;
+        text-align: center;
+      }
+      
+      .tab-menu {
+        justify-content: center;
+      }
+      
+      .tab-link {
+        padding: 12px 16px;
+        font-size: 1rem;
+      }
+      
+      /* Form inputs full width */
+      .contact-form input,
+      .contact-form textarea,
+      .contact-form select {
+        width: 100%;
+        max-width: 100%;
+        font-size: 16px; /* Prevent zoom on iOS */
+      }
+      
+      .contact-form label {
+        display: block;
+        margin: 10px 0 5px;
+        text-align: left;
+      }
+      
+      /* Post management cards */
+      .post-management {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .post-management .post-info {
+        text-align: center;
+        margin-bottom: 10px;
+      }
+      
+      .post-management > div:last-child {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+      }
+      
+      /* Music list */
+      #musicManagementContainer ul {
+        padding: 0;
+        list-style: none;
+      }
+      
+      #musicManagementContainer li {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        padding: 15px;
+        background: #222;
+        border-radius: 8px;
+        margin-bottom: 10px;
+      }
+      
+      #musicManagementContainer li span {
+        text-align: center;
+        margin-bottom: 10px;
+        word-break: break-word;
+      }
+      
+      #musicManagementContainer li div {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+      }
+      
+      .rename-music-btn {
+        padding: 10px 16px;
+        min-height: 44px;
+      }
+      
+      #logoutBtn {
+        top: 10px;
+        right: 10px;
+        padding: 10px 14px;
+        font-size: 12px;
+      }
+    }
+    
+    @media (max-width: 400px) {
+      .tab-link {
+        padding: 10px 12px;
+        font-size: 0.9rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -98,7 +210,7 @@
     }
   </script>
   <button id="logoutBtn" class="btn">Logout</button>
-  <main>
+  <main style="overflow-y: auto; height: auto; min-height: 100vh;">
     <section id="admin-section" class="screen">
       <div class="admin-container">
         <div class="tab-menu">

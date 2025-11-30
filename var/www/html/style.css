@@ -779,9 +779,10 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   .artiste { gap: 24px; padding: 32px; }
 }
 
-@media (max-width: 768) {
+@media (max-width: 768px) {
   .artiste {
     height: auto;                 /* sur mobile, on laisse respirer */
+    min-height: 100vh;
     grid-template-columns: 1fr;
     gap: 16px;
     padding: 20px;
@@ -789,10 +790,22 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   .artiste-image {
     width: 100%;
     height: 50vh;                 /* présence visuelle forte */
+    order: -1;                    /* Image en premier sur mobile */
   }
   .artiste-info {
     text-align: center;
     align-items: center;
+    padding-left: 0;
+    padding: 20px;
+  }
+  .artiste-info h3 {
+    font-size: 2.5rem;            /* Taille réduite sur mobile */
+  }
+  .artiste-actions {
+    justify-content: center;
+  }
+  .artiste-socials {
+    justify-content: center;
   }
 }
 
@@ -930,4 +943,350 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   font-size: 36px;
   background-color: #111; /* Fond plein pour l'étiquette centrale */
   border: 2px solid rgba(255,255,255,0.1);
+}
+
+/* ==============================================
+   RESPONSIVE STYLES - MOBILE FIRST APPROACH
+   Breakpoints:
+   - Mobile: up to 600px
+   - Tablet: 601px to 1024px
+   - Desktop: 1025px and above
+   ============================================== */
+
+/* ===== MOBILE STYLES (up to 600px) ===== */
+@media (max-width: 600px) {
+  /* Global fixes */
+  html, body {
+    overflow-x: hidden;
+  }
+  
+  main {
+    overflow-x: hidden;
+  }
+  
+  /* Sections */
+  .screen {
+    padding: 60px 16px;
+    min-height: 100vh;
+  }
+  
+  /* Typography mobile adjustments */
+  h1, h2 {
+    font-size: 1.8rem;
+    letter-spacing: 0;
+  }
+  
+  h3 {
+    font-size: 1.5rem;
+  }
+  
+  p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+  
+  /* Accueil section */
+  #accueil h1 {
+    font-size: 2rem;
+    padding: 0 10px;
+  }
+  
+  /* Burger button - larger touch target */
+  .burger {
+    padding: 12px 16px;
+    font-size: 28px;
+  }
+  
+  /* Menu mobile */
+  .menu a {
+    font-size: 18px;
+    padding: 12px 16px;
+  }
+  
+  .menu-group-title {
+    font-size: 1rem;
+  }
+  
+  .menu-group-list a {
+    font-size: 1rem;
+  }
+  
+  /* Buttons - larger for touch */
+  .btn {
+    padding: 14px 20px;
+    font-size: 13px;
+    min-height: 44px; /* Apple's recommendation for touch targets */
+  }
+  
+  /* Contact form mobile */
+  .contact-form {
+    width: 100%;
+    padding: 0 8px;
+  }
+  
+  .contact-form input,
+  .contact-form textarea {
+    padding: 14px;
+    font-size: 16px; /* Prevent zoom on iOS */
+    max-width: 100%;
+  }
+  
+  .contact-form textarea {
+    min-height: 100px;
+  }
+  
+  /* Radio section mobile */
+  #radio {
+    padding: 16px;
+  }
+  
+  .radio-header {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+  
+  #radio h2 {
+    font-size: 2rem;
+    text-align: center;
+  }
+  
+  #currentSong {
+    position: relative;
+    left: auto;
+    top: auto;
+    transform: none;
+    flex-direction: column;
+    text-align: center;
+    font-size: 0.9rem;
+    white-space: normal;
+    word-break: break-word;
+    padding: 0 10px;
+  }
+  
+  #visualizer {
+    display: none; /* Hide linear visualizer on mobile for cleaner look */
+  }
+  
+  #progress-info {
+    position: relative;
+    left: auto;
+    top: auto;
+    transform: none;
+    width: 100%;
+    max-width: 100%;
+    padding: 0 16px;
+    margin-top: 10px;
+  }
+  
+  .volume-container {
+    position: relative;
+  }
+  
+  #volumeToggle {
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+  }
+  
+  /* Vinyl disc mobile */
+  #vinyl-disc-container {
+    width: 280px;
+    height: 280px;
+  }
+  
+  #playRadio {
+    width: 70px;
+    height: 70px;
+    font-size: 28px;
+  }
+  
+  .status, .listeners {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    right: auto;
+    text-align: center;
+    margin-top: 10px;
+  }
+  
+  .player {
+    padding-top: 60px;
+  }
+  
+  /* Timeline mobile */
+  #timeline {
+    padding: 0;
+  }
+  
+  .timeline-header-wrapper {
+    position: relative;
+    top: auto;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    gap: 12px;
+  }
+  
+  #timeline h2 {
+    position: static;
+    transform: none;
+    font-size: 1.5rem;
+    text-align: center;
+  }
+  
+  .timeline-filters {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+  
+  .timeline-filters .btn {
+    padding: 10px 14px;
+    font-size: 12px;
+  }
+  
+  .timeline-container {
+    padding: 20px 0;
+  }
+  
+  .timeline-item {
+    width: 220px;
+    margin: 0 20px;
+  }
+  
+  .timeline-content,
+  .timeline-content-left,
+  .timeline-content-right {
+    padding: 16px;
+  }
+  
+  .timeline-item h3 {
+    font-size: 1.1rem;
+  }
+  
+  .timeline-item h4 {
+    font-size: 0.75rem;
+  }
+  
+  .timeline-item p {
+    font-size: 0.85rem;
+  }
+  
+  .timeline-image {
+    height: 200px;
+  }
+}
+
+/* ===== TABLET STYLES (601px to 1024px) ===== */
+@media (min-width: 601px) and (max-width: 1024px) {
+  /* Sections */
+  .screen {
+    padding: 70px 20px;
+  }
+  
+  /* Accueil */
+  #accueil h1 {
+    font-size: 2.5rem;
+  }
+  
+  /* Radio header tablet */
+  .radio-header {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  #radio h2 {
+    font-size: 3rem;
+  }
+  
+  #currentSong {
+    position: relative;
+    left: auto;
+    top: auto;
+    transform: none;
+    width: 100%;
+    justify-content: center;
+    margin-top: 10px;
+  }
+  
+  #progress-info {
+    position: relative;
+    left: auto;
+    top: auto;
+    transform: none;
+    width: 100%;
+    max-width: 500px;
+    margin: 10px auto 0;
+  }
+  
+  /* Vinyl disc tablet */
+  #vinyl-disc-container {
+    width: 350px;
+    height: 350px;
+  }
+  
+  /* Timeline tablet */
+  .timeline-item {
+    width: 280px;
+    margin: 0 30px;
+  }
+  
+  /* Artiste section tablet */
+  .artiste {
+    gap: 20px;
+  }
+  
+  .artiste-info h3 {
+    font-size: 3rem;
+  }
+}
+
+/* ===== DESKTOP STYLES (1025px and above) ===== */
+/* Minimal changes - preserve existing layout */
+@media (min-width: 1025px) {
+  /* Ensure no horizontal overflow */
+  html, body, main {
+    overflow-x: hidden;
+  }
+  
+  /* Radio header - ensure proper positioning */
+  .radio-header {
+    flex-wrap: nowrap;
+  }
+}
+
+/* ===== LANDSCAPE MOBILE FIX ===== */
+@media (max-height: 500px) and (orientation: landscape) {
+  .screen {
+    min-height: auto;
+    padding: 40px 20px;
+  }
+  
+  /* Radio landscape mobile */
+  #vinyl-disc-container {
+    width: 200px;
+    height: 200px;
+  }
+  
+  #playRadio {
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+  }
+  
+  /* Artiste landscape */
+  .artiste {
+    min-height: auto;
+  }
+  
+  .artiste-image {
+    height: 60vh;
+  }
 }
