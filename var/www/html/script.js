@@ -470,7 +470,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const ctx = asciiCanvas.getContext('2d');
     let width, height;
     let cols, rows;
-    const charSize = 14; 
+    const charSize = 18; // Increased size for better performance (fewer characters)
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$#@%&?!<>"; 
     
     let mouse = { x: -1000, y: -1000 };
@@ -518,11 +518,15 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const time = Date.now() * 0.001;
       
-      ctx.fillStyle = '#050505'; 
+      // Motion blur effect: clear with semi-transparent black
+      ctx.fillStyle = 'rgba(5, 5, 5, 0.85)'; 
       ctx.fillRect(0, 0, width, height);
       
       ctx.textBaseline = 'top';
+      ctx.font = `${charSize}px 'Courier New', monospace`;
       
+      const maxRadius = 250;
+
       for (let x = 0; x < cols; x++) {
         offsets[x] += speeds[x];
         
@@ -532,17 +536,29 @@ document.addEventListener('DOMContentLoaded', () => {
            grid[x].unshift(chars[Math.floor(Math.random() * chars.length)]);
         }
 
+        const px = x * charSize;
+        // Optimization: Check horizontal distance first
+        const dx = mouse.x - (px + charSize/2);
+        const absDx = Math.abs(dx);
+
         for (let y = 0; y < rows; y++) {
-          const px = x * charSize;
           const py = y * charSize + offsets[x] - charSize; 
           
-          if (py > height) continue;
+          // Optimization: Stop drawing if below screen
+          if (py > height) break;
 
           const char = grid[x][y];
           
-          // Mouse interaction
-          const dx = mouse.x - (px + charSize/2);
           const dy = mouse.y - (py + charSize/2);
+          const absDy = Math.abs(dy);
+          
+          // Optimization: Skip expensive math if far from mouse
+          if (absDx > maxRadius || absDy > maxRadius) {
+             ctx.fillStyle = '#1a1a1a';
+             if (Math.random() < 0.0005) ctx.fillStyle = '#333';
+             ctx.fillText(char, px, py);
+             continue;
+          }
           
           // Organic/Anarchic Shape (Wobbly distortion)
           const angle = Math.atan2(dy, dx);
@@ -552,7 +568,6 @@ document.addEventListener('DOMContentLoaded', () => {
           
           const dist = Math.sqrt(dx*dx + dy*dy) + distortion;
           
-          const maxRadius = 250; // Restored larger radius
           let intensity = 0;
           
           if (dist < maxRadius) {
@@ -562,8 +577,8 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           
           if (intensity > 0.01) {
-             // Reduced scale factor (was 0.5)
-             const scale = 1 + intensity * 0.3; 
+             // Reduced scale factor (was 0.3)
+             const scale = 1 + intensity * 0.12; 
              
              // Color interpolation (Dark Grey -> White)
              const val = Math.floor(26 + intensity * (255 - 26));
@@ -572,7 +587,7 @@ document.addEventListener('DOMContentLoaded', () => {
              ctx.font = `${charSize * scale}px 'Courier New', monospace`;
              
              if (intensity > 0.6) { // Glow only for core
-                 ctx.shadowBlur = 15 * intensity;
+                 ctx.shadowBlur = 10 * intensity;
                  ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
              } else {
                  ctx.shadowBlur = 0;
