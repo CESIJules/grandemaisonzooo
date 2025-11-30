@@ -529,9 +529,6 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 
 /* Timeline */
 #timeline { 
-  background: url(images/TEXTURE_ASCII_2.png) no-repeat center center;
-  background-size: cover;
-  background-attachment: fixed;
   justify-content: flex-start; 
   padding: 0;
   overflow: hidden;
