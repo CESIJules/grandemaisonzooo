@@ -1,5 +1,6 @@
 <?php
 // fetch_covers.php
+error_reporting(0); // Disable error reporting to avoid breaking JSON
 header('Content-Type: application/json');
 // Increase time limit for processing many files
 set_time_limit(300); 
@@ -94,9 +95,36 @@ foreach ($files as $file) {
     usleep(200000); // 200ms
 }
 
-echo json_encode([
+// Ensure UTF-8 for JSON
+function utf8ize($d) {
+    if (is_array($d)) {
+        foreach ($d as $k => $v) {
+            $d[$k] = utf8ize($v);
+        }
+    } else if (is_string($d)) {
+        if (function_exists('mb_convert_encoding')) {
+            return mb_convert_encoding($d, 'UTF-8', 'UTF-8');
+        } else {
+            // Fallback for older PHP or missing mbstring
+            return iconv('ISO-8859-1', 'UTF-8', $d);
+        }
+    }
+    return $d;
+}
+
+$response = [
     'status' => 'success', 
     'message' => "Traitement terminé. $downloaded covers téléchargées.",
     'details' => $errors
-]);
+];
+
+$json = json_encode(utf8ize($response));
+if ($json === false) {
+    echo json_encode([
+        'status' => 'error',
+        'message' => 'Erreur JSON encoding: ' . json_last_error_msg()
+    ]);
+} else {
+    echo $json;
+}
 ?>
