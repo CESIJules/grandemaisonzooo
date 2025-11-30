@@ -299,7 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // --- Radar Points ---
-      if (radarCtx && radarCanvas.width > 0 && !audio.paused) {
+      if (radarCtx && radarCanvas.width > 0) {
           const w = radarCanvas.width;
           const h = radarCanvas.height;
           const cx = w / 2;
@@ -308,95 +308,118 @@ document.addEventListener('DOMContentLoaded', () => {
 
           radarCtx.clearRect(0, 0, w, h);
 
-          // Calculate current radar angle based on time
-          // CSS animation is 15s linear infinite (Synced with CSS)
-          const elapsed = (Date.now() - radarStartTime) / 1000;
-          const cycle = 15.0; 
-          const progress = (elapsed % cycle) / cycle; // 0..1
-          const currentAngle = progress * 2 * Math.PI; // 0..2PI
-          
-          // Adjust to Canvas coordinates (0 is Right, Clockwise)
-          // If CSS starts at Top (0deg), then at t=0, angle is -PI/2 in Canvas.
-          const sweepAngle = currentAngle - Math.PI / 2; 
-          
-          const fov = Math.PI / 4; // Reduced FOV as requested
-
-          // Electric Effect Setup - Red & Shiny
-          radarCtx.shadowColor = '#ff0000'; 
-          radarCtx.fillStyle = '#ff0000';   
-
-          radarPoints.forEach(p => {
-              // Normalize point angle to match sweepAngle range
-              let diff = sweepAngle - p.theta;
+          // --- Graduations (Always Visible) ---
+          const numGrads = 48;
+          for (let i = 0; i < numGrads; i++) {
+              const angle = (i / numGrads) * 2 * Math.PI;
+              const isMajor = i % 4 === 0;
+              const len = isMajor ? 15 : 8;
               
-              // Normalize diff to -PI..PI or 0..2PI
-              while (diff < 0) diff += 2 * Math.PI;
-              while (diff >= 2 * Math.PI) diff -= 2 * Math.PI;
+              const x1 = cx + Math.cos(angle) * (maxRadius - len);
+              const y1 = cy + Math.sin(angle) * (maxRadius - len);
+              const x2 = cx + Math.cos(angle) * (maxRadius - 2);
+              const y2 = cy + Math.sin(angle) * (maxRadius - 2);
               
-              // If diff is small positive, it means sweep passed it recently.
-              if (diff < fov) {
-                  // It is in FOV!
-                  
-                  // Get frequency data
-                  // Map radius to frequency index
-                  // Inner = Low freq, Outer = High freq
-                  const freqIndex = Math.floor(p.r * (bufferLength * 0.5)); // Use half spectrum
-                  const val = dataArray[freqIndex] || 0;
-                  
-                  // Boost sensitivity for low volume/values
-                  // Normalize 0..1
-                  let normalized = val / 255;
-                  // Power curve < 1 boosts low values (e.g. 0.1^0.5 = 0.31)
-                  // Made even more sensitive (0.4 -> 0.3)
-                  let intensity = Math.pow(normalized, 0.3);
-                  
-                  // Lower threshold for visibility
-                  if (intensity > 0.01) {
-                      // Glitch / Twitch Effect - Reduced amplitude (Shortened)
-                      const jitterX = (Math.random() - 0.5) * 1.5; 
-                      const jitterY = (Math.random() - 0.5) * 1.5;
-                      
-                      const x = cx + Math.cos(p.theta) * (p.r * maxRadius) + jitterX;
-                      const y = cy + Math.sin(p.theta) * (p.r * maxRadius) + jitterY;
-                      
-                      // Alpha fades out as it gets further from sweep line
-                      // Smoother fade for "stay longer"
-                      let fade = 1 - (diff / fov);
-                      fade = Math.pow(fade, 1.5); // Less sharp falloff than before (was 4)
-                      
-                      // Random glitch flicker
-                      if (Math.random() < 0.1) fade *= 0.5;
-
-                      radarCtx.globalAlpha = intensity * fade;
-                      
-                      const glitchSize = Math.random() > 0.9 ? 1.5 : 1;
-                      // Reduced size multiplier (12.0 -> 4.0) as requested
-                      const radius = p.size * (0.5 + intensity * 4.0) * glitchSize;
-
-                      // 1. Red Glow (Outer) - More diffuse
-                      radarCtx.shadowBlur = 30 + intensity * 60; // More diffuse glow
-                      radarCtx.shadowColor = '#ff0000';
-                      radarCtx.fillStyle = '#ff0000';
-                      
-                      radarCtx.beginPath();
-                      radarCtx.arc(x, y, radius, 0, 2 * Math.PI);
-                      radarCtx.fill();
-
-                      // 2. White Hot Core (Inner)
-                      radarCtx.shadowBlur = 10; // Slightly more diffuse inner glow
-                      radarCtx.shadowColor = '#ffffff';
-                      radarCtx.fillStyle = '#ffffff';
-                      
-                      radarCtx.beginPath();
-                      radarCtx.arc(x, y, radius * 0.4, 0, 2 * Math.PI);
-                      radarCtx.fill();
-                  }
-              }
-          });
-          radarCtx.globalAlpha = 1.0;
+              radarCtx.beginPath();
+              radarCtx.moveTo(x1, y1);
+              radarCtx.lineTo(x2, y2);
+              radarCtx.strokeStyle = isMajor ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.4)';
+              radarCtx.lineWidth = isMajor ? 3 : 1;
+              radarCtx.shadowBlur = isMajor ? 10 : 0;
+              radarCtx.shadowColor = 'rgba(255, 255, 255, 0.5)';
+              radarCtx.stroke();
+          }
           radarCtx.shadowBlur = 0; // Reset
-      } else if (radarCtx) {
-          radarCtx.clearRect(0, 0, radarCanvas.width, radarCanvas.height);
+
+          if (!audio.paused) {
+              // Calculate current radar angle based on time
+              // CSS animation is 15s linear infinite (Synced with CSS)
+              const elapsed = (Date.now() - radarStartTime) / 1000;
+              const cycle = 15.0; 
+              const progress = (elapsed % cycle) / cycle; // 0..1
+              const currentAngle = progress * 2 * Math.PI; // 0..2PI
+              
+              // Adjust to Canvas coordinates (0 is Right, Clockwise)
+              // If CSS starts at Top (0deg), then at t=0, angle is -PI/2 in Canvas.
+              const sweepAngle = currentAngle - Math.PI / 2; 
+              
+              const fov = Math.PI / 4; // Reduced FOV as requested
+
+              // Electric Effect Setup - Red & Shiny
+              radarCtx.shadowColor = '#ff0000'; 
+              radarCtx.fillStyle = '#ff0000';   
+
+              radarPoints.forEach(p => {
+                  // Normalize point angle to match sweepAngle range
+                  let diff = sweepAngle - p.theta;
+                  
+                  // Normalize diff to -PI..PI or 0..2PI
+                  while (diff < 0) diff += 2 * Math.PI;
+                  while (diff >= 2 * Math.PI) diff -= 2 * Math.PI;
+                  
+                  // If diff is small positive, it means sweep passed it recently.
+                  if (diff < fov) {
+                      // It is in FOV!
+                      
+                      // Get frequency data
+                      // Map radius to frequency index
+                      // Inner = Low freq, Outer = High freq
+                      const freqIndex = Math.floor(p.r * (bufferLength * 0.5)); // Use half spectrum
+                      const val = dataArray[freqIndex] || 0;
+                      
+                      // Boost sensitivity for low volume/values
+                      // Normalize 0..1
+                      let normalized = val / 255;
+                      // Power curve < 1 boosts low values (e.g. 0.1^0.5 = 0.31)
+                      // Made even more sensitive (0.4 -> 0.3)
+                      let intensity = Math.pow(normalized, 0.3);
+                      
+                      // Lower threshold for visibility
+                      if (intensity > 0.01) {
+                          // Glitch / Twitch Effect - Reduced amplitude (Shortened)
+                          const jitterX = (Math.random() - 0.5) * 1.5; 
+                          const jitterY = (Math.random() - 0.5) * 1.5;
+                          
+                          const x = cx + Math.cos(p.theta) * (p.r * maxRadius) + jitterX;
+                          const y = cy + Math.sin(p.theta) * (p.r * maxRadius) + jitterY;
+                          
+                          // Alpha fades out as it gets further from sweep line
+                          // Smoother fade for "stay longer"
+                          let fade = 1 - (diff / fov);
+                          fade = Math.pow(fade, 1.5); // Less sharp falloff than before (was 4)
+                          
+                          // Random glitch flicker
+                          if (Math.random() < 0.1) fade *= 0.5;
+
+                          radarCtx.globalAlpha = intensity * fade;
+                          
+                          const glitchSize = Math.random() > 0.9 ? 1.5 : 1;
+                          // Reduced size multiplier (12.0 -> 4.0) as requested
+                          const radius = p.size * (0.5 + intensity * 4.0) * glitchSize;
+
+                          // 1. Red Glow (Outer) - More diffuse
+                          radarCtx.shadowBlur = 30 + intensity * 60; // More diffuse glow
+                          radarCtx.shadowColor = '#ff0000';
+                          radarCtx.fillStyle = '#ff0000';
+                          
+                          radarCtx.beginPath();
+                          radarCtx.arc(x, y, radius, 0, 2 * Math.PI);
+                          radarCtx.fill();
+
+                          // 2. White Hot Core (Inner)
+                          radarCtx.shadowBlur = 10; // Slightly more diffuse inner glow
+                          radarCtx.shadowColor = '#ffffff';
+                          radarCtx.fillStyle = '#ffffff';
+                          
+                          radarCtx.beginPath();
+                          radarCtx.arc(x, y, radius * 0.4, 0, 2 * Math.PI);
+                          radarCtx.fill();
+                      }
+                  }
+              });
+              radarCtx.globalAlpha = 1.0;
+              radarCtx.shadowBlur = 0; // Reset
+          }
       }
       
       // --- Linear Visualizer (Background) ---
