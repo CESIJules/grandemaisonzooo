@@ -8,6 +8,17 @@ body {
   overflow: hidden; /* le scroll se fait sur main */
 }
 
+/* Full-screen ASCII Background Canvas */
+#asciiCanvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  pointer-events: none;
+}
+
 /* One-scroll fluide global */
 main {
   height: 100vh;

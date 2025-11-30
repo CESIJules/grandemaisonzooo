@@ -1,4 +1,43 @@
 document.addEventListener('DOMContentLoaded', () => {
+  // ==========================================
+  // ASCII BACKGROUND INITIALIZATION
+  // ==========================================
+  // Initialize the full-screen ASCII background animation engine.
+  // The engine supports multiple scenes: 'clouds', 'neurons', 'eyes'
+  // and will automatically change scenes when the radio track changes.
+  const asciiCanvas = document.getElementById('asciiCanvas');
+  if (asciiCanvas && window.AsciiBackground) {
+    window.AsciiBackground.init(asciiCanvas, 'clouds');
+  }
+
+  // Scene cycling for radio - tracks which scene is active
+  // and ensures we don't repeat the same scene twice in a row.
+  const asciiScenes = ['clouds', 'neurons', 'eyes'];
+  let currentSceneIndex = 0;
+
+  /**
+   * Cycle to the next ASCII background scene.
+   * Called when a new track starts playing on the radio.
+   * 
+   * HOOK LOCATION: This function is called from the fetchCurrentSong()
+   * function when a track change is detected. To modify scene selection
+   * logic (e.g., based on music type), edit this function or the call site
+   * in fetchCurrentSong() around line 370-380.
+   */
+  function cycleAsciiScene() {
+    if (!window.AsciiBackground) return;
+    
+    // Move to next scene, avoiding repeat
+    currentSceneIndex = (currentSceneIndex + 1) % asciiScenes.length;
+    const nextScene = asciiScenes[currentSceneIndex];
+    
+    window.AsciiBackground.setScene(nextScene, true);
+    console.log('[Radio] Track changed - switching ASCII scene to:', nextScene);
+  }
+
+  // Expose cycleAsciiScene for debugging
+  window.cycleAsciiScene = cycleAsciiScene;
+
   // Burger menu (ne pas toucher)
   const burgerBtn = document.getElementById('burgerBtn');
   const menu = document.getElementById('menu');
@@ -372,6 +411,14 @@ document.addEventListener('DOMContentLoaded', () => {
             updateTitleUI(title);
             pendingTitle = null;
             pendingTitleTimeout = null;
+            
+            // ==========================================
+            // ASCII BACKGROUND SCENE CHANGE HOOK
+            // ==========================================
+            // When a new track is detected, cycle to the next ASCII scene.
+            // To customize scene selection (e.g., based on music genre or artist),
+            // modify the cycleAsciiScene() function at the top of this file.
+            cycleAsciiScene();
         }, totalDelay);
       }
 
