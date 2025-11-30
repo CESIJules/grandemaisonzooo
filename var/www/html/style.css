@@ -54,7 +54,7 @@ body {
   object-fit: cover;
   z-index: 0;
   opacity: 1;
-  mix-blend-mode: screen;
+  mix-blend-mode: normal; /* Changed from screen to normal for better visibility */
 }
 
 #accueil {
@@ -68,18 +68,35 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: #111;
-  opacity: 0;
-  z-index: -1;
+  background-color: rgba(0, 0, 0, 0.5); /* Dark overlay */
+  opacity: 1; /* Always visible */
+  z-index: 1; /* Above video */
+  backdrop-filter: blur(2px); /* Subtle blur for depth */
 }
 
 #accueil h1 {
   position: relative;
-  z-index: 1;
-  font-size: 4.5em;
+  z-index: 2; /* Above overlay */
+  font-family: 'Space Grotesk', sans-serif; /* More digital font */
+  font-size: 5em; /* Slightly larger */
+  letter-spacing: -2px;
+  color: rgba(255, 255, 255, 0.05); /* Glassy transparent fill */
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.3); /* Glass edge */
   /* Base shadow, will be overridden by JS for reactivity */
   text-shadow: 0 0 20px rgba(255, 255, 255, 0.4), 0 20px 50px rgba(0, 0, 0, 0.9);
-  transition: text-shadow 0.1s ease-out; /* Smooth transition for mouse movement */
+  transition: text-shadow 0.1s ease-out, opacity 0.8s ease, letter-spacing 0.8s ease;
+  
+  /* Digital Glitch Animation */
+  animation: digital-pulse 5s infinite;
+  animation-delay: 4s; /* Wait for intro fade in */
+}
+
+@keyframes digital-pulse {
+  0%, 90%, 100% { transform: scale(1); filter: blur(0); }
+  91% { transform: scale(1.02) skewX(1deg); filter: blur(1px); }
+  92% { transform: scale(1); filter: blur(0); }
+  93% { transform: scale(0.99) skewX(-1deg); filter: blur(0); }
+  94% { transform: scale(1); filter: blur(0); }
 }
 
 /* One-scroll fluide global */
@@ -418,8 +435,11 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   margin: 0;
   position: relative;
   line-height: 1;
-  opacity: 0.5;
+  opacity: 0.8; /* Increased opacity for visibility with glass effect */
   z-index: 2;
+  color: rgba(255, 255, 255, 0.05); /* Glassy transparent fill */
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.3); /* Glass edge */
+  text-shadow: 0 0 20px rgba(0, 0, 0, 0.5); /* Shadow for depth */
 }
 
 #currentSong {
@@ -667,13 +687,16 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 
 #timeline h2 { 
   margin: 0;
-  font-size: 2em;
+  font-size: 4.5em;
   position: absolute;
   text-align: left;
   pointer-events: none;
   left: 40px;
   top: 50%;
   transform: translateY(-50%);
+  color: rgba(255, 255, 255, 0.05); /* Glassy transparent fill */
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.3); /* Glass edge */
+  text-shadow: 0 0 20px rgba(0, 0, 0, 0.5); /* Shadow for depth */
 }
 
 .timeline-filters {
@@ -941,7 +964,9 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   margin: 0; 
   font-size: 4rem; /* Beaucoup plus gros pour l'impact */
   line-height: 0.9;
-  color: #f5f5f5; 
+  color: rgba(255, 255, 255, 0.05); /* Glassy transparent fill */
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.3); /* Glass edge */
+  text-shadow: 0 0 20px rgba(0, 0, 0, 0.5); /* Shadow for depth */
 }
 .artiste-info .localisation {
   font-family: 'Lexend', sans-serif;
@@ -1087,7 +1112,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   background-color: rgba(255, 255, 255, 0.02);
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
-  border: 4px solid rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   
   /* Radar Grid (More visible lines + Diagonals) */
   background-image: 
@@ -1101,9 +1126,9 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   
   /* Electric Glow Shadow */
   box-shadow: 
-    0 0 30px rgba(255, 255, 255, 0.5),
-    inset 0 0 30px rgba(255, 255, 255, 0.2),
-    0 0 20px rgba(255, 255, 255, 0.6);
+    0 0 15px rgba(255, 255, 255, 0.1),
+    inset 0 0 20px rgba(255, 255, 255, 0.05),
+    0 0 20px rgba(255, 255, 255, 0.2);
     
   transition: transform 0.1s ease, box-shadow 0.3s ease; /* Faster transform for audio reactivity */
   overflow: hidden;
@@ -1142,8 +1167,8 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   /* Pulse effect with white glow - Faded global glow */
   box-shadow: 
     0 0 30px rgba(0, 0, 0, 0.8),
-    inset 0 0 50px rgba(255, 255, 255, 0.1),
-    0 0 60px rgba(255, 255, 255, 0.15);
+    inset 0 0 50px rgba(255, 255, 255, 0.05),
+    0 0 40px rgba(255, 255, 255, 0.1);
   transition: box-shadow 2s ease-in-out;
 }
 

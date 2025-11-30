@@ -246,6 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const radarCtx = radarCanvas ? radarCanvas.getContext('2d') : null;
     let waveTime = 0;
     let smoothedBarHeight = 0;
+    let radarActiveIntensity = 0;
     
     // Radar Points Initialization
     const radarPoints = [];
@@ -278,24 +279,32 @@ document.addEventListener('DOMContentLoaded', () => {
       requestAnimationFrame(draw);
 
       analyser.getByteFrequencyData(dataArray);
+
+      // Smooth transition for radar activity
+      const targetIntensity = (!audio.paused) ? 1.0 : 0.0;
+      radarActiveIntensity += (targetIntensity - radarActiveIntensity) * 0.05;
       
       // --- Reactivity for Radar ---
-      if (vinylDisc && !audio.paused) {
-          let sum = 0;
-          // Use low frequencies for bass kick reactivity (first 1/8th of spectrum)
-          const bassCount = Math.floor(bufferLength * 0.125); 
-          for(let i = 0; i < bassCount; i++) {
-              sum += dataArray[i];
+      if (vinylDisc) {
+          let targetScale = 1.0;
+          if (!audio.paused) {
+              let sum = 0;
+              // Use low frequencies for bass kick reactivity (first 1/8th of spectrum)
+              const bassCount = Math.floor(bufferLength * 0.125); 
+              for(let i = 0; i < bassCount; i++) {
+                  sum += dataArray[i];
+              }
+              const average = sum / bassCount;
+              
+              // Scale between 1.0 and 1.15 based on bass (More reactive)
+              // Use power curve to emphasize kicks
+              const bassIntensity = Math.pow(average / 255, 1.2); 
+              targetScale = 1 + bassIntensity * 0.15;
           }
-          const average = sum / bassCount;
           
-          // Scale between 1.0 and 1.15 based on bass (More reactive)
-          // Use power curve to emphasize kicks
-          const bassIntensity = Math.pow(average / 255, 1.2); 
-          const scale = 1 + bassIntensity * 0.15;
-          vinylDisc.style.transform = `scale(${scale})`;
-      } else if (vinylDisc) {
-          vinylDisc.style.transform = 'scale(1)';
+          // Apply smooth start/stop transition to scale
+          const currentScale = 1.0 + (targetScale - 1.0) * radarActiveIntensity;
+          vinylDisc.style.transform = `scale(${currentScale})`;
       }
 
       // --- Radar Points ---
@@ -308,12 +317,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
           radarCtx.clearRect(0, 0, w, h);
 
-          // --- Graduations (Always Visible) ---
+          // --- Graduations (Animated) ---
+          // They breathe slightly when active
           const numGrads = 48;
+          const breathing = 1 + Math.sin(Date.now() * 0.002) * 0.05 * radarActiveIntensity;
+          
           for (let i = 0; i < numGrads; i++) {
               const angle = (i / numGrads) * 2 * Math.PI;
               const isMajor = i % 4 === 0;
-              const len = isMajor ? 15 : 8;
+              
+              // Animate length and opacity
+              const baseLen = isMajor ? 15 : 8;
+              const len = baseLen * (0.8 + 0.2 * radarActiveIntensity * breathing);
               
               const x1 = cx + Math.cos(angle) * (maxRadius - len);
               const y1 = cy + Math.sin(angle) * (maxRadius - len);
@@ -323,15 +338,20 @@ document.addEventListener('DOMContentLoaded', () => {
               radarCtx.beginPath();
               radarCtx.moveTo(x1, y1);
               radarCtx.lineTo(x2, y2);
-              radarCtx.strokeStyle = isMajor ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.4)';
+              
+              // Opacity transition
+              const majorAlpha = 0.3 + 0.6 * radarActiveIntensity;
+              const minorAlpha = 0.1 + 0.3 * radarActiveIntensity;
+              
+              radarCtx.strokeStyle = isMajor ? `rgba(255, 255, 255, ${majorAlpha})` : `rgba(255, 255, 255, ${minorAlpha})`;
               radarCtx.lineWidth = isMajor ? 3 : 1;
-              radarCtx.shadowBlur = isMajor ? 10 : 0;
+              radarCtx.shadowBlur = isMajor ? (5 + 10 * radarActiveIntensity) : 0;
               radarCtx.shadowColor = 'rgba(255, 255, 255, 0.5)';
               radarCtx.stroke();
           }
           radarCtx.shadowBlur = 0; // Reset
 
-          if (!audio.paused) {
+          if (radarActiveIntensity > 0.01) {
               // Calculate current radar angle based on time
               // CSS animation is 15s linear infinite (Synced with CSS)
               const elapsed = (Date.now() - radarStartTime) / 1000;
@@ -391,7 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
                           // Random glitch flicker
                           if (Math.random() < 0.1) fade *= 0.5;
 
-                          radarCtx.globalAlpha = intensity * fade;
+                          radarCtx.globalAlpha = intensity * fade * radarActiveIntensity;
                           
                           const glitchSize = Math.random() > 0.9 ? 1.5 : 1;
                           // Reduced size multiplier (12.0 -> 4.0) as requested
