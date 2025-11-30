@@ -334,16 +334,23 @@ document.addEventListener('DOMContentLoaded', () => {
           // Smooth the height
           smoothedBarHeight += (targetHeightVal - smoothedBarHeight) * 0.2;
           
-          const barMaxHeight = h * 0.8; // 80% of canvas height
-          const currentBarHeight = smoothedBarHeight * barMaxHeight;
-          const barWidth = 6; // Slightly thicker bar for visibility
-
-          radarCtx.fillStyle = '#fff';
-          radarCtx.shadowBlur = 20;
+          // --- Rotating Sweep Bar (Variable Length) ---
+          // Length reacts to volume (filling/emptying)
+          // Min length 10% of radius so it's always visible
+          const currentBarLength = (0.1 + smoothedBarHeight * 0.9) * maxRadius; 
+          
+          radarCtx.beginPath();
+          radarCtx.moveTo(cx, cy);
+          radarCtx.lineTo(cx + Math.cos(sweepAngle) * currentBarLength, cy + Math.sin(sweepAngle) * currentBarLength);
+          
+          radarCtx.strokeStyle = '#fff';
+          radarCtx.lineWidth = 4; 
+          radarCtx.lineCap = 'round';
+          
+          radarCtx.shadowBlur = 15 + smoothedBarHeight * 20;
           radarCtx.shadowColor = 'rgba(255, 255, 255, 0.9)';
           
-          // Draw centered vertical bar
-          radarCtx.fillRect(cx - barWidth / 2, cy - currentBarHeight / 2, barWidth, currentBarHeight);
+          radarCtx.stroke();
 
           // Electric Effect Setup - Red & Shiny
           radarCtx.shadowColor = '#ff0000'; 
