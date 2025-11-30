@@ -117,8 +117,8 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   /* Glassmorphism Style */
   background-color: transparent;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
   color: #eee;
   border-radius: 50%; /* Circular */
@@ -203,8 +203,8 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   /* Glassmorphism Style (Matching Timeline Cards) */
   background-color: transparent;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
   color: #eee;
   
@@ -321,8 +321,8 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   /* Glassmorphism Style (Unified) */
   background-color: transparent;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
   border-radius: 50%;
 
@@ -426,8 +426,8 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   padding: 10px 20px 30px 20px;
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
   
   /* Adaptation longueur */
@@ -746,8 +746,8 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   border-radius: 20px;
   text-align: center;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
   transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), 
               box-shadow 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
