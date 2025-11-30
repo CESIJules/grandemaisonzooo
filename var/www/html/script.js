@@ -288,8 +288,10 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           const average = sum / bassCount;
           
-          // Scale between 1.0 and 1.05 based on bass
-          const scale = 1 + (average / 255) * 0.05;
+          // Scale between 1.0 and 1.12 based on bass (More reactive)
+          // Use power curve to emphasize kicks
+          const bassIntensity = Math.pow(average / 255, 1.5); 
+          const scale = 1 + bassIntensity * 0.12;
           vinylDisc.style.transform = `scale(${scale})`;
       } else if (vinylDisc) {
           vinylDisc.style.transform = 'scale(1)';
@@ -318,10 +320,24 @@ document.addEventListener('DOMContentLoaded', () => {
           
           const fov = Math.PI / 1.5; // Wider FOV so points stay longer
 
-          // Electric Effect Setup - Brighter
-          radarCtx.shadowBlur = 20;
-          radarCtx.shadowColor = '#ffffff'; 
-          radarCtx.fillStyle = '#ffffff';   
+          // --- Reactive Bar ---
+          let rSum = 0;
+          const rCount = Math.floor(bufferLength * 0.2); // Focus on bass
+          for(let i = 0; i < rCount; i++) rSum += dataArray[i];
+          const rVal = Math.pow((rSum / rCount) / 255, 2.5); // Slightly less sharp curve for more activity
+
+          radarCtx.beginPath();
+          radarCtx.moveTo(cx, cy);
+          radarCtx.lineTo(cx + Math.cos(sweepAngle) * maxRadius, cy + Math.sin(sweepAngle) * maxRadius);
+          radarCtx.strokeStyle = `rgba(255, 255, 255, ${0.5 + rVal * 0.5})`;
+          radarCtx.lineWidth = 2 + rVal * 12; // Thicker
+          radarCtx.shadowBlur = 10 + rVal * 50; // More glow
+          radarCtx.shadowColor = '#fff';
+          radarCtx.stroke();
+
+          // Electric Effect Setup - Red & Shiny
+          radarCtx.shadowColor = '#ff0000'; 
+          radarCtx.fillStyle = '#ff0000';   
 
           radarPoints.forEach(p => {
               // Normalize point angle to match sweepAngle range
@@ -365,10 +381,27 @@ document.addEventListener('DOMContentLoaded', () => {
                       if (Math.random() < 0.1) fade *= 0.5;
 
                       radarCtx.globalAlpha = intensity * fade;
-                      radarCtx.beginPath();
-                      // Dynamic size based on intensity + random glitch size
+                      
                       const glitchSize = Math.random() > 0.9 ? 1.5 : 1;
-                      radarCtx.arc(x, y, p.size * (0.5 + intensity * 2.5) * glitchSize, 0, 2 * Math.PI);
+                      // Increased size multiplier for more reactivity
+                      const radius = p.size * (0.5 + intensity * 5.0) * glitchSize;
+
+                      // 1. Red Glow (Outer)
+                      radarCtx.shadowBlur = 20 + intensity * 40; // Intense glow
+                      radarCtx.shadowColor = '#ff0000';
+                      radarCtx.fillStyle = '#ff0000';
+                      
+                      radarCtx.beginPath();
+                      radarCtx.arc(x, y, radius, 0, 2 * Math.PI);
+                      radarCtx.fill();
+
+                      // 2. White Hot Core (Inner)
+                      radarCtx.shadowBlur = 5;
+                      radarCtx.shadowColor = '#ffffff';
+                      radarCtx.fillStyle = '#ffffff';
+                      
+                      radarCtx.beginPath();
+                      radarCtx.arc(x, y, radius * 0.4, 0, 2 * Math.PI);
                       radarCtx.fill();
                   }
               }
