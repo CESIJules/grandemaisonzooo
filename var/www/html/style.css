@@ -317,6 +317,25 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
+  
+  /* Glassmorphism Style (Unified) */
+  background-color: rgba(20, 20, 20, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+  border-radius: 50%;
+
+  /* Animation */
+  transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  z-index: 100;
+}
+
+.volume-container:hover {
+  transform: scale(1.05) translateY(-3px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.9), 0 0 15px rgba(255, 255, 255, 0.15);
+  background-color: rgba(35, 35, 35, 0.8);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .volume-ring {
@@ -351,28 +370,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   right: 30px !important; /* Aligné avec le burger */
   left: auto !important;
   z-index: 1001;
-  
-  /* Glassmorphism Style (Matching Burger) */
-  background-color: rgba(20, 20, 20, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
-  border-radius: 50%;
-  
-  /* Ensure dimensions */
-  width: 60px;
-  height: 60px;
-
-  /* Animation */
-  transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.volume-floating:hover {
-  transform: scale(1.05) translateY(-3px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.9), 0 0 15px rgba(255, 255, 255, 0.15);
-  background-color: rgba(35, 35, 35, 0.8);
-  border-color: rgba(255, 255, 255, 0.4);
+  margin: 0;
 }
 
 .volume-floating .volume-ring {
