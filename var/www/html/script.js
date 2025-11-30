@@ -519,7 +519,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const time = Date.now() * 0.001;
       
       // Motion blur effect: clear with semi-transparent black
-      ctx.fillStyle = 'rgba(5, 5, 5, 0.85)'; 
+      // Lower opacity = more trails/blur (0.25 allows trails to persist longer)
+      ctx.fillStyle = 'rgba(5, 5, 5, 0.25)'; 
       ctx.fillRect(0, 0, width, height);
       
       ctx.textBaseline = 'top';
@@ -577,8 +578,8 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           
           if (intensity > 0.01) {
-             // Reduced scale factor (was 0.3)
-             const scale = 1 + intensity * 0.12; 
+             // Reduced scale factor significantly (was 0.12)
+             const scale = 1 + intensity * 0.02; 
              
              // Color interpolation (Dark Grey -> White)
              const val = Math.floor(26 + intensity * (255 - 26));
