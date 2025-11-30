@@ -336,11 +336,11 @@ document.addEventListener('DOMContentLoaded', () => {
           
           const barMaxHeight = h * 0.8; // 80% of canvas height
           const currentBarHeight = smoothedBarHeight * barMaxHeight;
-          const barWidth = 4; // Thin bar
+          const barWidth = 6; // Slightly thicker bar for visibility
 
           radarCtx.fillStyle = '#fff';
-          radarCtx.shadowBlur = 15;
-          radarCtx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+          radarCtx.shadowBlur = 20;
+          radarCtx.shadowColor = 'rgba(255, 255, 255, 0.9)';
           
           // Draw centered vertical bar
           radarCtx.fillRect(cx - barWidth / 2, cy - currentBarHeight / 2, barWidth, currentBarHeight);
@@ -394,8 +394,8 @@ document.addEventListener('DOMContentLoaded', () => {
                       radarCtx.globalAlpha = intensity * fade;
                       
                       const glitchSize = Math.random() > 0.9 ? 1.5 : 1;
-                      // Increased size multiplier for more reactivity (8.0 -> 12.0)
-                      const radius = p.size * (0.5 + intensity * 12.0) * glitchSize;
+                      // Reduced size multiplier (12.0 -> 4.0) as requested
+                      const radius = p.size * (0.5 + intensity * 4.0) * glitchSize;
 
                       // 1. Red Glow (Outer) - More diffuse
                       radarCtx.shadowBlur = 30 + intensity * 60; // More diffuse glow

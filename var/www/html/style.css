@@ -1121,9 +1121,9 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   background: conic-gradient(
     from 0deg, 
     transparent 0deg, 
-    transparent 180deg, 
-    rgba(255, 255, 255, 0.01) 220deg, 
-    rgba(255, 255, 255, 0.1) 300deg, 
+    transparent 300deg, 
+    rgba(255, 255, 255, 0.01) 320deg, 
+    rgba(255, 255, 255, 0.1) 340deg, 
     rgba(255, 255, 255, 0.5) 360deg
   );
   opacity: 0;
