@@ -58,7 +58,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const backgroundVideo = document.getElementById('backgroundVideo');
   const burgerBtn = document.getElementById('burgerBtn');
   const titleAccueil = document.getElementById('titleAccueil');
-  const unmuteBtn = document.getElementById('unmuteBtn');
 
   // Flag pour s'assurer que l'intro ne se joue qu'une fois par session
   const hasPlayedIntro = sessionStorage.getItem('introPlayed');
@@ -90,15 +89,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 300);
   }
 
-  if (unmuteBtn) {
-    unmuteBtn.addEventListener('click', () => {
-      landingVideo.muted = false;
-      landingVideo.currentTime = 0; // Restart
-      landingVideo.play();
-      unmuteBtn.style.display = 'none';
-    });
-  }
-
   if (landingVideo && videoOverlay && backgroundVideo) {
     if (hasPlayedIntro) {
       // L'intro a déjà été jouée dans cette session, skip directement
@@ -128,9 +118,6 @@ document.addEventListener('DOMContentLoaded', () => {
           // Autoplay bloqué (souvent sur mobile ou navigateurs stricts)
           console.log('Autoplay with sound blocked:', err);
           
-          // Show unmute button
-          if (unmuteBtn) unmuteBtn.style.display = 'flex';
-
           // Essayer en mode muet
           landingVideo.muted = true;
           landingVideo.play().then(() => {
@@ -193,6 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const currentSong = document.getElementById('currentSong');
   const visualizerCanvas = document.getElementById('visualizer');
   const circularVisualizer = document.getElementById('circularVisualizer');
+  const radarCanvas = document.getElementById('radarPoints');
   const vinylDisc = document.getElementById('vinyl-disc');
   // --- Progress Bar Elements ---
   const progressInfo = document.getElementById('progress-info');
@@ -209,6 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let progressInterval = null;
   let trackDuration = 0;
   let trackStartTime = 0;
+  let radarStartTime = 0;
 
   function setupVisualizer() {
     if (visualizerInitialized) return;
@@ -226,8 +215,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const canvasCtx = visualizerCanvas.getContext('2d');
     const circularCtx = circularVisualizer ? circularVisualizer.getContext('2d') : null;
+    const radarCtx = radarCanvas ? radarCanvas.getContext('2d') : null;
     let waveTime = 0;
     
+    // Radar Points Initialization
+    const radarPoints = [];
+    const numRadarPoints = 80;
+    for (let i = 0; i < numRadarPoints; i++) {
+        radarPoints.push({
+            r: Math.random(), // Normalized radius 0..1
+            theta: Math.random() * 2 * Math.PI, // Angle in radians
+            size: Math.random() * 2 + 1 // Base size
+        });
+    }
     
     function resizeCanvas() {
         visualizerCanvas.width = visualizerCanvas.offsetWidth;
@@ -235,6 +235,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (circularVisualizer) {
           circularVisualizer.width = circularVisualizer.offsetWidth;
           circularVisualizer.height = circularVisualizer.offsetHeight;
+        }
+        if (radarCanvas) {
+          radarCanvas.width = radarCanvas.offsetWidth;
+          radarCanvas.height = radarCanvas.offsetHeight;
         }
     }
     resizeCanvas();
@@ -261,6 +265,69 @@ document.addEventListener('DOMContentLoaded', () => {
           vinylDisc.style.transform = `scale(${scale})`;
       } else if (vinylDisc) {
           vinylDisc.style.transform = 'scale(1)';
+      }
+
+      // --- Radar Points ---
+      if (radarCtx && radarCanvas.width > 0 && !audio.paused) {
+          const w = radarCanvas.width;
+          const h = radarCanvas.height;
+          const cx = w / 2;
+          const cy = h / 2;
+          const maxRadius = w / 2;
+
+          radarCtx.clearRect(0, 0, w, h);
+
+          // Calculate current radar angle based on time
+          // CSS animation is 2s linear infinite
+          const elapsed = (Date.now() - radarStartTime) / 1000;
+          const cycle = 2.0; 
+          const progress = (elapsed % cycle) / cycle; // 0..1
+          const currentAngle = progress * 2 * Math.PI; // 0..2PI
+          
+          // Adjust to Canvas coordinates (0 is Right, Clockwise)
+          // If CSS starts at Top (0deg), then at t=0, angle is -PI/2 in Canvas.
+          const sweepAngle = currentAngle - Math.PI / 2; 
+          
+          const fov = Math.PI / 3; // 60 degrees FOV trailing behind the sweep
+
+          radarCtx.fillStyle = '#fff';
+
+          radarPoints.forEach(p => {
+              // Normalize point angle to match sweepAngle range
+              let diff = sweepAngle - p.theta;
+              
+              // Normalize diff to -PI..PI or 0..2PI
+              while (diff < 0) diff += 2 * Math.PI;
+              while (diff >= 2 * Math.PI) diff -= 2 * Math.PI;
+              
+              // If diff is small positive, it means sweep passed it recently.
+              if (diff < fov) {
+                  // It is in FOV!
+                  
+                  // Get frequency data
+                  // Map radius to frequency index
+                  // Inner = Low freq, Outer = High freq
+                  const freqIndex = Math.floor(p.r * (bufferLength * 0.5)); // Use half spectrum
+                  const val = dataArray[freqIndex] || 0;
+                  const intensity = val / 255;
+                  
+                  if (intensity > 0.1) {
+                      const x = cx + Math.cos(p.theta) * (p.r * maxRadius);
+                      const y = cy + Math.sin(p.theta) * (p.r * maxRadius);
+                      
+                      // Alpha fades out as it gets further from sweep line
+                      const fade = 1 - (diff / fov);
+                      
+                      radarCtx.globalAlpha = intensity * fade;
+                      radarCtx.beginPath();
+                      radarCtx.arc(x, y, p.size * (1 + intensity * 2), 0, 2 * Math.PI);
+                      radarCtx.fill();
+                  }
+              }
+          });
+          radarCtx.globalAlpha = 1.0;
+      } else if (radarCtx) {
+          radarCtx.clearRect(0, 0, radarCanvas.width, radarCanvas.height);
       }
       
       // --- Linear Visualizer (Background) ---
@@ -556,7 +623,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Default font
       ctx.font = `${charSize}px 'Courier New', monospace`;
       
-      const maxRadius = 200; 
+      const maxRadius = 100; 
 
       for (let x = 0; x < cols; x++) {
         offsets[x] += speeds[x];
@@ -601,12 +668,12 @@ document.addEventListener('DOMContentLoaded', () => {
           let gasIntensity = (noise + 3) / 6;
           
           // Ultra smooth thresholding
-          // Very low threshold to avoid hard cuts
-          if (gasIntensity < 0.1) { 
+          // Higher threshold for more black space (0.1 -> 0.45)
+          if (gasIntensity < 0.45) { 
               gasIntensity = 0;
           } else {
-              // Remap 0.1..1.0 to 0..1.0
-              gasIntensity = (gasIntensity - 0.1) / 0.9;
+              // Remap 0.45..1.0 to 0..1.0
+              gasIntensity = (gasIntensity - 0.45) / 0.55;
               // Squared curve for soft ease-in from black
               gasIntensity = gasIntensity * gasIntensity; 
           }
@@ -907,7 +974,10 @@ document.addEventListener('DOMContentLoaded', () => {
           audio.load();
           await audio.play();
           playBtn.innerHTML = '<i class="fas fa-pause"></i>';
-          if (vinylDisc) vinylDisc.classList.add('playing');
+          if (vinylDisc) {
+             vinylDisc.classList.add('playing');
+             radarStartTime = Date.now();
+          }
           updateVolumeButtonPosition();
         } else {
           audio.pause();
