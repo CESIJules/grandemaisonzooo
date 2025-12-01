@@ -1,9 +1,16 @@
 /* Base */
 
 @font-face {
-  font-family: SEBGMZ;
-  src: url(font/Syne-ExtraBoldGMZMAGE.ttf) format('truetype');
+  font-family: SyneGMZExtraBold;
+  src: url(font/Syne-ExtraBoldGMZV2.ttf) format('truetype');
   font-weight: 800;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: SyneGMZBold;
+  src: url(font/Syne-BoldGMZV2.ttf) format('truetype');
+  font-weight: 700;
   font-style: normal;
 }
 
@@ -187,7 +194,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 .menu ul { list-style: none; margin: 0; padding: 0; text-align: center; }
 .menu li { margin: 12px 0; }
 .menu a {
-  font-family: 'Syne', sans-serif;
+  font-family: 'SyneGMZBold', sans-serif;
   font-weight: 700;
   color: #eee;
   text-decoration: none;
