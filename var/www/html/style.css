@@ -393,31 +393,185 @@ p { max-width: 800px; text-align: center; color: #ccc; }
     transform: scale(1.1);
 }
 
-.volume-floating {
-  position: fixed !important;
-  top: 100px !important; /* Aligné sous le burger (30px + 60px + 10px gap) */
-  right: 30px !important; /* Aligné avec le burger */
-  left: auto !important;
-  z-index: 1001;
-  margin: 0;
+/* Radio Controller (RC) */
+.rc-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  align-items: stretch;
+  background: rgba(20, 20, 20, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.3s ease;
+  width: 320px;
+  overflow: hidden;
+  color: #fff;
+}
+
+.rc-container.hidden {
   opacity: 0;
   pointer-events: none;
-  transform: scale(0.8);
-  transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.5s ease;
+  transform: translateY(20px) scale(0.95);
 }
 
-.volume-floating.visible {
-  opacity: 1;
-  pointer-events: auto;
-  transform: scale(1);
-  box-shadow: 0 0 25px rgba(255, 255, 255, 0.2), 0 0 10px rgba(255, 255, 255, 0.1);
+.rc-container.docked {
+  transform: translateX(calc(100% - 30px)); /* Keep 30px visible (the handle) */
+  background: rgba(20, 20, 20, 0.8); /* Darker when docked */
 }
 
-.volume-floating:hover {
-  transform: scale(1.05) translateY(-3px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.9), 0 0 20px rgba(255, 255, 255, 0.3);
-  background-color: rgba(35, 35, 35, 0.8);
-  border-color: rgba(255, 255, 255, 0.6);
+/* Handle / Toggle */
+.rc-handle {
+  width: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.05);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background 0.3s;
+}
+
+.rc-handle:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.rc-toggle-btn {
+  font-size: 12px;
+  transition: transform 0.5s ease;
+}
+
+.rc-container.docked .rc-toggle-btn {
+  transform: rotate(180deg);
+}
+
+/* Content */
+.rc-content {
+  flex: 1;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: grab; /* Draggable area */
+}
+
+.rc-content:active {
+  cursor: grabbing;
+}
+
+/* Top Row: Play, Volume, Meta */
+.rc-top-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rc-btn-play {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.rc-btn-play:hover {
+  background: #fff;
+  color: #000;
+  transform: scale(1.1);
+}
+
+.rc-volume-container {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.rc-volume-slider-wrapper {
+  width: 60px;
+  display: flex;
+  align-items: center;
+}
+
+#rcVolumeSlider {
+  width: 100%;
+  height: 4px;
+  -webkit-appearance: none;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  outline: none;
+}
+
+#rcVolumeSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+}
+
+.rc-meta {
+  flex: 1;
+  overflow: hidden;
+  text-align: right;
+}
+
+#rcTitle {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #fff;
+}
+
+#rcArtist {
+  font-size: 11px;
+  font-weight: 400;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Bottom Row: Progress */
+.rc-bottom-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: 'Space Grotesk', monospace;
+}
+
+.rc-progress-track {
+  flex: 1;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+.rc-progress-fill {
+  height: 100%;
+  background: #fff;
+  width: 0%;
+  transition: width 0.1s linear;
 }
 
 

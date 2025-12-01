@@ -33,37 +33,43 @@
       ☰
     </button>
 
-    <!-- Floating Volume Button (Hidden by default) -->
-    <div class="volume-container volume-floating hidden" id="floatingVolume">
-      <svg class="volume-ring" width="60" height="60" viewBox="0 0 60 60">
-        <circle
-          class="ring-bg"
-          cx="30"
-          cy="30"
-          r="26"
-          stroke-width="4"
-          fill="none"
-          stroke="rgba(255,255,255,0.2)"
-          stroke-linecap="round"
-          stroke-dasharray="122.52 163.36"
-          transform="rotate(135 30 30)"
-        ></circle>
-        <circle
-          class="ring-progress"
-          cx="30"
-          cy="30"
-          r="26"
-          stroke-width="4"
-          fill="none"
-          stroke="#fff"
-          stroke-linecap="round"
-          stroke-dasharray="122.52 163.36"
-          stroke-dashoffset="122.52"
-          transform="rotate(135 30 30)"
-        ></circle>
-      </svg>
-      <div class="volume-icon-center">
-        <i class="fas fa-volume-up" id="floatingVolumeIcon"></i>
+    <!-- Radio Controller (RC) -->
+    <div id="radioController" class="rc-container docked hidden">
+      <div class="rc-handle" id="rcHandle">
+        <div class="rc-toggle-btn" id="rcToggleBtn">
+          <i class="fas fa-chevron-left"></i>
+        </div>
+      </div>
+      <div class="rc-content">
+        <div class="rc-top-row">
+          <button id="rcPlayPause" class="rc-btn-play">
+            <i class="fas fa-play"></i>
+          </button>
+          <div class="rc-volume-container">
+            <i class="fas fa-volume-up" id="rcVolumeIcon"></i>
+            <div class="rc-volume-slider-wrapper">
+              <input
+                type="range"
+                id="rcVolumeSlider"
+                min="0"
+                max="1"
+                step="0.01"
+                value="1"
+              />
+            </div>
+          </div>
+          <div class="rc-meta">
+            <h1 id="rcTitle">Titre</h1>
+            <h2 id="rcArtist">Artiste</h2>
+          </div>
+        </div>
+        <div class="rc-bottom-row">
+          <span id="rcElapsed">0:00</span>
+          <div class="rc-progress-track" id="rcProgressTrack">
+            <div class="rc-progress-fill" id="rcProgressBar"></div>
+          </div>
+          <span id="rcRemaining">0:00</span>
+        </div>
       </div>
     </div>
 

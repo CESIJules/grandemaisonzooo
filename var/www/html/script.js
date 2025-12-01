@@ -713,6 +713,11 @@ document.addEventListener('DOMContentLoaded', () => {
     progressBar.style.width = `${percentage}%`;
     elapsedTimeEl.textContent = formatTime(elapsed);
     remainingTimeEl.textContent = formatTime(remaining);
+
+    // Update RC Progress
+    if (rcProgressBar) rcProgressBar.style.width = `${percentage}%`;
+    if (rcElapsed) rcElapsed.textContent = formatTime(elapsed);
+    if (rcRemaining) rcRemaining.textContent = formatTime(remaining);
   }
 
   // --- ASCII Background Effect ---
@@ -939,39 +944,138 @@ document.addEventListener('DOMContentLoaded', () => {
   
   initAsciiBackground();
 
+  // --- Radio Controller (RC) Logic ---
+  const rcContainer = document.getElementById('radioController');
+  const rcHandle = document.getElementById('rcHandle');
+  const rcToggleBtn = document.getElementById('rcToggleBtn');
+  const rcPlayPause = document.getElementById('rcPlayPause');
+  const rcVolumeSlider = document.getElementById('rcVolumeSlider');
+  const rcVolumeIcon = document.getElementById('rcVolumeIcon');
+  const rcTitle = document.getElementById('rcTitle');
+  const rcArtist = document.getElementById('rcArtist');
+  const rcElapsed = document.getElementById('rcElapsed');
+  const rcRemaining = document.getElementById('rcRemaining');
+  const rcProgressBar = document.getElementById('rcProgressBar');
+  const rcContent = document.querySelector('.rc-content');
+
+  // Sync RC with Main Player
+  function updateRCUI() {
+      if (!rcContainer) return;
+      
+      // Play/Pause Icon
+      if (audio.paused) {
+          rcPlayPause.innerHTML = '<i class="fas fa-play"></i>';
+      } else {
+          rcPlayPause.innerHTML = '<i class="fas fa-pause"></i>';
+      }
+
+      // Volume
+      rcVolumeSlider.value = audio.volume;
+      if (audio.volume === 0) rcVolumeIcon.className = 'fas fa-volume-mute';
+      else if (audio.volume < 0.5) rcVolumeIcon.className = 'fas fa-volume-down';
+      else rcVolumeIcon.className = 'fas fa-volume-up';
+  }
+
+  // Visibility Logic
+  function updateRCVisibility() {
+      if (!rcContainer) return;
+      const currentSection = sections[currentSectionIndex];
+      const isRadioSection = currentSection && currentSection.id === 'radio';
+      
+      if (isRadioSection) {
+          rcContainer.classList.add('hidden');
+      } else {
+          rcContainer.classList.remove('hidden');
+      }
+  }
+
+  // Docking Logic
+  if (rcHandle) {
+      rcHandle.addEventListener('click', () => {
+          rcContainer.classList.toggle('docked');
+          // Reset position if docking?
+          if (rcContainer.classList.contains('docked')) {
+             rcContainer.style.transform = ''; // Let CSS handle the translate
+             rcContainer.style.left = '';
+             rcContainer.style.top = '';
+             rcContainer.style.bottom = '20px';
+             rcContainer.style.right = '20px';
+          }
+      });
+  }
+
+  // Drag Logic
+  if (rcContent) {
+      let isDragging = false;
+      let startX, startY, initialLeft, initialTop;
+
+      rcContent.addEventListener('mousedown', (e) => {
+          // Don't drag if clicking controls
+          if (e.target.closest('button') || e.target.closest('input')) return;
+          
+          if (rcContainer.classList.contains('docked')) return; // Don't drag if docked
+
+          isDragging = true;
+          startX = e.clientX;
+          startY = e.clientY;
+          
+          const rect = rcContainer.getBoundingClientRect();
+          initialLeft = rect.left;
+          initialTop = rect.top;
+          
+          rcContainer.style.transition = 'none'; // Disable transition for direct follow
+          rcContainer.style.bottom = 'auto';
+          rcContainer.style.right = 'auto';
+          rcContainer.style.left = `${initialLeft}px`;
+          rcContainer.style.top = `${initialTop}px`;
+          
+          e.preventDefault();
+      });
+
+      document.addEventListener('mousemove', (e) => {
+          if (!isDragging) return;
+          const dx = e.clientX - startX;
+          const dy = e.clientY - startY;
+          rcContainer.style.left = `${initialLeft + dx}px`;
+          rcContainer.style.top = `${initialTop + dy}px`;
+      });
+
+      document.addEventListener('mouseup', () => {
+          if (isDragging) {
+              isDragging = false;
+              rcContainer.style.transition = ''; // Re-enable transition
+          }
+      });
+  }
+
+  // Controls Events
+  if (rcPlayPause) {
+      rcPlayPause.addEventListener('click', () => {
+          if (playBtn) playBtn.click();
+          updateRCUI();
+      });
+  }
+
+  if (rcVolumeSlider) {
+      rcVolumeSlider.addEventListener('input', (e) => {
+          const vol = parseFloat(e.target.value);
+          audio.volume = vol;
+          volumeControl.value = vol; // Sync with main slider
+          updateVolumeUI(vol);
+          updateRCUI();
+      });
+  }
+
   // --- Circular Volume Control Logic ---
   const circularVolumeContainer = document.getElementById('circularVolume');
-  const floatingVolumeContainer = document.getElementById('floatingVolume');
-  const volumeContainers = [circularVolumeContainer, floatingVolumeContainer].filter(Boolean);
+  const volumeContainers = [circularVolumeContainer].filter(Boolean);
   
   const ringProgresses = document.querySelectorAll('.ring-progress');
   const volumeIcons = document.querySelectorAll('.volume-icon-center i');
   
   // Function to update volume button position (Now handles visibility of floating button)
   function updateVolumeButtonPosition() {
-      const currentSection = sections[currentSectionIndex];
-      const isRadioPlaying = audio && !audio.paused;
-      const isRadioSection = currentSection && currentSection.id === 'radio';
-      
-      if (isRadioPlaying && !isRadioSection) {
-          if (floatingVolumeContainer) {
-              floatingVolumeContainer.classList.remove('hidden');
-              // Small delay to allow display:block to apply before opacity transition
-              requestAnimationFrame(() => {
-                  floatingVolumeContainer.classList.add('visible');
-              });
-          }
-      } else {
-          if (floatingVolumeContainer) {
-              floatingVolumeContainer.classList.remove('visible');
-              // Wait for transition to finish before hiding
-              setTimeout(() => {
-                  if (!floatingVolumeContainer.classList.contains('visible')) {
-                      floatingVolumeContainer.classList.add('hidden');
-                  }
-              }, 500);
-          }
-      }
+      updateRCVisibility();
   }
 
   if (audio && playBtn && status && volumeControl && volumeContainers.length > 0) {
@@ -984,6 +1088,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     audio.volume = currentVolume;
     volumeControl.value = currentVolume;
+    if (rcVolumeSlider) rcVolumeSlider.value = currentVolume; // Sync RC slider
 
     // Update Ring UI
     const radius = 26;
@@ -1010,6 +1115,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     updateVolumeUI(currentVolume);
+    updateRCVisibility();
 
     // Interaction
     let isDraggingVolume = false;
@@ -1165,6 +1271,19 @@ document.addEventListener('DOMContentLoaded', () => {
   let pendingTitleTimeout = null;
   let isFirstTitleLoad = true;
 
+  function updateRCInfo(fullTitle) {
+      if (!rcTitle || !rcArtist) return;
+      
+      const parts = fullTitle.split(' - ');
+      if (parts.length >= 2) {
+          rcArtist.textContent = parts[0];
+          rcTitle.textContent = parts.slice(1).join(' - ');
+      } else {
+          rcTitle.textContent = fullTitle;
+          rcArtist.textContent = ''; 
+      }
+  }
+
   function updateTitleUI(title) {
       if (!currentSong) return;
       const currentTitle = currentSong.querySelector('.title').textContent;
@@ -1173,7 +1292,10 @@ document.addEventListener('DOMContentLoaded', () => {
           setTimeout(() => {
               currentSong.querySelector('.title').textContent = title;
               currentSong.classList.remove("fade");
+              updateRCInfo(title);
           }, 300);
+      } else {
+          updateRCInfo(title);
       }
   }
 
