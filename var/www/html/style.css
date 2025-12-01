@@ -1,4 +1,12 @@
 /* Base */
+
+@font-face {
+  font-family: SEBGMZ;
+  src: url(font/Syne-ExtraBoldGMZMAGE.ttf) format('truetype');
+  font-weight: 800;
+  font-style: normal;
+}
+
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
 body {
@@ -108,7 +116,7 @@ main { -ms-overflow-style: none; scrollbar-width: none; }
 }
 
 h1, h2, h3, h4, h5, h6 { 
-  font-family: 'Syne', sans-serif;
+  font-family: 'SEBGMZ', sans-serif;
   font-weight: 800; 
   margin: 0 0 12px; 
   color: #f5f5f5; 
