@@ -1328,6 +1328,9 @@ document.addEventListener('DOMContentLoaded', () => {
           <span class="timeline-date">${new Date(post.date).toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
         `;
 
+        // Add 3D Tilt Effect
+        addTiltEffect(contentDiv);
+
         timelineItem.appendChild(contentDiv);
         timelineContainer.appendChild(timelineItem);
       });
@@ -1336,6 +1339,42 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Impossible de charger la timeline:', error);
       timelineContainer.innerHTML = '<p style="text-align: center; color: red;">Erreur: Impossible de charger la timeline.</p>';
     }
+  }
+
+  // 3D Tilt Effect Function
+  function addTiltEffect(card) {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      
+      // Calculate rotation (max 15 degrees)
+      const rotateX = ((y - centerY) / centerY) * -15; 
+      const rotateY = ((x - centerX) / centerX) * 15;
+
+      card.style.setProperty('--rotate-x', `${rotateX}deg`);
+      card.style.setProperty('--rotate-y', `${rotateY}deg`);
+      
+      // Calculate shine position
+      card.style.setProperty('--shine-x', `${(x / rect.width) * 100}%`);
+      card.style.setProperty('--shine-y', `${(y / rect.height) * 100}%`);
+      
+      // Make movement snappy when following mouse
+      card.style.transition = 'transform 0.1s ease-out, box-shadow 0.4s ease'; 
+    });
+
+    card.addEventListener('mouseleave', () => {
+      // Reset to center
+      card.style.setProperty('--rotate-x', '0deg');
+      card.style.setProperty('--rotate-y', '0deg');
+      card.style.setProperty('--shine-x', '50%');
+      card.style.setProperty('--shine-y', '50%');
+      
+      // Smooth return
+      card.style.transition = 'transform 0.6s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.4s ease';
+    });
   }
 
   async function populateFilterButtons() {
