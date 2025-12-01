@@ -7,8 +7,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- START: Fullscreen height fix for mobile browsers ---
   function setMainHeight() {
+    const vh = window.innerHeight;
+    // Force html, body, and main to take the full visible height.
+    document.documentElement.style.height = `${vh}px`;
+    document.body.style.height = `${vh}px`;
     if (mainContainer) {
-      mainContainer.style.height = `${window.innerHeight}px`;
+      mainContainer.style.height = `${vh}px`;
     }
   }
   // Set height on initial load and on resize/orientation change.
