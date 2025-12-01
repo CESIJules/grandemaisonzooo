@@ -1837,7 +1837,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (mindsetTitle) {
     const originalText = "MINDSET";
     const targetText = "MįNDSET";
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
+    // Reduced char set to avoid vertical layout shifts (font fallback issues)
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; 
     let interval = null;
 
     mindsetTitle.addEventListener('mouseenter', () => {
