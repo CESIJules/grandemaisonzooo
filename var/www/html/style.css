@@ -1451,6 +1451,10 @@ p { max-width: 800px; text-align: center; color: #ccc; }
     padding-bottom: 120px; /* Add padding to avoid overlap with fixed currentSong */
   }
 
+  #visualizer {
+    display: none;
+  }
+
   .radio-header {
     position: static;
     flex-direction: column;
