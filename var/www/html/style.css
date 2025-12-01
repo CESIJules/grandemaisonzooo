@@ -1730,7 +1730,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 
 @media (min-width: 1920px) {
   .timeline-item {
-    width: 280px;
+    width: 240px;
   }
   .timeline-image {
     height: 200px;
