@@ -1730,9 +1730,21 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 
 @media (min-width: 1920px) {
   .timeline-item {
-    width: 240px;
+    width: 220px; /* Reduced from 240px */
+  }
+  .timeline-content {
+    padding: 15px; /* Reduce padding */
+  }
+  .timeline-item h3 {
+    font-size: 1.1em; /* Reduce title font size */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .timeline-item p {
+    font-size: 0.85em; /* Reduce paragraph font size */
   }
   .timeline-image {
-    height: 200px;
+    height: 180px; /* Reduced from 200px */
   }
 }
