@@ -1886,23 +1886,33 @@ document.addEventListener('DOMContentLoaded', () => {
   let touchStartY = 0;
   let touchStartX = 0;
   let isTouchTriggered = false;
+  let touchDidStartOnTimeline = false; // Flag for timeline scrolling
   
   window.addEventListener('touchstart', (e) => {
       touchStartY = e.touches[0].clientY;
       touchStartX = e.touches[0].clientX;
       isTouchTriggered = false;
+      
+      // Check if the touch starts inside the timeline container
+      touchDidStartOnTimeline = !!e.target.closest('.timeline-container');
+
   }, { passive: false });
   
   window.addEventListener('touchmove', (e) => {
-      e.preventDefault(); // Prevent native scroll
-      
-      if (isNavigating) return;
-      
       const touchY = e.touches[0].clientY;
       const touchX = e.touches[0].clientX;
-      
       const deltaY = touchStartY - touchY;
       const deltaX = touchStartX - touchX;
+
+      // If touch started on timeline and is a vertical scroll, allow native scroll
+      if (touchDidStartOnTimeline && Math.abs(deltaY) > Math.abs(deltaX)) {
+          return; 
+      }
+
+      // For all other cases, prevent default to handle section swiping
+      e.preventDefault();
+      
+      if (isNavigating) return;
       
       // Determine dominant axis
       if (Math.abs(deltaX) > Math.abs(deltaY)) {
@@ -1912,21 +1922,15 @@ document.addEventListener('DOMContentLoaded', () => {
                // Scroll timeline directly
                timelineContainer.scrollLeft += deltaX;
                timelineTargetScroll = timelineContainer.scrollLeft;
-               touchStartX = touchX; // Continuous scroll
+               // Update startX for continuous horizontal scroll, but not startY
+               touchStartX = touchX; 
           }
       } else {
-          // Vertical Swipe
+          // Vertical Swipe for changing sections
           if (!isTouchTriggered && Math.abs(deltaY) > 50) { // Threshold
               const direction = deltaY > 0 ? 1 : -1;
               const nextIndex = currentSectionIndex + direction;
-              
-              // Check if we are in timeline and trying to exit
-              const currentSection = sections[currentSectionIndex];
-              if (currentSection && currentSection.id === 'timeline' && timelineContainer) {
-                  // Allow exit regardless of horizontal position on mobile vertical swipe?
-                  // Yes, usually better UX.
-              }
-
+  
               if (nextIndex >= 0 && nextIndex < sections.length) {
                   scrollToSection(nextIndex);
                   isTouchTriggered = true;
