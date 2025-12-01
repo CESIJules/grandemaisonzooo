@@ -139,13 +139,14 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   justify-content: center;
   padding: 0;
 
-  /* Glassmorphism Style */
-  background-color: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  /* Inverted Colors (White BG, Black Icon) */
+  background-color: #fff;
+  color: #000;
+  border: none;
+  
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
-  color: #eee;
   border-radius: 50%; /* Circular */
   
   font-size: 24px;
