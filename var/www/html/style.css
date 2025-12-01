@@ -52,6 +52,10 @@ body {
   transition: opacity 0.8s ease;
 }
 
+a:-webkit-any-link {
+  text-decoration: none;
+}
+
 /* Background Video for Accueil Section */
 .background-video {
   position: absolute;
@@ -405,7 +409,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   align-items: stretch;
   /* Timeline Style Transparency */
   
-  background-color: rgba(10, 10, 10, 0.2); /* Darker when docked for visibility */
+  background-color: rgba(10, 10, 10, 0.5); /* Darker when docked for visibility */
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -486,7 +490,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 
 .rc-btn-play {
   background: none;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: none;
   border-radius: 50%;
   width: 46px; /* Increased from 36px */
   height: 46px; /* Increased from 36px */
@@ -501,9 +505,10 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 }
 
 .rc-btn-play:hover {
-  background: #fff;
-  color: #000;
-  transform: scale(1.1);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.9), 0 0 15px rgba(255, 255, 255, 0.15);
+  background-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #fff;
 }
 
 /* RC Circular Volume */

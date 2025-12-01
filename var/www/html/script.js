@@ -1050,8 +1050,8 @@ document.addEventListener('DOMContentLoaded', () => {
       let startX, startY, initialLeft, initialTop;
 
       rcContent.addEventListener('mousedown', (e) => {
-          // Don't drag if clicking controls
-          if (e.target.closest('button') || e.target.closest('.rc-volume-container')) return;
+          // Don't drag if clicking controls or meta info (title/artist)
+          if (e.target.closest('button') || e.target.closest('.rc-volume-container') || e.target.closest('.rc-meta')) return;
           
           if (rcContainer.classList.contains('docked')) return; // Don't drag if docked
 
@@ -1094,6 +1094,23 @@ document.addEventListener('DOMContentLoaded', () => {
           if (playBtn) playBtn.click();
           updateRCUI();
       });
+  }
+
+  // Click on Title/Artist to go to Radio
+  function goToRadioSection() {
+      const radioIndex = Array.from(sections).findIndex(s => s.id === 'radio');
+      if (radioIndex !== -1) {
+          scrollToSection(radioIndex);
+      }
+  }
+
+  if (rcTitle) {
+      rcTitle.style.cursor = 'pointer';
+      rcTitle.addEventListener('click', goToRadioSection);
+  }
+  if (rcArtist) {
+      rcArtist.style.cursor = 'pointer';
+      rcArtist.addEventListener('click', goToRadioSection);
   }
 
   // --- Circular Volume Control Logic ---
