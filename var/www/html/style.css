@@ -101,8 +101,7 @@ body {
 
 /* One-scroll fluide global */
 main {
-  height: 100vh; /* Fallback for older browsers */
-  height: 100svh; /* Small viewport height - avoids issues with mobile browser UI */
+  height: 100%;
   overflow: hidden; /* Full JS control */
   /* scroll-snap-type: y mandatory;  Désactivé pour JS custom */
   scroll-behavior: auto; /* Handled by JS */
@@ -1460,6 +1459,8 @@ p { max-width: 800px; text-align: center; color: #ccc; }
     bottom: 0;
     left: 0;
     right: 0;
+    width: 100%;
+    max-width: none;
     transform: none;
     padding: 12px 15px;
     margin: 0;
