@@ -1455,22 +1455,30 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 
   #currentSong {
     position: absolute;
-    bottom: 15px;
-    left: 15px;
-    right: 15px;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
     transform: none;
-    flex-direction: column;
-    padding: 15px;
+    padding: 10px 15px;
     max-width: none;
     width: auto;
     margin: 0;
-    z-index: 25; /* Above other radio elements but below global UI */
+    z-index: 25;
     background-color: rgba(10, 10, 10, 0.7);
-    border-radius: 15px;
+    border-radius: 12px;
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
     white-space: normal;
     text-align: center;
+  }
+  #currentSong .label {
+    display: none;
+  }
+  #currentSong .title {
+    font-size: 0.9em;
+  }
+  #currentSong #progress-info {
+    display: none; /* Hide progress bar in this compact view */
   }
   
   #progress-info {
@@ -1532,7 +1540,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
       flex-direction: column;
       align-items: flex-start;
       gap: 15px;
-      padding: 80px 20px 20px 20px; /* Adjust padding for flow */
+      padding: 60px 20px 20px 20px; /* Adjust padding for flow */
     }
   
     #timeline h2 {
@@ -1543,6 +1551,12 @@ p { max-width: 800px; text-align: center; color: #ccc; }
     
     .timeline-filters {
       flex-wrap: wrap;
+      gap: 8px; /* Reduce gap between buttons */
+    }
+
+    .timeline-filters .btn {
+      padding: 8px 14px;
+      font-size: 12px;
     }
 
     .timeline-container {
@@ -1629,6 +1643,11 @@ p { max-width: 800px; text-align: center; color: #ccc; }
     padding-left: 0; /* Assure un centrage parfait */
     order: 2; /* Le texte est toujours en second */
   }
+
+  .artiste-actions .btn {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
 }
 
 @media (max-width: 640px) {
@@ -1637,7 +1656,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 
 @media (max-width: 480px) {
   h1, #accueil h1 {
-    font-size: 2.2em; /* Further reduce main title size */
+    font-size: 1.8em; /* Further reduce main title size */
     letter-spacing: -1px;
   }
 
