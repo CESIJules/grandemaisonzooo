@@ -1118,8 +1118,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         audio.volume = vol;
         volumeControl.value = vol;
-        localStorage.setItem('radioVolume', vol);
+        // localStorage.setItem('radioVolume', vol); // Removed to prevent lag
         updateVolumeUI(vol);
+    }
+
+    function saveVolume() {
+        localStorage.setItem('radioVolume', audio.volume);
     }
 
     volumeContainers.forEach(container => {
@@ -1155,6 +1159,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isDraggingVolume) {
             isDraggingVolume = false;
             volumeContainers.forEach(c => c.classList.remove('dragging'));
+            saveVolume(); // Save on release
         }
     });
 
@@ -1172,6 +1177,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('touchend', () => {
         isDraggingVolume = false;
         volumeContainers.forEach(c => c.classList.remove('dragging'));
+        saveVolume(); // Save on release
     });
 
     // Statuts
