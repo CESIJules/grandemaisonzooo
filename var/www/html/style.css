@@ -1727,3 +1727,12 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   }
   /* --- End Timeline Fixes --- */
 }
+
+@media (min-width: 1920px) {
+  .timeline-item {
+    width: 280px;
+  }
+  .timeline-image {
+    height: 200px;
+  }
+}
