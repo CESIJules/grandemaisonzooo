@@ -4,6 +4,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const sections = document.querySelectorAll('section');
   let currentSectionIndex = 0;
   let isNavigating = false;
+
+  // --- START: Fullscreen height fix for mobile browsers ---
+  function setMainHeight() {
+    const vh = window.innerHeight;
+    // Force html, body, and main to take the full visible height.
+    document.documentElement.style.height = `${vh}px`;
+    document.body.style.height = `${vh}px`;
+    if (mainContainer) {
+      mainContainer.style.height = `${vh}px`;
+    }
+  }
+  // Set height on initial load and on resize/orientation change.
+  setMainHeight();
+  window.addEventListener('resize', setMainHeight);
+  window.addEventListener('orientationchange', setMainHeight);
+  // --- END: Fullscreen height fix for mobile browsers ---
   
   // Timeline State
   let timelineTargetScroll = 0;
@@ -1281,10 +1297,10 @@ document.addEventListener('DOMContentLoaded', () => {
     audio.addEventListener('error', () => { status.textContent = 'Erreur de lecture'; });
 
     // Play/Pause (radio en direct)
-    playBtn.addEventListener('click', async () => {
+    playBtn.addEventListener('click', () => { // REMOVED async
       // On iOS, AudioContext must be resumed after a user gesture.
       if (audioContext && audioContext.state === 'suspended') {
-        await audioContext.resume();
+        audioContext.resume(); // REMOVED await
       }
 
       try {
@@ -1293,14 +1309,23 @@ document.addEventListener('DOMContentLoaded', () => {
             setupVisualizer(); // Setup visualizer on first play
           }
           audio.src = playBtn.dataset.src;
-          audio.load();
-          await audio.play();
-          playBtn.innerHTML = '<i class="fas fa-pause"></i>';
-          if (vinylDisc) {
-             vinylDisc.classList.add('playing');
-             radarStartTime = Date.now();
+          const playPromise = audio.play(); // REMOVED await, store promise
+
+          if (playPromise !== undefined) {
+            playPromise.then(() => {
+              // Playback started successfully
+              playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+              if (vinylDisc) {
+                 vinylDisc.classList.add('playing');
+                 radarStartTime = Date.now();
+              }
+              updateVolumeButtonPosition();
+            }).catch(err => {
+              // Playback failed
+              status.textContent = 'Lecture bloquée';
+              console.error(err);
+            });
           }
-          updateVolumeButtonPosition();
         } else {
           audio.pause();
           playBtn.innerHTML = '<i class="fas fa-play"></i>';
@@ -1308,7 +1333,9 @@ document.addEventListener('DOMContentLoaded', () => {
           updateVolumeButtonPosition();
         }
       } catch (err) {
-        status.textContent = 'Lecture bloquée';
+        // This catch block is now less likely to be used,
+        // the promise .catch() will handle play() errors.
+        status.textContent = 'Erreur inattendue';
         console.error(err);
       }
     });
@@ -1560,7 +1587,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        const titleElement = `<h3>${displayTitle}</h3>`;
+        // Check if the title is an artist name (case-insensitive comparison)
+        const isArtistTitle = allArtists.some(artist => artist.toLowerCase() === post.title.toLowerCase());
+
+        const titleElement = `<h3 class="${isArtistTitle ? 'artist-title' : ''}">${displayTitle}</h3>`;
 
         const subtitleElement = post.link && displaySubtitle
           ? `<h4><a href="${post.link}" target="_blank" rel="noopener noreferrer" class="timeline-subtitle-link">${displaySubtitle}</a></h4>`
@@ -1800,6 +1830,39 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
+  // --- Scroll & Layout Recalculation on Resize ---
+  let resizeTimer;
+
+  function recalculateLayout() {
+    // Find the section that is currently most visible
+    let closestSectionIndex = 0;
+    let minDistance = Infinity;
+    
+    sections.forEach((section, index) => {
+      const rect = section.getBoundingClientRect();
+      // Use the distance from the top of the viewport
+      const distance = Math.abs(rect.top);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestSectionIndex = index;
+      }
+    });
+
+    // Snap to the top of that section without smooth scrolling
+    // to instantly correct the position.
+    if (mainContainer) {
+        mainContainer.scrollTop = sections[closestSectionIndex].offsetTop;
+    }
+    // Update the global index
+    currentSectionIndex = closestSectionIndex;
+  }
+
+  window.addEventListener('resize', () => {
+    // Debounce resize event
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(recalculateLayout, 250); // Recalculate 250ms after last resize
+  });
+
   // Global Wheel Handler
   window.addEventListener('wheel', (e) => {
     e.preventDefault();
@@ -1870,23 +1933,33 @@ document.addEventListener('DOMContentLoaded', () => {
   let touchStartY = 0;
   let touchStartX = 0;
   let isTouchTriggered = false;
+  let touchDidStartOnTimeline = false; // Flag for timeline scrolling
   
   window.addEventListener('touchstart', (e) => {
       touchStartY = e.touches[0].clientY;
       touchStartX = e.touches[0].clientX;
       isTouchTriggered = false;
+      
+      // Check if the touch starts inside the timeline container
+      touchDidStartOnTimeline = !!e.target.closest('.timeline-container');
+
   }, { passive: false });
   
   window.addEventListener('touchmove', (e) => {
-      e.preventDefault(); // Prevent native scroll
-      
-      if (isNavigating) return;
-      
       const touchY = e.touches[0].clientY;
       const touchX = e.touches[0].clientX;
-      
       const deltaY = touchStartY - touchY;
       const deltaX = touchStartX - touchX;
+
+      // If touch started on timeline and is a vertical scroll, allow native scroll
+      if (touchDidStartOnTimeline && Math.abs(deltaY) > Math.abs(deltaX)) {
+          return; 
+      }
+
+      // For all other cases, prevent default to handle section swiping
+      e.preventDefault();
+      
+      if (isNavigating) return;
       
       // Determine dominant axis
       if (Math.abs(deltaX) > Math.abs(deltaY)) {
@@ -1896,21 +1969,15 @@ document.addEventListener('DOMContentLoaded', () => {
                // Scroll timeline directly
                timelineContainer.scrollLeft += deltaX;
                timelineTargetScroll = timelineContainer.scrollLeft;
-               touchStartX = touchX; // Continuous scroll
+               // Update startX for continuous horizontal scroll, but not startY
+               touchStartX = touchX; 
           }
       } else {
-          // Vertical Swipe
+          // Vertical Swipe for changing sections
           if (!isTouchTriggered && Math.abs(deltaY) > 50) { // Threshold
               const direction = deltaY > 0 ? 1 : -1;
               const nextIndex = currentSectionIndex + direction;
-              
-              // Check if we are in timeline and trying to exit
-              const currentSection = sections[currentSectionIndex];
-              if (currentSection && currentSection.id === 'timeline' && timelineContainer) {
-                  // Allow exit regardless of horizontal position on mobile vertical swipe?
-                  // Yes, usually better UX.
-              }
-
+  
               if (nextIndex >= 0 && nextIndex < sections.length) {
                   scrollToSection(nextIndex);
                   isTouchTriggered = true;
