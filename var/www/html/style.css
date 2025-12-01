@@ -8,6 +8,12 @@
 }
 
 * { box-sizing: border-box; }
+
+img, video, iframe {
+  max-width: 100%;
+  height: auto;
+}
+
 html, body { height: 100%; margin: 0; }
 body {
   font-family: 'Space Grotesk', sans-serif;
@@ -1247,7 +1253,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   .artiste { gap: 24px; padding: 32px; }
 }
 
-@media (max-width: 768) {
+@media (max-width: 768px) {
   .artiste {
     height: auto;                 /* sur mobile, on laisse respirer */
     grid-template-columns: 1fr;
@@ -1418,3 +1424,133 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   backdrop-filter: blur(2px);
 }
 
+/* ===== General Responsive Adjustments ===== */
+
+@media (max-width: 1024px) {
+  /* Reduce font sizes for tablets */
+  h1, #accueil h1 {
+    font-size: 4em;
+  }
+
+  h2, #timeline h2 {
+    font-size: 3.5em;
+  }
+
+  .artiste-info h3 {
+    font-size: 3.5rem;
+  }
+
+  /* Make the radio vinyl disc a bit smaller */
+  #vinyl-disc-container {
+    width: 350px;
+    height: 350px;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Reduce font sizes for mobile */
+  h1, #accueil h1 {
+    font-size: 3em;
+  }
+
+  h2, #timeline h2 {
+    font-size: 2.5em;
+  }
+  
+  .artiste-info h3 {
+    font-size: 2.8rem;
+  }
+
+  /* Make the radio vinyl disc smaller and centered */
+  #vinyl-disc-container {
+    width: 80vw;
+    height: 80vw;
+    max-width: 300px;
+    max-height: 300px;
+  }
+  
+  /* Adjust current song display */
+  #currentSong {
+    flex-direction: column;
+    padding: 15px;
+    max-width: 80vw;
+  }
+  
+  #progress-info {
+    width: 100%;
+    position: static;
+    transform: none;
+    margin-top: 10px;
+  }
+
+  .screen {
+      padding: 60px 12px; /* Reduce padding on all sections */
+  }
+
+  .contact-form {
+      width: 100%;
+  }
+
+  /* Responsive Radio Controller */
+  .rc-container {
+    min-width: 0;
+    width: calc(100% - 20px);
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    /* When not docked, it's visible. We override the transform for docking. */
+  }
+  
+  .rc-container.docked {
+    /* Hides the controller off-screen when docked on mobile */
+    transform: translateY(150%) !important;
+  }
+
+  .rc-handle {
+    /* On mobile, maybe we don't want the handle to be the only thing showing */
+    display: none; 
+  }
+
+  /* The timeline items */
+  .timeline-item {
+    width: 280px;
+    margin: 0 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  h1, #accueil h1 {
+    font-size: 2.2em; /* Further reduce main title size */
+    letter-spacing: -1px;
+  }
+
+  h2, #timeline h2 {
+    font-size: 1.8em; /* Further reduce section title size */
+  }
+
+  .artiste-info h3 {
+    font-size: 2.2rem;
+  }
+
+  #playRadio {
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+  }
+
+  .btn {
+    padding: 10px 18px;
+    font-size: 12px;
+  }
+
+  .burger {
+    top: 15px;
+    right: 15px;
+    width: 50px;
+    height: 50px;
+  }
+
+  .rc-content {
+    padding: 15px;
+  }
+}
