@@ -1280,10 +1280,10 @@ document.addEventListener('DOMContentLoaded', () => {
     audio.addEventListener('error', () => { status.textContent = 'Erreur de lecture'; });
 
     // Play/Pause (radio en direct)
-    playBtn.addEventListener('click', async () => {
+    playBtn.addEventListener('click', () => { // REMOVED async
       // On iOS, AudioContext must be resumed after a user gesture.
       if (audioContext && audioContext.state === 'suspended') {
-        await audioContext.resume();
+        audioContext.resume(); // REMOVED await
       }
 
       try {
@@ -1292,13 +1292,23 @@ document.addEventListener('DOMContentLoaded', () => {
             setupVisualizer(); // Setup visualizer on first play
           }
           audio.src = playBtn.dataset.src;
-          await audio.play();
-          playBtn.innerHTML = '<i class="fas fa-pause"></i>';
-          if (vinylDisc) {
-             vinylDisc.classList.add('playing');
-             radarStartTime = Date.now();
+          const playPromise = audio.play(); // REMOVED await, store promise
+
+          if (playPromise !== undefined) {
+            playPromise.then(() => {
+              // Playback started successfully
+              playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+              if (vinylDisc) {
+                 vinylDisc.classList.add('playing');
+                 radarStartTime = Date.now();
+              }
+              updateVolumeButtonPosition();
+            }).catch(err => {
+              // Playback failed
+              status.textContent = 'Lecture bloquée';
+              console.error(err);
+            });
           }
-          updateVolumeButtonPosition();
         } else {
           audio.pause();
           playBtn.innerHTML = '<i class="fas fa-play"></i>';
@@ -1306,7 +1316,9 @@ document.addEventListener('DOMContentLoaded', () => {
           updateVolumeButtonPosition();
         }
       } catch (err) {
-        status.textContent = 'Lecture bloquée';
+        // This catch block is now less likely to be used,
+        // the promise .catch() will handle play() errors.
+        status.textContent = 'Erreur inattendue';
         console.error(err);
       }
     });
