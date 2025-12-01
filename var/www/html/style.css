@@ -101,7 +101,8 @@ body {
 
 /* One-scroll fluide global */
 main {
-  height: 100%;
+  min-height: 100vh; /* Fallback */
+  min-height: 100dvh; /* Dynamic viewport height */
   overflow: hidden; /* Full JS control */
   /* scroll-snap-type: y mandatory;  Désactivé pour JS custom */
   scroll-behavior: auto; /* Handled by JS */
