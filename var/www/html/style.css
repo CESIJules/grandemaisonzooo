@@ -1728,7 +1728,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   /* --- End Timeline Fixes --- */
 }
 
-@media (min-width: 1920px) {
+@media (width: 1920px) {
   #timeline h2 {
     font-size: 3.5em; /* Reduce timeline title size */
   }

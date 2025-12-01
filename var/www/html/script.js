@@ -1280,46 +1280,39 @@ document.addEventListener('DOMContentLoaded', () => {
     audio.addEventListener('error', () => { status.textContent = 'Erreur de lecture'; });
 
     // Play/Pause (radio en direct)
-    playBtn.addEventListener('click', () => { // REMOVED async
+    playBtn.addEventListener('click', () => {
       // On iOS, AudioContext must be resumed after a user gesture.
       if (audioContext && audioContext.state === 'suspended') {
-        audioContext.resume(); // REMOVED await
+        audioContext.resume();
       }
 
-      try {
-        if (audio.paused) {
-          if (!visualizerInitialized) {
-            setupVisualizer(); // Setup visualizer on first play
-          }
-          audio.src = playBtn.dataset.src;
-          const playPromise = audio.play(); // REMOVED await, store promise
+      if (audio.paused) {
+        audio.src = playBtn.dataset.src;
+        const playPromise = audio.play();
 
-          if (playPromise !== undefined) {
-            playPromise.then(() => {
-              // Playback started successfully
-              playBtn.innerHTML = '<i class="fas fa-pause"></i>';
-              if (vinylDisc) {
-                 vinylDisc.classList.add('playing');
-                 radarStartTime = Date.now();
-              }
-              updateVolumeButtonPosition();
-            }).catch(err => {
-              // Playback failed
-              status.textContent = 'Lecture bloquée';
-              console.error(err);
-            });
-          }
-        } else {
-          audio.pause();
-          playBtn.innerHTML = '<i class="fas fa-play"></i>';
-          if (vinylDisc) vinylDisc.classList.remove('playing');
-          updateVolumeButtonPosition();
+        if (playPromise !== undefined) {
+          playPromise.then(() => {
+            // Playback started successfully, now do secondary setup
+            if (!visualizerInitialized) {
+              setupVisualizer();
+            }
+            playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            if (vinylDisc) {
+               vinylDisc.classList.add('playing');
+               radarStartTime = Date.now();
+            }
+            updateVolumeButtonPosition();
+          }).catch(err => {
+            // Autoplay was prevented.
+            status.textContent = 'Lecture bloquée';
+            console.error(err);
+          });
         }
-      } catch (err) {
-        // This catch block is now less likely to be used,
-        // the promise .catch() will handle play() errors.
-        status.textContent = 'Erreur inattendue';
-        console.error(err);
+      } else {
+        audio.pause();
+        playBtn.innerHTML = '<i class="fas fa-play"></i>';
+        if (vinylDisc) vinylDisc.classList.remove('playing');
+        updateVolumeButtonPosition();
       }
     });
 
