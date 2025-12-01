@@ -403,7 +403,8 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   display: flex;
   align-items: stretch;
   /* Timeline Style Transparency */
-  background-color: transparent;
+  
+  background-color: rgba(10, 10, 10, 0.2); /* Darker when docked for visibility */
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -429,8 +430,8 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 
 .rc-container.docked {
   /* Ensure only the 40px handle is visible */
-  transform: translateX(calc(100% - 40px)) !important; 
-  background: rgba(20, 20, 20, 0.8); /* Darker when docked for visibility */
+  transform: translateX(calc(100% - 20px)) !important; 
+  
 }
 
 /* Handle / Toggle */
