@@ -1488,15 +1488,12 @@ p { max-width: 800px; text-align: center; color: #ccc; }
     font-weight: 600;
     margin: 0;
   }
-  #currentSong #progress-info {
-    display: none; /* Hide progress bar in this compact view */
-  }
-  
   #progress-info {
     width: 100%;
     position: static;
     transform: none;
     margin-top: 10px;
+    display: none; /* Hide progress bar in this compact view */
   }
 
   .player {
