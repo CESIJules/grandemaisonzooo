@@ -945,7 +945,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 .timeline-item { 
   position: relative;
   flex-shrink: 0;
-  width: 280px;
+  width: 300px;
   margin: 0 40px;
   z-index: 2;
 }
@@ -1277,7 +1277,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 /* Custom timeline image style */
 .timeline-image {
   width: 100%;
-  height: 200px; /* Fixed height */
+  height: 300px; /* Fixed height */
   object-fit: cover; /* Crop to fit */
   object-position: center; /* Center the image */
   border-radius: 12px;
@@ -1727,5 +1727,3 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   }
   /* --- End Timeline Fixes --- */
 }
-
-
