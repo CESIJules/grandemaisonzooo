@@ -538,7 +538,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 
 .rc-ring-progress {
   stroke: #fff;
-  transition: stroke-dashoffset 0.1s linear;
+  /* transition: stroke-dashoffset 0.1s linear; Removed for instant response */
 }
 
 .rc-volume-icon-center {
