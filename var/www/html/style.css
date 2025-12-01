@@ -894,7 +894,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   padding: 0 40px;
   z-index: 10;
   pointer-events: none;
@@ -903,12 +903,9 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 #timeline h2 { 
   margin: 0;
   font-size: 4.5em;
-  position: absolute;
+  position: relative;
   text-align: left;
-  pointer-events: none;
-  left: 40px;
-  top: 50%;
-  transform: translateY(-50%);
+  pointer-events: auto;
 }
 
 .timeline-filters {
