@@ -90,13 +90,13 @@ body {
 #accueil h1 {
   position: relative;
   z-index: 2; /* Above overlay */
-  font-size: 5em; /* Slightly larger */
+  font-size: clamp(2.2em, 12vw, 5em);
   letter-spacing: -2px;
   color: #fff;
   /* Base shadow, will be overridden by JS for reactivity */
   text-shadow: 0 0 20px rgba(255, 255, 255, 0.4), 0 20px 50px rgba(0, 0, 0, 0.9);
   transition: text-shadow 0.1s ease-out, opacity 0.8s ease, letter-spacing 0.8s ease;
-  word-break: break-all;
+  white-space: nowrap;
 }
 
 /* One-scroll fluide global */
@@ -1175,10 +1175,10 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 
 .artiste-info h3 { 
   margin: 0; 
-  font-size: 4rem; /* Beaucoup plus gros pour l'impact */
+  font-size: clamp(2rem, 8vw, 4rem); /* Fluid font size */
   line-height: 0.9;
   color: #f5f5f5;
-  /* white-space: nowrap; Prevent wrapping during glitch animation */
+  white-space: normal; /* Allow wrapping */
 }
 .artiste-info .localisation {
   font-family: 'Lexend', sans-serif;
@@ -1449,19 +1449,19 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   }
 
   #currentSong {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    position: absolute;
+    bottom: 15px;
+    left: 15px;
+    right: 15px;
     transform: none;
     flex-direction: column;
     padding: 15px;
-    max-width: 100%;
-    width: 100%;
-    margin-top: 0;
-    z-index: 1001;
+    max-width: none;
+    width: auto;
+    margin: 0;
+    z-index: 25; /* Above other radio elements but below global UI */
     background-color: rgba(10, 10, 10, 0.7);
-    border-radius: 15px 15px 0 0;
+    border-radius: 15px;
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
     white-space: normal;
@@ -1514,21 +1514,24 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 
     /* --- Timeline Mobile Rework --- */
     #timeline {
-      padding-bottom: 0; /* Remove bottom padding for mobile view */
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding: 0;
+      justify-content: flex-start;
     }
     
     .timeline-header-wrapper {
+      flex-shrink: 0; /* Prevent header from shrinking */
+      position: static;
       flex-direction: column;
       align-items: flex-start;
       gap: 15px;
-      padding: 0 20px;
-      position: static; /* Let it be part of the flow */
-      padding-top: 80px; /* Add padding since it's not absolute anymore */
-      padding-bottom: 20px;
+      padding: 80px 20px 20px 20px; /* Adjust padding for flow */
     }
   
     #timeline h2 {
-      font-size: 1.5em;
+      font-size: 1.8em; /* Slightly larger */
       position: static;
       transform: none;
     }
@@ -1538,6 +1541,8 @@ p { max-width: 800px; text-align: center; color: #ccc; }
     }
 
     .timeline-container {
+      flex-grow: 1; /* Allow container to fill remaining space */
+      min-height: 0; /* Crucial for flex-grow in a scrollable context */
       flex-direction: column;
       overflow-y: auto;
       overflow-x: hidden;
@@ -1546,7 +1551,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
       background: linear-gradient(#555, #555) repeat-y 40px center / 2px 1px;
       -ms-overflow-style: auto;
       scrollbar-width: thin;
-      height: calc(100vh - 200px); /* Adjust height to allow scrolling, accounting for header */
+      -webkit-overflow-scrolling: touch; /* Momentum scrolling */
     }
     .timeline-container::-webkit-scrollbar {
       display: block;
