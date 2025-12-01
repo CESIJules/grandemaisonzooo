@@ -825,8 +825,8 @@ document.addEventListener('DOMContentLoaded', () => {
       requestAnimationFrame(draw);
       
       // PERFORMANCE: Skip frames (30fps)
-      frameCount++;
-      if (frameCount % 2 !== 0) return;
+      // frameCount++;
+      // if (frameCount % 2 !== 0) return;
 
       const time = Date.now() * 0.001;
       
