@@ -1111,6 +1111,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isDraggingVolume = false;
     let startY = 0;
     let startVolume = 0;
+    let rafId = null;
 
     function setVolume(vol) {
         // Clamp
@@ -1147,17 +1148,23 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('mousemove', (e) => {
         if (isDraggingVolume) {
             e.preventDefault();
-            const deltaY = startY - e.clientY; 
-            const sensitivity = 0.005; 
             
-            let newVol = startVolume + (deltaY * sensitivity);
-            setVolume(newVol);
+            // Use requestAnimationFrame for smoother UI updates
+            if (rafId) cancelAnimationFrame(rafId);
+            
+            rafId = requestAnimationFrame(() => {
+                const deltaY = startY - e.clientY; 
+                const sensitivity = 0.005; 
+                let newVol = startVolume + (deltaY * sensitivity);
+                setVolume(newVol);
+            });
         }
     });
 
     window.addEventListener('mouseup', () => {
         if (isDraggingVolume) {
             isDraggingVolume = false;
+            if (rafId) cancelAnimationFrame(rafId);
             volumeContainers.forEach(c => c.classList.remove('dragging'));
             saveVolume(); // Save on release
         }
@@ -1166,16 +1173,21 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('touchmove', (e) => {
         if (isDraggingVolume) {
             e.preventDefault();
-            const deltaY = startY - e.touches[0].clientY;
-            const sensitivity = 0.005; 
             
-            let newVol = startVolume + (deltaY * sensitivity);
-            setVolume(newVol);
+            if (rafId) cancelAnimationFrame(rafId);
+
+            rafId = requestAnimationFrame(() => {
+                const deltaY = startY - e.touches[0].clientY;
+                const sensitivity = 0.005; 
+                let newVol = startVolume + (deltaY * sensitivity);
+                setVolume(newVol);
+            });
         }
     }, { passive: false });
 
     window.addEventListener('touchend', () => {
         isDraggingVolume = false;
+        if (rafId) cancelAnimationFrame(rafId);
         volumeContainers.forEach(c => c.classList.remove('dragging'));
         saveVolume(); // Save on release
     });
