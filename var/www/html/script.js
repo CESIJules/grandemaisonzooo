@@ -949,7 +949,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const rcHandle = document.getElementById('rcHandle');
   const rcToggleBtn = document.getElementById('rcToggleBtn');
   const rcPlayPause = document.getElementById('rcPlayPause');
-  const rcVolumeSlider = document.getElementById('rcVolumeSlider');
+  // const rcVolumeSlider = document.getElementById('rcVolumeSlider'); // Removed
+  const rcCircularVolume = document.getElementById('rcCircularVolume'); // New
   const rcVolumeIcon = document.getElementById('rcVolumeIcon');
   const rcTitle = document.getElementById('rcTitle');
   const rcArtist = document.getElementById('rcArtist');
@@ -968,12 +969,8 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
           rcPlayPause.innerHTML = '<i class="fas fa-pause"></i>';
       }
-
-      // Volume
-      rcVolumeSlider.value = audio.volume;
-      if (audio.volume === 0) rcVolumeIcon.className = 'fas fa-volume-mute';
-      else if (audio.volume < 0.5) rcVolumeIcon.className = 'fas fa-volume-down';
-      else rcVolumeIcon.className = 'fas fa-volume-up';
+      
+      // Volume Icon update is handled in updateVolumeUI
   }
 
   // Visibility Logic
@@ -1011,7 +1008,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       rcContent.addEventListener('mousedown', (e) => {
           // Don't drag if clicking controls
-          if (e.target.closest('button') || e.target.closest('input')) return;
+          if (e.target.closest('button') || e.target.closest('.rc-volume-container')) return;
           
           if (rcContainer.classList.contains('docked')) return; // Don't drag if docked
 
@@ -1056,22 +1053,12 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
-  if (rcVolumeSlider) {
-      rcVolumeSlider.addEventListener('input', (e) => {
-          const vol = parseFloat(e.target.value);
-          audio.volume = vol;
-          volumeControl.value = vol; // Sync with main slider
-          updateVolumeUI(vol);
-          updateRCUI();
-      });
-  }
-
   // --- Circular Volume Control Logic ---
   const circularVolumeContainer = document.getElementById('circularVolume');
-  const volumeContainers = [circularVolumeContainer].filter(Boolean);
+  const volumeContainers = [circularVolumeContainer, rcCircularVolume].filter(Boolean);
   
-  const ringProgresses = document.querySelectorAll('.ring-progress');
-  const volumeIcons = document.querySelectorAll('.volume-icon-center i');
+  const ringProgresses = document.querySelectorAll('.ring-progress, .rc-ring-progress');
+  const volumeIcons = document.querySelectorAll('.volume-icon-center i, #rcVolumeIcon');
   
   // Function to update volume button position (Now handles visibility of floating button)
   function updateVolumeButtonPosition() {
@@ -1088,18 +1075,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     audio.volume = currentVolume;
     volumeControl.value = currentVolume;
-    if (rcVolumeSlider) rcVolumeSlider.value = currentVolume; // Sync RC slider
 
-    // Update Ring UI
-    const radius = 26;
-    const circumference = 2 * Math.PI * radius;
-    // Arc length is 270 degrees (3/4 of circle)
-    const arcLength = circumference * 0.75;
-    
     function updateVolumeUI(vol) {
-        const offset = arcLength * (1 - vol);
-        
         ringProgresses.forEach(ring => {
+            const r = ring.getAttribute('r');
+            const circumference = 2 * Math.PI * r;
+            const arcLength = circumference * 0.75;
+            const offset = arcLength * (1 - vol);
             ring.style.strokeDashoffset = offset;
         });
         
