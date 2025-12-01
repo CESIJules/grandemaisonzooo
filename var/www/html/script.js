@@ -265,6 +265,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
+    // Cache gradients
+    let linearGradient = null;
+    let circularGradient = null;
+
     function resizeCanvas() {
         visualizerCanvas.width = visualizerCanvas.offsetWidth;
         visualizerCanvas.height = visualizerCanvas.offsetHeight;
@@ -275,6 +279,29 @@ document.addEventListener('DOMContentLoaded', () => {
         if (radarCanvas) {
           radarCanvas.width = radarCanvas.offsetWidth;
           radarCanvas.height = radarCanvas.offsetHeight;
+        }
+        
+        // Recreate gradients on resize
+        if (visualizerCanvas.width > 0 && visualizerCanvas.height > 0) {
+            const ctx = visualizerCanvas.getContext('2d');
+            linearGradient = ctx.createLinearGradient(0, 0, 0, visualizerCanvas.height);
+            linearGradient.addColorStop(0.3, 'rgba(238, 238, 238, 0)');
+            linearGradient.addColorStop(0.45, 'rgba(238, 238, 238, 0.4)');
+            linearGradient.addColorStop(0.5, 'rgba(238, 238, 238, 0.5)');
+            linearGradient.addColorStop(0.55, 'rgba(238, 238, 238, 0.4)');
+            linearGradient.addColorStop(0.7, 'rgba(238, 238, 238, 0)');
+        }
+
+        if (circularVisualizer && circularVisualizer.width > 0) {
+             const ctx = circularVisualizer.getContext('2d');
+             const cx = circularVisualizer.width / 2;
+             const cy = circularVisualizer.height / 2;
+             const innerRadius = 110;
+             const maxBarHeight = 60;
+             circularGradient = ctx.createRadialGradient(cx, cy, innerRadius, cx, cy, innerRadius + maxBarHeight);
+             circularGradient.addColorStop(0, 'rgba(255, 255, 255, 0.0)');
+             circularGradient.addColorStop(0.6, 'rgba(255, 255, 255, 0.15)');
+             circularGradient.addColorStop(1, 'rgba(255, 255, 255, 0.0)');
         }
     }
     resizeCanvas();
@@ -355,8 +382,9 @@ document.addEventListener('DOMContentLoaded', () => {
               
               radarCtx.strokeStyle = isMajor ? `rgba(255, 255, 255, ${majorAlpha})` : `rgba(255, 255, 255, ${minorAlpha})`;
               radarCtx.lineWidth = isMajor ? 3 : 1;
-              radarCtx.shadowBlur = isMajor ? (5 + 10 * radarActiveIntensity) : 0;
-              radarCtx.shadowColor = 'rgba(255, 255, 255, 0.5)';
+              // PERFORMANCE: Removed shadowBlur
+              // radarCtx.shadowBlur = isMajor ? (5 + 10 * radarActiveIntensity) : 0;
+              // radarCtx.shadowColor = 'rgba(255, 255, 255, 0.5)';
               radarCtx.stroke();
           }
           radarCtx.shadowBlur = 0; // Reset
@@ -478,9 +506,9 @@ document.addEventListener('DOMContentLoaded', () => {
                       radarCtx.arc(x, y, size, 0, 2 * Math.PI);
                       radarCtx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
                       
-                      // Glow
-                      radarCtx.shadowBlur = (age < transitionPoint) ? 15 : (5 + 10 * audioLevel);
-                      radarCtx.shadowColor = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                      // Glow - PERFORMANCE: Removed shadowBlur
+                      // radarCtx.shadowBlur = (age < transitionPoint) ? 15 : (5 + 10 * audioLevel);
+                      // radarCtx.shadowColor = `rgba(${r}, ${g}, ${b}, ${alpha})`;
                       
                       radarCtx.fill();
                   }
@@ -588,14 +616,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
         // --- Fill and Style ---
-        const gradient = canvasCtx.createLinearGradient(0, 0, 0, HEIGHT);
-        gradient.addColorStop(0.3, 'rgba(238, 238, 238, 0)');
-        gradient.addColorStop(0.45, 'rgba(238, 238, 238, 0.4)');
-        gradient.addColorStop(0.5, 'rgba(238, 238, 238, 0.5)');
-        gradient.addColorStop(0.55, 'rgba(238, 238, 238, 0.4)');
-        gradient.addColorStop(0.7, 'rgba(238, 238, 238, 0)');
-
-        canvasCtx.fillStyle = gradient;
+        // Use cached gradient
+        canvasCtx.fillStyle = linearGradient || 'rgba(238, 238, 238, 0.2)';
         canvasCtx.fill();
 
         // Also add a stroke for definition
@@ -664,17 +686,13 @@ document.addEventListener('DOMContentLoaded', () => {
           
           // --- STYLING (WITH NEW GRADIENT FILL) ---
           
-          // 1. Subtle Gradient Fill
-          const fillGradient = circularCtx.createRadialGradient(cx, cy, innerRadius, cx, cy, innerRadius + maxBarHeight);
-          fillGradient.addColorStop(0, 'rgba(255, 255, 255, 0.0)');   // Transparent near center
-          fillGradient.addColorStop(0.6, 'rgba(255, 255, 255, 0.15)');// Visible in the middle
-          fillGradient.addColorStop(1, 'rgba(255, 255, 255, 0.0)');   // Fades out at the peaks
-          circularCtx.fillStyle = fillGradient;
+          // 1. Subtle Gradient Fill - Use cached
+          circularCtx.fillStyle = circularGradient || 'rgba(255, 255, 255, 0.1)';
           circularCtx.fill();
 
-          // 2. Glow effect using shadow
-          circularCtx.shadowBlur = 12;
-          circularCtx.shadowColor = 'rgba(255, 255, 255, 0.5)';
+          // 2. Glow effect using shadow - PERFORMANCE: Removed
+          // circularCtx.shadowBlur = 12;
+          // circularCtx.shadowColor = 'rgba(255, 255, 255, 0.5)';
           
           // 3. Main line
           circularCtx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
@@ -741,6 +759,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let grid = []; 
     let offsets = []; 
     let speeds = []; 
+    let rowNoise = []; // Pre-calculated noise for rows
 
     window.addEventListener('mousemove', (e) => {
       mouse.x = e.clientX;
@@ -760,6 +779,16 @@ document.addEventListener('DOMContentLoaded', () => {
         offsets.push(Math.random() * charSize);
         speeds.push(Math.random() * 0.8 + 0.2); 
       }
+      
+      // Pre-calculate row noise
+      rowNoise = [];
+      for (let y = 0; y < rows; y++) {
+          const noiseY = y * 0.025;
+          // Combine the two static Y-dependent cosine terms
+          // term1: Math.cos(noiseY * 0.8)
+          // term2: Math.cos(noiseY * 1.7) * 0.5
+          rowNoise.push(Math.cos(noiseY * 0.8) + Math.cos(noiseY * 1.7) * 0.5);
+      }
     }
 
     function resize() {
@@ -775,9 +804,14 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', resize);
     resize();
 
+    let frameCount = 0;
     function draw() {
       requestAnimationFrame(draw);
       
+      // PERFORMANCE: Skip frames (30fps)
+      frameCount++;
+      if (frameCount % 2 !== 0) return;
+
       const time = Date.now() * 0.001;
       
       // Clear with transparency for trails
@@ -822,12 +856,9 @@ document.addEventListener('DOMContentLoaded', () => {
           const centerY = py + charSize/2;
           
           // --- 1. Gas/Cloud Calculation (Optimized Noise) ---
-          const noiseY = y * 0.025;
-          
-          // Organic noise approximation
-          let noise = noisePartX1 + Math.cos(noiseY * 0.8);
-          noise += noisePartX2;
-          noise += Math.cos(noiseY * 1.7) * 0.5;
+          // Use pre-calculated Y noise
+          // Original: let noise = noisePartX1 + Math.cos(noiseY * 0.8) + noisePartX2 + Math.cos(noiseY * 1.7) * 0.5;
+          let noise = noisePartX1 + noisePartX2 + (rowNoise[y] || 0);
           
           // Normalize roughly to 0..1
           let gasIntensity = (noise + 3) / 6;
@@ -1521,23 +1552,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 3D Tilt Effect Function
   function addTiltEffect(card) {
+    let rafId = null;
+    
     card.addEventListener('mousemove', (e) => {
-      const rect = card.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const centerX = rect.width / 2;
-      const centerY = rect.height / 2;
-      
-      // Calculate rotation (max 15 degrees)
-      const rotateX = ((y - centerY) / centerY) * -15; 
-      const rotateY = ((x - centerX) / centerX) * 15;
+      if (rafId) return; // Throttle
 
-      card.style.setProperty('--rotate-x', `${rotateX}deg`);
-      card.style.setProperty('--rotate-y', `${rotateY}deg`);
-      
-      // Calculate shine position
-      card.style.setProperty('--shine-x', `${(x / rect.width) * 100}%`);
-      card.style.setProperty('--shine-y', `${(y / rect.height) * 100}%`);
+      rafId = requestAnimationFrame(() => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        
+        // Calculate rotation (max 15 degrees)
+        const rotateX = ((y - centerY) / centerY) * -15; 
+        const rotateY = ((x - centerX) / centerX) * 15;
+
+        card.style.setProperty('--rotate-x', `${rotateX}deg`);
+        card.style.setProperty('--rotate-y', `${rotateY}deg`);
+        
+        // Calculate shine position
+        card.style.setProperty('--shine-x', `${(x / rect.width) * 100}%`);
+        card.style.setProperty('--shine-y', `${(y / rect.height) * 100}%`);
+        
+        rafId = null;
+      });
       
       // Make movement snappy when following mouse
       card.style.transition = 'transform 0.1s ease-out, box-shadow 0.4s ease'; 
