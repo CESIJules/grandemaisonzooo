@@ -1617,7 +1617,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const button = document.createElement('button');
         button.className = 'btn filter-btn';
         button.dataset.artist = artist;
-        button.textContent = artist;
+        button.textContent = artist.toUpperCase();
         timelineFilters.appendChild(button);
       });
 
