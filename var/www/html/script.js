@@ -4,6 +4,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const sections = document.querySelectorAll('section');
   let currentSectionIndex = 0;
   let isNavigating = false;
+
+  // --- START: Fullscreen height fix for mobile browsers ---
+  function setMainHeight() {
+    if (mainContainer) {
+      mainContainer.style.height = `${window.innerHeight}px`;
+    }
+  }
+  // Set height on initial load and on resize/orientation change.
+  setMainHeight();
+  window.addEventListener('resize', setMainHeight);
+  window.addEventListener('orientationchange', setMainHeight);
+  // --- END: Fullscreen height fix for mobile browsers ---
   
   // Timeline State
   let timelineTargetScroll = 0;
