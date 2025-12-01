@@ -1426,131 +1426,372 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 
 /* ===== General Responsive Adjustments ===== */
 
-@media (max-width: 1024px) {
-  /* Reduce font sizes for tablets */
-  h1, #accueil h1 {
-    font-size: 4em;
+
+
+@media (max-width: 1200px) {
+
+  #accueil h1 {
+
+    font-size: 4.5em;
+
   }
 
-  h2, #timeline h2 {
-    font-size: 3.5em;
+  #radio h2, #timeline h2 {
+
+    font-size: 4em;
+
   }
 
   .artiste-info h3 {
+
     font-size: 3.5rem;
+
   }
+
+}
+
+
+
+@media (max-width: 1024px) {
+
+  /* Reduce font sizes for tablets */
+
+  #accueil h1 {
+
+    font-size: 4em;
+
+  }
+
+
+
+  #radio h2, #timeline h2 {
+
+    font-size: 3.5em;
+
+  }
+
+
+
+  .artiste-info h3 {
+
+    font-size: 3.2rem;
+
+  }
+
+
 
   /* Make the radio vinyl disc a bit smaller */
+
   #vinyl-disc-container {
+
     width: 350px;
+
     height: 350px;
+
   }
+
 }
+
+
 
 @media (max-width: 768px) {
+
   /* Reduce font sizes for mobile */
+
   h1, #accueil h1 {
+
     font-size: 3em;
+
   }
+
+
+
+  /* Separate radio h2 from the general rule */
 
   h2, #timeline h2 {
-    font-size: 2.5em;
-  }
-  
-  .artiste-info h3 {
-    font-size: 2.8rem;
+
+    font-size: 2.2em;
+
   }
 
-  /* Make the radio vinyl disc smaller and centered */
-  #vinyl-disc-container {
-    width: 80vw;
-    height: 80vw;
-    max-width: 300px;
-    max-height: 300px;
-  }
   
-  /* Adjust current song display */
+
+  .artiste-info h3 {
+
+    font-size: 2.5rem;
+
+  }
+
+
+
+  #radio h2 {
+
+    font-size: 2.2em;
+
+  }
+
+
+
+  /* --- Radio Page Fixes --- */
+
+  #radio {
+
+    justify-content: space-evenly; /* Better vertical distribution */
+
+    gap: 0;
+
+  }
+
+
+
   #currentSong {
-    flex-direction: column;
-    padding: 15px;
-    max-width: 80vw;
-  }
-  
-  #progress-info {
-    width: 100%;
-    position: static;
+
+    position: static; /* Remove absolute positioning */
+
     transform: none;
-    margin-top: 10px;
+
+    flex-direction: column;
+
+    padding: 15px;
+
+    max-width: 80vw;
+
+    margin-top: 0;
+
   }
+
+  
+
+  #progress-info {
+
+    width: 100%;
+
+    position: static;
+
+    transform: none;
+
+    margin-top: 10px;
+
+  }
+
+
+
+  .player {
+
+    position: static; /* Ensure player is in the normal flow */
+
+    margin-top: 20px;
+
+  }
+
+
+
+  #vinyl-disc-container {
+
+    width: 70vw; /* Use viewport width for more fluidity */
+
+    height: 70vw;
+
+    max-width: 280px;
+
+    max-height: 280px;
+
+  }
+
+  /* --- End Radio Page Fixes --- */
+
+
 
   .screen {
+
       padding: 60px 12px; /* Reduce padding on all sections */
+
   }
+
+
 
   .contact-form {
+
       width: 100%;
+
   }
+
+
 
   /* Responsive Radio Controller */
+
   .rc-container {
+
     min-width: 0;
+
     width: calc(100% - 20px);
+
     left: 10px;
+
     right: 10px;
+
     bottom: 10px;
+
     /* When not docked, it's visible. We override the transform for docking. */
+
   }
+
   
+
   .rc-container.docked {
+
     /* Hides the controller off-screen when docked on mobile */
+
     transform: translateY(150%) !important;
+
   }
+
+
 
   .rc-handle {
+
     /* On mobile, maybe we don't want the handle to be the only thing showing */
+
     display: none; 
+
   }
 
-  /* The timeline items */
-  .timeline-item {
-    width: 280px;
-    margin: 0 20px;
+
+
+  /* --- Timeline Fixes --- */
+
+  .timeline-container {
+
+    padding: 0 10px; /* Add some padding to the container itself */
+
   }
+
+  .timeline-item {
+
+    width: 65vw; /* Make items take up more screen width, but still scrollable */
+
+    max-width: 300px; /* Cap the size */
+
+    margin: 0 15px;
+
+  }
+
+  /* --- End Timeline Fixes --- */
+
 }
+
+
 
 @media (max-width: 480px) {
+
   h1, #accueil h1 {
+
     font-size: 2.2em; /* Further reduce main title size */
+
     letter-spacing: -1px;
+
   }
+
+
 
   h2, #timeline h2 {
-    font-size: 1.8em; /* Further reduce section title size */
+
+    font-size: 1.6em; /* Further reduce section title size */
+
   }
+
+
+
+  #radio h2 {
+
+    font-size: 1.6em;
+
+  }
+
+
 
   .artiste-info h3 {
-    font-size: 2.2rem;
+
+    font-size: 2rem;
+
   }
+
+
 
   #playRadio {
+
     width: 60px;
+
     height: 60px;
+
     font-size: 24px;
+
   }
+
+
 
   .btn {
+
     padding: 10px 18px;
+
     font-size: 12px;
+
   }
+
+
 
   .burger {
+
     top: 15px;
+
     right: 15px;
+
     width: 50px;
+
     height: 50px;
+
   }
 
+
+
   .rc-content {
+
     padding: 15px;
+
   }
+
+  
+
+  /* --- Timeline Fixes for small screens --- */
+
+  .timeline-item {
+
+    width: 80vw; /* One item takes most of the screen */
+
+    margin: 0 10px;
+
+  }
+
+  .timeline-content {
+
+      padding: 15px;
+
+  }
+
+  .timeline-item h3 {
+
+      font-size: 1em;
+
+  }
+
+  .timeline-item p {
+
+      font-size: 0.8em;
+
+  }
+
+  /* --- End Timeline Fixes --- */
+
 }
+
+

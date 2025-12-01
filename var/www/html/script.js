@@ -1783,6 +1783,39 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
+  // --- Scroll & Layout Recalculation on Resize ---
+  let resizeTimer;
+
+  function recalculateLayout() {
+    // Find the section that is currently most visible
+    let closestSectionIndex = 0;
+    let minDistance = Infinity;
+    
+    sections.forEach((section, index) => {
+      const rect = section.getBoundingClientRect();
+      // Use the distance from the top of the viewport
+      const distance = Math.abs(rect.top);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestSectionIndex = index;
+      }
+    });
+
+    // Snap to the top of that section without smooth scrolling
+    // to instantly correct the position.
+    if (mainContainer) {
+        mainContainer.scrollTop = sections[closestSectionIndex].offsetTop;
+    }
+    // Update the global index
+    currentSectionIndex = closestSectionIndex;
+  }
+
+  window.addEventListener('resize', () => {
+    // Debounce resize event
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(recalculateLayout, 250); // Recalculate 250ms after last resize
+  });
+
   // Global Wheel Handler
   window.addEventListener('wheel', (e) => {
     e.preventDefault();
