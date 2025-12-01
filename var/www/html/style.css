@@ -398,6 +398,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   position: fixed;
   bottom: 20px;
   right: 20px;
+  bottom: 50px; /* Slightly higher */
   z-index: 1000;
   display: flex;
   align-items: stretch;
@@ -413,7 +414,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   
   /* Adaptive Width */
   width: auto;
-  min-width: 300px;
+  min-width: 350px; /* Increased from 300px */
   max-width: 90vw;
   
   overflow: hidden;
@@ -427,14 +428,14 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 }
 
 .rc-container.docked {
-  /* Ensure only the 30px handle is visible */
-  transform: translateX(calc(100% - 30px)) !important; 
+  /* Ensure only the 40px handle is visible */
+  transform: translateX(calc(100% - 40px)) !important; 
   background: rgba(20, 20, 20, 0.8); /* Darker when docked for visibility */
 }
 
 /* Handle / Toggle */
 .rc-handle {
-  width: 30px;
+  width: 40px; /* Increased from 30px */
   flex-shrink: 0; /* Prevent shrinking */
   display: flex;
   align-items: center;
@@ -450,7 +451,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 }
 
 .rc-toggle-btn {
-  font-size: 12px;
+  font-size: 14px; /* Increased from 12px */
   transition: transform 0.5s ease;
   transform: rotate(180deg); /* Default: Point Right (using chevron-left) */
 }
@@ -462,10 +463,10 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 /* Content */
 .rc-content {
   flex: 1;
-  padding: 15px;
+  padding: 20px; /* Increased from 15px */
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px; /* Increased gap */
   cursor: grab; /* Draggable area */
   min-width: 0; /* Allow flex items to shrink */
 }
@@ -478,15 +479,15 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 .rc-top-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 15px; /* Increased gap */
 }
 
 .rc-btn-play {
   background: none;
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
-  width: 36px;
-  height: 36px;
+  width: 46px; /* Increased from 36px */
+  height: 46px; /* Increased from 36px */
   color: #fff;
   display: flex;
   align-items: center;
@@ -494,6 +495,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   cursor: pointer;
   transition: all 0.2s;
   flex-shrink: 0;
+  font-size: 18px; /* Larger icon */
 }
 
 .rc-btn-play:hover {
@@ -505,8 +507,8 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 /* RC Circular Volume */
 .rc-volume-container {
   position: relative;
-  width: 32px;
-  height: 32px;
+  width: 46px; /* Increased from 32px to match play button */
+  height: 46px; /* Increased from 32px */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -515,8 +517,10 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 }
 
 .rc-volume-ring {
-  transform: rotate(-90deg); /* Start from top? No, SVG has rotate(135) */
+  transform: rotate(0deg); /* Rotated 90deg right from -90deg */
   pointer-events: none;
+  width: 100%;
+  height: 100%;
 }
 
 .rc-ring-bg {
@@ -533,7 +537,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 10px;
+  font-size: 14px; /* Increased from 10px */
   color: #fff;
   pointer-events: none;
 }
@@ -580,7 +584,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 }
 
 #rcTitle {
-  font-size: 14px;
+  font-size: 16px; /* Increased from 14px */
   font-weight: 700;
   margin: 0;
   white-space: nowrap;
@@ -590,7 +594,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 }
 
 #rcArtist {
-  font-size: 11px;
+  font-size: 13px; /* Increased from 11px */
   font-weight: 400;
   margin: 0;
   color: rgba(255, 255, 255, 0.6);
