@@ -1729,6 +1729,9 @@ p { max-width: 800px; text-align: center; color: #ccc; }
 }
 
 @media (min-width: 1920px) {
+  #timeline h2 {
+    font-size: 3.5em; /* Reduce timeline title size */
+  }
   .timeline-item {
     width: 220px; /* Reduced from 240px */
   }
@@ -1740,6 +1743,11 @@ p { max-width: 800px; text-align: center; color: #ccc; }
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+  .timeline-item h3.artist-title {
+    white-space: normal; /* Allow artist name to wrap if needed, but it should be short enough */
+    overflow: visible;
+    text-overflow: clip;
   }
   .timeline-item p {
     font-size: 0.85em; /* Reduce paragraph font size */
