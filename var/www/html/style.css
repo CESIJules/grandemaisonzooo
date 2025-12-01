@@ -440,22 +440,23 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  background: rgba(255, 255, 255, 0.05);
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  border: none;
   transition: background 0.3s;
 }
 
 .rc-handle:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .rc-toggle-btn {
   font-size: 12px;
   transition: transform 0.5s ease;
+  transform: rotate(180deg); /* Default: Point Right (using chevron-left) */
 }
 
 .rc-container.docked .rc-toggle-btn {
-  transform: rotate(180deg);
+  transform: rotate(0deg); /* Docked: Point Left */
 }
 
 /* Content */
