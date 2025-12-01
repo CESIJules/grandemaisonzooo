@@ -989,14 +989,22 @@ document.addEventListener('DOMContentLoaded', () => {
   // Docking Logic
   if (rcHandle) {
       rcHandle.addEventListener('click', () => {
-          rcContainer.classList.toggle('docked');
-          // Reset position if docking?
-          if (rcContainer.classList.contains('docked')) {
-             rcContainer.style.transform = ''; // Let CSS handle the translate
-             rcContainer.style.left = '';
-             rcContainer.style.top = '';
-             rcContainer.style.bottom = '20px';
+          const isDocked = rcContainer.classList.contains('docked');
+          
+          if (!isDocked) {
+             // Docking: Freeze vertical position, snap to right
+             const rect = rcContainer.getBoundingClientRect();
+             
+             rcContainer.style.top = `${rect.top}px`;
+             rcContainer.style.bottom = 'auto';
+             rcContainer.style.left = 'auto';
              rcContainer.style.right = '20px';
+             rcContainer.style.transform = ''; // Clear drag transform if any
+             
+             rcContainer.classList.add('docked');
+          } else {
+             // Undocking
+             rcContainer.classList.remove('docked');
           }
       });
   }
