@@ -90,7 +90,7 @@ body {
 #accueil h1 {
   position: relative;
   z-index: 2; /* Above overlay */
-  font-size: clamp(2.2em, 12vw, 5em);
+  font-size: clamp(1.5em, 10vw, 5em);
   letter-spacing: -2px;
   color: #fff;
   /* Base shadow, will be overridden by JS for reactivity */
@@ -1446,6 +1446,11 @@ p { max-width: 800px; text-align: center; color: #ccc; }
     justify-content: space-evenly; /* Better vertical distribution */
     gap: 0;
     padding-bottom: 120px; /* Add padding to avoid overlap with fixed currentSong */
+  }
+
+  .radio-header {
+    position: static;
+    flex-direction: column;
   }
 
   #currentSong {
