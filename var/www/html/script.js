@@ -1487,6 +1487,18 @@ document.addEventListener('DOMContentLoaded', () => {
   async function renderTimelinePosts(artist = 'Tous') {
     if (!timelineContainer) return;
 
+    let allArtists = [];
+    try {
+        const artistsResponse = await fetch('get_artists.php');
+        if (artistsResponse.ok) {
+            allArtists = await artistsResponse.json();
+            // Sort by length descending to match longer names first (e.g. "Artist Name" before "Artist")
+            allArtists.sort((a, b) => b.length - a.length);
+        }
+    } catch (e) {
+        console.error("Could not fetch artists for replacement", e);
+    }
+
     const fetchURL = `./get_posts.php?artist=${encodeURIComponent(artist)}`;
 
     try {
@@ -1516,12 +1528,27 @@ document.addEventListener('DOMContentLoaded', () => {
         contentDiv.classList.add('timeline-content');
         contentDiv.classList.add(index % 2 === 0 ? 'timeline-content-left' : 'timeline-content-right');
 
-        const titleElement = `<h3>${post.title}</h3>`;
+        let displayTitle = post.title;
+        let displaySubtitle = post.subtitle;
 
-        const subtitleElement = post.link && post.subtitle
-          ? `<h4><a href="${post.link}" target="_blank" rel="noopener noreferrer" class="timeline-subtitle-link">${post.subtitle}</a></h4>`
-          : post.subtitle
-            ? `<h4>${post.subtitle}</h4>`
+        if (allArtists.length > 0) {
+            for (const artistName of allArtists) {
+                const artistRegex = new RegExp(artistName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi');
+                if (displayTitle) {
+                    displayTitle = displayTitle.replace(artistRegex, artistName.toUpperCase());
+                }
+                if (displaySubtitle) {
+                    displaySubtitle = displaySubtitle.replace(artistRegex, artistName.toUpperCase());
+                }
+            }
+        }
+
+        const titleElement = `<h3>${displayTitle}</h3>`;
+
+        const subtitleElement = post.link && displaySubtitle
+          ? `<h4><a href="${post.link}" target="_blank" rel="noopener noreferrer" class="timeline-subtitle-link">${displaySubtitle}</a></h4>`
+          : displaySubtitle
+            ? `<h4>${displaySubtitle}</h4>`
             : '';
 
         const imageElement = post.image
@@ -1617,7 +1644,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const button = document.createElement('button');
         button.className = 'btn filter-btn';
         button.dataset.artist = artist;
-        button.textContent = artist.toUpperCase();
+        button.textContent = artist;
         timelineFilters.appendChild(button);
       });
 
