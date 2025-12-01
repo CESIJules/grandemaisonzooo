@@ -1493,7 +1493,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
     position: static;
     transform: none;
     margin-top: 10px;
-    display: none; /* Hide progress bar in this compact view */
+    display: none !important; /* Hide progress bar in this compact view */
   }
 
   .player {
