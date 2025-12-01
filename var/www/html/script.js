@@ -1920,53 +1920,100 @@ document.addEventListener('DOMContentLoaded', () => {
   }, { passive: false });
   
   // MINDSET Hover Effect (JS Animation)
-  const mindsetTitle = document.getElementById('mindsetTitle');
-  if (mindsetTitle) {
-    const originalText = "MINDSET";
-    const targetText = "MįNDSET";
-    // Reduced char set to avoid vertical layout shifts (font fallback issues)
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; 
-    let interval = null;
+  // Generic Glitch Function
+  function setupGlitchEffect(elementId, targetText, originalTextOverride = null) {
+      const element = document.getElementById(elementId);
+      if (!element) return;
 
-    mindsetTitle.addEventListener('mouseenter', () => {
-      let iteration = 0;
-      clearInterval(interval);
+      // Use provided original text or get from DOM (trimmed)
+      const originalText = originalTextOverride || element.textContent.trim();
+      // Ensure we start clean
+      element.textContent = originalText;
       
-      interval = setInterval(() => {
-        const currentText = mindsetTitle.textContent.split('');
-        // The 'I' is at index 1
-        if (currentText.length > 1) {
-            currentText[1] = chars[Math.floor(Math.random() * chars.length)];
-            mindsetTitle.textContent = currentText.join('');
-        }
-        
-        if (iteration > 5) { 
-          clearInterval(interval);
-          mindsetTitle.textContent = targetText;
-        }
-        iteration++;
-      }, 50);
-    });
+      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; 
+      let interval = null;
 
-    mindsetTitle.addEventListener('mouseleave', () => {
-       let iteration = 0;
-      clearInterval(interval);
+      // Identify indices that are different
+      const diffIndices = [];
+      const maxLength = Math.max(originalText.length, targetText.length);
       
-      interval = setInterval(() => {
-        const currentText = mindsetTitle.textContent.split('');
-        // The 'į' is at index 1
-        if (currentText.length > 1) {
-            currentText[1] = chars[Math.floor(Math.random() * chars.length)];
-            mindsetTitle.textContent = currentText.join('');
-        }
-        
-        if (iteration > 5) {
+      for (let i = 0; i < maxLength; i++) {
+          if (originalText[i] !== targetText[i]) {
+              diffIndices.push(i);
+          }
+      }
+
+      element.addEventListener('mouseenter', () => {
+          let iteration = 0;
           clearInterval(interval);
-          mindsetTitle.textContent = originalText;
-        }
-        iteration++;
-      }, 50);
-    });
+          
+          interval = setInterval(() => {
+              // Build the current string state
+              let currentString = "";
+              
+              // We want to transition from originalText to targetText
+              // But only glitch the changing characters
+              
+              // If lengths differ, we might need a different strategy.
+              // For now, let's assume we are morphing to targetText length.
+              
+              // Construct a temporary string based on target length
+              const tempArray = targetText.split('');
+              
+              // For each character in the target string
+              for(let i = 0; i < targetText.length; i++) {
+                  // If this index is one that changes
+                  if (diffIndices.includes(i)) {
+                      // Randomize it during animation
+                      tempArray[i] = chars[Math.floor(Math.random() * chars.length)];
+                  } else {
+                      // Keep it stable (from target, which matches original at this index)
+                      tempArray[i] = targetText[i];
+                  }
+              }
+              
+              element.textContent = tempArray.join('');
+              
+              // Stop after some iterations
+              if (iteration > 8) { 
+                  clearInterval(interval);
+                  element.textContent = targetText;
+              }
+              iteration++;
+          }, 40);
+      });
+
+      element.addEventListener('mouseleave', () => {
+          let iteration = 0;
+          clearInterval(interval);
+          
+          interval = setInterval(() => {
+              const tempArray = originalText.split('');
+              
+              // Revert logic
+              for(let i = 0; i < originalText.length; i++) {
+                  if (diffIndices.includes(i)) {
+                      tempArray[i] = chars[Math.floor(Math.random() * chars.length)];
+                  } else {
+                      tempArray[i] = originalText[i];
+                  }
+              }
+              
+              element.textContent = tempArray.join('');
+              
+              if (iteration > 8) {
+                  clearInterval(interval);
+                  element.textContent = originalText;
+              }
+              iteration++;
+          }, 40);
+      });
   }
+
+  // Apply effects
+  setupGlitchEffect('mindsetTitle', 'MįNDSET', 'MINDSET');
+  setupGlitchEffect('req1Title', 'REQU', 'REQ1');
+  setupGlitchEffect('nelsonTitle', 'NELS0N N0RTH', 'NELSON NORTH');
+  setupGlitchEffect('shorebreakTitle', 'S BREAK', 'SHOREBREAK');
 
 }); // End DOMContentLoaded
