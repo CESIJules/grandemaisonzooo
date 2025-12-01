@@ -1729,6 +1729,13 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   /* --- End Timeline Fixes --- */
 }
 
+
+@media (max-width: 768px) {
+  #currentSong {
+    pointer-events: none;
+  }
+}
+
 @media (width: 1920px) {
   #timeline h2 {
     font-size: 3.5em; /* Reduce timeline title size */
