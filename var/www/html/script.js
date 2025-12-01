@@ -820,12 +820,12 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', resize);
     resize();
 
-    let frameCount = 0;
+    // let frameCount = 0;
     function draw() {
       requestAnimationFrame(draw);
       
       // PERFORMANCE: Skip frames (30fps)
-      frameCount++;
+      // frameCount++;
       // if (frameCount % 2 !== 0) return;
 
       const time = Date.now() * 0.001;
