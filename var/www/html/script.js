@@ -435,50 +435,54 @@ document.addEventListener('DOMContentLoaded', () => {
                   if (diff < fov) {
                       // It is in FOV!
                       
-                      // Get frequency data using the point's assigned random frequency factor
+                      // Calculate "age" of the detection (0.0 to 1.0) inside the FOV
+                      const age = diff / fov;
+
+                      // Get frequency data for subtle pulsing (not visibility gating)
                       const freqIndex = Math.floor(p.freqFactor * bufferLength); 
                       const val = dataArray[freqIndex] || 0;
+                      const audioLevel = val / 255; // 0.0 to 1.0
                       
-                      let normalized = val / 255;
-                      let intensity = Math.pow(normalized, 0.3);
+                      // Position (Stable, no jitter)
+                      const x = cx + Math.cos(p.theta) * (p.r * maxRadius);
+                      const y = cy + Math.sin(p.theta) * (p.r * maxRadius);
                       
-                      if (intensity > 0.01) {
-                          const jitterX = (Math.random() - 0.5) * 1.5; 
-                          const jitterY = (Math.random() - 0.5) * 1.5;
-                          
-                          const x = cx + Math.cos(p.theta) * (p.r * maxRadius) + jitterX;
-                          const y = cy + Math.sin(p.theta) * (p.r * maxRadius) + jitterY;
-                          
-                          // Alpha fades out as it gets further from sweep line
-                          // Smoother fade for "stay longer"
-                          let fade = 1 - (diff / fov);
-                          fade = Math.pow(fade, 0.8); // Even slower fade (was 1.5)
-                          
-                          if (Math.random() < 0.1) fade *= 0.5;
-
-                          radarCtx.globalAlpha = intensity * fade * radarActiveIntensity;
-                          
-                          const glitchSize = Math.random() > 0.9 ? 1.5 : 1;
-                          const radius = p.size * (0.5 + intensity * 4.0) * glitchSize;
-
-                          // 1. Red Glow (Outer)
-                          radarCtx.shadowBlur = 30 + intensity * 60; 
-                          radarCtx.shadowColor = '#ff0000';
-                          radarCtx.fillStyle = '#ff0000';
-                          
-                          radarCtx.beginPath();
-                          radarCtx.arc(x, y, radius, 0, 2 * Math.PI);
-                          radarCtx.fill();
-
-                          // 2. White Hot Core (Inner)
-                          radarCtx.shadowBlur = 10; 
-                          radarCtx.shadowColor = '#ffffff';
-                          radarCtx.fillStyle = '#ffffff';
-                          
-                          radarCtx.beginPath();
-                          radarCtx.arc(x, y, radius * 0.4, 0, 2 * Math.PI);
-                          radarCtx.fill();
+                      // Color Transition: White -> Red
+                      // "Transition is quite short"
+                      const transitionPoint = 0.2; // First 20% of the trail is the transition
+                      let r, g, b;
+                      
+                      if (age < transitionPoint) {
+                          // Interpolate White (255,255,255) to Red (255,0,0)
+                          const t = age / transitionPoint; // 0.0 to 1.0
+                          r = 255;
+                          g = Math.floor(255 * (1 - t));
+                          b = Math.floor(255 * (1 - t));
+                      } else {
+                          // Full Red
+                          r = 255;
+                          g = 0;
+                          b = 0;
                       }
+
+                      // Alpha: Fade out at the very end of the trail
+                      let alpha = 1.0;
+                      if (age > 0.8) {
+                          alpha = 1.0 - ((age - 0.8) / 0.2);
+                      }
+                      
+                      // Size pulsing (Subtle)
+                      const size = p.size * (1 + audioLevel * 0.5);
+
+                      radarCtx.beginPath();
+                      radarCtx.arc(x, y, size, 0, 2 * Math.PI);
+                      radarCtx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                      
+                      // Glow
+                      radarCtx.shadowBlur = (age < transitionPoint) ? 15 : (5 + 10 * audioLevel);
+                      radarCtx.shadowColor = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                      
+                      radarCtx.fill();
                   }
               });
               radarCtx.globalAlpha = 1.0;
