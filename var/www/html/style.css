@@ -1152,25 +1152,16 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  /* Radar Sweep - White - Brighter & Wider */
-  background: conic-gradient(
-    from 0deg, 
-    transparent 0deg, 
-    transparent 300deg, 
-    rgba(255, 255, 255, 0.01) 320deg, 
-    rgba(255, 255, 255, 0.1) 340deg, 
-    rgba(255, 255, 255, 0.5) 360deg
-  );
+  /* CSS Sweep removed - Handled by JS for better sync */
+  background: transparent;
   opacity: 0;
-  transition: opacity 2s ease-in-out; /* Fluidifie lancement/arret */
   pointer-events: none;
   z-index: 0;
-  filter: blur(5px); /* Stylise le FOV (soft edges) */
 }
 
 #vinyl-disc.playing::after {
-  opacity: 1;
-  animation: radar-spin 15s linear infinite; /* Ralentis encore plus */
+  opacity: 0;
+  animation: none;
 }
 
 #vinyl-disc.playing {

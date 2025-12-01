@@ -247,15 +247,21 @@ document.addEventListener('DOMContentLoaded', () => {
     let waveTime = 0;
     let smoothedBarHeight = 0;
     let radarActiveIntensity = 0;
+    let currentRadarAngle = -Math.PI / 2; // Start at top
+    let lastFrameTime = Date.now();
     
     // Radar Points Initialization
     const radarPoints = [];
-    const numRadarPoints = 30;
+    const numRadarPoints = 50; // Increased for better coverage
     for (let i = 0; i < numRadarPoints; i++) {
         radarPoints.push({
-            r: Math.random(), // Normalized radius 0..1
-            theta: Math.random() * 2 * Math.PI, // Angle in radians
-            size: Math.random() * 2 + 1 // Base size
+            // Square root of random ensures uniform distribution over the area (avoids center clustering)
+            r: Math.sqrt(Math.random()), 
+            theta: Math.random() * 2 * Math.PI, 
+            size: Math.random() * 2 + 1,
+            // Assign a random frequency bin (0.0 to 0.8) to decouple position from frequency
+            // This ensures points light up randomly across the disc, not just in the center (bass)
+            freqFactor: Math.random() * 0.8 
         });
     }
     
@@ -277,6 +283,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function draw() {
       requestAnimationFrame(draw);
+      
+      const now = Date.now();
+      const deltaTime = (now - lastFrameTime) / 1000; // Seconds
+      lastFrameTime = now;
 
       analyser.getByteFrequencyData(dataArray);
 
@@ -352,18 +362,62 @@ document.addEventListener('DOMContentLoaded', () => {
           radarCtx.shadowBlur = 0; // Reset
 
           if (radarActiveIntensity > 0.01) {
-              // Calculate current radar angle based on time
-              // CSS animation is 15s linear infinite (Synced with CSS)
-              const elapsed = (Date.now() - radarStartTime) / 1000;
-              const cycle = 15.0; 
-              const progress = (elapsed % cycle) / cycle; // 0..1
-              const currentAngle = progress * 2 * Math.PI; // 0..2PI
+              // Update Angle only if playing
+              if (!audio.paused) {
+                  const cycleDuration = 12.0; // Faster (was 15s)
+                  const speed = (2 * Math.PI) / cycleDuration;
+                  currentRadarAngle += speed * deltaTime;
+                  // Keep angle normalized 0..2PI for easier math? No, let it grow, use modulo for display
+              }
+
+              // Normalize for calculations
+              const normalizedAngle = currentRadarAngle % (2 * Math.PI);
               
-              // Adjust to Canvas coordinates (0 is Right, Clockwise)
-              // If CSS starts at Top (0deg), then at t=0, angle is -PI/2 in Canvas.
-              const sweepAngle = currentAngle - Math.PI / 2; 
+              // Draw Sweep (JS Gradient)
+              // We want a trail BEHIND the current angle.
+              // Conic gradient starts at angle and goes clockwise.
+              // So we want the gradient to end at currentAngle.
+              // Gradient: Transparent -> White
               
-              const fov = Math.PI / 4; // Reduced FOV as requested
+              // Create gradient centered at cx, cy, starting at currentAngle - trailLength
+              const trailLength = Math.PI / 2; // Longer trail (90 degrees)
+              const startGrad = normalizedAngle - trailLength;
+              
+              // Note: createConicGradient startAngle is in radians.
+              // We want the "white" part at the END of the trail (at currentAngle).
+              // So gradient should go from transparent (at startGrad) to white (at currentAngle).
+              
+              try {
+                  const gradient = radarCtx.createConicGradient(startGrad, cx, cy);
+                  // Relative stops: 0 is startGrad, 1 is startGrad + 2PI (full circle)
+                  // We only want to fill a sector.
+                  // Actually, createConicGradient fills the whole circle. We need to mask it or set stops carefully.
+                  // Easier: Set stops for the trail section.
+                  // The trail is from 0 to trailLength relative to startGrad.
+                  // 0 -> Transparent
+                  // trailLength / (2PI) -> White
+                  
+                  const stopPos = trailLength / (2 * Math.PI);
+                  gradient.addColorStop(0, 'transparent');
+                  gradient.addColorStop(Math.max(0, stopPos - 0.1), 'rgba(255, 255, 255, 0.01)'); // Smooth start
+                  gradient.addColorStop(stopPos, 'rgba(255, 255, 255, 0.5)'); // Bright tip
+                  gradient.addColorStop(stopPos + 0.001, 'transparent'); // Hard cut after tip
+                  
+                  radarCtx.fillStyle = gradient;
+                  radarCtx.beginPath();
+                  radarCtx.arc(cx, cy, maxRadius, 0, 2 * Math.PI);
+                  radarCtx.fill();
+              } catch (e) {
+                  // Fallback if createConicGradient not supported (unlikely in modern browsers)
+              }
+
+              // Adjust to Canvas coordinates for dots
+              // currentRadarAngle is 0 at 3 o'clock (Canvas default) if we didn't offset.
+              // But we want to match the visual sweep.
+              // The sweep tip is at `normalizedAngle`.
+              const sweepAngle = normalizedAngle; 
+              
+              const fov = Math.PI / 2; // Match trail length for detection (Longer duration)
 
               // Electric Effect Setup - Red & Shiny
               radarCtx.shadowColor = '#ff0000'; 
@@ -381,22 +435,14 @@ document.addEventListener('DOMContentLoaded', () => {
                   if (diff < fov) {
                       // It is in FOV!
                       
-                      // Get frequency data
-                      // Map radius to frequency index
-                      // Inner = Low freq, Outer = High freq
-                      const freqIndex = Math.floor(p.r * (bufferLength * 0.5)); // Use half spectrum
+                      // Get frequency data using the point's assigned random frequency factor
+                      const freqIndex = Math.floor(p.freqFactor * bufferLength); 
                       const val = dataArray[freqIndex] || 0;
                       
-                      // Boost sensitivity for low volume/values
-                      // Normalize 0..1
                       let normalized = val / 255;
-                      // Power curve < 1 boosts low values (e.g. 0.1^0.5 = 0.31)
-                      // Made even more sensitive (0.4 -> 0.3)
                       let intensity = Math.pow(normalized, 0.3);
                       
-                      // Lower threshold for visibility
                       if (intensity > 0.01) {
-                          // Glitch / Twitch Effect - Reduced amplitude (Shortened)
                           const jitterX = (Math.random() - 0.5) * 1.5; 
                           const jitterY = (Math.random() - 0.5) * 1.5;
                           
@@ -406,19 +452,17 @@ document.addEventListener('DOMContentLoaded', () => {
                           // Alpha fades out as it gets further from sweep line
                           // Smoother fade for "stay longer"
                           let fade = 1 - (diff / fov);
-                          fade = Math.pow(fade, 1.5); // Less sharp falloff than before (was 4)
+                          fade = Math.pow(fade, 0.8); // Even slower fade (was 1.5)
                           
-                          // Random glitch flicker
                           if (Math.random() < 0.1) fade *= 0.5;
 
                           radarCtx.globalAlpha = intensity * fade * radarActiveIntensity;
                           
                           const glitchSize = Math.random() > 0.9 ? 1.5 : 1;
-                          // Reduced size multiplier (12.0 -> 4.0) as requested
                           const radius = p.size * (0.5 + intensity * 4.0) * glitchSize;
 
-                          // 1. Red Glow (Outer) - More diffuse
-                          radarCtx.shadowBlur = 30 + intensity * 60; // More diffuse glow
+                          // 1. Red Glow (Outer)
+                          radarCtx.shadowBlur = 30 + intensity * 60; 
                           radarCtx.shadowColor = '#ff0000';
                           radarCtx.fillStyle = '#ff0000';
                           
@@ -427,7 +471,7 @@ document.addEventListener('DOMContentLoaded', () => {
                           radarCtx.fill();
 
                           // 2. White Hot Core (Inner)
-                          radarCtx.shadowBlur = 10; // Slightly more diffuse inner glow
+                          radarCtx.shadowBlur = 10; 
                           radarCtx.shadowColor = '#ffffff';
                           radarCtx.fillStyle = '#ffffff';
                           
