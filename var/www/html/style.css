@@ -1194,7 +1194,8 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   margin: 0; 
   font-size: 4rem; /* Beaucoup plus gros pour l'impact */
   line-height: 0.9;
-  color: #f5f5f5; 
+  color: #f5f5f5;
+  white-space: nowrap; /* Prevent wrapping during glitch animation */
 }
 .artiste-info .localisation {
   font-family: 'Lexend', sans-serif;
