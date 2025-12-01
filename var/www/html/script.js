@@ -1619,4 +1619,53 @@ document.addEventListener('DOMContentLoaded', () => {
       }
   }, { passive: false });
   
+  // MINDSET Hover Effect (JS Animation)
+  const mindsetTitle = document.getElementById('mindsetTitle');
+  if (mindsetTitle) {
+    const originalText = "MINDSET";
+    const targetText = "MįNDSET";
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
+    let interval = null;
+
+    mindsetTitle.addEventListener('mouseenter', () => {
+      let iteration = 0;
+      clearInterval(interval);
+      
+      interval = setInterval(() => {
+        const currentText = mindsetTitle.textContent.split('');
+        // The 'I' is at index 1
+        if (currentText.length > 1) {
+            currentText[1] = chars[Math.floor(Math.random() * chars.length)];
+            mindsetTitle.textContent = currentText.join('');
+        }
+        
+        if (iteration > 5) { 
+          clearInterval(interval);
+          mindsetTitle.textContent = targetText;
+        }
+        iteration++;
+      }, 50);
+    });
+
+    mindsetTitle.addEventListener('mouseleave', () => {
+       let iteration = 0;
+      clearInterval(interval);
+      
+      interval = setInterval(() => {
+        const currentText = mindsetTitle.textContent.split('');
+        // The 'į' is at index 1
+        if (currentText.length > 1) {
+            currentText[1] = chars[Math.floor(Math.random() * chars.length)];
+            mindsetTitle.textContent = currentText.join('');
+        }
+        
+        if (iteration > 5) {
+          clearInterval(interval);
+          mindsetTitle.textContent = originalText;
+        }
+        iteration++;
+      }, 50);
+    });
+  }
+
 }); // End DOMContentLoaded
