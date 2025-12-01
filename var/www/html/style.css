@@ -1752,6 +1752,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    text-align: center;
   }
   .timeline-item h3.artist-title {
     white-space: normal; /* Allow artist name to wrap if needed, but it should be short enough */
