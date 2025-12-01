@@ -1292,7 +1292,6 @@ document.addEventListener('DOMContentLoaded', () => {
             setupVisualizer(); // Setup visualizer on first play
           }
           audio.src = playBtn.dataset.src;
-          audio.load();
           await audio.play();
           playBtn.innerHTML = '<i class="fas fa-pause"></i>';
           if (vinylDisc) {
