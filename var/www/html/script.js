@@ -1559,7 +1559,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        const titleElement = `<h3>${displayTitle}</h3>`;
+        // Check if the title is an artist name (case-insensitive comparison)
+        const isArtistTitle = allArtists.some(artist => artist.toLowerCase() === post.title.toLowerCase());
+
+        const titleElement = `<h3 class="${isArtistTitle ? 'artist-title' : ''}">${displayTitle}</h3>`;
 
         const subtitleElement = post.link && displaySubtitle
           ? `<h4><a href="${post.link}" target="_blank" rel="noopener noreferrer" class="timeline-subtitle-link">${displaySubtitle}</a></h4>`
