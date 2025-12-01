@@ -288,7 +288,7 @@ p { max-width: 800px; text-align: center; color: #ccc; }
   width: 100%;
   height: 100%;
   z-index: -1;
-  pointer-events: auto; /* Allow mouse interaction */
+  pointer-events: none; /* Allow mouse interaction */
   background-color: #111;
 }
 
