@@ -2079,8 +2079,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Apply effects
   setupGlitchEffect('mindsetTitle', 'MįNDSET', 'MINDSET');
-  setupGlitchEffect('req1Title', 'REQU', 'REQ1');
-  setupGlitchEffect('nelsonTitle', 'NELS0N N0RTH', 'NELSON NORTH');
-  setupGlitchEffect('shorebreakTitle', 'S BREAK', 'SHOREBREAK');
+  setupGlitchEffect('req1Title', 'REQŘ', 'REQ1');
+  setupGlitchEffect('nelsonTitle', 'NELSŚN NŚRTH', 'NELSON NORTH');
+  setupGlitchEffect('shorebreakTitle', 'ŪBREAK', 'SHOREBREAK');
 
 }); // End DOMContentLoaded
