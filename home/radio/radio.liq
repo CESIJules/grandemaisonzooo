@@ -9,8 +9,7 @@ def set_title_artist(m) =
     if m["filename"] == "" then
       "GRANDE MAISON RADIO"
     else
-      parts = string.split(separator="/", m["filename"])
-      list.nth(parts, list.length(parts) - 1)
+      file.basename(m["filename"])
     end
   [
     ("title",  title),
