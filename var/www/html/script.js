@@ -1124,26 +1124,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
           const centerY = py + charSize/2;
           
-          // --- 1. Gas/Cloud Calculation (Chaotic & Organic) ---
-          // Layer 1: Large diagonal waves (Base structure)
-          const n1 = Math.sin(x * 0.03 + y * 0.02 + time * 0.15);
-          // Layer 2: Smaller counter-interference (Break regularity)
-          const n2 = Math.sin(x * 0.07 - y * 0.05 - time * 0.1);
-          // Layer 3: Vertical drift (Mist feel)
-          const n3 = Math.sin(x * 0.02 + y * 0.08 + time * 0.05);
+          // --- 1. Gas/Cloud Calculation (Fluid & Melted) ---
+          // Coordinate distortion (Domain Warping) for fluid/smoke look
+          // This makes the grid feel like it's flowing liquid/gas rather than just overlapping waves
+          const xx = x * 0.02;
+          const yy = y * 0.02;
           
-          let noise = n1 + n2 * 0.5 + n3 * 0.3; // Range approx -1.8 to 1.8
+          // Warp the reading position with a large slow wave
+          const warp = Math.sin(xx * 1.5 + yy * 1.5 + time * 0.2) * 2.0;
           
-          // Normalize to 0..1
-          let gasIntensity = (noise + 1.8) / 3.6;
+          // Layer 1: Base Cloud (distorted by warp)
+          const n1 = Math.sin(xx * 2.5 + warp + time * 0.1);
+          // Layer 2: Detail/Texture (Counter-movement)
+          const n2 = Math.sin(yy * 3.5 - time * 0.15 + xx * 2);
+          // Layer 3: Slow breathing interference
+          const n3 = Math.sin(xx * 1.0 + yy * 1.0 + time * 0.05);
           
-          // "Grand dégradé" & "Fond bien les bords"
-          // Use a strong power curve (pow 4) to push low values to black smoothly
-          // This creates "islands" of light with very soft, long gradients into the darkness
-          gasIntensity = Math.pow(gasIntensity, 4);
+          let noise = n1 + n2 * 0.5 + n3 * 0.25; 
           
-          // Boost peaks slightly to ensure the center of islands is bright enough
-          gasIntensity *= 1.8;
+          // Normalize
+          let gasIntensity = (noise + 1.75) / 3.5;
+          
+          // "Estompe bien" / "Fondu"
+          // Use a slightly softer power curve (3 instead of 4) to extend the gradients
+          // This creates a longer "fade" from light to dark
+          gasIntensity = Math.pow(gasIntensity, 3); 
+          
+          // Boost peaks but avoid hard clipping for a smoother look
+          gasIntensity *= 1.6; 
           if (gasIntensity > 1) gasIntensity = 1;
 
           // --- 2. Mouse Calculation (Restored "Animation d'avant") ---
