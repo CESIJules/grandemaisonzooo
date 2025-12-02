@@ -618,6 +618,17 @@ body.menu-open {
 }
 
 /* Contact */
+#contact h2 {
+  font-size: 4.5em;
+  margin: 0;
+  position: relative;
+  line-height: 1;
+  z-index: 20;
+  mix-blend-mode: difference;
+  color: #ffffff;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+}
+
 .contact-form input,
 .contact-form textarea {
   font-family: 'Outfit', sans-serif;
@@ -1856,7 +1867,7 @@ body.menu-open {
   #accueil h1 {
     font-size: 6em;
   }
-  #radio h2, #timeline h2 {
+  #radio h2, #timeline h2, #contact h2 {
     font-size: 4em;
   }
   .artiste-info h3 {
@@ -1874,7 +1885,7 @@ body.menu-open {
     font-size: 5.2em;
   }
 
-  #radio h2, #timeline h2 {
+  #radio h2, #timeline h2, #contact h2 {
     font-size: 3.5em;
   }
 
@@ -1909,7 +1920,7 @@ body.menu-open {
     font-size: 2.5rem;
   }
 
-  #radio h2 {
+  #radio h2, #contact h2 {
     font-size: 2.2em;
   }
 
@@ -2145,7 +2156,7 @@ body.menu-open {
     font-size: 1.6em; /* Further reduce section title size */
   }
 
-  #radio h2 {
+  #radio h2, #contact h2 {
     font-size: 1.6em;
   }
 
