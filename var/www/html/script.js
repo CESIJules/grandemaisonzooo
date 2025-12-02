@@ -1130,20 +1130,20 @@ document.addEventListener('DOMContentLoaded', () => {
           const xx = x * 0.015; 
           const yy = y * 0.015;
           
-          // Warp 1: Large slow swirl (The "Wind")
-          const warp1 = Math.sin(xx * 1.2 + yy * 0.8 + time * 0.15);
-          const warp2 = Math.cos(xx * 0.9 - yy * 1.3 - time * 0.12);
+          // Warp 1: Large slow swirl (The "Wind") - SLOWED DOWN
+          const warp1 = Math.sin(xx * 1.2 + yy * 0.8 + time * 0.05);
+          const warp2 = Math.cos(xx * 0.9 - yy * 1.3 - time * 0.04);
           
           // Warp 2: Apply warp1/2 to coordinates for the next layer (The "Turbulence")
           const wx = xx + warp1 * 1.5;
           const wy = yy + warp2 * 1.5;
           
-          // Layer 1: Distorted base
-          const n1 = Math.sin(wx * 2.0 + time * 0.1);
-          // Layer 2: Cross-interference with different rotation
-          const n2 = Math.cos(wy * 2.5 - time * 0.2 + wx);
-          // Layer 3: High frequency detail to break smoothness
-          const n3 = Math.sin(wx * 4.0 + wy * 3.0 + time * 0.3);
+          // Layer 1: Distorted base - SLOWED DOWN
+          const n1 = Math.sin(wx * 2.0 + time * 0.03);
+          // Layer 2: Cross-interference with different rotation - SLOWED DOWN
+          const n2 = Math.cos(wy * 2.5 - time * 0.06 + wx);
+          // Layer 3: High frequency detail to break smoothness - SLOWED DOWN
+          const n3 = Math.sin(wx * 4.0 + wy * 3.0 + time * 0.1);
           
           // Combine with non-linear mixing
           let noise = n1 + n2 * 0.6 + n3 * 0.3; 
@@ -1151,13 +1151,13 @@ document.addEventListener('DOMContentLoaded', () => {
           // Normalize (Range is approx -1.9 to 1.9)
           let gasIntensity = (noise + 1.9) / 3.8;
           
-          // "Créer plus d'espace" & "Trop blanc"
-          // Use a much higher power curve (5) to compress the mid-tones into darkness.
-          // This creates smaller, more isolated islands of light with very smooth falloff.
-          gasIntensity = Math.pow(gasIntensity, 5); 
+          // "Plus de noir" -> Increase power curve significantly (5 -> 8)
+          // This compresses almost everything into black, leaving only the peaks
+          gasIntensity = Math.pow(gasIntensity, 8); 
           
           // Boost to make sure the core of the islands reaches white
-          gasIntensity *= 3.0;
+          // Need higher boost since we crushed the values more
+          gasIntensity *= 5.0;
           if (gasIntensity > 1) gasIntensity = 1;
 
           // --- 2. Mouse Calculation (Restored "Animation d'avant") ---
