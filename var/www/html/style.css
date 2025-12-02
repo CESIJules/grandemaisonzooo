@@ -1732,9 +1732,13 @@ body.menu-open {
 }
 
 #vinyl-disc-container.playing::before {
+  content: none;
+}
+
+#vinyl-disc.playing::before {
   content: '';
   position: absolute;
-  top: -5px; left: -5px; right: -5px; bottom: -5px;
+  top: -15px; left: -15px; right: -15px; bottom: -15px;
   border-radius: 50%;
   background: conic-gradient(
     from 0deg,
@@ -1745,8 +1749,8 @@ body.menu-open {
   );
   z-index: -2;
   filter: blur(15px);
-  -webkit-mask: radial-gradient(transparent 65%, black 66%);
-  mask: radial-gradient(transparent 65%, black 66%);
+  -webkit-mask: radial-gradient(transparent 88%, black 95%);
+  mask: radial-gradient(transparent 88%, black 95%);
   animation: glow-turn 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
@@ -1785,7 +1789,7 @@ body.menu-open {
     0 0 5px rgba(0, 255, 104, 0.05);
     
   transition: transform 0.1s ease, box-shadow 0.3s ease; /* Faster transform for audio reactivity */
-  overflow: hidden;
+  /* overflow: hidden; Removed to allow outer glow */
 }
 
 #vinyl-disc::after {
