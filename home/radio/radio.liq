@@ -22,7 +22,8 @@ end
 radio = map_metadata(set_title_artist, radio)
 
 # Securite : silence si playlist vide
-radio = fallback(track_sensitive=false, [radio, blank()])=
+radio = fallback(track_sensitive=false, [radio, blank()])
+radio = compress(threshold=-18.,ratio=3.,attack=0.2,release=1.,radio)
 
 # Diffusion vers Icecast
 output.icecast(
