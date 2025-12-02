@@ -1,0 +1,76 @@
+/* Video Landing Overlay */
+.video-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.video-overlay.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.video-overlay video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Animations pour le burger et le titre */
+.burger {
+  transition: opacity 0.6s ease;
+}
+
+#titleAccueil {
+  transition: opacity 0.8s ease;
+}
+
+/* Background Video for Accueil Section */
+.background-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  opacity: 1;
+  mix-blend-mode: screen;
+}
+
+#accueil {
+  position: relative;
+}
+
+#accueil::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #111;
+  opacity: 0;
+  z-index: -1;
+}
+
+#accueil h1 {
+  position: relative;
+  z-index: 2; /* Above overlay */
+  font-size: clamp(1.5em, 10vw, 5em);
+  letter-spacing: -2px;
+  color: #fff;
+  /* Base shadow, will be overridden by JS for reactivity */
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.4), 0 20px 50px rgba(0, 0, 0, 0.9);
+  transition: text-shadow 0.1s ease-out, opacity 0.8s ease, letter-spacing 0.8s ease;
+  white-space: nowrap;
+}

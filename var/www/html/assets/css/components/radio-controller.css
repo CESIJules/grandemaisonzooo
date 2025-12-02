@@ -1,0 +1,294 @@
+/* Radio Controller (RC) */
+.rc-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  bottom: 50px; /* Slightly higher */
+  z-index: 1000;
+  display: flex;
+  align-items: stretch;
+  /* Timeline Style Transparency */
+  
+  background-color: rgba(10, 10, 10, 0.5); /* Darker when docked for visibility */
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+  
+  border-radius: 16px;
+  transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.3s ease;
+  
+  /* Adaptive Width */
+  width: auto;
+  min-width: 350px; /* Increased from 300px */
+  max-width: 90vw;
+  
+  overflow: hidden;
+  color: #fff;
+}
+
+.rc-container.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(20px) scale(0.95);
+}
+
+.rc-container.docked {
+  /* Ensure only the 40px handle is visible */
+  transform: translateX(calc(100% - 20px)) !important; 
+  
+}
+
+/* Handle / Toggle */
+.rc-handle {
+  width: 40px; /* Increased from 30px */
+  flex-shrink: 0; /* Prevent shrinking */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  transition: background 0.3s;
+}
+
+.rc-handle:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.rc-toggle-btn {
+  font-size: 14px; /* Increased from 12px */
+  transition: transform 0.5s ease;
+  transform: rotate(180deg); /* Default: Point Right (using chevron-left) */
+}
+
+.rc-container.docked .rc-toggle-btn {
+  transform: rotate(0deg); /* Docked: Point Left */
+}
+
+/* Content */
+.rc-content {
+  flex: 1;
+  padding: 20px; /* Increased from 15px */
+  display: flex;
+  flex-direction: column;
+  gap: 12px; /* Increased gap */
+  cursor: grab; /* Draggable area */
+  min-width: 0; /* Allow flex items to shrink */
+}
+
+.rc-content:active {
+  cursor: grabbing;
+}
+
+/* Top Row: Play, Volume, Meta */
+.rc-top-row {
+  display: flex;
+  align-items: center;
+  gap: 15px; /* Increased gap */
+}
+
+.rc-btn-play {
+  background: none;
+  border: none;
+  border-radius: 50%;
+  width: 46px; /* Increased from 36px */
+  height: 46px; /* Increased from 36px */
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  font-size: 18px; /* Larger icon */
+}
+
+.rc-btn-play:hover {
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.9), 0 0 15px rgba(255, 255, 255, 0.15);
+  background-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #fff;
+}
+
+.rc-btn-pip {
+  background: none;
+  border: none;
+  border-radius: 50%;
+  width: 46px; /* Same as play button */
+  height: 46px; /* Same as play button */
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  font-size: 18px; /* Same icon size */
+}
+
+.rc-btn-pip:hover {
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.9), 0 0 15px rgba(255, 255, 255, 0.15);
+  background-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #fff;
+}
+
+.btn-pip-main {
+  position: relative;
+  width: 60px; /* Same as volume container */
+  height: 60px; /* Same as volume container */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  
+  /* Glassmorphism Style (Unified) */
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+  border-radius: 50%;
+
+  /* Animation */
+  transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  z-index: 100;
+  color: #fff;
+  font-size: 18px;
+}
+
+.btn-pip-main:hover {
+  transform: scale(1.05) translateY(-3px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.9), 0 0 15px rgba(255, 255, 255, 0.15);
+  background-color: rgba(35, 35, 35, 0.8);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #fff;
+}
+
+/* RC Circular Volume */
+.rc-volume-container {
+  position: relative;
+  width: 46px; /* Increased from 32px to match play button */
+  height: 46px; /* Increased from 32px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.rc-volume-ring {
+  transform: rotate(0deg); /* Rotated 90deg right from -90deg */
+  pointer-events: none;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.rc-volume-container:hover .rc-volume-ring,
+.rc-volume-container.dragging .rc-volume-ring {
+  opacity: 1;
+}
+
+.rc-ring-bg {
+  stroke: rgba(255, 255, 255, 0.2);
+}
+
+.rc-ring-progress {
+  stroke: #fff;
+  /* transition: stroke-dashoffset 0.1s linear; Removed for instant response */
+}
+
+.rc-volume-icon-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 14px; /* Increased from 10px */
+  color: #fff;
+  pointer-events: none;
+}
+
+.rc-volume-container:hover .rc-volume-icon-center {
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.rc-meta {
+  flex: 1;
+  overflow: hidden;
+  text-align: right;
+  min-width: 0; /* Allow text truncation */
+}
+
+.rc-volume-slider-wrapper {
+  width: 60px;
+  display: flex;
+  align-items: center;
+}
+
+#rcVolumeSlider {
+  width: 100%;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  outline: none;
+}
+
+#rcVolumeSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.rc-meta h3 {
+  font-family: 'SyneGMZBold', sans-serif;
+  font-size: 14px; /* Increased from 13px */
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#rcTitle {
+  display: block;
+}
+
+#rcArtist {
+  display: block;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px; /* Increased from 11px */
+  color: #aaa;
+  margin-top: 2px;
+}
+
+/* Bottom Row: Progress */
+.rc-bottom-row {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+
+.rc-progress-track {
+  width: 100%;
+  height: 100%;
+}
+
+.rc-progress-fill {
+  height: 100%;
+  background: #fff;
+  width: 0%;
+  transition: width 0.5s linear;
+}

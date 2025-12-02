@@ -1,0 +1,90 @@
+/* Section titre Artistes réduite */
+#artistes {
+  padding-top: 100px;
+  justify-content: flex-start;
+  gap: 30px;
+}
+#artistes h2 {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+}
+
+/* Navigation boutons sous le titre Artistes */
+.artistes-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  max-width: 900px;
+}
+
+.artistes-nav .btn {
+  font-size: 13px;
+}
+
+/* Chaque artiste = section plein écran intégrée au one-scroll */
+.artiste {
+  display: flex;
+  flex-direction: row; /* Side by side */
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Colonne gauche: infos */
+.artiste-info {
+  flex: 1;
+  padding: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.artiste-info h3 {
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+.artiste-info .localisation {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.2rem;
+  color: #aaa;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Localisation alignée */
+.artiste-info .localisation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.1rem;
+  color: #aaa;
+}
+
+.artiste-actions { display: flex; flex-wrap: wrap; gap: 12px; padding-left: 4px;}
+.artiste-socials { display: flex; gap: 14px; margin-top: 12px; padding-left: 5px;}
+.artiste-socials a { color: #eee; font-size: 24px; transition: color 0.3s; }
+.artiste-socials a:hover { color: #ff4081; }
+
+/* Colonne droite: image */
+.artiste {
+  position: relative;
+}
+
+.artiste-image {
+  flex: 1;
+  height: 100%;
+  position: relative;
+}
+
+.artiste-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}

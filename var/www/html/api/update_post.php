@@ -57,7 +57,7 @@ $posts[$post_index]['link'] = $_POST['link'] ?? $posts[$post_index]['link'];
 
 // Handle image upload
 if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-    $upload_dir = 'uploads/';
+    $upload_dir = '../uploads/';
     if (!is_dir($upload_dir)) {
         mkdir($upload_dir, 0777, true);
     }
@@ -76,7 +76,7 @@ if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
     if (move_uploaded_file($_FILES['image']['tmp_name'], $target_file)) {
         // If there was an old image, you might want to delete it here
         // For simplicity, we are not deleting the old one in this script.
-        $posts[$post_index]['image'] = $target_file;
+        $posts[$post_index]['image'] = 'uploads/' . $new_image_name;
     } else {
         send_json_error('Erreur lors du téléchargement de l\'image.');
     }

@@ -1,0 +1,9 @@
+h1, h2, h3, h4, h5, h6 { 
+  font-family: 'SyneGMZExtraBold', sans-serif;
+  font-weight: 800; 
+  margin: 0 0 12px; 
+  color: #f5f5f5; 
+  letter-spacing: -1px;
+}
+
+p { max-width: 800px; text-align: center; color: #ccc; }

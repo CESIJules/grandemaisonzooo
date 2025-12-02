@@ -1,0 +1,58 @@
+/* One-scroll fluide global */
+main {
+  height: 100vh; /* Fallback */
+  height: 100dvh; /* Dynamic viewport height */
+  overflow: hidden; /* Full JS control */
+  /* scroll-snap-type: y mandatory;  Désactivé pour JS custom */
+  scroll-behavior: auto; /* Handled by JS */
+  scroll-padding-top: 0;
+}
+main::-webkit-scrollbar { display: none; }
+main { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Sections plein écran */
+.screen {
+  min-height: 100vh;
+  padding: 80px 24px 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  /* scroll-snap-align: start; Désactivé */
+}
+
+/* Scroll Arrow */
+.scroll-arrow {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 24px;
+  cursor: pointer;
+  animation: bounce 2s infinite;
+  transition: opacity 0.3s ease, color 0.3s ease;
+}
+
+.scroll-arrow:hover {
+  color: #fff;
+}
+
+.scroll-arrow.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateX(-50%) translateY(0);
+  }
+  40% {
+    transform: translateX(-50%) translateY(-10px);
+  }
+  60% {
+    transform: translateX(-50%) translateY(-5px);
+  }
+}

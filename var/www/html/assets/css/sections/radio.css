@@ -1,0 +1,246 @@
+/* ASCII Background Canvas */
+#asciiBg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none; /* Allow mouse interaction */
+  background-color: #111;
+}
+
+/* Radio Section */
+#radio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+#noiseCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4; /* Opacity handled in JS mostly, but this is a global multiplier */
+}
+
+#radio.playing .film-grain::before {
+  animation-play-state: running;
+}
+
+@keyframes grain {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-5%, -10%); }
+  20% { transform: translate(-15%, 5%); }
+  30% { transform: translate(7%, -25%); }
+  40% { transform: translate(-5%, 25%); }
+  50% { transform: translate(-15%, 10%); }
+  60% { transform: translate(15%, 0%); }
+  70% { transform: translate(0%, 15%); }
+  80% { transform: translate(3%, 35%); }
+  90% { transform: translate(-10%, 10%); }
+}
+
+.radio-header {
+  position: absolute;
+  top: 30px;
+  left: 30px;
+  width: calc(100% - 60px);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+/* Circular Volume Control */
+.volume-container {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  
+  /* Glassmorphism Style (Unified) */
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+  border-radius: 50%;
+
+  /* Animation */
+  transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  z-index: 100;
+}
+
+.volume-container:hover {
+  transform: scale(1.05) translateY(-3px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.9), 0 0 15px rgba(255, 255, 255, 0.15);
+  background-color: rgba(35, 35, 35, 0.8);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.volume-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60px;
+  height: 60px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none; /* Clicks pass through to container */
+}
+
+.volume-container:hover .volume-ring,
+.volume-container.dragging .volume-ring {
+  opacity: 1;
+}
+
+.volume-icon-center {
+  font-size: 20px;
+  color: #fff;
+  z-index: 2;
+  pointer-events: none;
+  transition: transform 0.2s ease;
+}
+
+.volume-container:hover .volume-icon-center {
+    transform: scale(1.1);
+}
+
+/* Radar Disc Styles */
+#vinyl-disc-container {
+  position: relative;
+  width: 40vw;
+  height: 40vw;
+  max-width: 500px;
+  max-height: 500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+#vinyl-disc {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #111 10%, #000 100%);
+  position: relative;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+#vinyl-disc::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: repeating-radial-gradient(
+    #222 0, 
+    #222 2px, 
+    #111 3px, 
+    #111 4px
+  );
+  opacity: 0.6;
+  pointer-events: none;
+  animation: spin 5s linear infinite;
+  animation-play-state: paused;
+}
+
+#vinyl-disc.playing::after {
+  animation-play-state: running;
+}
+
+#vinyl-disc.playing {
+  box-shadow: 0 0 60px rgba(255, 255, 255, 0.1);
+}
+
+@keyframes radar-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+#radarPoints {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+#playRadio {
+  position: absolute;
+  z-index: 20;
+  font-size: 4rem;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+#playRadio:hover {
+  transform: scale(1.1);
+  color: #fff;
+}
+
+/* Barre de progression de la radio */
+#progress-info {
+  position: absolute;
+  bottom: 120px; /* Above RC */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  z-index: 10;
+}
+
+#radio.playing #progress-info.visible {
+  opacity: 1;
+}
+
+#progress-container {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+#progress-bar {
+  width: 0%;
+  height: 100%;
+  background: #fff;
+  transition: width 0.5s linear;
+}
+
+#elapsed-time,
+#remaining-time {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  color: #aaa;
+}

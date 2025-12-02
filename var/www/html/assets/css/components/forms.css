@@ -1,0 +1,18 @@
+/* Contact */
+.contact-form input,
+.contact-form textarea {
+  font-family: 'Outfit', sans-serif;
+  width: 100%;
+  max-width: 700px;
+  margin: 8px auto;
+  padding: 12px;
+  border-radius: 4px;
+  border: none;
+  background: #1a1a1a;
+  color: #eee;
+}
+.contact-form textarea { 
+  min-height: 120px; 
+  resize: none;
+}
+.contact-form .btn { margin-top: 8px; }

@@ -1,0 +1,35 @@
+/* Boutons */
+.btn {
+  font-family: 'Lexend', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  
+  /* Glassmorphism Style (Matching Timeline Cards) */
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+  color: #eee;
+  
+  padding: 12px 24px;
+  border-radius: 20px;
+  font-size: 14px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  
+  /* Animation Easing */
+  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), 
+              box-shadow 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
+              background-color 0.3s ease,
+              border-color 0.3s ease,
+              color 0.3s ease;
+}
+
+.btn:hover { 
+  transform: scale(1.05) translateY(-3px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.9), 0 0 15px rgba(255, 255, 255, 0.15);
+  background-color: rgba(35, 35, 35, 0.8);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #fff;
+}

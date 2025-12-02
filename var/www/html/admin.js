@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!postArtistSelect) return;
 
     try {
-      const response = await fetch('get_artists.php');
+      const response = await fetch('api/get_artists.php');
       if (!response.ok) {
         throw new Error('Could not fetch artists');
       }
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Function to add a post
   async function addPost(formData) {
     try {
-      const response = await fetch('add_post.php', {
+      const response = await fetch('api/add_post.php', {
         method: 'POST',
         body: formData,
        });
@@ -132,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Function to update a post
   async function updatePost(formData) {
     try {
-      const response = await fetch('update_post.php', {
+      const response = await fetch('api/update_post.php', {
         method: 'POST',
         body: formData,
       });
@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const response = await fetch('delete_post.php', {
+      const response = await fetch('api/delete_post.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -206,7 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Function to render posts in the management area
   async function renderAdminPosts() {
     try {
-      const response = await fetch('get_posts.php', { cache: 'no-store' });
+      const response = await fetch('api/get_posts.php', { cache: 'no-store' });
       if (!response.ok) {
         throw new Error(`Erreur du serveur: ${response.statusText}`);
       }
@@ -339,7 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Fetch current song and music files in parallel
       const [currentSong, musicFilesResponse] = await Promise.all([
         fetchCurrentSong(),
-        fetch('get_music_files.php', { cache: 'no-store' })
+        fetch('api/get_music_files.php', { cache: 'no-store' })
       ]);
 
       if (!musicFilesResponse.ok) {
@@ -435,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       try {
-          const response = await fetch('rename_music.php', {
+          const response = await fetch('api/rename_music.php', {
               method: 'POST',
               headers: {
                   'Content-Type': 'application/json',
@@ -464,7 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const response = await fetch('delete_music.php', {
+      const response = await fetch('api/delete_music.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -565,7 +565,7 @@ document.addEventListener('DOMContentLoaded', () => {
       youtubeFormMessage.style.color = 'inherit';
 
       try {
-        const response = await fetch('download_youtube.php', {
+        const response = await fetch('api/download_youtube.php', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

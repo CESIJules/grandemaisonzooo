@@ -2,7 +2,7 @@
 header('Content-Type: application/json');
 
 $file_path = 'timeline.json';
-$upload_dir = 'uploads/';
+$upload_dir = '../uploads/';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -32,7 +32,7 @@ try {
         $destination = $upload_dir . $new_filename;
 
         if (move_uploaded_file($tmp_name, $destination)) {
-            $image_path = $destination;
+            $image_path = 'uploads/' . $new_filename;
         } else {
             throw new Exception('Impossible de déplacer le fichier téléchargé.');
         }

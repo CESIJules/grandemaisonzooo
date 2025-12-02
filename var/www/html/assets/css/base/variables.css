@@ -1,0 +1,35 @@
+/* Fonts */
+@font-face {
+  font-family: SyneGMZExtraBold;
+  src: url(../../font/Syne-ExtraBoldGMZV3.ttf) format('truetype');
+  font-weight: 800;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: SyneGMZBold;
+  src: url(../../font/Syne-BoldGMZV3.ttf) format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+/* Global Reset */
+* { box-sizing: border-box; }
+
+img, video, iframe {
+  max-width: 100%;
+  height: auto;
+}
+
+html, body { height: 100%; margin: 0; }
+
+body {
+  font-family: 'Space Grotesk', sans-serif;
+  background: #050505;
+  color: #eee;
+  overflow: hidden; /* le scroll se fait sur main */
+}
+
+a:-webkit-any-link {
+  text-decoration: none;
+}
