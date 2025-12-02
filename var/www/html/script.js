@@ -610,7 +610,7 @@ document.addEventListener('DOMContentLoaded', () => {
               // The sweep tip is at `normalizedAngle`.
               const sweepAngle = normalizedAngle; 
               
-              const fov = Math.PI / 2; // Match trail length for detection (Longer duration)
+              const fov = Math.PI; // Extended trail (180 degrees) for longer fade out
 
               // Electric Effect Setup - Red & Shiny
               radarCtx.shadowColor = '#ff0000'; 
@@ -662,8 +662,9 @@ document.addEventListener('DOMContentLoaded', () => {
                       // Alpha: Fade out logic (Controlled by variables)
                       let alpha = 1.0;
                       if (age > fadeOutStart) {
-                          const fadeDuration = 5.0 - fadeOutStart;
-                          alpha = 1.0 - ((age - fadeOutStart) / fadeDuration);
+                          // Ensure it reaches 0 exactly when age reaches 1.0 (end of FOV)
+                          const fadeDuration = 10.0 - fadeOutStart;
+                          alpha = Math.max(0, 1.0 - ((age - fadeOutStart) / fadeDuration));
                       }
                       
                       // Size pulsing (Subtle)
