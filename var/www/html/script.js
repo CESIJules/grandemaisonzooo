@@ -1145,12 +1145,13 @@ document.addEventListener('DOMContentLoaded', () => {
           // Normalize
           let gasIntensity = (noise + 1.75) / 3.5;
           
-          // "Trop abrupte" -> Remove hard subtraction. Use smooth curve on the full range.
-          // This ensures a continuous gradient from 0 (black) to 1 (white).
-          gasIntensity = Math.pow(gasIntensity, 3); 
+          // "Créer plus d'espace" & "Trop blanc"
+          // Use a much higher power curve (5) to compress the mid-tones into darkness.
+          // This creates smaller, more isolated islands of light with very smooth falloff.
+          gasIntensity = Math.pow(gasIntensity, 5); 
           
-          // Boost slightly to ensure peaks are bright
-          gasIntensity *= 2.0;
+          // Boost to make sure the core of the islands reaches white
+          gasIntensity *= 3.0;
           if (gasIntensity > 1) gasIntensity = 1;
 
           // --- 2. Mouse Calculation (Restored "Animation d'avant") ---
