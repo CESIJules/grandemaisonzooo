@@ -1619,12 +1619,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     pipVideo = document.createElement('video');
                     pipVideo.muted = true;
                     pipVideo.playsInline = true;
+                    // Force small dimensions for the video element itself
+                    pipVideo.width = 200;
+                    pipVideo.height = 200;
+                    
                     // Use radarCanvas stream if available
                     if (radarCanvas) {
-                        // Capture stream at 30fps
+                        // Capture stream at 20fps
                         const stream = radarCanvas.captureStream(20); 
                         pipVideo.srcObject = stream;
                     }
+                    
+                    // Sync PiP play/pause with audio
+                    pipVideo.addEventListener('play', () => {
+                        if (audio.paused) playBtn.click();
+                    });
+                    pipVideo.addEventListener('pause', () => {
+                        if (!audio.paused) playBtn.click();
+                    });
                 }
                 try {
                     // Must play before requesting PiP
