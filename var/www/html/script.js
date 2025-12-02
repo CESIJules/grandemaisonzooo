@@ -1186,10 +1186,10 @@ document.addEventListener('DOMContentLoaded', () => {
              
              ctx.font = `${charSize * scale}px 'Courier New', monospace`;
              
-             // RGB Shift (Light Chromatic Aberration - Red/Cyan style)
+             // RGB Shift (Broken Orange Aberration)
              ctx.shadowBlur = 0;
-             ctx.shadowColor = 'rgba(255, 0, 0, 0.4)'; // Red shadow
-             ctx.shadowOffsetX = 1.5; // Slight offset
+             ctx.shadowColor = 'rgba(204, 85, 0, 0.6)'; // Broken orange shadow
+             ctx.shadowOffsetX = 2;
              ctx.shadowOffsetY = 0;
              
              // --- Glitch & Words Logic (Mouse Only) ---
