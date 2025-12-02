@@ -2,14 +2,14 @@
 
 @font-face {
   font-family: SyneGMZExtraBold;
-  src: url(font/Syne-ExtraBoldGMZV2.ttf) format('truetype');
+  src: url(font/Syne-ExtraBoldGMZV3.ttf) format('truetype');
   font-weight: 800;
   font-style: normal;
 }
 
 @font-face {
   font-family: SyneGMZBold;
-  src: url(font/Syne-BoldGMZV2.ttf) format('truetype');
+  src: url(font/Syne-BoldGMZV3.ttf) format('truetype');
   font-weight: 700;
   font-style: normal;
 }
