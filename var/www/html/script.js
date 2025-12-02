@@ -1755,7 +1755,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Nouvelle fonction pour récupérer la durée et démarrer la progression
-  async function fetchAndSetProgress(rawTitle) {
+  async function fetchAndSetProgress(rawTitle, isInitialLoad = false) {
     if (progressInterval) {
       clearInterval(progressInterval);
       progressInterval = null;
@@ -1763,12 +1763,22 @@ document.addEventListener('DOMContentLoaded', () => {
     if (progressInfo) progressInfo.classList.remove('visible');
 
     try {
-      const response = await fetch(`./get_duration.php?file=${encodeURIComponent(rawTitle)}`);
+      const response = await fetch(`./get_duration.php?file=${encodeURIComponent(rawTitle)}&nocache=${new Date().getTime()}`);
       const data = await response.json();
 
       if (response.ok && data.duration && data.duration > 0) {
         trackDuration = data.duration;
-        trackStartTime = Date.now() / 1000; // Heure de début côté client
+        
+        // Lors du chargement de la page, on synchronise avec le temps écoulé du serveur
+        if (isInitialLoad && data.start_time && data.server_now) {
+          const elapsed = data.server_now - data.start_time;
+          const initialElapsed = Math.max(0, elapsed);
+          // On calcule un trackStartTime "fictif" dans le passé pour l'horloge du client
+          trackStartTime = (Date.now() / 1000) - initialElapsed;
+        } else {
+          // Comportement original pour les transitions de son : on démarre le compteur maintenant
+          trackStartTime = Date.now() / 1000;
+        }
 
         updateProgressBar(); // Premier appel
         progressInterval = setInterval(updateProgressBar, 250);
@@ -1818,7 +1828,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isFirstTitleLoad) {
             isFirstTitleLoad = false;
             updateTitleUI(title);
-            if (rawTitle) fetchAndSetProgress(rawTitle);
+            if (rawTitle) fetchAndSetProgress(rawTitle, true);
             return;
         }
 
@@ -1843,7 +1853,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         pendingTitleTimeout = setTimeout(() => {
             updateTitleUI(title);
-            if (rawTitle) fetchAndSetProgress(rawTitle); // Lancer la progression en même temps que le titre
+            if (rawTitle) fetchAndSetProgress(rawTitle, false); // Lancer la progression en même temps que le titre
             pendingTitle = null;
             pendingTitleTimeout = null;
         }, totalDelay);
