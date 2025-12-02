@@ -127,12 +127,11 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchAllSongs() {
     try {
       const response = await fetch('get_all_songs.php', { cache: 'no-store' });
-      if (!response.ok) {
-        throw new Error('Could not fetch all songs');
-      }
       const result = await response.json();
+      console.log('fetchAllSongs: Result from get_all_songs.php', result);
       if (result.status === 'success') {
         allAvailableSongs = result.files;
+        console.log('fetchAllSongs: allAvailableSongs populated', allAvailableSongs);
         renderAllSongs();
       } else {
         throw new Error(result.message || 'Error fetching all songs.');
@@ -482,6 +481,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentEditingPlaylist = null; // To hold the playlist object being edited
 
   function editPlaylist(playlist) {
+    console.log('editPlaylist called with playlist:', playlist);
     currentEditingPlaylist = { ...playlist }; // Create a copy to edit
     editingPlaylistNameSpan.textContent = currentEditingPlaylist.name;
     
@@ -494,6 +494,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderCurrentPlaylistSongs() {
+    console.log('renderCurrentPlaylistSongs: currentEditingPlaylist.songs', currentEditingPlaylist.songs);
     currentPlaylistSongsUl.innerHTML = '';
     if (currentEditingPlaylist && currentEditingPlaylist.songs.length > 0) {
       currentEditingPlaylist.songs.forEach((songPath, index) => {
@@ -518,6 +519,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderAllAvailableSongsForEdit(filter = '') {
+    console.log('renderAllAvailableSongsForEdit: allAvailableSongs', allAvailableSongs);
     allAvailableSongsForEditUl.innerHTML = '';
     const filteredSongs = allAvailableSongs.filter(songPath => 
       formatSongPathToTitle(songPath).toLowerCase().includes(filter.toLowerCase())
