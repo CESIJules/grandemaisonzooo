@@ -1126,9 +1126,9 @@ document.addEventListener('DOMContentLoaded', () => {
           
           // --- 1. Gas/Cloud Calculation (Deep Chaos & Turbulence) ---
           // Coordinate distortion (Double Domain Warping)
-          // We use a slightly larger scale (0.015) to make the patterns huge and abstract
-          const xx = x * 0.015; 
-          const yy = y * 0.015;
+          // Reverting scale to 0.025 for finer details (less "zoomed in")
+          const xx = x * 0.025; 
+          const yy = y * 0.025;
           
           // Warp 1: Large slow swirl (The "Wind") - SLOWED DOWN
           const warp1 = Math.sin(xx * 1.2 + yy * 0.8 + time * 0.05);
@@ -1151,12 +1151,23 @@ document.addEventListener('DOMContentLoaded', () => {
           // Normalize (Range is approx -1.9 to 1.9)
           let gasIntensity = (noise + 1.9) / 3.8;
           
-          // "Beau dégradé" & "Pas contrasté d'un coup"
-          // Reduced power from 8 to 6 for a smoother falloff
-          gasIntensity = Math.pow(gasIntensity, 6); 
+          // "Tu n'arrives pas à faire le dégradé... délimitation"
+          // Solution: Soft subtraction. Instead of hard clamping, we use a smoothstep-like approach.
+          // We want a lot of black, but a VERY smooth transition out of it.
           
-          // Reduced boost (2.0 -> 1.5) to prevent clipping and reveal internal details
-          gasIntensity *= 1.5;
+          // Shift down to create black space
+          gasIntensity -= 0.35; 
+          
+          if (gasIntensity < 0) {
+              gasIntensity = 0;
+          } else {
+              // Normalize remaining range (0..0.65 -> 0..1)
+              gasIntensity /= 0.65;
+              
+              // Use a gentle curve (2.5) to smooth the ramp-up from black
+              gasIntensity = Math.pow(gasIntensity, 2.5);
+          }
+          
           if (gasIntensity > 1) gasIntensity = 1;
 
           // --- 2. Mouse Calculation (Restored "Animation d'avant") ---
@@ -1188,16 +1199,18 @@ document.addEventListener('DOMContentLoaded', () => {
           // Gas is capped at ~50% brightness (Lowered further)
           const combinedIntensity = Math.max(mouseIntensity, gasIntensity * 0.5);
 
-          // Lower threshold significantly to avoid "popping" artifacts at the edges
-          if (combinedIntensity > 0.01) {
+          // "Délimitation" fix:
+          // 1. Lower threshold to almost zero
+          // 2. Start color from background level (approx 5-10) instead of 40
+          if (combinedIntensity > 0.001) {
              
              // Scale: Only mouse affects scale
              const scale = 1 + mouseIntensity * 0.2; 
              
-             // Color: Range 40 -> 255. 
-             // Starting at 40 (instead of 100) allows the characters to fade much deeper into the black
-             // before disappearing, solving the "abrupt edge" issue.
-             const val = Math.floor(40 + combinedIntensity * (255 - 40));
+             // Color: Range 10 -> 255.
+             // This ensures that when intensity is low, the character is barely visible against the dark background.
+             // No more "jump" from black to gray.
+             const val = Math.floor(10 + combinedIntensity * (255 - 10));
              const mainColor = `rgb(${val}, ${val}, ${val})`;
              
              ctx.font = `${charSize * scale}px 'Courier New', monospace`;
