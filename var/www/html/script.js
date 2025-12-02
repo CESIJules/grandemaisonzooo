@@ -1182,15 +1182,9 @@ document.addEventListener('DOMContentLoaded', () => {
              
              // Color: Based on combined intensity (White/Gray)
              const val = Math.floor(26 + combinedIntensity * (255 - 26));
-             ctx.fillStyle = `rgb(${val}, ${val}, ${val})`;
+             const mainColor = `rgb(${val}, ${val}, ${val})`;
              
              ctx.font = `${charSize * scale}px 'Courier New', monospace`;
-             
-             // RGB Shift (Broken Orange Aberration)
-             ctx.shadowBlur = 0;
-             ctx.shadowColor = 'rgba(204, 85, 0, 0.6)'; // Broken orange shadow
-             ctx.shadowOffsetX = 2;
-             ctx.shadowOffsetY = 0;
              
              // --- Glitch & Words Logic (Mouse Only) ---
              let displayChar = grid[x][y];
@@ -1236,11 +1230,16 @@ document.addEventListener('DOMContentLoaded', () => {
              }
              
              const offset = (charSize * scale - charSize) / 2;
+             
+             // 1. Draw Orange "Shadow" / Aberration manually behind
+             ctx.fillStyle = 'rgba(204, 85, 0, 0.6)';
+             ctx.fillText(displayChar, px - offset + 2, py - offset);
+
+             // 2. Draw Main Character on top
+             ctx.fillStyle = mainColor;
              ctx.fillText(displayChar, px - offset, py - offset);
              
              // Reset context
-             ctx.shadowBlur = 0;
-             ctx.shadowOffsetX = 0;
              ctx.font = `${charSize}px 'Courier New', monospace`;
 
           } else {
