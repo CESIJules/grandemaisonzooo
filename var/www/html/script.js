@@ -1151,13 +1151,12 @@ document.addEventListener('DOMContentLoaded', () => {
           // Normalize (Range is approx -1.9 to 1.9)
           let gasIntensity = (noise + 1.9) / 3.8;
           
-          // "Plus de noir" -> Increase power curve significantly (5 -> 8)
-          // This compresses almost everything into black, leaving only the peaks
-          gasIntensity = Math.pow(gasIntensity, 8); 
+          // "Beau dégradé" & "Pas contrasté d'un coup"
+          // Reduced power from 8 to 6 for a smoother falloff
+          gasIntensity = Math.pow(gasIntensity, 6); 
           
-          // Boost to make sure the core of the islands reaches white
-          // Need higher boost since we crushed the values more
-          gasIntensity *= 5.0;
+          // Reduced boost (2.0 -> 1.5) to prevent clipping and reveal internal details
+          gasIntensity *= 1.5;
           if (gasIntensity > 1) gasIntensity = 1;
 
           // --- 2. Mouse Calculation (Restored "Animation d'avant") ---
