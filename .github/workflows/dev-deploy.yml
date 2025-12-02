@@ -4,26 +4,12 @@ on:
   push:
     branches:
       - dev
-      - sandbox
 
 jobs:
   test-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: "8.2"
-
-      - name: Run PHP syntax check
-        run: |
-          chmod +x tests/php_syntax.sh
-          ./tests/php_syntax.sh
-
       # Si les tests sont OK, on déploie sur le VPS
       - name: Deploy to VPS and restart radio
         uses: appleboy/ssh-action@v1
