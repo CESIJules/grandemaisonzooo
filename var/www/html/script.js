@@ -254,8 +254,8 @@ document.addEventListener('DOMContentLoaded', () => {
     V4_PERCENT: 0.596,           // V4 original position (59.6% from left)
     V5_PERCENT: 0.788,           // V5 original position (78.8% from left)
     HORIZONTAL_OFFSET: 10,       // Spacing above/below hovered item
-    V4_OFFSET: 30,               // V4 offset from item left edge
-    V5_OFFSET: 50                // V5 offset from item right edge
+    V4_OFFSET: 20,               // V4 offset from text left edge
+    V5_OFFSET: 0                 // V5 offset (centered on number)
   };
 
   // Animate lines on menu item hover
@@ -266,6 +266,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const rect = item.getBoundingClientRect();
+    const link = item.querySelector('.menu-link');
+    const number = item.querySelector('.menu-number');
+    
+    const linkRect = link ? link.getBoundingClientRect() : rect;
+    const numberRect = number ? number.getBoundingClientRect() : rect;
+
     const viewportHeight = window.innerHeight;
     const viewportWidth = window.innerWidth;
     
@@ -291,19 +297,20 @@ document.addEventListener('DOMContentLoaded', () => {
       lineH2.classList.add('active');
     }
     
-    // Animate V4 towards the text column
+    // Animate V4 towards the text column (Left of text)
     if (lineV4) {
       const v4Original = viewportWidth * LINE_POSITIONS.V4_PERCENT;
-      const v4Target = rect.left - LINE_POSITIONS.V4_OFFSET;
+      const v4Target = linkRect.left - LINE_POSITIONS.V4_OFFSET;
       const v4Translation = v4Target - v4Original;
       lineV4.style.transform = `translateX(${v4Translation}px)`;
       lineV4.classList.add('active');
     }
     
-    // Animate V5 slightly more to the right (towards numbers)
+    // Animate V5 to the center of the number column
     if (lineV5) {
       const v5Original = viewportWidth * LINE_POSITIONS.V5_PERCENT;
-      const v5Target = rect.right + LINE_POSITIONS.V5_OFFSET;
+      // Center of the number element
+      const v5Target = numberRect.left + (numberRect.width / 2) + LINE_POSITIONS.V5_OFFSET;
       const v5Translation = v5Target - v5Original;
       lineV5.style.transform = `translateX(${v5Translation}px)`;
       lineV5.classList.add('active');
