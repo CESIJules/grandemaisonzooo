@@ -1,7 +1,7 @@
 <?php
 
 class PlaylistManager {
-    private $playlistFile = '/home/radio/playlists.json';
+    private $playlistFile = '/var/www/html/grandemaisonzooo/playlist.json';
     private $defaultContent = [
         "active_playlist" => null,
         "playlists" => []
