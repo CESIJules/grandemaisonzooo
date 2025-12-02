@@ -372,7 +372,6 @@ body.menu-open {
 
 .menu-item:hover .menu-number {
   color: rgba(255, 255, 255, 0.7);
-  transform: translateX(-5px);
 }
 
 /* Lines highlight on item hover - make active lines brighter */
