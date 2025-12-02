@@ -104,22 +104,49 @@
     </div>
 
     <!-- Menu overlay -->
-    <nav id="menu" class="menu hidden" aria-hidden="true">
-      <ul>
-        <li><a href="#accueil">Accueil</a></li>
-        <li><a href="#timeline">Timeline</a></li>
-        <li><a href="#radio">Radio</a></li>
-        <li><a href="#contact">Contact</a></li>
-        <li class="menu-group">
-          <span class="menu-group-title">Artistes</span>
-          <ul class="menu-group-list">
-            <li><a href="#nelsonnorth">Nelson North</a></li>
-            <li><a href="#req1">Req1</a></li>
-            <li><a href="#mindset">MINDSET</a></li>
-            <li><a href="#shorebreak">SHOREBREAK</a></li>
-          </ul>
-        </li>
-      </ul>
+    <nav id="menu" class="menu-overlay" aria-hidden="true">
+      <!-- Animated grid lines -->
+      <div class="menu-lines">
+        <div class="line-v line-v1"></div>
+        <div class="line-v line-v2"></div>
+        <div class="line-v line-v3"></div>
+        <div class="line-v line-v4"></div>
+        <div class="line-v line-v5"></div>
+        <div class="line-v line-v6"></div>
+        <div class="line-h line-h1"></div>
+        <div class="line-h line-h2"></div>
+      </div>
+      
+      <!-- Close button -->
+      <button class="menu-close" id="menuCloseBtn" aria-label="Fermer le menu">
+        <i class="fas fa-times"></i>
+      </button>
+      
+      <!-- Menu content -->
+      <div class="menu-content">
+        <ul class="menu-list">
+          <li class="menu-item" data-index="0">
+            <span class="menu-number">01</span>
+            <a href="#accueil" class="menu-link">ACCUEIL</a>
+          </li>
+          <li class="menu-item" data-index="1">
+            <span class="menu-number">02</span>
+            <a href="#nelsonnorth" class="menu-link">ARTISTE</a>
+          </li>
+          <li class="menu-item" data-index="2">
+            <span class="menu-number">03</span>
+            <a href="#timeline" class="menu-link">TIMELINE</a>
+          </li>
+          <li class="menu-item" data-index="3">
+            <span class="menu-number">04</span>
+            <a href="#radio" class="menu-link">RADIO</a>
+          </li>
+          <li class="menu-item" data-index="4">
+            <span class="menu-number">05</span>
+            <a href="#contact" class="menu-link">CONTACT</a>
+          </li>
+        </ul>
+      </div>
     </nav>
 
     <!-- Sections -->
