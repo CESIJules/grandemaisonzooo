@@ -27,10 +27,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const adminFormMessage = document.getElementById('adminFormMessage');
     const postsManagementContainer = document.getElementById('postsManagementContainer');
     const postArtistSelect = document.getElementById('postArtist');
+    const postArtistFilter = document.getElementById('postArtistFilter');
     const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
     // --- Music Section ---
     const youtubeDownloadForm = document.getElementById('youtubeDownloadForm');
+
     const youtubeUrlInput = document.getElementById('youtubeUrl');
     const youtubeFormMessage = document.getElementById('youtubeFormMessage');
     const musicManagementContainer = document.getElementById('musicManagementContainer');
@@ -86,13 +88,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    async function populateArtistFilterDropdown() {
+        if (!postArtistFilter) return;
+        try {
+            const response = await fetch('get_artists.php');
+            if (!response.ok) throw new Error('Could not fetch artists');
+            const artists = await response.json();
+            postArtistFilter.innerHTML = '<option value="all">Tous les artistes</option>';
+            artists.forEach(artist => {
+                const option = document.createElement('option');
+                option.value = artist;
+                option.textContent = artist;
+                postArtistFilter.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Failed to populate artist filter dropdown:', error);
+            postArtistFilter.innerHTML = '<option value="all">Erreur</option>';
+        }
+    }
+
     // POSTS (TIMELINE)
-    async function renderAdminPosts() {
+    async function renderAdminPosts(artistFilter = 'all') {
         try {
             const response = await fetch('get_posts.php', { cache: 'no-store' });
             if (!response.ok) throw new Error(`Erreur serveur: ${response.statusText}`);
-            const posts = await response.json();
+            let posts = await response.json();
             posts.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if (artistFilter !== 'all') {
+                posts = posts.filter(post => post.artist === artistFilter);
+            }
 
             if (posts.length === 0) {
                 postsManagementContainer.innerHTML = '<p>Aucun post à gérer.</p>';
@@ -520,6 +545,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    postArtistFilter.addEventListener('change', () => {
+        renderAdminPosts(postArtistFilter.value);
+    });
+
     youtubeDownloadForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const url = youtubeUrlInput.value;
@@ -588,6 +617,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Initial Load ---
     function initializeAdminPanel() {
         populateArtistDropdown();
+        populateArtistFilterDropdown();
         renderAdminPosts();
         renderMusicFiles();
         fetchAllSongs();

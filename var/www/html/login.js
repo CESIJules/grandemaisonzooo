@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Replace 'your_password' with a real password.
   // For this case, I'll use 'grandemaison' as requested.
-  const PASSWORD = 'grandemaison';
+  const PASSWORD = 'gtR0u5DBtZMuLNyAiaHMo';
 
   loginForm.addEventListener('submit', (e) => {
     e.preventDefault();
