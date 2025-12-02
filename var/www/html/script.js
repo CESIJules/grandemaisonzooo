@@ -1510,8 +1510,12 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('radio').classList.add('playing');
       
       if (!fetchInterval) {
-          fetchCurrentSong(); // Fetch immediately on play
-          fetchInterval = setInterval(fetchCurrentSong, 5000);
+          // On attend 1.5s avant la première récupération d'infos.
+          // Cela laisse le temps à Icecast de mettre à jour ses métadonnées après le début de la lecture.
+          setTimeout(() => {
+            fetchCurrentSong(); // Premier appel
+            fetchInterval = setInterval(fetchCurrentSong, 5000); // On lance ensuite l'intervalle
+          }, 1500);
       }
 
       // --- FIX: Relancer la barre de progression à la reprise de la lecture ---
