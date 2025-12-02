@@ -307,8 +307,8 @@ body.menu-open {
 }
 
 /* Horizontal lines - Default positions */
-.line-h1 { top: 35%; }
-.line-h2 { top: 65%; }
+.line-h1 { top: 30%; }
+.line-h2 { top: 70%; }
 
 /* Menu content container */
 .menu-content {
