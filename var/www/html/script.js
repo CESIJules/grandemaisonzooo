@@ -1180,19 +1180,16 @@ document.addEventListener('DOMContentLoaded', () => {
              // Scale: Only mouse affects scale
              const scale = 1 + mouseIntensity * 0.2; 
              
-             // Color: Based on combined intensity (Orange Cassé)
+             // Color: Based on combined intensity (White/Gray)
              const val = Math.floor(26 + combinedIntensity * (255 - 26));
-             const r = val;
-             const g = Math.floor(val * 0.55);
-             const b = Math.floor(val * 0.1);
-             ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+             ctx.fillStyle = `rgb(${val}, ${val}, ${val})`;
              
              ctx.font = `${charSize * scale}px 'Courier New', monospace`;
              
-             // RGB Shift (Cyan Shadow)
+             // RGB Shift (Light Chromatic Aberration - Red/Cyan style)
              ctx.shadowBlur = 0;
-             ctx.shadowColor = 'rgba(0, 255, 255, 0.6)';
-             ctx.shadowOffsetX = 2;
+             ctx.shadowColor = 'rgba(255, 0, 0, 0.4)'; // Red shadow
+             ctx.shadowOffsetX = 1.5; // Slight offset
              ctx.shadowOffsetY = 0;
              
              // --- Glitch & Words Logic (Mouse Only) ---
@@ -1248,8 +1245,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
           } else {
              // Background Rain
-             ctx.fillStyle = '#1a0d05'; 
-             if (Math.random() < 0.001) ctx.fillStyle = '#331a0a';
+             ctx.fillStyle = '#111'; 
+             if (Math.random() < 0.001) ctx.fillStyle = '#222';
              ctx.fillText(grid[x][y], px, py);
           }
         }
