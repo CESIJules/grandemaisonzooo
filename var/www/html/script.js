@@ -254,7 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
     V4_PERCENT: 0.596,           // V4 original position (59.6% from left)
     V5_PERCENT: 0.788,           // V5 original position (78.8% from left)
     HORIZONTAL_OFFSET: 10,       // Spacing above/below hovered item
-    V4_OFFSET: 20,               // V4 offset from text left edge
+    V4_OFFSET: 30,               // V4 offset from text left edge
     V5_OFFSET: 0                 // V5 offset (centered on number)
   };
 
