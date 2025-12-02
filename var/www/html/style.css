@@ -1745,7 +1745,9 @@ body.menu-open {
   );
   z-index: -2;
   filter: blur(15px);
-  animation: glow-turn 1.5s ease-out forwards;
+  -webkit-mask: radial-gradient(transparent 65%, black 66%);
+  mask: radial-gradient(transparent 65%, black 66%);
+  animation: glow-turn 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 @keyframes glow-turn {
