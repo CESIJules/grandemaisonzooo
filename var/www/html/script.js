@@ -1521,6 +1521,11 @@ document.addEventListener('DOMContentLoaded', () => {
         progressInterval = setInterval(updateProgressBar, 250);
         if (progressInfo) progressInfo.classList.add('visible');
       }
+
+      // Sync PiP state
+      if (pipVideo && pipVideo.paused) {
+          pipVideo.play().catch(e => console.log("PiP auto-play blocked", e));
+      }
     });
     audio.addEventListener('pause', () => { 
       status.textContent = ''; 
@@ -1536,6 +1541,11 @@ document.addEventListener('DOMContentLoaded', () => {
         progressInterval = null;
       }
       if(progressInfo) progressInfo.classList.remove('visible');
+
+      // Sync PiP state
+      if (pipVideo && !pipVideo.paused) {
+          pipVideo.pause();
+      }
     });
     audio.addEventListener('waiting', () => { status.textContent = 'Connexion au flux…'; });
     audio.addEventListener('error', () => { status.textContent = 'Erreur de lecture'; });
