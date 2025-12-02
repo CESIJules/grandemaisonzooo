@@ -274,6 +274,7 @@ body.menu-open {
   height: 100%;
   pointer-events: none;
   overflow: hidden;
+  opacity: 0.12; /* Global opacity between 0.08 and 0.14 */
 }
 
 /* Vertical lines - Base styles */
@@ -282,10 +283,38 @@ body.menu-open {
   top: 0;
   width: 1px;
   height: 100%;
-  background: rgba(100, 130, 180, 0.15);
-  transition: transform 0.45s cubic-bezier(0.165, 0.84, 0.44, 1),
-              background 0.3s ease;
+  background: transparent; /* Removed base background */
+  overflow: hidden; /* Mask for inner animation */
+  transition: transform 0.45s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
+
+/* Inner animation for vertical lines */
+.line-v::after {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 200%;
+  /* Two segments: Opacity 1 and Opacity 0.5, repeated for loop */
+  background: linear-gradient(to bottom, 
+    rgba(255, 255, 255, 1) 0%, 
+    rgba(255, 255, 255, 1) 25%, 
+    rgba(255, 255, 255, 0.5) 25%, 
+    rgba(255, 255, 255, 0.5) 50%,
+    rgba(255, 255, 255, 1) 50%, 
+    rgba(255, 255, 255, 1) 75%, 
+    rgba(255, 255, 255, 0.5) 75%, 
+    rgba(255, 255, 255, 0.5) 100%
+  );
+  animation: vertical-flow 8s linear infinite;
+}
+
+/* Vertical lines - Delays */
+.line-v1::after { animation-delay: 0s; }
+.line-v2::after { animation-delay: -1.5s; }
+.line-v3::after { animation-delay: -3s; }
+.line-v4::after { animation-delay: -4.5s; }
+.line-v5::after { animation-delay: -6s; }
+.line-v6::after { animation-delay: -7.5s; }
 
 /* Vertical lines - Default positions (evenly spaced) */
 .line-v1 { left: 2%; }
@@ -301,9 +330,45 @@ body.menu-open {
   left: 0;
   width: 100%;
   height: 1px;
-  background: rgba(100, 130, 180, 0.15);
-  transition: transform 0.45s cubic-bezier(0.165, 0.84, 0.44, 1),
-              background 0.3s ease;
+  background: transparent; /* Removed base background */
+  overflow: hidden; /* Mask for inner animation */
+  transition: transform 0.45s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+/* Inner animation for horizontal lines */
+.line-h::after {
+  content: '';
+  display: block;
+  width: 200%;
+  height: 100%;
+  /* Two segments: Opacity 1 and Opacity 0.5, repeated for loop */
+  background: linear-gradient(to right, 
+    rgba(255, 255, 255, 1) 0%, 
+    rgba(255, 255, 255, 1) 25%, 
+    rgba(255, 255, 255, 0.5) 25%, 
+    rgba(255, 255, 255, 0.5) 50%,
+    rgba(255, 255, 255, 1) 50%, 
+    rgba(255, 255, 255, 1) 75%, 
+    rgba(255, 255, 255, 0.5) 75%, 
+    rgba(255, 255, 255, 0.5) 100%
+  );
+  animation: horizontal-flow 8s linear infinite;
+}
+
+/* Horizontal lines - Delays */
+.line-h1::after { animation-delay: -2s; }
+.line-h2::after { animation-delay: -5s; }
+.line-h3::after { animation-delay: -1s; }
+
+/* Keyframes */
+@keyframes vertical-flow {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
+}
+
+@keyframes horizontal-flow {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
 /* Horizontal lines - Default positions */
