@@ -1180,14 +1180,20 @@ document.addEventListener('DOMContentLoaded', () => {
              // Scale: Only mouse affects scale
              const scale = 1 + mouseIntensity * 0.2; 
              
-             // Color: Based on combined intensity
+             // Color: Based on combined intensity (Orange Cassé)
              const val = Math.floor(26 + combinedIntensity * (255 - 26));
-             ctx.fillStyle = `rgb(${val}, ${val}, ${val})`;
+             const r = val;
+             const g = Math.floor(val * 0.55);
+             const b = Math.floor(val * 0.1);
+             ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
              
              ctx.font = `${charSize * scale}px 'Courier New', monospace`;
              
-             // Glow: Removed for performance
+             // RGB Shift (Cyan Shadow)
              ctx.shadowBlur = 0;
+             ctx.shadowColor = 'rgba(0, 255, 255, 0.6)';
+             ctx.shadowOffsetX = 2;
+             ctx.shadowOffsetY = 0;
              
              // --- Glitch & Words Logic (Mouse Only) ---
              let displayChar = grid[x][y];
@@ -1237,12 +1243,13 @@ document.addEventListener('DOMContentLoaded', () => {
              
              // Reset context
              ctx.shadowBlur = 0;
+             ctx.shadowOffsetX = 0;
              ctx.font = `${charSize}px 'Courier New', monospace`;
 
           } else {
              // Background Rain
-             ctx.fillStyle = '#111'; 
-             if (Math.random() < 0.001) ctx.fillStyle = '#222';
+             ctx.fillStyle = '#1a0d05'; 
+             if (Math.random() < 0.001) ctx.fillStyle = '#331a0a';
              ctx.fillText(grid[x][y], px, py);
           }
         }
