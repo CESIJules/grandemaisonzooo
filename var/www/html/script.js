@@ -1057,7 +1057,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Pre-calculate row noise
       rowNoise = [];
       for (let y = 0; y < rows; y++) {
-          const noiseY = y * 0.025;
+          const noiseY = y * 0.04; // Increased frequency for more islands
           // Combine the two static Y-dependent cosine terms
           // term1: Math.cos(noiseY * 0.8)
           // term2: Math.cos(noiseY * 1.7) * 0.5
@@ -1115,8 +1115,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const absDxMouse = Math.abs(dxMouse);
 
         // Cloud Noise Calculation (Horizontal Movement)
-        // Reduced frequency for wider, smoother gradients (0.04 -> 0.025)
-        const noiseX = x * 0.025 + time * 0.15; 
+        // Increased frequency for more distinct islands (0.025 -> 0.04)
+        const noiseX = x * 0.04 + time * 0.15; 
         
         // Pre-calculate X noise parts
         const noisePartX1 = Math.sin(noiseX);
@@ -1138,14 +1138,14 @@ document.addEventListener('DOMContentLoaded', () => {
           let gasIntensity = (noise + 3) / 6;
           
           // Ultra smooth thresholding
-          // Higher threshold for more black space (0.1 -> 0.45)
-          if (gasIntensity < 0.45) { 
+          // Higher threshold for more black space (0.45 -> 0.55) to create islands
+          if (gasIntensity < 0.55) { 
               gasIntensity = 0;
           } else {
-              // Remap 0.45..1.0 to 0..1.0
-              gasIntensity = (gasIntensity - 0.45) / 0.55;
-              // Squared curve for soft ease-in from black
-              gasIntensity = gasIntensity * gasIntensity; 
+              // Remap 0.55..1.0 to 0..1.0
+              gasIntensity = (gasIntensity - 0.55) / 0.45;
+              // Cubic curve for sharper edges/cutout while keeping organic feel
+              gasIntensity = Math.pow(gasIntensity, 3); 
           }
 
           // --- 2. Mouse Calculation (Restored "Animation d'avant") ---
