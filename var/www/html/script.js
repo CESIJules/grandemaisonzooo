@@ -1172,8 +1172,7 @@ document.addEventListener('DOMContentLoaded', () => {
           // --- Drawing ---
           
           // Blending: Avoid dark ring by taking max of mouse and gas
-          // Gas is capped at ~75% brightness to keep mouse brighter
-          const combinedIntensity = Math.max(mouseIntensity, gasIntensity * 0.75);
+          const combinedIntensity = Math.max(mouseIntensity, gasIntensity);
 
           if (combinedIntensity > 0.05) {
              
@@ -1181,7 +1180,8 @@ document.addEventListener('DOMContentLoaded', () => {
              const scale = 1 + mouseIntensity * 0.2; 
              
              // Color: Based on combined intensity (White/Gray)
-             const val = Math.floor(26 + combinedIntensity * (255 - 26));
+             // Boost brightness significantly to ensure characters look white
+             const val = Math.floor(180 + combinedIntensity * (255 - 180));
              const mainColor = `rgb(${val}, ${val}, ${val})`;
              
              ctx.font = `${charSize * scale}px 'Courier New', monospace`;
