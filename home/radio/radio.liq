@@ -8,7 +8,7 @@ def get_active_playlist_songs()
   active_playlist_name = json_data["active_playlist"]
   all_playlists = json_data["playlists"]
 
-  if is_nil(active_playlist_name) or is_nil(all_playlists)
+  if is_nil(active_playlist_name) or is_nil(all_playlists) then
     log("No active playlist configured or playlists data missing. Falling back to random music directory playback.", level="warning")
     playlist(mode="random.smart", "/home/radio/musique")
   else
