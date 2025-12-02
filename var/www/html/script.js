@@ -1145,18 +1145,18 @@ document.addEventListener('DOMContentLoaded', () => {
           // Normalize
           let gasIntensity = (noise + 1.75) / 3.5;
           
-          // "Contraste max" -> Aggressive black cut
-          gasIntensity -= 0.4;
+          // "Dégradé long" -> Lower cut to allow the gradient to start earlier (longer tails)
+          gasIntensity -= 0.25;
           
           if (gasIntensity < 0) {
               gasIntensity = 0;
           } else {
-              // Amplify strongly so centers hit pure white quickly
-              gasIntensity *= 2.5;
+              // Normalize the remaining range to ensure we reach full white
+              gasIntensity /= 0.75;
               
-              // High power curve for dramatic falloff/gradient
-              // This creates a very bright center that fades rapidly but smoothly into black
-              gasIntensity = Math.pow(gasIntensity, 4);
+              // Use a moderate curve (2.0) to keep the fade long and smooth
+              // This connects the deep black and bright white with a wide range of grays
+              gasIntensity = Math.pow(gasIntensity, 2.0);
           }
           
           if (gasIntensity > 1) gasIntensity = 1;
