@@ -200,17 +200,137 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Burger menu (ne pas toucher)
+  // Burger menu 
   const menu = document.getElementById('menu');
+  const menuCloseBtn = document.getElementById('menuCloseBtn');
+  const menuItems = document.querySelectorAll('.menu-item');
+  const menuLinks = document.querySelectorAll('.menu-link');
+  
+  // Lines for animation
+  const lineV4 = document.querySelector('.line-v4');
+  const lineV5 = document.querySelector('.line-v5');
+  const lineH1 = document.querySelector('.line-h1');
+  const lineH2 = document.querySelector('.line-h2');
+  const allLines = document.querySelectorAll('.line-v, .line-h');
 
-  function toggleMenu() {
-    const hidden = menu.classList.toggle('hidden');
-    menu.setAttribute('aria-hidden', hidden ? 'true' : 'false');
+  // Open menu
+  function openMenu() {
+    menu.classList.add('open');
+    menu.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('menu-open');
+    burgerBtn.style.display = 'none';
   }
+
+  // Close menu
+  function closeMenu() {
+    menu.classList.remove('open');
+    menu.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('menu-open');
+    burgerBtn.style.display = 'flex';
+    resetLines();
+  }
+
+  // Toggle menu
+  function toggleMenu() {
+    if (menu.classList.contains('open')) {
+      closeMenu();
+    } else {
+      openMenu();
+    }
+  }
+
+  // Reset lines to neutral positions
+  function resetLines() {
+    allLines.forEach(line => {
+      line.style.transform = '';
+      line.classList.remove('active');
+    });
+  }
+
+  // Animate lines on menu item hover
+  function animateLinesForItem(item) {
+    if (!item) {
+      resetLines();
+      return;
+    }
+
+    const rect = item.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    
+    // Calculate the center Y position of the item
+    const itemCenterY = rect.top + rect.height / 2;
+    
+    // Get original line positions
+    const h1Original = viewportHeight * 0.35;
+    const h2Original = viewportHeight * 0.65;
+    
+    // Calculate target positions for H1 (above item) and H2 (below item)
+    const h1Target = rect.top - 10;
+    const h2Target = rect.bottom + 10;
+    
+    // Calculate translations
+    const h1Translation = h1Target - h1Original;
+    const h2Translation = h2Target - h2Original;
+    
+    // Animate H1 and H2 to frame the item
+    if (lineH1) {
+      lineH1.style.transform = `translateY(${h1Translation}px)`;
+      lineH1.classList.add('active');
+    }
+    if (lineH2) {
+      lineH2.style.transform = `translateY(${h2Translation}px)`;
+      lineH2.classList.add('active');
+    }
+    
+    // Animate V4 towards the text column
+    if (lineV4) {
+      const v4Original = window.innerWidth * 0.55;
+      const v4Target = rect.left - 30;
+      const v4Translation = v4Target - v4Original;
+      lineV4.style.transform = `translateX(${v4Translation}px)`;
+      lineV4.classList.add('active');
+    }
+    
+    // Animate V5 slightly more to the right (towards numbers)
+    if (lineV5) {
+      const v5Original = window.innerWidth * 0.70;
+      const v5Target = rect.right + 50;
+      const v5Translation = v5Target - v5Original;
+      lineV5.style.transform = `translateX(${v5Translation}px)`;
+      lineV5.classList.add('active');
+    }
+  }
+
+  // Event listeners for burger menu
   if (burgerBtn && menu) {
     burgerBtn.addEventListener('click', toggleMenu);
-    menu.addEventListener('click', (e) => {
-      if (e.target.tagName === 'A') toggleMenu();
+    
+    // Close button
+    if (menuCloseBtn) {
+      menuCloseBtn.addEventListener('click', closeMenu);
+    }
+    
+    // Close on link click
+    menuLinks.forEach(link => {
+      link.addEventListener('click', closeMenu);
+    });
+    
+    // Escape key to close
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && menu.classList.contains('open')) {
+        closeMenu();
+      }
+    });
+    
+    // Line animations on hover
+    menuItems.forEach(item => {
+      item.addEventListener('mouseenter', () => {
+        animateLinesForItem(item);
+      });
+      
+      item.addEventListener('mouseleave', () => {
+        resetLines();
+      });
     });
   }
 
