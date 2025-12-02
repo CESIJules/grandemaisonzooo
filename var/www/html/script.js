@@ -280,8 +280,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const h2Original = viewportHeight * LINE_POSITIONS.H2_PERCENT;
     
     // Calculate target positions for H1 (above item) and H2 (below item)
-    const h1Target = rect.top - LINE_POSITIONS.HORIZONTAL_OFFSET;
-    const h2Target = rect.bottom + LINE_POSITIONS.HORIZONTAL_OFFSET;
+    // Use linkRect to frame the text content, ignoring the container padding
+    const h1Target = linkRect.top - LINE_POSITIONS.HORIZONTAL_OFFSET;
+    const h2Target = linkRect.bottom + LINE_POSITIONS.HORIZONTAL_OFFSET;
     
     // Calculate translations
     const h1Translation = h1Target - h1Original;
@@ -339,13 +340,21 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     // Line animations on hover
+    let resetTimeout;
+
     menuItems.forEach(item => {
       item.addEventListener('mouseenter', () => {
+        if (resetTimeout) {
+          clearTimeout(resetTimeout);
+          resetTimeout = null;
+        }
         animateLinesForItem(item);
       });
       
       item.addEventListener('mouseleave', () => {
-        resetLines();
+        resetTimeout = setTimeout(() => {
+          resetLines();
+        }, 100); // Small delay to allow moving to next item without reset
       });
     });
   }
