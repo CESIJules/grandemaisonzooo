@@ -299,9 +299,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td>${playlist.name}</td>
                     <td>${playlist.songs.length}</td>
                     <td class="actions">
-                        <button class="btn activate-playlist-btn" data-playlist-name="${playlist.name}" ${playlist.name === currentActivePlaylist ? 'disabled' : ''}><i class="fas fa-play-circle"></i> Activer</button>
-                        <button class="btn edit-playlist-btn" data-playlist-name="${playlist.name}"><i class="fas fa-edit"></i> Modifier</button>
-                        <button class="btn btn-danger delete-playlist-btn" data-playlist-name="${playlist.name}"><i class="fas fa-trash"></i> Supprimer</button>
+                        <div class="action-buttons-container">
+                            <button class="btn activate-playlist-btn" title="Activer" data-playlist-name="${playlist.name}" ${playlist.name === currentActivePlaylist ? 'disabled' : ''}><i class="fas fa-play-circle"></i></button>
+                            <button class="btn edit-playlist-btn" title="Modifier" data-playlist-name="${playlist.name}"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-danger delete-playlist-btn" title="Supprimer" data-playlist-name="${playlist.name}"><i class="fas fa-trash"></i></button>
+                        </div>
                     </td>
                 `;
                 tbody.appendChild(tr);
