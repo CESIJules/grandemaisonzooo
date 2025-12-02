@@ -1115,12 +1115,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const absDxMouse = Math.abs(dxMouse);
 
         // Cloud Noise Calculation (Horizontal Movement)
-        // Increased frequency for more distinct islands (0.025 -> 0.04)
-        const noiseX = x * 0.04 + time * 0.15; 
-        
-        // Pre-calculate X noise parts
-        const noisePartX1 = Math.sin(noiseX);
-        const noisePartX2 = Math.sin(noiseX * 2.1 + time * 0.1) * 0.5;
+        // Removed pre-calculation to allow for more chaotic 2D noise in the loop
         
         for (let y = 0; y < rows; y++) {
           const py = y * charSize + offsets[x] - charSize; 
@@ -1129,24 +1124,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
           const centerY = py + charSize/2;
           
-          // --- 1. Gas/Cloud Calculation (Optimized Noise) ---
-          // Use pre-calculated Y noise
-          // Original: let noise = noisePartX1 + Math.cos(noiseY * 0.8) + noisePartX2 + Math.cos(noiseY * 1.7) * 0.5;
-          let noise = noisePartX1 + noisePartX2 + (rowNoise[y] || 0);
+          // --- 1. Gas/Cloud Calculation (Chaotic & Organic) ---
+          // Layer 1: Large diagonal waves (Base structure)
+          const n1 = Math.sin(x * 0.03 + y * 0.02 + time * 0.15);
+          // Layer 2: Smaller counter-interference (Break regularity)
+          const n2 = Math.sin(x * 0.07 - y * 0.05 - time * 0.1);
+          // Layer 3: Vertical drift (Mist feel)
+          const n3 = Math.sin(x * 0.02 + y * 0.08 + time * 0.05);
           
-          // Normalize roughly to 0..1
-          let gasIntensity = (noise + 3) / 6;
+          let noise = n1 + n2 * 0.5 + n3 * 0.3; // Range approx -1.8 to 1.8
           
-          // Ultra smooth thresholding
-          // Higher threshold for more black space (0.45 -> 0.55) to create islands
-          if (gasIntensity < 0.55) { 
-              gasIntensity = 0;
-          } else {
-              // Remap 0.55..1.0 to 0..1.0
-              gasIntensity = (gasIntensity - 0.55) / 0.45;
-              // Cubic curve for sharper edges/cutout while keeping organic feel
-              gasIntensity = Math.pow(gasIntensity, 3); 
-          }
+          // Normalize to 0..1
+          let gasIntensity = (noise + 1.8) / 3.6;
+          
+          // "Grand dégradé" & "Fond bien les bords"
+          // Use a strong power curve (pow 4) to push low values to black smoothly
+          // This creates "islands" of light with very soft, long gradients into the darkness
+          gasIntensity = Math.pow(gasIntensity, 4);
+          
+          // Boost peaks slightly to ensure the center of islands is bright enough
+          gasIntensity *= 1.8;
+          if (gasIntensity > 1) gasIntensity = 1;
 
           // --- 2. Mouse Calculation (Restored "Animation d'avant") ---
           let mouseIntensity = 0;
