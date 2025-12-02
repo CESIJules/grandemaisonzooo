@@ -1766,6 +1766,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const response = await fetch(`./get_duration.php?file=${encodeURIComponent(rawTitle)}&nocache=${new Date().getTime()}`);
       const data = await response.json();
 
+      if (data.error) {
+        console.error("Erreur de get_duration.php:", data.error);
+      }
+
       if (response.ok && data.duration && data.duration > 0) {
         trackDuration = data.duration;
         
