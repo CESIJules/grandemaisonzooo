@@ -271,6 +271,29 @@
             width: 100%;
             margin-bottom: 16px;
         }
+
+        /* --- Section Layout Improvements --- */
+        .section-grid {
+            display: grid;
+            /* Responsive grid: 1 column on small screens, 2 on larger screens */
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr));
+            gap: 30px;
+            align-items: start; /* Align cards to the top of the grid row */
+        }
+
+        /* When cards are in a grid, remove their bottom margin to let the gap handle spacing */
+        .section-grid > .card {
+            margin-bottom: 0;
+        }
+
+        /* Make tables/lists inside cards scrollable if they overflow */
+        .card .item-list-container {
+            max-height: 500px; /* Adjust as needed */
+            overflow-y: auto;
+            border: 1px solid var(--surface-border);
+            border-radius: 8px;
+            margin-top: 16px;
+        }
     </style>
 </head>
 <body>
@@ -332,44 +355,48 @@
         <!-- SECTION: MUSIQUE -->
         <section id="music" class="admin-section">
             <h2>Gestion de la Musique</h2>
-            <div class="card">
-                <h3>Télécharger depuis YouTube</h3>
-                <form id="youtubeDownloadForm" class="form-grid">
-                    <div class="form-group" style="grid-column: 1 / -1;">
-                        <label for="youtubeUrl">URL de la vidéo YouTube</label>
-                        <input type="url" id="youtubeUrl" placeholder="https://www.youtube.com/watch?v=..." required>
-                    </div>
-                    <div class="form-actions">
-                        <span id="youtubeFormMessage"></span>
-                        <button type="submit" class="btn btn-primary"><i class="fab fa-youtube"></i> Télécharger en MP3</button>
-                    </div>
-                </form>
-                 </div>
-            <div class="card">
-                <h3>Fichiers sur le serveur</h3>
-                <div id="musicManagementContainer"></div>
+            <div class="section-grid">
+                <div class="card">
+                    <h3>Télécharger depuis YouTube</h3>
+                    <form id="youtubeDownloadForm" class="form-grid">
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label for="youtubeUrl">URL de la vidéo YouTube</label>
+                            <input type="url" id="youtubeUrl" placeholder="https://www.youtube.com/watch?v=..." required>
+                        </div>
+                        <div class="form-actions">
+                            <span id="youtubeFormMessage"></span>
+                            <button type="submit" class="btn btn-primary"><i class="fab fa-youtube"></i> Télécharger en MP3</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card">
+                    <h3>Fichiers sur le serveur</h3>
+                    <div id="musicManagementContainer" class="item-list-container"></div>
+                </div>
             </div>
         </section>
 
         <!-- SECTION: PLAYLISTS -->
         <section id="playlists" class="admin-section">
             <h2>Gestion des Playlists</h2>
-            <div class="card">
-                <h3>Créer une nouvelle Playlist</h3>
-                <form id="createPlaylistForm" class="form-grid">
-                    <div class="form-group" style="grid-column: 1 / -1;">
-                        <label for="newPlaylistName">Nom de la nouvelle playlist</label>
-                        <input type="text" id="newPlaylistName" placeholder="Ex: Chill Vibes" required />
-                    </div>
-                    <div class="form-actions">
-                        <span id="createPlaylistMessage"></span>
-                        <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> Créer Playlist</button>
-                    </div>
-                </form>
-            </div>
-            <div class="card">
-                <h3>Playlists Existantes</h3>
-                <div id="existingPlaylistsContainer"></div>
+            <div class="section-grid">
+                <div class="card">
+                    <h3>Créer une nouvelle Playlist</h3>
+                    <form id="createPlaylistForm" class="form-grid">
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label for="newPlaylistName">Nom de la nouvelle playlist</label>
+                            <input type="text" id="newPlaylistName" placeholder="Ex: Chill Vibes" required />
+                        </div>
+                        <div class="form-actions">
+                            <span id="createPlaylistMessage"></span>
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> Créer Playlist</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card">
+                    <h3>Playlists Existantes</h3>
+                    <div id="existingPlaylistsContainer" class="item-list-container"></div>
+                </div>
             </div>
         </section>
 
