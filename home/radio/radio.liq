@@ -23,7 +23,7 @@ radio = map_metadata(set_title_artist, radio)
 
 # Securite : silence si playlist vide
 radio = fallback(track_sensitive=false, [radio, blank()])
-radio = ladspa.tap_limiter(source, limit_level = -3)   
+source = ladspa.tap_limiter(source, limit_level = -3)   
 
 # Diffusion vers Icecast
 output.icecast(
