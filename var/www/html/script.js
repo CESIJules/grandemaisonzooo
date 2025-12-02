@@ -249,10 +249,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Line positioning constants for menu animation
   const LINE_POSITIONS = {
-    H1_PERCENT: 0.35,           // H1 original position (35% from top)
-    H2_PERCENT: 0.65,           // H2 original position (65% from top)
-    V4_PERCENT: 0.55,           // V4 original position (55% from left)
-    V5_PERCENT: 0.70,           // V5 original position (70% from left)
+    H1_PERCENT: 0.30,           // H1 original position (35% from top)
+    H2_PERCENT: 0.70,           // H2 original position (65% from top)
+    V4_PERCENT: 0.596,           // V4 original position (59.6% from left)
+    V5_PERCENT: 0.788,           // V5 original position (78.8% from left)
     HORIZONTAL_OFFSET: 10,       // Spacing above/below hovered item
     V4_OFFSET: 30,               // V4 offset from item left edge
     V5_OFFSET: 50                // V5 offset from item right edge
