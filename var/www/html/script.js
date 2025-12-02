@@ -1180,8 +1180,8 @@ document.addEventListener('DOMContentLoaded', () => {
           // --- Drawing ---
           
           // Blending: Avoid dark ring by taking max of mouse and gas
-          // Gas is capped at ~75% brightness to keep mouse brighter (Restored organic feel)
-          const combinedIntensity = Math.max(mouseIntensity, gasIntensity * 0.75);
+          // Gas is capped at ~65% brightness (Reduced opacity by ~10% as requested)
+          const combinedIntensity = Math.max(mouseIntensity, gasIntensity * 0.65);
 
           // Lower threshold significantly to avoid "popping" artifacts at the edges
           if (combinedIntensity > 0.01) {
