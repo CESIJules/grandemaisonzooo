@@ -31,5 +31,5 @@ output.icecast(
   password = "hacklaradio",
   mount    = "/stream",
   name     = "Radio GRANDE MAISON",
-  radio
+  compressor(threshold=-15.,ratio=4.,attack=0.2,release=1.,radio)
 )
