@@ -1172,16 +1172,17 @@ document.addEventListener('DOMContentLoaded', () => {
           // --- Drawing ---
           
           // Blending: Avoid dark ring by taking max of mouse and gas
-          const combinedIntensity = Math.max(mouseIntensity, gasIntensity);
+          // Gas is capped at ~75% brightness to keep mouse brighter (Restored organic feel)
+          const combinedIntensity = Math.max(mouseIntensity, gasIntensity * 0.75);
 
           if (combinedIntensity > 0.05) {
              
              // Scale: Only mouse affects scale
              const scale = 1 + mouseIntensity * 0.2; 
              
-             // Color: Based on combined intensity (White/Gray)
-             // Boost brightness significantly to ensure characters look white
-             const val = Math.floor(180 + combinedIntensity * (255 - 180));
+             // Color: Keep it White (255) but modulate opacity via grayscale to avoid transparency blending issues
+             // Range: 100 (Dark Gray) -> 255 (Pure White) to maintain depth/fog effect while keeping it "white"
+             const val = Math.floor(100 + combinedIntensity * (255 - 100));
              const mainColor = `rgb(${val}, ${val}, ${val})`;
              
              ctx.font = `${charSize * scale}px 'Courier New', monospace`;
@@ -1232,7 +1233,9 @@ document.addEventListener('DOMContentLoaded', () => {
              const offset = (charSize * scale - charSize) / 2;
              
              // 1. Draw Orange "Shadow" / Aberration manually behind
-             ctx.fillStyle = 'rgba(204, 85, 0, 0.6)';
+             // Modulate opacity with intensity so it doesn't overpower the white at low levels
+             const orangeAlpha = 0.6 * combinedIntensity;
+             ctx.fillStyle = `rgba(204, 85, 0, ${orangeAlpha})`;
              ctx.fillText(displayChar, px - offset + 2, py - offset);
 
              // 2. Draw Main Character on top
