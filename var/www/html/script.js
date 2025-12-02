@@ -247,6 +247,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Line positioning constants for menu animation
+  const LINE_POSITIONS = {
+    H1_PERCENT: 0.35,           // H1 original position (35% from top)
+    H2_PERCENT: 0.65,           // H2 original position (65% from top)
+    V4_PERCENT: 0.55,           // V4 original position (55% from left)
+    V5_PERCENT: 0.70,           // V5 original position (70% from left)
+    HORIZONTAL_OFFSET: 10,       // Spacing above/below hovered item
+    V4_OFFSET: 30,               // V4 offset from item left edge
+    V5_OFFSET: 50                // V5 offset from item right edge
+  };
+
   // Animate lines on menu item hover
   function animateLinesForItem(item) {
     if (!item) {
@@ -256,17 +267,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const rect = item.getBoundingClientRect();
     const viewportHeight = window.innerHeight;
-    
-    // Calculate the center Y position of the item
-    const itemCenterY = rect.top + rect.height / 2;
+    const viewportWidth = window.innerWidth;
     
     // Get original line positions
-    const h1Original = viewportHeight * 0.35;
-    const h2Original = viewportHeight * 0.65;
+    const h1Original = viewportHeight * LINE_POSITIONS.H1_PERCENT;
+    const h2Original = viewportHeight * LINE_POSITIONS.H2_PERCENT;
     
     // Calculate target positions for H1 (above item) and H2 (below item)
-    const h1Target = rect.top - 10;
-    const h2Target = rect.bottom + 10;
+    const h1Target = rect.top - LINE_POSITIONS.HORIZONTAL_OFFSET;
+    const h2Target = rect.bottom + LINE_POSITIONS.HORIZONTAL_OFFSET;
     
     // Calculate translations
     const h1Translation = h1Target - h1Original;
@@ -284,8 +293,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Animate V4 towards the text column
     if (lineV4) {
-      const v4Original = window.innerWidth * 0.55;
-      const v4Target = rect.left - 30;
+      const v4Original = viewportWidth * LINE_POSITIONS.V4_PERCENT;
+      const v4Target = rect.left - LINE_POSITIONS.V4_OFFSET;
       const v4Translation = v4Target - v4Original;
       lineV4.style.transform = `translateX(${v4Translation}px)`;
       lineV4.classList.add('active');
@@ -293,8 +302,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Animate V5 slightly more to the right (towards numbers)
     if (lineV5) {
-      const v5Original = window.innerWidth * 0.70;
-      const v5Target = rect.right + 50;
+      const v5Original = viewportWidth * LINE_POSITIONS.V5_PERCENT;
+      const v5Target = rect.right + LINE_POSITIONS.V5_OFFSET;
       const v5Translation = v5Target - v5Original;
       lineV5.style.transform = `translateX(${v5Translation}px)`;
       lineV5.classList.add('active');
