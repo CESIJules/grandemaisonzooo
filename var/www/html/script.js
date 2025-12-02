@@ -1124,26 +1124,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
           const centerY = py + charSize/2;
           
-          // --- 1. Gas/Cloud Calculation (Fluid & Melted) ---
-          // Coordinate distortion (Domain Warping) for fluid/smoke look
-          // This makes the grid feel like it's flowing liquid/gas rather than just overlapping waves
-          const xx = x * 0.02;
-          const yy = y * 0.02;
+          // --- 1. Gas/Cloud Calculation (Deep Chaos & Turbulence) ---
+          // Coordinate distortion (Double Domain Warping)
+          // We use a slightly larger scale (0.015) to make the patterns huge and abstract
+          const xx = x * 0.015; 
+          const yy = y * 0.015;
           
-          // Warp the reading position with a large slow wave
-          const warp = Math.sin(xx * 1.5 + yy * 1.5 + time * 0.2) * 2.0;
+          // Warp 1: Large slow swirl (The "Wind")
+          const warp1 = Math.sin(xx * 1.2 + yy * 0.8 + time * 0.15);
+          const warp2 = Math.cos(xx * 0.9 - yy * 1.3 - time * 0.12);
           
-          // Layer 1: Base Cloud (distorted by warp)
-          const n1 = Math.sin(xx * 2.5 + warp + time * 0.1);
-          // Layer 2: Detail/Texture (Counter-movement)
-          const n2 = Math.sin(yy * 3.5 - time * 0.15 + xx * 2);
-          // Layer 3: Slow breathing interference
-          const n3 = Math.sin(xx * 1.0 + yy * 1.0 + time * 0.05);
+          // Warp 2: Apply warp1/2 to coordinates for the next layer (The "Turbulence")
+          const wx = xx + warp1 * 1.5;
+          const wy = yy + warp2 * 1.5;
           
-          let noise = n1 + n2 * 0.5 + n3 * 0.25; 
+          // Layer 1: Distorted base
+          const n1 = Math.sin(wx * 2.0 + time * 0.1);
+          // Layer 2: Cross-interference with different rotation
+          const n2 = Math.cos(wy * 2.5 - time * 0.2 + wx);
+          // Layer 3: High frequency detail to break smoothness
+          const n3 = Math.sin(wx * 4.0 + wy * 3.0 + time * 0.3);
           
-          // Normalize
-          let gasIntensity = (noise + 1.75) / 3.5;
+          // Combine with non-linear mixing
+          let noise = n1 + n2 * 0.6 + n3 * 0.3; 
+          
+          // Normalize (Range is approx -1.9 to 1.9)
+          let gasIntensity = (noise + 1.9) / 3.8;
           
           // "Créer plus d'espace" & "Trop blanc"
           // Use a much higher power curve (5) to compress the mid-tones into darkness.
