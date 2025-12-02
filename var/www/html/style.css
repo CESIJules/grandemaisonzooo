@@ -2057,7 +2057,6 @@ body.menu-open {
   font-size: 24px;
   cursor: pointer;
   transition: all 0.3s ease;
-  animation: bounce 2s infinite;
   padding: 10px;
   /* Glassmorphism background for better visibility */
   background: rgba(0, 0, 0, 0.2);
@@ -2077,7 +2076,7 @@ body.menu-open {
   border-color: rgba(255, 255, 255, 0.3);
   /* Pause bounce on hover to avoid conflict with scale */
   animation-play-state: paused; 
-  transform: translateX(-50%) scale(1.1);
+  transform: translateX(-50%) translateY(-3px) scale(1.1);
 }
 
 .scroll-arrow.hidden {

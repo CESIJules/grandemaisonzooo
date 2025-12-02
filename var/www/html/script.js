@@ -2037,6 +2037,8 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('wheel', (e) => {
     e.preventDefault();
     
+    if (document.body.classList.contains('menu-open')) return;
+
     if (isNavigating) return;
 
     // Determine direction
