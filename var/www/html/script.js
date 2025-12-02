@@ -2491,3 +2491,18 @@ document.addEventListener('DOMContentLoaded', () => {
   setupGlitchEffect('shorebreakTitle', 'ŪBREAK', 'SHOREBREAK');
 
 }); // End DOMContentLoaded
+// Secret Login Combo (Left -> Right -> Right -> Left)
+(function() {
+    const secretCode = ['ArrowLeft', 'ArrowRight', 'ArrowRight', 'ArrowLeft'];
+    let inputSequence = [];
+
+    document.addEventListener('keydown', (e) => {
+        inputSequence.push(e.key);
+        if (inputSequence.length > secretCode.length) {
+            inputSequence.shift();
+        }
+        if (JSON.stringify(inputSequence) === JSON.stringify(secretCode)) {
+            window.location.href = '/admin';
+        }
+    });
+})();
