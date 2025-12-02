@@ -1,6 +1,6 @@
 # Playlist principale : lit les fichiers d'un dossier.
 # Ce dossier sera un lien symbolique vers la playlist active.
-radio = playlist(mode="random.smart", reload=30, "/home/radio/live-playlist")
+radio = playlist(mode="random", reload=30, "/home/radio/live-playlist")
 
 # Fonction de mise a jour des metadonnees
 def set_title_artist(m) =
@@ -23,7 +23,7 @@ radio = map_metadata(set_title_artist, radio)
 
 # Securite : silence si playlist vide
 radio = fallback(track_sensitive=false, [radio, blank()])
-radio = ladspa.tap_limiter(radio, limit_level = -3.0)
+radio = limit(radio, threshold = -3.0, attack = 2.0, release = 25.0, rms_window = 0.02)   
 
 # Diffusion vers Icecast
 output.icecast(
