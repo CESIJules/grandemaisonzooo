@@ -141,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!marqueeContent) return;
       const items = marqueeContent.querySelectorAll('.marquee-item');
       items.forEach(item => {
-          item.textContent = `GRANDEMAISON | LOADING ${percent}%`;
+          item.innerHTML = `GRANDEMAISON <span class="marquee-separator">|</span> LOADING ${percent}%`;
       });
   }
 
@@ -196,12 +196,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // Generate Marquee Text (6 copies)
-      const baseText = "GRANDEMAISON | LOADING ";
       marqueeContent.innerHTML = '';
       for(let i=0; i<6; i++) {
           const span = document.createElement('span');
           span.className = 'marquee-item';
-          span.textContent = baseText + "0%";
+          span.innerHTML = `GRANDEMAISON <span class="marquee-separator">|</span> LOADING 0%`;
           marqueeContent.appendChild(span);
       }
 
@@ -533,9 +532,15 @@ document.addEventListener('DOMContentLoaded', () => {
       analyser.getByteFrequencyData(dataArray);
 
       // Smooth transition for radar activity
-      const targetIntensity = (!audio.paused) ? 1.0 : 0.0;
-      // Slower decay for 2-3s fade out (0.02 approx)
-      radarActiveIntensity += (targetIntensity - radarActiveIntensity) * 0.02;
+      if (!audio.paused) {
+          // Fade In (Fast - 0.5s)
+          radarActiveIntensity += deltaTime * 2.0;
+          if (radarActiveIntensity > 1.0) radarActiveIntensity = 1.0;
+      } else {
+          // Fade Out (Slow - 3.0s)
+          radarActiveIntensity -= deltaTime / 3.0;
+          if (radarActiveIntensity < 0.0) radarActiveIntensity = 0.0;
+      }
       
       // --- Reactivity for Radar ---
       if (vinylDisc) {
@@ -726,7 +731,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                       radarCtx.beginPath();
                       radarCtx.arc(x, y, size, 0, 2 * Math.PI);
-                      radarCtx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                      radarCtx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha * radarActiveIntensity})`;
                       
                       // Glow - PERFORMANCE: Removed shadowBlur
                       // radarCtx.shadowBlur = (age < transitionPoint) ? 15 : (5 + 10 * audioLevel);
