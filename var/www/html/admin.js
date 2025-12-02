@@ -528,12 +528,9 @@ document.addEventListener('DOMContentLoaded', () => {
     currentEditingPlaylist = { ...playlist }; // Create a copy to edit
     editingPlaylistNameSpan.textContent = currentEditingPlaylist.name;
     
-    // Hide all main tab contents
-    tabContents.forEach(content => {
-      content.style.display = 'none';
-    });
-    // Show the edit modal directly
-    playlistEditModal.style.display = 'block';
+    // Hide other tabs and show edit modal
+    tabContents.forEach(content => content.classList.remove('active'));
+    playlistEditModal.classList.add('active');
 
     renderCurrentPlaylistSongs();
     renderAllAvailableSongsForEdit();
@@ -628,13 +625,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function cancelPlaylistEdit() {
-    // Hide the edit modal
-    playlistEditModal.style.display = 'none';
-    
-    // Re-activate the main playlists tab by simulating a click
+    playlistEditModal.classList.remove('active');
+    // Re-activate the playlists tab and refresh data
     document.querySelector('.tab-link[data-tab="playlists"]').click();
-
-    // Fetch the latest playlist data
     fetchPlaylists();
     currentEditingPlaylist = null;
   }
