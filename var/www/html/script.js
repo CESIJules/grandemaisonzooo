@@ -1145,21 +1145,15 @@ document.addEventListener('DOMContentLoaded', () => {
           // Normalize
           let gasIntensity = (noise + 1.75) / 3.5;
           
-          // "Dégradé long" -> Lower cut to allow the gradient to start earlier (longer tails)
-          gasIntensity -= 0.25;
+          // "Trop abrupte" -> Remove hard subtraction. Use smooth curve on the full range.
+          // This ensures a continuous gradient from 0 (black) to 1 (white).
+          gasIntensity = Math.pow(gasIntensity, 3); 
           
-          if (gasIntensity < 0) {
-              gasIntensity = 0;
-          } else {
-              // Normalize the remaining range to ensure we reach full white
-              gasIntensity /= 0.75;
-              
-              // Use a moderate curve (2.0) to keep the fade long and smooth
-              // This connects the deep black and bright white with a wide range of grays
-              gasIntensity = Math.pow(gasIntensity, 2.0);
-          }
-          
+          // Boost slightly to ensure peaks are bright
+          gasIntensity *= 2.0;
           if (gasIntensity > 1) gasIntensity = 1;
+
+          // --- 2. Mouse Calculation (Restored "Animation d'avant") ---
 
           // --- 2. Mouse Calculation (Restored "Animation d'avant") ---
           let mouseIntensity = 0;
@@ -1188,14 +1182,16 @@ document.addEventListener('DOMContentLoaded', () => {
           // Gas is capped at ~75% brightness to keep mouse brighter (Restored organic feel)
           const combinedIntensity = Math.max(mouseIntensity, gasIntensity * 0.75);
 
-          if (combinedIntensity > 0.05) {
+          // Lower threshold significantly to avoid "popping" artifacts at the edges
+          if (combinedIntensity > 0.01) {
              
              // Scale: Only mouse affects scale
              const scale = 1 + mouseIntensity * 0.2; 
              
-             // Color: Keep it White (255) but modulate opacity via grayscale to avoid transparency blending issues
-             // Range: 100 (Dark Gray) -> 255 (Pure White) to maintain depth/fog effect while keeping it "white"
-             const val = Math.floor(100 + combinedIntensity * (255 - 100));
+             // Color: Range 40 -> 255. 
+             // Starting at 40 (instead of 100) allows the characters to fade much deeper into the black
+             // before disappearing, solving the "abrupt edge" issue.
+             const val = Math.floor(40 + combinedIntensity * (255 - 40));
              const mainColor = `rgb(${val}, ${val}, ${val})`;
              
              ctx.font = `${charSize * scale}px 'Courier New', monospace`;
