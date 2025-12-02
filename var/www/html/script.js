@@ -1531,27 +1531,20 @@ document.addEventListener('DOMContentLoaded', () => {
           pipVideo.play().catch(e => console.log("PiP auto-play blocked", e));
       }
     });
-    audio.addEventListener('pause', () => { 
-      status.textContent = ''; 
-      document.getElementById('radio').classList.remove('playing');
-      
-      if (fetchInterval) {
-          clearInterval(fetchInterval);
-          fetchInterval = null;
-      }
-      // Arrêter la barre de progression
-      if (progressInterval) {
-        clearInterval(progressInterval);
-        progressInterval = null;
-      }
-      if(progressInfo) progressInfo.classList.remove('visible');
-
-      // Sync PiP state
-      if (pipVideo && !pipVideo.paused) {
-          pipVideo.pause();
-      }
-    });
-    audio.addEventListener('waiting', () => { status.textContent = 'Connexion au flux…'; });
+        audio.addEventListener('pause', () => {
+          status.textContent = '';
+          document.getElementById('radio').classList.remove('playing');
+          
+          if (fetchInterval) {
+              clearInterval(fetchInterval);
+              fetchInterval = null;
+          }
+    
+          // Sync PiP state
+          if (pipVideo && !pipVideo.paused) {
+              pipVideo.pause();
+          }
+        });    audio.addEventListener('waiting', () => { status.textContent = 'Connexion au flux…'; });
     audio.addEventListener('error', () => { status.textContent = 'Erreur de lecture'; });
 
     // Play/Pause (radio en direct)
