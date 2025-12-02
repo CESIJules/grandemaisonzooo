@@ -15,7 +15,7 @@ def get_active_playlist_songs()
     found_playlist = false
     current_playlist_songs = []
     
-    found_playlist_obj = list.find(fun p -> p["name"] == active_playlist_name, all_playlists)
+    found_playlist_obj = list.find(fun p => p["name"] == active_playlist_name, all_playlists)
     if is_nil(found_playlist_obj) then
       found_playlist = false
       current_playlist_songs = []
