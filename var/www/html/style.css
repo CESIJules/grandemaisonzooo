@@ -505,6 +505,7 @@ body.menu-open {
   text-transform: uppercase;
   letter-spacing: 2px;
   line-height: 1.1;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
   
   transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1),
               letter-spacing 0.35s ease,
@@ -690,7 +691,7 @@ body.menu-open {
   top: 30px;
   left: 30px;
   width: calc(100% - 60px);
-  z-index: 20;
+  /* z-index removed to allow mix-blend-mode on children */
   display: flex;
   align-items: center;
   gap: 15px;
@@ -1067,7 +1068,7 @@ body.menu-open {
   position: relative;
   line-height: 1;
   opacity: 0.5;
-  z-index: 2;
+  z-index: 20;
   mix-blend-mode: difference;
   color: #fff;
 }
@@ -1077,6 +1078,7 @@ body.menu-open {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
+  z-index: 20;
   font-family: 'Lexend', sans-serif;
   font-size: 1.1rem;
   color: #aaa;
@@ -1122,7 +1124,7 @@ body.menu-open {
   width: 400px;
   height: 90px;
   transform: translateY(-50%);
-  z-index: 1;
+  z-index: 20;
   pointer-events: none;
   border-radius: 0;
 }
@@ -1315,7 +1317,7 @@ body.menu-open {
   align-items: center;
   justify-content: center;
   padding: 0 40px;
-  z-index: 10;
+  /* z-index removed to allow mix-blend-mode on children */
   pointer-events: none;
 }
 
@@ -1330,6 +1332,8 @@ body.menu-open {
   transform: translateY(-50%);
   mix-blend-mode: difference;
   color: #fff;
+  z-index: 10;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
 }
 
 .timeline-filters {
@@ -1337,6 +1341,8 @@ body.menu-open {
   gap: 10px;
   justify-content: center;
   pointer-events: auto;
+  position: relative;
+  z-index: 10;
 }
 
 .filter-btn.active {
@@ -1603,6 +1609,7 @@ body.menu-open {
   color: #fff;
   white-space: normal; /* Allow wrapping */
   mix-blend-mode: difference;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
 }
 .artiste-info .localisation {
   font-family: 'Lexend', sans-serif;
