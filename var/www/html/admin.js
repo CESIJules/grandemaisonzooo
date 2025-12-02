@@ -3,6 +3,33 @@ document.addEventListener('DOMContentLoaded', () => {
   const tabLinks = document.querySelectorAll('.tab-link');
   const tabContents = document.querySelectorAll('.tab-content');
 
+  // New elements for Playlist Management
+  const createPlaylistForm = document.getElementById('createPlaylistForm');
+  const newPlaylistNameInput = document.getElementById('newPlaylistName');
+  const createPlaylistMessage = document.getElementById('createPlaylistMessage');
+  const existingPlaylistsContainer = document.getElementById('existingPlaylistsContainer');
+  const allSongsListContainer = document.getElementById('allSongsList');
+
+  // New elements for Playlist Editing Modal
+  const playlistEditModal = document.getElementById('playlistEditModal');
+  const editingPlaylistNameSpan = document.getElementById('editingPlaylistName');
+  const currentPlaylistSongsUl = document.getElementById('currentPlaylistSongs');
+  const allAvailableSongsForEditUl = document.getElementById('allAvailableSongsForEdit');
+  const songSearchInput = document.getElementById('songSearchInput');
+  const savePlaylistChangesBtn = document.getElementById('savePlaylistChangesBtn');
+  const cancelPlaylistEditBtn = document.getElementById('cancelPlaylistEditBtn');
+
+  // Array to hold all available songs (full paths)
+  let allAvailableSongs = [];
+
+  // --- Song Path to Title Formatter ---
+  function formatSongPathToTitle(songPath) {
+    if (!songPath) return '';
+    const parts = songPath.split('/');
+    const filename = parts[parts.length - 1]; // Get the last part (filename)
+    return filename.replace(/\.[^/.]+$/, "").replace(/_/g, ' ').replace(/\s*-\s*/g, ' - ').toUpperCase();
+  }
+
   tabLinks.forEach(link => {
     link.addEventListener('click', () => {
       const tabId = link.getAttribute('data-tab');
@@ -92,6 +119,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Populate artist dropdown on page load
   populateArtistDropdown();
+
+  // Variable to store the currently active playlist name
+  let currentActivePlaylist = null;
+
+  // --- All Songs Fetcher and Renderer (for playlist building) ---
+  async function fetchAllSongs() {
+    try {
+      const response = await fetch('get_all_songs.php', { cache: 'no-store' });
+      if (!response.ok) {
+        throw new Error('Could not fetch all songs');
+      }
+      const result = await response.json();
+      if (result.status === 'success') {
+        allAvailableSongs = result.files;
+        renderAllSongs();
+      } else {
+        throw new Error(result.message || 'Error fetching all songs.');
+      }
+    } catch (error) {
+      console.error('Failed to fetch all songs:', error);
+      allSongsListContainer.innerHTML = `<p style="color: red;">Erreur: Impossible de charger toutes les musiques disponibles.</p>`;
+    }
+  }
+
+  function renderAllSongs() {
+    allSongsListContainer.innerHTML = '';
+    if (allAvailableSongs.length === 0) {
+      allSongsListContainer.innerHTML = '<p>Aucune musique disponible sur le serveur.</p>';
+      return;
+    }
+
+    const ul = document.createElement('ul');
+    ul.classList.add('all-songs-list'); // Add a class for styling/drag-drop
+    allAvailableSongs.forEach(songPath => {
+      const li = document.createElement('li');
+      li.textContent = formatSongPathToTitle(songPath);
+      li.dataset.songPath = songPath; // Store full path
+      li.draggable = true; // Make songs draggable
+      li.classList.add('draggable-song'); // Add class for drag-drop styling
+      ul.appendChild(li);
+    });
+    allSongsListContainer.appendChild(ul);
+  }
 
   // --- Post Management ---
    const adminTimelineForm = document.getElementById('adminTimelineForm');
@@ -277,6 +347,239 @@ document.addEventListener('DOMContentLoaded', () => {
       postsManagementContainer.innerHTML = `<p style="color: red;">Impossible de charger les posts: ${error.message}</p>`;
      }
   };
+
+  // --- Playlist Management ---
+  async function fetchPlaylists() {
+    try {
+      const response = await fetch('get_playlists.php', { cache: 'no-store' });
+      if (!response.ok) {
+        throw new Error(`Erreur du serveur (playlists): ${response.statusText}`);
+      }
+      const result = await response.json();
+      if (result.status === 'success') {
+        currentActivePlaylist = result.data.active_playlist;
+        renderPlaylists(result.data.playlists);
+      } else {
+        throw new Error(result.message || 'Erreur lors de la récupération des playlists.');
+      }
+    } catch (error) {
+      console.error('Failed to fetch playlists:', error);
+      existingPlaylistsContainer.innerHTML = `<p style="color: red;">Erreur: Impossible de charger les playlists.</p>`;
+    }
+  }
+
+  function renderPlaylists(playlists) {
+    existingPlaylistsContainer.innerHTML = ''; // Clear existing playlists
+
+    if (playlists.length === 0) {
+      existingPlaylistsContainer.innerHTML = '<p>Aucune playlist créée pour le moment.</p>';
+      return;
+    }
+
+    const ul = document.createElement('ul');
+    playlists.forEach(playlist => {
+      const li = document.createElement('li');
+      li.style.display = 'flex';
+      li.style.justifyContent = 'space-between';
+      li.style.alignItems = 'center';
+      li.style.marginBottom = '10px';
+      li.style.border = '1px solid #333';
+      li.style.padding = '10px';
+      li.style.borderRadius = '5px';
+
+      const playlistInfo = document.createElement('div');
+      playlistInfo.innerHTML = `
+        <strong>${playlist.name}</strong> (${playlist.songs.length} titres)
+        ${playlist.name === currentActivePlaylist ? '<span class="playing" style="margin-left: 10px;">(ACTIVE)</span>' : ''}
+      `;
+
+      const buttonsDiv = document.createElement('div');
+
+      const editBtn = document.createElement('button');
+      editBtn.textContent = 'Modifier';
+      editBtn.classList.add('edit-btn');
+      editBtn.dataset.playlistName = playlist.name;
+      buttonsDiv.appendChild(editBtn);
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.textContent = 'Supprimer';
+      deleteBtn.classList.add('delete-btn');
+      deleteBtn.dataset.playlistName = playlist.name;
+      buttonsDiv.appendChild(deleteBtn);
+
+      if (playlist.name !== currentActivePlaylist) {
+        const setActiveBtn = document.createElement('button');
+        setActiveBtn.textContent = 'Activer';
+        setActiveBtn.classList.add('btn');
+        setActiveBtn.dataset.playlistName = playlist.name;
+        setActiveBtn.style.marginLeft = '5px';
+        buttonsDiv.appendChild(setActiveBtn);
+      }
+      
+      li.appendChild(playlistInfo);
+      li.appendChild(buttonsDiv);
+      ul.appendChild(li);
+    });
+    existingPlaylistsContainer.appendChild(ul);
+
+    // Add event listeners for new buttons
+    document.querySelectorAll('#existingPlaylistsContainer .delete-btn').forEach(button => {
+      button.addEventListener('click', (e) => {
+        const playlistName = e.target.dataset.playlistName;
+        deletePlaylist(playlistName);
+      });
+    });
+
+    document.querySelectorAll('#existingPlaylistsContainer .edit-btn').forEach(button => {
+      button.addEventListener('click', (e) => {
+        const playlistName = e.target.dataset.playlistName;
+        // Find the full playlist object to pass to editPlaylist
+        const playlistToEdit = playlists.find(p => p.name === playlistName);
+        if (playlistToEdit) {
+          editPlaylist(playlistToEdit);
+        }
+      });
+    });
+
+    document.querySelectorAll('#existingPlaylistsContainer .btn').forEach(button => {
+      if (button.textContent === 'Activer') {
+        button.addEventListener('click', (e) => {
+          const playlistName = e.target.dataset.playlistName;
+          setActivePlaylist(playlistName);
+        });
+      }
+    });
+  }
+
+  // --- Playlist Editing ---
+  let currentEditingPlaylist = null; // To hold the playlist object being edited
+
+  function editPlaylist(playlist) {
+    currentEditingPlaylist = { ...playlist }; // Create a copy to edit
+    editingPlaylistNameSpan.textContent = currentEditingPlaylist.name;
+    
+    // Hide other tabs and show edit modal
+    tabContents.forEach(content => content.classList.remove('active'));
+    playlistEditModal.classList.add('active');
+
+    renderCurrentPlaylistSongs();
+    renderAllAvailableSongsForEdit();
+  }
+
+  function renderCurrentPlaylistSongs() {
+    currentPlaylistSongsUl.innerHTML = '';
+    if (currentEditingPlaylist && currentEditingPlaylist.songs.length > 0) {
+      currentEditingPlaylist.songs.forEach((songPath, index) => {
+        const li = document.createElement('li');
+        li.textContent = formatSongPathToTitle(songPath);
+        li.dataset.songPath = songPath;
+
+        const removeBtn = document.createElement('button');
+        removeBtn.textContent = 'Supprimer';
+        removeBtn.classList.add('delete-btn');
+        removeBtn.style.marginLeft = '10px';
+        removeBtn.addEventListener('click', () => {
+          currentEditingPlaylist.songs.splice(index, 1);
+          renderCurrentPlaylistSongs(); // Re-render to reflect removal
+        });
+        li.appendChild(removeBtn);
+        currentPlaylistSongsUl.appendChild(li);
+      });
+    } else {
+      currentPlaylistSongsUl.innerHTML = '<p>Aucune chanson dans cette playlist.</p>';
+    }
+  }
+
+  function renderAllAvailableSongsForEdit(filter = '') {
+    allAvailableSongsForEditUl.innerHTML = '';
+    const filteredSongs = allAvailableSongs.filter(songPath => 
+      formatSongPathToTitle(songPath).toLowerCase().includes(filter.toLowerCase())
+    );
+
+    if (filteredSongs.length === 0) {
+      allAvailableSongsForEditUl.innerHTML = '<p>Aucune chanson trouvée.</p>';
+      return;
+    }
+
+    filteredSongs.forEach(songPath => {
+      const li = document.createElement('li');
+      li.textContent = formatSongPathToTitle(songPath);
+      li.dataset.songPath = songPath;
+
+      const addBtn = document.createElement('button');
+      addBtn.textContent = 'Ajouter';
+      addBtn.classList.add('btn');
+      addBtn.style.marginLeft = '10px';
+      addBtn.addEventListener('click', () => {
+        // Add only if not already in the playlist
+        if (!currentEditingPlaylist.songs.includes(songPath)) {
+          currentEditingPlaylist.songs.push(songPath);
+          renderCurrentPlaylistSongs(); // Re-render current playlist
+        } else {
+          alert('Cette chanson est déjà dans la playlist.');
+        }
+      });
+      li.appendChild(addBtn);
+      allAvailableSongsForEditUl.appendChild(li);
+    });
+  }
+
+  async function savePlaylistChanges() {
+    if (!currentEditingPlaylist) return;
+
+    try {
+      const response = await fetch('update_playlist.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          name: currentEditingPlaylist.name, 
+          songs: currentEditingPlaylist.songs 
+        })
+      });
+      const result = await response.json();
+
+      if (result.status === 'success') {
+        alert('Playlist mise à jour avec succès!');
+        cancelPlaylistEdit(); // Close modal and refresh
+      } else {
+        throw new Error(result.message || 'Erreur lors de la mise à jour de la playlist.');
+      }
+    } catch (error) {
+      alert(`Erreur: ${error.message}`);
+    }
+  }
+
+  function cancelPlaylistEdit() {
+    playlistEditModal.classList.remove('active');
+    // Re-activate the playlists tab and refresh data
+    document.querySelector('.tab-link[data-tab="playlists"]').click();
+    fetchPlaylists();
+    currentEditingPlaylist = null;
+  }
+
+  // Event Listeners for Playlist Edit Modal
+  if (savePlaylistChangesBtn) {
+    savePlaylistChangesBtn.addEventListener('click', savePlaylistChanges);
+  }
+  if (cancelPlaylistEditBtn) {
+    cancelPlaylistEditBtn.addEventListener('click', cancelPlaylistEdit);
+  }
+  if (songSearchInput) {
+    songSearchInput.addEventListener('input', (e) => {
+      renderAllAvailableSongsForEdit(e.target.value);
+    });
+  }
+
+  // Event listener for Create Playlist Form
+  if (createPlaylistForm) {
+    createPlaylistForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const playlistName = newPlaylistNameInput.value.trim();
+      if (playlistName) {
+        await createPlaylist(playlistName);
+      }
+    });
+  }
 
   // Admin form submission
   if (adminTimelineForm) {
@@ -539,6 +842,12 @@ document.addEventListener('DOMContentLoaded', () => {
   if (musicManagementContainer) {
     renderMusicFiles(); // Initial load
     setInterval(renderMusicFiles, 20000); // Refresh every 20 seconds
+  }
+
+  // --- Initial loads for Playlists ---
+  if (existingPlaylistsContainer && allSongsListContainer) {
+    fetchAllSongs();
+    fetchPlaylists();
   }
 
   // --- YouTube Downloader ---

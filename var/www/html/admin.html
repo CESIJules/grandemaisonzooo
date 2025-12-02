@@ -125,6 +125,7 @@
               Timeline
             </button>
             <button class="tab-link" data-tab="music">Musique</button>
+            <button class="tab-link" data-tab="playlists">Playlists</button>
           </div>
 
           <div id="admin-timeline" class="tab-content active">
@@ -185,6 +186,56 @@
               <span id="youtubeFormMessage"></span>
             </form>
           </div>
+
+          <div id="playlists" class="tab-content">
+            <h2>Gérer les Playlists</h2>
+
+            <div id="playlistControls">
+              <h3>Créer une nouvelle Playlist</h3>
+              <form id="createPlaylistForm" class="contact-form">
+                <input type="text" id="newPlaylistName" placeholder="Nom de la playlist" required />
+                <button type="submit" class="btn">Créer Playlist</button>
+                <span id="createPlaylistMessage"></span>
+              </form>
+
+              <h3>Playlists Existantes</h3>
+              <div id="existingPlaylistsContainer">
+                <!-- Existing playlists will be listed here -->
+              </div>
+            </div>
+
+            <hr style="margin: 40px 0" />
+
+            <h2>Toutes les Musiques Disponibles</h2>
+            <div id="allSongsList">
+              <!-- All available songs will be listed here for adding to playlists -->
+            </div>
+          </div>
+
+          <!-- Playlist Edit Modal/Section -->
+          <div id="playlistEditModal" class="tab-content" style="display: none;">
+            <h2>Éditer Playlist: <span id="editingPlaylistName"></span></h2>
+            <div class="playlist-editor-container">
+              <div class="playlist-songs-panel">
+                <h3>Chansons de la Playlist</h3>
+                <ul id="currentPlaylistSongs">
+                  <!-- Songs in the playlist will be listed here -->
+                </ul>
+              </div>
+              <div class="all-available-songs-panel">
+                <h3>Toutes les Musiques Disponibles</h3>
+                <input type="text" id="songSearchInput" placeholder="Rechercher des musiques..." />
+                <ul id="allAvailableSongsForEdit">
+                  <!-- All available songs will be listed here -->
+                </ul>
+              </div>
+            </div>
+            <div class="edit-playlist-actions">
+              <button id="savePlaylistChangesBtn" class="btn">Enregistrer les Modifications</button>
+              <button id="cancelPlaylistEditBtn" class="btn delete-btn">Annuler</button>
+            </div>
+          </div>
+
         </div>
       </section>
     </main>
