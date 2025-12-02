@@ -1740,19 +1740,19 @@ body.menu-open {
   
   /* Radar Grid (More visible lines + Diagonals) */
   background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
-    linear-gradient(45deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
-    radial-gradient(circle closest-side, transparent 20%, rgba(255, 255, 255, 0.15) 20%, rgba(255, 255, 255, 0.15) 21%, transparent 21%, transparent 40%, rgba(255, 255, 255, 0.15) 40%, rgba(255, 255, 255, 0.15) 41%, transparent 41%, transparent 60%, rgba(255, 255, 255, 0.15) 60%, rgba(255, 255, 255, 0.15) 61%, transparent 61%, transparent 80%, rgba(255, 255, 255, 0.15) 80%, rgba(255, 255, 255, 0.15) 81%, transparent 81%);
+    linear-gradient(rgba(0, 255, 104, 0.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 104, 0.15) 1px, transparent 1px),
+    linear-gradient(45deg, rgba(0, 255, 104, 0.1) 1px, transparent 1px),
+    linear-gradient(135deg, rgba(0, 255, 104, 0.1) 1px, transparent 1px),
+    radial-gradient(circle closest-side, transparent 20%, rgba(0, 255, 104, 0.2) 20%, rgba(0, 255, 104, 0.2) 21%, transparent 21%, transparent 40%, rgba(0, 255, 104, 0.2) 40%, rgba(0, 255, 104, 0.2) 41%, transparent 41%, transparent 60%, rgba(0, 255, 104, 0.2) 60%, rgba(0, 255, 104, 0.2) 61%, transparent 61%, transparent 80%, rgba(0, 255, 104, 0.2) 80%, rgba(0, 255, 104, 0.2) 81%, transparent 81%);
   background-size: 50px 50px, 50px 50px, 50px 50px, 50px 50px, 100% 100%;
   background-position: center center;
   
   /* Electric Glow Shadow */
   box-shadow: 
-    0 0 15px rgba(255, 255, 255, 0.1),
-    inset 0 0 20px rgba(255, 255, 255, 0.05),
-    0 0 20px rgba(255, 255, 255, 0.2);
+    0 0 15px rgba(0, 255, 104, 0.2),
+    inset 0 0 20px rgba(0, 255, 104, 0.1),
+    0 0 20px rgba(0, 255, 104, 0.3);
     
   transition: transform 0.1s ease, box-shadow 0.3s ease; /* Faster transform for audio reactivity */
   overflow: hidden;
@@ -1779,11 +1779,11 @@ body.menu-open {
 }
 
 #vinyl-disc.playing {
-  /* Pulse effect with white glow - Faded global glow */
+  /* Pulse effect with green glow - Faded global glow */
   box-shadow: 
     0 0 30px rgba(0, 0, 0, 0.8),
-    inset 0 0 50px rgba(255, 255, 255, 0.05),
-    0 0 40px rgba(255, 255, 255, 0.1);
+    inset 0 0 50px rgba(0, 255, 104, 0.1),
+    0 0 40px rgba(0, 255, 104, 0.2);
   transition: box-shadow 2s ease-in-out;
 }
 

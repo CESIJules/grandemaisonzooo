@@ -601,11 +601,12 @@ document.addEventListener('DOMContentLoaded', () => {
               const majorAlpha = 0.3 + 0.6 * radarActiveIntensity;
               const minorAlpha = 0.1 + 0.3 * radarActiveIntensity;
               
-              radarCtx.strokeStyle = isMajor ? `rgba(255, 255, 255, ${majorAlpha})` : `rgba(255, 255, 255, ${minorAlpha})`;
+              radarCtx.strokeStyle = isMajor ? `rgba(0, 255, 104, ${majorAlpha})` : `rgba(0, 255, 104, ${minorAlpha})`;
               radarCtx.lineWidth = isMajor ? 3 : 1;
-              // PERFORMANCE: Removed shadowBlur
-              // radarCtx.shadowBlur = isMajor ? (5 + 10 * radarActiveIntensity) : 0;
-              // radarCtx.shadowColor = 'rgba(255, 255, 255, 0.5)';
+              
+              // Glow for graduations
+              radarCtx.shadowBlur = isMajor ? (5 + 5 * radarActiveIntensity) : 0;
+              radarCtx.shadowColor = 'rgba(0, 255, 104, 0.5)';
               radarCtx.stroke();
           }
           radarCtx.shadowBlur = 0; // Reset
@@ -647,8 +648,8 @@ document.addEventListener('DOMContentLoaded', () => {
                   const stopPos = trailLength / (2 * Math.PI);
                   gradient.addColorStop(0, 'transparent');
                   // Use radarActiveIntensity for opacity
-                  gradient.addColorStop(Math.max(0, stopPos - 0.1), `rgba(255, 255, 255, ${0.01 * radarActiveIntensity})`); // Smooth start
-                  gradient.addColorStop(stopPos, `rgba(255, 255, 255, ${0.5 * radarActiveIntensity})`); // Bright tip
+                  gradient.addColorStop(Math.max(0, stopPos - 0.1), `rgba(0, 255, 104, ${0.01 * radarActiveIntensity})`); // Smooth start
+                  gradient.addColorStop(stopPos, `rgba(0, 255, 104, ${0.5 * radarActiveIntensity})`); // Bright tip
                   gradient.addColorStop(stopPos + 0.001, 'transparent'); // Hard cut after tip
                   
                   radarCtx.fillStyle = gradient;
@@ -737,9 +738,9 @@ document.addEventListener('DOMContentLoaded', () => {
                       radarCtx.arc(x, y, size, 0, 2 * Math.PI);
                       radarCtx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha * radarActiveIntensity})`;
                       
-                      // Glow - PERFORMANCE: Removed shadowBlur
-                      // radarCtx.shadowBlur = (age < transitionPoint) ? 15 : (5 + 10 * audioLevel);
-                      // radarCtx.shadowColor = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                      // Glow enabled
+                      radarCtx.shadowBlur = (timeSincePass < transitionPoint) ? 15 : (5 + 10 * p.smoothedLevel);
+                      radarCtx.shadowColor = `rgba(${r}, ${g}, ${b}, ${alpha})`;
                       
                       radarCtx.fill();
                   } else if (p.seen) {
