@@ -747,18 +747,16 @@ document.addEventListener('DOMContentLoaded', () => {
                       const glowG = Math.min(255, g + 50);
                       const glowB = Math.min(255, b + 50);
                       
-                      radarCtx.shadowBlur = (timeSincePass < transitionPoint) ? 60 : (30 + 40 * p.smoothedLevel);
+                      // Use 'lighter' composite operation for intense glow effect
+                      radarCtx.globalCompositeOperation = 'lighter';
+                      
+                      radarCtx.shadowBlur = (timeSincePass < transitionPoint) ? 80 : (40 + 50 * p.smoothedLevel);
                       radarCtx.shadowColor = `rgba(${glowR}, ${glowG}, ${glowB}, ${alpha})`;
                       
                       radarCtx.fill();
                       
-                      // Double pass for extra shine (White core)
-                      if (timeSincePass < transitionPoint) {
-                          radarCtx.shadowBlur = 20;
-                          radarCtx.shadowColor = 'rgba(255, 255, 255, 0.8)';
-                          radarCtx.fillStyle = `rgba(255, 255, 255, ${alpha * radarActiveIntensity})`;
-                          radarCtx.fill();
-                      }
+                      // Reset composite operation
+                      radarCtx.globalCompositeOperation = 'source-over';
                   } else if (p.seen) {
                       // Point has left the FOV (trail passed), respawn it for the next pass
                       // This creates a sense of randomness without reallocating objects
