@@ -1070,7 +1070,7 @@ body.menu-open {
   /* opacity: 0.5; Removed to fix grey text issue */
   z-index: 20;
   mix-blend-mode: difference;
-  color: #00ff80;
+  color: #ffffff;
   text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
 }
 
