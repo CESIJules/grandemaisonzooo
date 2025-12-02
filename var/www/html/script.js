@@ -627,6 +627,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   // If diff is small positive, it means sweep passed it recently.
                   if (diff < fov) {
                       // It is in FOV!
+                      p.seen = true; // Mark as seen
                       
                       // Calculate "age" of the detection (0.0 to 1.0) inside the FOV
                       const age = diff / fov;
@@ -677,6 +678,24 @@ document.addEventListener('DOMContentLoaded', () => {
                       // radarCtx.shadowColor = `rgba(${r}, ${g}, ${b}, ${alpha})`;
                       
                       radarCtx.fill();
+                  } else if (p.seen) {
+                      // Point has left the FOV (trail passed), respawn it for the next pass
+                      // This creates a sense of randomness without reallocating objects
+                      p.r = Math.sqrt(Math.random());
+                      p.theta = Math.random() * 2 * Math.PI;
+                      p.size = Math.random() * 2 + 1;
+                      p.freqFactor = Math.random() * 0.8;
+                      p.seen = false;
+
+                      // Avoid placing it directly in the current sweep (prevent pop-in)
+                      let newDiff = sweepAngle - p.theta;
+                      while (newDiff < 0) newDiff += 2 * Math.PI;
+                      while (newDiff >= 2 * Math.PI) newDiff -= 2 * Math.PI;
+                      
+                      if (newDiff < fov) {
+                          // If we accidentally placed it in the view, flip it to the opposite side
+                          p.theta = (p.theta + Math.PI) % (2 * Math.PI);
+                      }
                   }
               });
               radarCtx.globalAlpha = 1.0;
