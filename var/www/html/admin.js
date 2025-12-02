@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const youtubeUrlInput = document.getElementById('youtubeUrl');
     const youtubeFormMessage = document.getElementById('youtubeFormMessage');
     const musicManagementContainer = document.getElementById('musicManagementContainer');
+    const musicSearchInput = document.getElementById('musicSearchInput');
 
     // --- Playlist Section ---
     const createPlaylistForm = document.getElementById('createPlaylistForm');
@@ -52,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- State ---
     let allAvailableSongs = [];
+    let allMusicFiles = [];
     let currentActivePlaylist = null;
     let currentEditingPlaylist = null;
 
@@ -183,24 +185,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // MUSIC
-    async function renderMusicFiles() {
+    async function renderMusicFiles(filter = '', forceRefresh = false) {
         try {
-            const response = await fetch('get_music_files.php', { cache: 'no-store' });
-            if (!response.ok) throw new Error(`Erreur serveur: ${response.statusText}`);
-            const result = await response.json();
-            if (result.status === 'error') throw new Error(result.message);
+            // Fetch only if the list is empty or a refresh is forced
+            if (forceRefresh || allMusicFiles.length === 0) {
+                const response = await fetch('get_music_files.php', { cache: 'no-store' });
+                if (!response.ok) throw new Error(`Erreur serveur: ${response.statusText}`);
+                const result = await response.json();
+                if (result.status === 'error') throw new Error(result.message);
+                allMusicFiles = result.files || [];
+                allMusicFiles.sort((a, b) => a.localeCompare(b));
+            }
 
-            if (result.files.length === 0) {
-                musicManagementContainer.innerHTML = `<p>${result.message || 'Aucun fichier de musique trouvé.'}</p>`;
+            const filteredFiles = allMusicFiles.filter(file => 
+                formatSongPathToTitle(file).toLowerCase().includes(filter.toLowerCase())
+            );
+
+            if (filteredFiles.length === 0) {
+                musicManagementContainer.innerHTML = `<p>${allMusicFiles.length === 0 ? 'Aucun fichier de musique trouvé.' : 'Aucun fichier ne correspond à votre recherche.'}</p>`;
                 return;
             }
-            result.files.sort((a, b) => a.localeCompare(b));
             
             const table = document.createElement('table');
             table.className = 'item-list';
             table.innerHTML = `<thead><tr><th>Titre</th><th class="actions">Actions</th></tr></thead>`;
             const tbody = document.createElement('tbody');
-            result.files.forEach(file => {
+            filteredFiles.forEach(file => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${formatSongPathToTitle(file)}</td>
@@ -231,7 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await response.json();
             if (!response.ok) throw new Error(result.message || 'Erreur inconnue.');
             alert(result.message);
-            renderMusicFiles();
+            renderMusicFiles(musicSearchInput.value, true); // Refresh list
         } catch (error) {
             alert(`Erreur: ${error.message}`);
         }
@@ -250,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await response.json();
             if (!response.ok || result.status !== 'success') throw new Error(result.message || 'Erreur inconnue.');
             alert(result.message);
-            renderMusicFiles();
+            renderMusicFiles(musicSearchInput.value, true); // Refresh list
         } catch (error) {
             alert(`Erreur: ${error.message}`);
         }
@@ -528,7 +538,7 @@ document.addEventListener('DOMContentLoaded', () => {
             youtubeFormMessage.textContent = result.message;
             youtubeFormMessage.style.color = 'lightgreen';
             youtubeDownloadForm.reset();
-            renderMusicFiles();
+            renderMusicFiles(musicSearchInput.value, true); // Refresh list
         } catch (error) {
             youtubeFormMessage.textContent = `Erreur: ${error.message}`;
             youtubeFormMessage.style.color = 'var(--accent-danger)';
@@ -544,6 +554,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const deleteButton = e.target.closest('.delete-music-btn');
         if (renameButton) renameMusicFile(renameButton.dataset.filename);
         if (deleteButton) deleteMusicFile(deleteButton.dataset.filename);
+    });
+
+    musicSearchInput.addEventListener('input', (e) => {
+        renderMusicFiles(e.target.value);
     });
 
     createPlaylistForm.addEventListener('submit', (e) => {
