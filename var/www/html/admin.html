@@ -13,11 +13,11 @@
     <style>
         /* --- Base & Typography --- */
         :root {
-            --bg-color: #050505;
-            --bg-color-translucent: rgba(10, 10, 10, 0.5);
-            --surface-color: rgba(26, 26, 26, 0.5);
-            --surface-border: rgba(255, 255, 255, 0.1);
-            --surface-hover: rgba(35, 35, 35, 0.8);
+            --bg-color: #121212;
+            --bg-color-translucent: rgba(18, 18, 18, 0.5);
+            --surface-color: #1E1E1E;
+            --surface-border: #333333;
+            --surface-hover: #2a2a2a;
             --text-primary: #f5f5f5;
             --text-secondary: #aaa;
             --accent-primary: #007bff;
@@ -44,7 +44,16 @@
             margin: 0 0 24px 0;
         }
         h2 { font-size: 2.5rem; }
-        h3 { font-size: 1.5rem; margin-bottom: 16px;}
+        h2 { font-size: 2.5rem; }
+        h3 {
+            font-family: var(--font-body);
+            font-size: 1.25rem;
+            margin-bottom: 20px;
+            font-weight: 400;
+            color: #cbd5e1;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
 
         /* --- Main Layout --- */
         .admin-sidebar {
@@ -76,31 +85,45 @@
             font-weight: 800;
             font-size: 1.5rem;
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 60px;
         }
         .sidebar-nav ul {
             list-style: none;
             padding: 0;
             margin: 0;
         }
+        .sidebar-nav li {
+            margin-bottom: 8px;
+        }
         .sidebar-nav a {
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 12px;
+            padding: 12px 16px;
             border-radius: 8px;
             color: var(--text-secondary);
             text-decoration: none;
             font-weight: 700;
-            transition: background-color 0.2s ease, color 0.2s ease;
+            transition: all 0.2s ease;
+            position: relative;
         }
         .sidebar-nav a:hover {
             background-color: var(--surface-hover);
             color: var(--text-primary);
         }
         .sidebar-nav a.active {
-            background-color: var(--accent-primary);
             color: var(--text-primary);
+            background-color: rgba(0, 123, 255, 0.1);
+        }
+        .sidebar-nav a.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 25%;
+            width: 4px;
+            height: 50%;
+            background-color: var(--accent-primary);
+            border-radius: 0 4px 4px 0;
         }
         .sidebar-nav a i {
             width: 20px;
@@ -114,8 +137,6 @@
         .card {
             background-color: var(--surface-color);
             border: 1px solid var(--surface-border);
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
             border-radius: 12px;
             padding: 24px;
             margin-bottom: 30px;
@@ -181,10 +202,11 @@
             padding: 12px;
             border-radius: 8px;
             border: 1px solid var(--surface-border);
-            background: var(--bg-color);
+            background: #2a2a2a; /* Lighter than card */
             color: var(--text-primary);
             font-family: var(--font-body);
             font-size: 1rem;
+            transition: border-color 0.2s ease;
         }
         .form-group input:focus, .form-group select:focus {
             outline: none;
@@ -204,9 +226,20 @@
             border-collapse: collapse;
         }
         .item-list th, .item-list td {
-            padding: 12px 16px;
+            padding: 16px;
             text-align: left;
             border-bottom: 1px solid var(--surface-border);
+            vertical-align: middle;
+        }
+        .item-list th {
+            font-family: var(--font-heading);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            border-bottom-width: 2px;
+        }
+        .item-list tbody tr:hover {
+            background-color: var(--surface-hover);
         }
         .item-list th {
             font-family: var(--font-heading);
@@ -218,8 +251,22 @@
             text-align: right;
         }
         .item-list .actions .btn {
-            padding: 6px 10px;
-            font-size: 0.8rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            padding: 0;
+            font-size: 1rem; /* Icon size */
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .item-list .actions .btn:hover {
+            background-color: var(--surface-hover);
+            color: var(--text-primary);
+            transform: none; /* Override default btn hover transform */
         }
         .item-list .playing {
             color: var(--accent-primary);
