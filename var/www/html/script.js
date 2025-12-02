@@ -1145,20 +1145,18 @@ document.addEventListener('DOMContentLoaded', () => {
           // Normalize
           let gasIntensity = (noise + 1.75) / 3.5;
           
-          // "Manque un peu de noir" -> Create distinct black voids
-          // Shift values down so that low-intensity noise becomes pure black
-          gasIntensity -= 0.35;
+          // "Contraste max" -> Aggressive black cut
+          gasIntensity -= 0.4;
           
           if (gasIntensity < 0) {
               gasIntensity = 0;
           } else {
-              // "Le dégradé ne fonctionne pas bien" -> Fix gradient smoothness
-              // Stretch the remaining signal (approx 0..0.65) back to 0..1
-              gasIntensity *= 1.8;
+              // Amplify strongly so centers hit pure white quickly
+              gasIntensity *= 2.5;
               
-              // Apply a soft power curve to create a long, smooth fade-in from black
-              // This ensures the "edges" of the patterns are very gradual (fondus)
-              gasIntensity = Math.pow(gasIntensity, 2.5);
+              // High power curve for dramatic falloff/gradient
+              // This creates a very bright center that fades rapidly but smoothly into black
+              gasIntensity = Math.pow(gasIntensity, 4);
           }
           
           if (gasIntensity > 1) gasIntensity = 1;
