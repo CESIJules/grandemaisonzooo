@@ -534,7 +534,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Smooth transition for radar activity
       const targetIntensity = (!audio.paused) ? 1.0 : 0.0;
-      radarActiveIntensity += (targetIntensity - radarActiveIntensity) * 0.05;
+      // Slower decay for 2-3s fade out (0.02 approx)
+      radarActiveIntensity += (targetIntensity - radarActiveIntensity) * 0.02;
       
       // --- Reactivity for Radar ---
       if (vinylDisc) {
@@ -605,13 +606,11 @@ document.addEventListener('DOMContentLoaded', () => {
           radarCtx.shadowBlur = 0; // Reset
 
           if (radarActiveIntensity > 0.01) {
-              // Update Angle only if playing
-              if (!audio.paused) {
-                  const cycleDuration = 12.0; // Faster (was 15s)
-                  const speed = (2 * Math.PI) / cycleDuration;
-                  currentRadarAngle += speed * deltaTime;
-                  // Keep angle normalized 0..2PI for easier math? No, let it grow, use modulo for display
-              }
+              // Update Angle (Continue rotating while fading out)
+              const cycleDuration = 12.0; // Faster (was 15s)
+              const speed = (2 * Math.PI) / cycleDuration;
+              currentRadarAngle += speed * deltaTime;
+              // Keep angle normalized 0..2PI for easier math? No, let it grow, use modulo for display
 
               // Normalize for calculations
               const normalizedAngle = currentRadarAngle % (2 * Math.PI);
@@ -642,8 +641,9 @@ document.addEventListener('DOMContentLoaded', () => {
                   
                   const stopPos = trailLength / (2 * Math.PI);
                   gradient.addColorStop(0, 'transparent');
-                  gradient.addColorStop(Math.max(0, stopPos - 0.1), 'rgba(255, 255, 255, 0.01)'); // Smooth start
-                  gradient.addColorStop(stopPos, 'rgba(255, 255, 255, 0.5)'); // Bright tip
+                  // Use radarActiveIntensity for opacity
+                  gradient.addColorStop(Math.max(0, stopPos - 0.1), `rgba(255, 255, 255, ${0.01 * radarActiveIntensity})`); // Smooth start
+                  gradient.addColorStop(stopPos, `rgba(255, 255, 255, ${0.5 * radarActiveIntensity})`); // Bright tip
                   gradient.addColorStop(stopPos + 0.001, 'transparent'); // Hard cut after tip
                   
                   radarCtx.fillStyle = gradient;
@@ -661,8 +661,7 @@ document.addEventListener('DOMContentLoaded', () => {
               const sweepAngle = normalizedAngle; 
               
               // Calculate speed and FOV based on time settings
-              const cycleDuration = 12.0; 
-              const speed = (2 * Math.PI) / cycleDuration; // radians per second
+              // cycleDuration and speed are already defined above
               const fov = speed * fadeDuration; // FOV matches the desired duration
 
               // Electric Effect Setup - Red & Shiny
