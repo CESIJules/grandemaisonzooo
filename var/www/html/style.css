@@ -61,14 +61,14 @@ body {
 .marquee-content {
   display: flex; /* Use flex to align items */
   width: fit-content;
-  animation: scrollRight 6s linear infinite;
+  animation: scrollRight 8s linear infinite;
 }
 
 .marquee-item {
   font-family: 'SyneGMZExtraBold', sans-serif;
   font-size: 4vw; /* Large text */
   font-style: italic;
-  color: #fff;
+  color: #aaa;
   padding-right: 2vw; /* Spacing */
   white-space: nowrap;
 }
