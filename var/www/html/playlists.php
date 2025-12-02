@@ -2,6 +2,8 @@
 
 class PlaylistManager {
     private $playlistFile = '/var/www/html/playlist.json';
+    private $activePlaylistFile = '/home/radio/current.playlist';
+    private $musicDir = '/home/radio/musique';
     private $defaultContent = [
         "active_playlist" => null,
         "playlists" => []
@@ -16,22 +18,18 @@ class PlaylistManager {
     private function readPlaylists() {
         $content = file_get_contents($this->playlistFile);
         if ($content === false) {
-            // Error reading file, return default
             return $this->defaultContent;
         }
         $data = json_decode($content, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
-            // JSON decode error, return default
             return $this->defaultContent;
         }
-        // Ensure structure is always correct
         return array_merge($this->defaultContent, $data);
     }
 
     private function savePlaylists($data) {
         $json = json_encode($data, JSON_PRETTY_PRINT);
         if ($json === false) {
-            // JSON encode error
             return false;
         }
         return file_put_contents($this->playlistFile, $json) !== false;
@@ -44,18 +42,12 @@ class PlaylistManager {
 
     public function createPlaylist($name, $songs = []) {
         $data = $this->readPlaylists();
-        
-        // Check if playlist name already exists
         foreach ($data['playlists'] as $playlist) {
             if ($playlist['name'] === $name) {
                 return ['status' => 'error', 'message' => 'Une playlist avec ce nom existe déjà.'];
             }
         }
-
-        $newPlaylist = [
-            'name' => $name,
-            'songs' => $songs
-        ];
+        $newPlaylist = ['name' => $name, 'songs' => $songs];
         $data['playlists'][] = $newPlaylist;
         if ($this->savePlaylists($data)) {
             return ['status' => 'success', 'message' => 'Playlist créée avec succès.'];
@@ -80,19 +72,17 @@ class PlaylistManager {
     public function deletePlaylist($name) {
         $data = $this->readPlaylists();
         $initialCount = count($data['playlists']);
-        $data['playlists'] = array_filter($data['playlists'], function($playlist) use ($name) {
+        $data['playlists'] = array_values(array_filter($data['playlists'], function($playlist) use ($name) {
             return $playlist['name'] !== $name;
-        });
-
+        }));
         if (count($data['playlists']) === $initialCount) {
             return ['status' => 'error', 'message' => 'Playlist introuvable.'];
         }
-
-        // If the deleted playlist was the active one, clear active_playlist
         if ($data['active_playlist'] === $name) {
             $data['active_playlist'] = null;
+            // Also update the active playlist file to fallback mode
+            $this->setActivePlaylist(null);
         }
-
         if ($this->savePlaylists($data)) {
             return ['status' => 'success', 'message' => 'Playlist supprimée avec succès.'];
         }
@@ -101,20 +91,37 @@ class PlaylistManager {
 
     public function setActivePlaylist($name) {
         $data = $this->readPlaylists();
-        
-        // Check if the playlist exists
         $playlistExists = false;
-        foreach ($data['playlists'] as $playlist) {
-            if ($playlist['name'] === $name) {
-                $playlistExists = true;
-                break;
+        $songs_to_write = [];
+
+        if ($name !== null) {
+            foreach ($data['playlists'] as $playlist) {
+                if ($playlist['name'] === $name) {
+                    $playlistExists = true;
+                    $songs_to_write = $playlist['songs'];
+                    break;
+                }
             }
         }
 
-        if (!$playlistExists && $name !== null) { // Allow setting to null to "deactivate"
+        if ($name !== null && !$playlistExists) {
             return ['status' => 'error', 'message' => 'Playlist à activer introuvable.'];
         }
 
+        // If no playlist is to be activated OR the found playlist is empty, fallback to all music
+        if (empty($songs_to_write)) {
+            $all_music_files = glob($this->musicDir . '/*.{mp3,m4a,aac,ogg,flac}', GLOB_BRACE);
+            $songs_to_write = $all_music_files ? $all_music_files : [];
+        }
+
+        // Write the songs to the file for Liquidsoap
+        $file_content = implode("\n", $songs_to_write);
+        if (@file_put_contents($this->activePlaylistFile, $file_content) === false) {
+            // Attempt to create the file if it doesn't exist, and check permissions
+            return ['status' => 'error', 'message' => 'Erreur critique: Impossible d\'écrire dans le fichier ' . $this->activePlaylistFile . '. Vérifiez que le serveur web (www-data) a les permissions d\'écriture sur le dossier /home/radio/.'];
+        }
+
+        // Update the active playlist in JSON for the UI
         $data['active_playlist'] = $name;
         if ($this->savePlaylists($data)) {
             return ['status' => 'success', 'message' => 'Playlist active définie avec succès.'];
