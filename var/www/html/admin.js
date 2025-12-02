@@ -481,7 +481,6 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentEditingPlaylist = null; // To hold the playlist object being edited
 
   function editPlaylist(playlist) {
-    console.log('editPlaylist called with playlist:', playlist);
     currentEditingPlaylist = { ...playlist }; // Create a copy to edit
     editingPlaylistNameSpan.textContent = currentEditingPlaylist.name;
     
