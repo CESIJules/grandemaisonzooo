@@ -26,10 +26,10 @@ def create_playlist_source()
       found_playlist = list.find(fun(p) p["name"] == active_playlist_name end, all_playlists)
 
       if is_nil(found_playlist) or list.length(found_playlist["songs"]) == 0 then
-        log("Active playlist '#{active_playlist_name}' not found or is empty. Falling back to random music.", level="warning")
+        log(level="warning", "Active playlist '" + active_playlist_name + "' not found or is empty. Falling back to random music.")
         playlist(id="fallback_playlist", mode="random", reload_mode="watch", "/home/radio/musique")
       else
-        log("Loading active playlist: '#{active_playlist_name}' with #{list.length(found_playlist["songs"])} songs.", level="info")
+        log(level="info", "Loading active playlist: '" + active_playlist_name + "' with " + string_of(list.length(found_playlist["songs"])) + " songs.")
         # Create a playlist source from the list of songs.
         # Using a queue to play in order. Use playlist() for random.
         queue(id="dynamic_playlist", found_playlist["songs"])
