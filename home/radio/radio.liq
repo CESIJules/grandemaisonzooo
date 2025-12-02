@@ -23,7 +23,7 @@ def create_playlist_source()
       playlist(id="fallback_playlist", mode="random", reload_mode="watch", "/home/radio/musique")
     else
       # Find the playlist and its songs
-      found_playlist = list.find(fun(p) => p["name"] == active_playlist_name, all_playlists)
+      found_playlist = list.find(fun(p) p["name"] == active_playlist_name end, all_playlists)
 
       if is_nil(found_playlist) or list.length(found_playlist["songs"]) == 0 then
         log("Active playlist '#{active_playlist_name}' not found or is empty. Falling back to random music.", level="warning")
