@@ -1,73 +1,86 @@
+# radio.liq
+
 # Path to the playlist configuration file
 playlist_config_file = "/var/www/html/playlist.json"
 
-# Function to get the active playlist songs
-def get_active_playlist_songs()
-  json_data = json.parse(file.read(playlist_config_file))
-
-  active_playlist_name = json_data["active_playlist"]
-  all_playlists = json_data["playlists"]
-
-  if is_nil(active_playlist_name) or is_nil(all_playlists) then
-    log("No active playlist configured or playlists data missing. Falling back to random music directory playback.", level="warning")
-    playlist(mode="random.smart", "/home/radio/musique")
+# A function that creates a source based on the active playlist.
+# This function will be called by a factory to create new sources on-demand.
+def create_playlist_source()
+  log("Checking for active playlist...")
+  # Default to an empty playlist if file is invalid
+  json_data = try file.read(playlist_config_file) catch e do "" end
+  if json_data == "" then
+    log("Could not read or parse playlist.json. Falling back to random music.", level="error")
+    playlist(id="fallback_playlist", mode="random", reload_mode="watch", "/home/radio/musique")
   else
-    found_playlist = false
-    current_playlist_songs = []
-    
-    found_playlist_obj = list.find(fun p => p["name"] == active_playlist_name, all_playlists)
-    if is_nil(found_playlist_obj) then
-      found_playlist = false
-      current_playlist_songs = []
-    else
-      found_playlist = true
-      current_playlist_songs = found_playlist_obj["songs"]
-    end
+    json = json.parse(json_data)
+    active_playlist_name = json["active_playlist"]
+    all_playlists = json["playlists"]
 
-    if not found_playlist or list.length(current_playlist_songs) == 0 then
-      log("Active playlist '" + active_playlist_name + "' not found or is empty. Falling back to random music directory playback.", level="warning")
-      playlist(mode="random.smart", "/home/radio/musique")
+    # Check if an active playlist is set
+    if is_nil(active_playlist_name) or active_playlist_name == "" then
+      log("No active playlist set. Falling back to random music.", level="info")
+      playlist(id="fallback_playlist", mode="random", reload_mode="watch", "/home/radio/musique")
     else
-      log("Playing active playlist: " + active_playlist_name + " with " + (string_of(list.length(current_playlist_songs))) + " songs.", level="info")
-      # Use `queue` to play songs in order, `playlist` to play randomly
-      queue(id="active_playlist_queue", current_playlist_songs)
+      # Find the playlist and its songs
+      found_playlist = list.find(fun(p) => p["name"] == active_playlist_name, all_playlists)
+
+      if is_nil(found_playlist) or list.length(found_playlist["songs"]) == 0 then
+        log("Active playlist '#{active_playlist_name}' not found or is empty. Falling back to random music.", level="warning")
+        playlist(id="fallback_playlist", mode="random", reload_mode="watch", "/home/radio/musique")
+      else
+        log("Loading active playlist: '#{active_playlist_name}' with #{list.length(found_playlist["songs"])} songs.", level="info")
+        # Create a playlist source from the list of songs.
+        # Using a queue to play in order. Use playlist() for random.
+        queue(id="dynamic_playlist", found_playlist["songs"])
+      end
     end
   end
 end
 
-# Main radio source, re-evaluated when playlist_config_file changes
-radio = get_active_playlist_songs()
-radio = once(radio) # Ensure the source is re-evaluated only on changes to the config file
+# Create a factory that can produce new playlist sources whenever we need one.
+radio_factory = source.factory(create_playlist_source)
 
-# Watch for changes in the playlist config file and re-evaluate the source
-radio = switch(reopen(id="playlist_config_watcher", playlist_config_file, 1.), [radio])
+# Create a clock that "ticks" whenever the playlist configuration file is modified.
+playlist_update_clock = file.watch(playlist_config_file)
 
+# The main radio source. It starts with an initial source from the factory.
+# The switch will transition to a *new* source from the same factory every time
+# the playlist_update_clock ticks. `track_sensitive=false` ensures a smooth transition.
+radio = switch(
+  track_sensitive=false,
+  transitions=[(playlist_update_clock, radio_factory)],
+  radio_factory
+)
 
-# Fonction de mise a jour des metadonnees
-def set_title_artist(m) =
-  # Calcul du titre a partir du chemin de fichier
+# --- Metadata and Processing ---
+
+# Function to update metadata
+def set_title_artist(m)
   title =
     if m["filename"] == "" then
       "GRANDE MAISON RADIO"
     else
+      # Extract filename from the full path
       parts = string.split(separator="/", m["filename"])
-      list.nth(parts, list.length(parts) - 1)
+      filename = list.nth(default="", parts, list.length(parts) - 1)
+      # Remove extension
+      string.split(separator=".", filename)[0]
     end
-  [
-    ("title",  title),
-    ("artist", "")
-  ]
+  [("title", title), ("artist", "")]
 end
 
-# Application a chaque morceau
+# Apply metadata mapping
 radio = map_metadata(set_title_artist, radio)
 
-# Securite : silence si playlist vide
-radio = fallback(track_sensitive=false, [radio, blank()])
-radio = compress(threshold=-15.,ratio=4.,attack=0.2,release=1.,radio)
+# Safety net: play silence if the source is empty for some reason
+radio = fallback(track_sensitive=false, [radio, blank(duration=5.)])
 
+# Apply compression
+radio = compress(threshold=-15., ratio=4., attack=0.2, release=1., radio)
 
-# Diffusion vers Icecast
+# --- Output to Icecast ---
+
 output.icecast(
   %mp3,
   host     = "127.0.0.1",
@@ -75,5 +88,8 @@ output.icecast(
   password = "hacklaradio",
   mount    = "/stream",
   name     = "Radio GRANDE MAISON",
+  description = "La radio de la Grande Maison",
+  genre = "Various",
+  url = "https://grandemaisonzoo.com",
   radio
 )
