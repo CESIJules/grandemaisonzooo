@@ -692,8 +692,12 @@ document.addEventListener('DOMContentLoaded', () => {
                       // Get frequency data for subtle pulsing (not visibility gating)
                       const freqIndex = Math.floor(p.freqFactor * bufferLength); 
                       const val = dataArray[freqIndex] || 0;
-                      const audioLevel = val / 255; // 0.0 to 1.0
+                      const rawAudioLevel = val / 255; // 0.0 to 1.0
                       
+                      // Smooth audio level to prevent snapping when paused
+                      if (typeof p.smoothedLevel === 'undefined') p.smoothedLevel = 0;
+                      p.smoothedLevel += (rawAudioLevel - p.smoothedLevel) * 0.1;
+
                       // Position (Stable, no jitter)
                       const x = cx + Math.cos(p.theta) * (p.r * maxRadius);
                       const y = cy + Math.sin(p.theta) * (p.r * maxRadius);
@@ -727,7 +731,7 @@ document.addEventListener('DOMContentLoaded', () => {
                       }
                       
                       // Size pulsing (Subtle)
-                      const size = p.size * (1 + audioLevel * 0.5);
+                      const size = p.size * (1 + p.smoothedLevel * 0.5);
 
                       radarCtx.beginPath();
                       radarCtx.arc(x, y, size, 0, 2 * Math.PI);
