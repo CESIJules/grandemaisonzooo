@@ -1593,6 +1593,50 @@ document.addEventListener('DOMContentLoaded', () => {
     // Hide volume control when clicking outside (Removed)
     // document.addEventListener('click', ...);
 
+    // --- Media Session API Handlers ---
+    if ('mediaSession' in navigator) {
+        navigator.mediaSession.setActionHandler('play', () => {
+            if (audio.paused) playBtn.click();
+        });
+        navigator.mediaSession.setActionHandler('pause', () => {
+            if (!audio.paused) playBtn.click();
+        });
+        navigator.mediaSession.setActionHandler('stop', () => {
+             if (!audio.paused) playBtn.click();
+        });
+    }
+
+    // --- PiP Logic ---
+    const pipBtn = document.getElementById('rcPipBtn');
+    let pipVideo = null;
+
+    if (pipBtn) {
+        pipBtn.addEventListener('click', async () => {
+            if (document.pictureInPictureElement) {
+                await document.exitPictureInPicture();
+            } else {
+                if (!pipVideo) {
+                    pipVideo = document.createElement('video');
+                    pipVideo.muted = true;
+                    pipVideo.playsInline = true;
+                    // Use radarCanvas stream if available
+                    if (radarCanvas) {
+                        // Capture stream at 30fps
+                        const stream = radarCanvas.captureStream(20); 
+                        pipVideo.srcObject = stream;
+                    }
+                }
+                try {
+                    // Must play before requesting PiP
+                    await pipVideo.play();
+                    await pipVideo.requestPictureInPicture();
+                } catch (error) {
+                    console.error('PiP failed:', error);
+                }
+            }
+        });
+    }
+
     // Initial fetch of song info and listeners
     fetchCurrentSong();
   }
@@ -1606,12 +1650,29 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!rcTitle || !rcArtist) return;
       
       const parts = fullTitle.split(' - ');
+      let artist = '';
+      let title = fullTitle;
+
       if (parts.length >= 2) {
-          rcArtist.textContent = parts[0];
-          rcTitle.textContent = parts.slice(1).join(' - ');
+          artist = parts[0];
+          title = parts.slice(1).join(' - ');
+          rcArtist.textContent = artist;
+          rcTitle.textContent = title;
       } else {
           rcTitle.textContent = fullTitle;
           rcArtist.textContent = ''; 
+      }
+
+      // Update Media Session
+      if ('mediaSession' in navigator) {
+          navigator.mediaSession.metadata = new MediaMetadata({
+              title: title,
+              artist: artist,
+              album: 'GrandeMaison Radio',
+              artwork: [
+                  { src: 'favicon.ico', sizes: '64x64', type: 'image/x-icon' }
+              ]
+          });
       }
   }
 
