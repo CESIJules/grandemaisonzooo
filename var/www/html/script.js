@@ -2502,7 +2502,7 @@ document.addEventListener('DOMContentLoaded', () => {
             inputSequence.shift();
         }
         if (JSON.stringify(inputSequence) === JSON.stringify(secretCode)) {
-            window.location.href = '/admin';
+            window.location.href = 'admin.html';
         }
     });
 })();
