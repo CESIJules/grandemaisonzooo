@@ -1827,8 +1827,33 @@ document.addEventListener('DOMContentLoaded', () => {
           isNavigating = false;
           currentSectionIndex = index;
           if (typeof updateVolumeButtonPosition === 'function') updateVolumeButtonPosition();
+          if (typeof updateScrollArrowVisibility === 'function') updateScrollArrowVisibility();
       });
   }
+
+  // --- Scroll Arrow Logic ---
+  const scrollArrow = document.getElementById('scrollArrow');
+
+  function updateScrollArrowVisibility() {
+      if (!scrollArrow) return;
+      // Hide on last section
+      if (currentSectionIndex >= sections.length - 1) {
+          scrollArrow.classList.add('hidden');
+      } else {
+          scrollArrow.classList.remove('hidden');
+      }
+  }
+
+  if (scrollArrow) {
+      scrollArrow.addEventListener('click', () => {
+          if (currentSectionIndex < sections.length - 1) {
+              scrollToSection(currentSectionIndex + 1);
+          }
+      });
+  }
+  
+  // Initial check
+  updateScrollArrowVisibility();
 
   // --- Scroll & Layout Recalculation on Resize ---
   let resizeTimer;
