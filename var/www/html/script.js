@@ -737,13 +737,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
                       radarCtx.beginPath();
                       radarCtx.arc(x, y, size, 0, 2 * Math.PI);
+                      
+                      // Core color (White/Red)
                       radarCtx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha * radarActiveIntensity})`;
                       
-                      // Glow enabled - Stronger
-                      radarCtx.shadowBlur = (timeSincePass < transitionPoint) ? 50 : (20 + 30 * p.smoothedLevel);
-                      radarCtx.shadowColor = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                      // Glow enabled - Stronger & Brighter
+                      // Use a lighter color for the shadow to make it "shine"
+                      const glowR = Math.min(255, r + 50);
+                      const glowG = Math.min(255, g + 50);
+                      const glowB = Math.min(255, b + 50);
+                      
+                      radarCtx.shadowBlur = (timeSincePass < transitionPoint) ? 60 : (30 + 40 * p.smoothedLevel);
+                      radarCtx.shadowColor = `rgba(${glowR}, ${glowG}, ${glowB}, ${alpha})`;
                       
                       radarCtx.fill();
+                      
+                      // Double pass for extra shine (White core)
+                      if (timeSincePass < transitionPoint) {
+                          radarCtx.shadowBlur = 20;
+                          radarCtx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+                          radarCtx.fillStyle = `rgba(255, 255, 255, ${alpha * radarActiveIntensity})`;
+                          radarCtx.fill();
+                      }
                   } else if (p.seen) {
                       // Point has left the FOV (trail passed), respawn it for the next pass
                       // This creates a sense of randomness without reallocating objects
