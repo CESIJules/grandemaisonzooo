@@ -402,7 +402,7 @@ document.addEventListener('DOMContentLoaded', () => {
       item.addEventListener('mouseleave', () => {
         resetTimeout = setTimeout(() => {
           resetLines();
-        }, 1000); // Small delay to allow moving to next item without reset
+        }, 200); // Small delay to allow moving to next item without reset
       });
     });
   }

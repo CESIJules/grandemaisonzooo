@@ -8,95 +8,32 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;700&family=Syne:wght@400;700;800&family=Outfit:wght@400;500;700&family=Lexend:wght@300;400;600&display=swap"
       rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
     />
     <link rel="stylesheet" href="style.css" />
     <style>
-      /* Additional styles for admin page */
-      .admin-container {
-        width: 100%;
-        max-width: 900px;
-        margin: 0 auto;
-        padding: 20px;
+      :root {
+        --accent-primary: #007bff;
+        --accent-danger: #dc3545;
+        --accent-danger-hover: #c82333;
+        --background-dark: #050505;
+        --background-card: rgba(18, 18, 18, 0.5);
+        --border-color: rgba(255, 255, 255, 0.1);
+        --text-primary: #eee;
+        --text-secondary: #ccc;
+        --text-muted: #888;
       }
-      .post-management {
-        background-color: #222;
-        padding: 15px;
-        border-radius: 8px;
-        margin-bottom: 15px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-      .post-management .post-info {
-        text-align: left;
-      }
-      .delete-btn {
-        background-color: #dc3545;
-        color: white;
-        border: none;
-        padding: 8px 12px;
-        border-radius: 4px;
-        cursor: pointer;
-      }
-      .delete-btn:hover {
-        background-color: #c82333;
-      }
-      .edit-btn {
-        background-color: #007bff;
-        color: white;
-        border: none;
-        padding: 8px 12px;
-        border-radius: 4px;
-        cursor: pointer;
-        margin-right: 5px;
-      }
-      .edit-btn:hover {
-        background-color: #0056b3;
-      }
-      #logoutBtn {
-        position: fixed;
-        top: 16px;
-        right: 16px;
-        z-index: 1000;
-      }
-      .playing {
-        color: red;
-      }
-      /* Tab menu styles */
-      .tab-menu {
-        display: flex;
-        border-bottom: 2px solid #444;
-        margin-bottom: 20px;
-      }
-      .tab-link {
-        background: none;
-        border: none;
-        padding: 10px 20px;
-        cursor: pointer;
-        color: #ccc;
-        font-size: 1.1em;
-        transition: all 0.2s ease-in-out;
-        border-bottom: 2px solid transparent;
-      }
-      .tab-link.active {
-        color: #fff;
-        border-bottom-color: #007bff;
-      }
-      .tab-link:hover {
-        background-color: #333;
-      }
-      .tab-content {
-        display: none; /* Hidden by default */
-      }
-      .tab-content.active {
-        display: block; /* Shown when active */
-      }
-      /* Fix scrolling */
+
+      /* Base Overrides */
       body {
+        background-color: var(--background-dark);
         overflow-y: auto !important;
-        background-color: #000;
+        color: var(--text-primary);
       }
       main {
         height: auto !important;
@@ -106,7 +43,321 @@
         display: block !important;
         height: auto !important;
         min-height: 100vh;
-        padding-bottom: 50px;
+        padding: 120px 24px 50px;
+      }
+      h2 {
+        font-family: "SyneGMZExtraBold", sans-serif;
+        font-size: 1.8em;
+        margin-bottom: 24px;
+        letter-spacing: 1px;
+      }
+
+      /* ASCII Background */
+      #asciiBg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        pointer-events: none;
+        background-color: #111;
+      }
+
+      /* Admin Header */
+      .admin-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 30px;
+        z-index: 1001;
+        background: rgba(5, 5, 5, 0.6);
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        border-bottom: 1px solid var(--border-color);
+      }
+      .admin-header h1 {
+        font-family: "SyneGMZExtraBold", sans-serif;
+        font-size: 1.5em;
+        margin: 0;
+        letter-spacing: 1px;
+      }
+      .admin-header h1 a {
+        color: var(--text-primary);
+        text-decoration: none;
+      }
+      .admin-header h1 span {
+        font-family: "Outfit", sans-serif;
+        font-weight: 400;
+        font-size: 0.7em;
+        color: var(--text-muted);
+        margin-left: 8px;
+        letter-spacing: 2px;
+      }
+      #logoutBtn {
+        font-size: 14px;
+      }
+      #logoutBtn i {
+        margin-right: 8px;
+      }
+
+      /* Main Container */
+      .admin-container {
+        width: 100%;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 0;
+      }
+
+      /* Tab Menu */
+      .tab-menu {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 30px;
+        justify-content: center;
+      }
+      .tab-link {
+        font-family: "Lexend", sans-serif;
+        font-weight: 700;
+        text-transform: uppercase;
+        background-color: transparent;
+        border: 1px solid var(--border-color);
+        backdrop-filter: blur(3px);
+        -webkit-backdrop-filter: blur(3px);
+        color: var(--text-secondary);
+        padding: 10px 20px;
+        border-radius: 20px;
+        font-size: 14px;
+        cursor: pointer;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+      }
+      .tab-link:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.3);
+        color: var(--text-primary);
+      }
+      .tab-link.active {
+        background-color: #fff;
+        color: #111;
+        border-color: #fff;
+        box-shadow: 0 0 25px rgba(255, 255, 255, 0.3);
+      }
+      .tab-content {
+        display: none;
+        flex-direction: column;
+        gap: 30px;
+      }
+      .tab-content.active {
+        display: flex;
+      }
+
+      /* Admin Card */
+      .admin-card {
+        background-color: var(--background-card);
+        padding: 25px 30px;
+        border-radius: 20px;
+        border: 1px solid var(--border-color);
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+      }
+
+      /* Forms */
+      .admin-form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+      .admin-form input[type="text"],
+      .admin-form input[type="url"],
+      .admin-form input[type="date"],
+      .admin-form select {
+        font-family: "Outfit", sans-serif;
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        background: #1a1a1a;
+        color: var(--text-primary);
+        font-size: 1rem;
+        transition: all 0.2s ease;
+      }
+      .admin-form input:focus,
+      .admin-form select:focus {
+        outline: none;
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+      }
+      .admin-form label {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        margin-bottom: -10px;
+      }
+      .admin-form .btn {
+        margin-top: 10px;
+        width: fit-content;
+        align-self: flex-start;
+      }
+      .form-message {
+        margin-left: 15px;
+        font-size: 0.9rem;
+      }
+
+      /* Item Lists / Tables */
+      .item-list-container {
+        width: 100%;
+        overflow-x: auto;
+      }
+      .item-list {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      .item-list th,
+      .item-list td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+      }
+      .item-list th {
+        font-family: "Lexend", sans-serif;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+      }
+      .item-list td {
+        font-family: "Outfit", sans-serif;
+        font-size: 0.95rem;
+      }
+      .item-list tr:last-child td {
+        border-bottom: none;
+      }
+      .item-list tr.playing {
+        background: rgba(0, 123, 255, 0.1);
+        color: #fff;
+      }
+      .item-list tr.playing td:first-child {
+        border-left: 3px solid var(--accent-primary);
+      }
+      .item-list .actions {
+        text-align: right;
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+      .item-list .btn {
+        padding: 6px 10px;
+        font-size: 12px;
+        border-radius: 15px;
+      }
+      .item-list .btn i {
+        font-size: 1rem;
+      }
+
+      /* Button Variants */
+      .btn-danger {
+        border-color: var(--accent-danger);
+        color: var(--accent-danger);
+      }
+      .btn-danger:hover {
+        background-color: var(--accent-danger);
+        border-color: var(--accent-danger);
+        color: #fff;
+        box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
+      }
+      .btn[disabled] {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+        background-color: transparent;
+      }
+
+      /* Playlist Editor Modal */
+      #playlistEditModal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(5, 5, 5, 0.7);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        z-index: 2000;
+        display: none; /* Controlled by JS */
+        align-items: center;
+        justify-content: center;
+        padding: 30px;
+      }
+      #playlistEditModal.active {
+        display: flex;
+      }
+      .playlist-editor-content {
+        width: 100%;
+        max-width: 1200px;
+        height: 90%;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .playlist-editor-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .playlist-editor-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        flex-grow: 1;
+        min-height: 0;
+      }
+      .playlist-panel {
+        background-color: var(--background-card);
+        border-radius: 15px;
+        border: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .playlist-panel h3 {
+        padding: 15px 20px;
+        margin: 0;
+        font-size: 1.2rem;
+        border-bottom: 1px solid var(--border-color);
+      }
+      .playlist-panel input[type="text"] {
+        margin: 15px 20px 0;
+        width: calc(100% - 40px);
+      }
+      .playlist-panel ul {
+        list-style: none;
+        padding: 10px 20px;
+        margin: 0;
+        overflow-y: auto;
+        flex-grow: 1;
+      }
+      .playlist-panel li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        font-size: 0.9rem;
+      }
+      .playlist-panel li:last-child {
+        border-bottom: none;
+      }
+      .playlist-panel .btn {
+        padding: 4px 8px;
+        font-size: 10px;
       }
     </style>
   </head>
@@ -116,7 +367,19 @@
         window.location.href = "login.html";
       }
     </script>
-    <button id="logoutBtn" class="btn">Logout</button>
+
+    <canvas id="asciiBg"></canvas>
+
+    <header class="admin-header">
+      <h1>
+        <a href="index.html">GRANDE MAISON</a>
+        <span>ADMIN</span>
+      </h1>
+      <button id="logoutBtn" class="btn">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </header>
+
     <main>
       <section id="admin-section" class="screen">
         <div class="admin-container">
@@ -128,117 +391,191 @@
             <button class="tab-link" data-tab="playlists">Playlists</button>
           </div>
 
+          <!-- Timeline Tab -->
           <div id="admin-timeline" class="tab-content active">
-            <h2>Admin Timeline</h2>
-            <form id="adminTimelineForm" class="contact-form">
-              <input
-                type="text"
-                id="postSubtitle"
-                placeholder="Titre du Projet"
-              />
-              <input type="url" id="postLink" placeholder="Lien (optionnel)" />
-              <label for="postImage">Image du post</label>
-              <input type="file" id="postImage" accept="image/*" />
-              <input type="date" id="postDate" required />
-              <select id="postArtist" required>
-                <option value="" disabled selected>Choisir un artiste</option>
-              </select>
-              <button type="submit" class="btn">Ajouter au Timeline</button>
-              <span id="adminFormMessage"></span>
-            </form>
-
-            <hr style="margin-top: 40px; margin-bottom: 20px" />
-
-            <h2>Gérer les posts</h2>
-            <div id="postsManagementContainer">
-              <!-- Posts will be listed here -->
-            </div>
-          </div>
-
-          <div id="music" class="tab-content">
-            <h2>Gérer les musiques</h2>
-            <button id="refreshMusicBtn" class="btn">
-              Rafraîchir la liste
-            </button>
-
-            <div id="musicManagementContainer">
-              <!-- Music files will be listed here -->
-            </div>
-            <div style="text-align: center; margin-top: 10px">
-              <button id="showMoreMusicBtn" class="btn" style="display: none">
-                Voir plus ▼
-              </button>
-            </div>
-
-            <hr style="margin: 40px 0" />
-
-            <h2>Télécharger depuis YouTube</h2>
-            <form id="youtubeDownloadForm" class="contact-form">
-              <input
-                type="url"
-                id="youtubeUrl"
-                placeholder="https://www.youtube.com/watch?v=..."
-                required
-              />
-              <button type="submit" class="btn">
-                Télécharger et convertir en MP3
-              </button>
-              <span id="youtubeFormMessage"></span>
-            </form>
-          </div>
-
-          <div id="playlists" class="tab-content">
-            <h2>Gérer les Playlists</h2>
-
-            <div id="playlistControls">
-              <h3>Créer une nouvelle Playlist</h3>
-              <form id="createPlaylistForm" class="contact-form">
-                <input type="text" id="newPlaylistName" placeholder="Nom de la playlist" required />
-                <button type="submit" class="btn">Créer Playlist</button>
-                <span id="createPlaylistMessage"></span>
+            <div class="admin-card">
+              <h2>Ajouter / Modifier un Post</h2>
+              <form id="adminTimelineForm" class="admin-form">
+                <input
+                  type="text"
+                  id="postSubtitle"
+                  placeholder="Titre du Projet"
+                />
+                <input type="url" id="postLink" placeholder="Lien (optionnel)" />
+                <label for="postImage">Image du post</label>
+                <input type="file" id="postImage" accept="image/*" />
+                <input type="date" id="postDate" required />
+                <select id="postArtist" required>
+                  <option value="" disabled selected>Choisir un artiste</option>
+                </select>
+                <button type="submit" class="btn">
+                  <i class="fas fa-plus"></i> Ajouter au Timeline
+                </button>
+                <span id="adminFormMessage" class="form-message"></span>
               </form>
-
-              <h3>Playlists Existantes</h3>
-              <div id="existingPlaylistsContainer">
-                <!-- Existing playlists will be listed here -->
-              </div>
             </div>
-
-            <hr style="margin: 40px 0" />
-
-            <h2>Toutes les Musiques Disponibles</h2>
-            <div id="allSongsList">
-              <!-- All available songs will be listed here for adding to playlists -->
+            <div class="admin-card">
+              <h2>Gérer les Posts</h2>
+              <div id="postsManagementContainer" class="item-list-container">
+                <!-- Posts will be listed here by JS -->
+              </div>
             </div>
           </div>
 
-          <!-- Playlist Edit Modal/Section -->
-          <div id="playlistEditModal" class="tab-content" style="display: none;">
-            <h2>Éditer Playlist: <span id="editingPlaylistName"></span></h2>
-            <div class="playlist-editor-container">
-              <div class="playlist-songs-panel">
-                <h3>Chansons de la Playlist</h3>
-                <ul id="currentPlaylistSongs">
-                  <!-- Songs in the playlist will be listed here -->
-                </ul>
-              </div>
-              <div class="all-available-songs-panel">
-                <h3>Toutes les Musiques Disponibles</h3>
-                <input type="text" id="songSearchInput" placeholder="Rechercher des musiques..." />
-                <ul id="allAvailableSongsForEdit">
-                  <!-- All available songs will be listed here -->
-                </ul>
-              </div>
+          <!-- Music Tab -->
+          <div id="music" class="tab-content">
+            <div class="admin-card">
+              <h2>Télécharger depuis YouTube</h2>
+              <form id="youtubeDownloadForm" class="admin-form">
+                <input
+                  type="url"
+                  id="youtubeUrl"
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  required
+                />
+                <button type="submit" class="btn">
+                  <i class="fab fa-youtube"></i> Télécharger en MP3
+                </button>
+                <span id="youtubeFormMessage" class="form-message"></span>
+              </form>
             </div>
-            <div class="edit-playlist-actions">
-              <button id="savePlaylistChangesBtn" class="btn">Enregistrer les Modifications</button>
-              <button id="cancelPlaylistEditBtn" class="btn delete-btn">Annuler</button>
+            <div class="admin-card">
+              <h2>Gérer les Musiques</h2>
+              <div id="musicManagementContainer" class="item-list-container">
+                <!-- Music files will be listed here by JS -->
+              </div>
             </div>
           </div>
 
+          <!-- Playlists Tab -->
+          <div id="playlists" class="tab-content">
+            <div class="admin-card">
+              <h2>Créer une nouvelle Playlist</h2>
+              <form id="createPlaylistForm" class="admin-form">
+                <input
+                  type="text"
+                  id="newPlaylistName"
+                  placeholder="Nom de la playlist"
+                  required
+                />
+                <button type="submit" class="btn">Créer Playlist</button>
+                <span id="createPlaylistMessage" class="form-message"></span>
+              </form>
+            </div>
+            <div class="admin-card">
+              <h2>Playlists Existantes</h2>
+              <div
+                id="existingPlaylistsContainer"
+                class="item-list-container"
+              >
+                <!-- Existing playlists will be listed here by JS -->
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </main>
+
+    <!-- Playlist Edit Modal -->
+    <div id="playlistEditModal">
+      <div class="playlist-editor-content">
+        <div class="playlist-editor-header">
+          <h2>Éditer Playlist: <span id="editingPlaylistName"></span></h2>
+          <div class="edit-playlist-actions">
+            <button id="savePlaylistChangesBtn" class="btn">
+              <i class="fas fa-save"></i> Enregistrer
+            </button>
+            <button id="cancelPlaylistEditBtn" class="btn btn-danger">
+              <i class="fas fa-times"></i> Annuler
+            </button>
+          </div>
+        </div>
+        <div class="playlist-editor-container">
+          <div class="playlist-panel">
+            <h3>Chansons de la Playlist</h3>
+            <ul id="currentPlaylistSongs">
+              <!-- Songs in the playlist will be listed here -->
+            </ul>
+          </div>
+          <div class="playlist-panel">
+            <h3>Toutes les Musiques Disponibles</h3>
+            <input
+              type="text"
+              id="songSearchInput"
+              class="admin-form"
+              placeholder="Rechercher des musiques..."
+            />
+            <ul id="allAvailableSongsForEdit">
+              <!-- All available songs will be listed here -->
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script src="admin.js"></script>
+    <script>
+      // Simplified ASCII background effect
+      document.addEventListener("DOMContentLoaded", () => {
+        const canvas = document.getElementById("asciiBg");
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        const chars = "GRANDMAISONZOO".split("");
+        const fontSize = 14;
+        let columns,
+          drops = [];
+
+        function resize() {
+          canvas.width = window.innerWidth;
+          canvas.height = window.innerHeight;
+          columns = Math.floor(canvas.width / fontSize);
+          drops = [];
+          for (let i = 0; i < columns; i++) {
+            drops[i] = Math.random() * canvas.height;
+          }
+        }
+
+        function draw() {
+          ctx.fillStyle = "rgba(17, 17, 17, 0.1)";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+          ctx.font = fontSize + "px monospace";
+
+          for (let i = 0; i < drops.length; i++) {
+            const text = chars[Math.floor(Math.random() * chars.length)];
+            ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+            if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+              drops[i] = 0;
+            }
+            drops[i]++;
+          }
+        }
+        
+        window.addEventListener("resize", resize);
+        resize();
+        setInterval(draw, 60);
+
+        // Tab switching logic
+        const tabLinks = document.querySelectorAll(".tab-link");
+        const tabContents = document.querySelectorAll(".tab-content");
+
+        tabLinks.forEach(link => {
+            link.addEventListener("click", () => {
+                const tabId = link.dataset.tab;
+
+                tabLinks.forEach(l => l.classList.remove("active"));
+                link.classList.add("active");
+
+                tabContents.forEach(content => {
+                    if (content.id === tabId) {
+                        content.classList.add("active");
+                    } else {
+                        content.classList.remove("active");
+                    }
+                });
+            });
+        });
+      });
+    </script>
   </body>
 </html>
