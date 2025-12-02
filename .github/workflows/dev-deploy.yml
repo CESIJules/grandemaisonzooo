@@ -47,7 +47,6 @@ jobs:
             git fetch origin
             git reset --hard "origin/${BRANCH}"
 
-            systemctl restart nginx
             systemctl restart icecast2
             systemctl restart liquidsoap
 
