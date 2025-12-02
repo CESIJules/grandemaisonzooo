@@ -413,7 +413,11 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Radar Points Initialization
     const radarPoints = [];
-    const numRadarPoints = 50; // Increased for better coverage
+    // --- CONFIGURATION RADAR ---
+    const numRadarPoints = 30; // Moins de points (Modifiable ici)
+    const fadeOutStart = 0.1;  // Début du fade-out (0.0 = immédiat, 1.0 = fin du sillage)
+    // ---------------------------
+
     for (let i = 0; i < numRadarPoints; i++) {
         radarPoints.push({
             // Square root of random ensures uniform distribution over the area (avoids center clustering)
@@ -654,10 +658,11 @@ document.addEventListener('DOMContentLoaded', () => {
                           b = 0;
                       }
 
-                      // Alpha: Fade out at the very end of the trail
+                      // Alpha: Fade out logic (Controlled by variables)
                       let alpha = 1.0;
-                      if (age > 0.8) {
-                          alpha = 1.0 - ((age - 0.8) / 0.2);
+                      if (age > fadeOutStart) {
+                          const fadeDuration = 5.0 - fadeOutStart;
+                          alpha = 1.0 - ((age - fadeOutStart) / fadeDuration);
                       }
                       
                       // Size pulsing (Subtle)
