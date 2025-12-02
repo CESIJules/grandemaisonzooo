@@ -738,8 +738,8 @@ document.addEventListener('DOMContentLoaded', () => {
                       radarCtx.arc(x, y, size, 0, 2 * Math.PI);
                       radarCtx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha * radarActiveIntensity})`;
                       
-                      // Glow enabled
-                      radarCtx.shadowBlur = (timeSincePass < transitionPoint) ? 15 : (5 + 10 * p.smoothedLevel);
+                      // Glow enabled - Stronger
+                      radarCtx.shadowBlur = (timeSincePass < transitionPoint) ? 50 : (20 + 30 * p.smoothedLevel);
                       radarCtx.shadowColor = `rgba(${r}, ${g}, ${b}, ${alpha})`;
                       
                       radarCtx.fill();
