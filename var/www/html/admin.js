@@ -5,11 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let allAvailableSongs = [];
     let currentActivePlaylist = null;
     let currentEditingPlaylist = null;
-    let currentArtistFilter = 'all';
 
     // --- Element Selectors ---
-    const navLinks = document.querySelectorAll('.nav-link');
-    const adminSections = document.querySelectorAll('.admin-section');
     const logoutBtn = document.getElementById('logoutBtn');
 
     // Timeline
@@ -17,16 +14,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const adminFormMessage = document.getElementById('adminFormMessage');
     const postsManagementContainer = document.getElementById('postsManagementContainer');
     const postArtistSelect = document.getElementById('postArtist');
-    const postFiltersContainer = document.getElementById('postFilters');
-    const togglePostsBtn = document.getElementById('togglePostsBtn');
-    const collapsiblePosts = document.getElementById('collapsiblePosts');
 
     // Music
     const youtubeDownloadForm = document.getElementById('youtubeDownloadForm');
     const musicManagementContainer = document.getElementById('musicManagementContainer');
-    const musicSearchInput = document.getElementById('musicSearchInput');
-    const toggleMusicBtn = document.getElementById('toggleMusicBtn');
-    const collapsibleMusic = document.getElementById('collapsibleMusic');
 
     // Playlists
     const createPlaylistForm = document.getElementById('createPlaylistForm');
@@ -46,32 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return filename.replace(/\.[^/.]+$/, "").replace(/_/g, ' ').replace(/\s*-\s*/g, ' - ').toUpperCase();
     }
 
-    // --- UI Initializers ---
-    function setupNavigation() {
-        navLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const sectionId = link.getAttribute('data-section');
-                
-                navLinks.forEach(navLink => navLink.classList.remove('active'));
-                link.classList.add('active');
 
-                adminSections.forEach(section => {
-                    section.style.display = section.id === sectionId ? 'block' : 'none';
-                });
-            });
-        });
-    }
-
-    function setupCollapsible(button, content) {
-        if (!button || !content) return;
-        button.addEventListener('click', () => {
-            const isExpanded = content.classList.toggle('expanded');
-            button.innerHTML = isExpanded 
-                ? '<i class="fas fa-chevron-up"></i> Masquer' 
-                : '<i class="fas fa-chevron-down"></i> Afficher';
-        });
-    }
 
     // --- API & Rendering Functions ---
 
@@ -94,36 +60,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // POSTS (TIMELINE)
-    function populatePostFilters() {
-        const artists = ['all', ...new Set(allPosts.map(p => p.artist))];
-        postFiltersContainer.innerHTML = '';
-        artists.forEach(artist => {
-            const button = document.createElement('button');
-            button.className = 'btn filter-btn';
-            button.dataset.artist = artist;
-            button.textContent = artist;
-            if (artist === 'all') button.textContent = 'Tous';
-            if (artist === currentArtistFilter) button.classList.add('active');
-            
-            button.addEventListener('click', () => {
-                currentArtistFilter = artist;
-                renderAdminPosts(); 
-                postFiltersContainer.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-                button.classList.add('active');
-            });
-            postFiltersContainer.appendChild(button);
-        });
-    }
-
     function renderAdminPosts() {
         let postsToRender = allPosts;
-        if (currentArtistFilter !== 'all') {
-            postsToRender = allPosts.filter(p => p.artist === currentArtistFilter);
-        }
         postsToRender.sort((a, b) => new Date(b.date) - new Date(a.date));
 
         if (postsToRender.length === 0) {
-            postsManagementContainer.innerHTML = '<p>Aucun post à afficher pour ce filtre.</p>';
+            postsManagementContainer.innerHTML = '<p>Aucun post à afficher.</p>';
             return;
         }
 
@@ -154,7 +96,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch('get_posts.php', { cache: 'no-store' });
             if (!response.ok) throw new Error(`Erreur serveur: ${response.statusText}`);
             allPosts = await response.json();
-            populatePostFilters();
             renderAdminPosts();
         } catch (error) {
             postsManagementContainer.innerHTML = `<p style="color: var(--accent-danger);">Impossible de charger les posts: ${error.message}</p>`;
@@ -163,11 +104,56 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ... other post functions (add, update, delete) remain largely the same ...
     async function addPost(formData) {
-        // ... (implementation is unchanged)
+        const submitBtn = adminTimelineForm.querySelector('button[type="submit"]');
+        const originalBtnHtml = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Ajout...';
+        try {
+            const response = await fetch('add_post.php', { method: 'POST', body: formData });
+            if (!response.ok) throw new Error('Server error');
+            const result = await response.json();
+            if (result.status !== 'success') throw new Error(result.message);
+            adminFormMessage.textContent = 'Post ajouté !';
+            adminFormMessage.style.color = 'lightgreen';
+            adminTimelineForm.reset();
+            fetchAndRenderPosts();
+        } catch (error) {
+            adminFormMessage.textContent = `Erreur: ${error.message}`;
+            adminFormMessage.style.color = 'var(--accent-danger)';
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnHtml;
+            setTimeout(() => adminFormMessage.textContent = '', 3000);
+        }
     }
+
     async function updatePost(formData) {
-        // ... (implementation is unchanged)
+        const submitBtn = adminTimelineForm.querySelector('button[type="submit"]');
+        const originalBtnHtml = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mise à jour...';
+        try {
+            const response = await fetch('update_post.php', { method: 'POST', body: formData });
+            if (!response.ok) throw new Error('Server error');
+            const result = await response.json();
+            if (result.status !== 'success') throw new Error(result.message);
+            adminFormMessage.textContent = 'Post mis à jour !';
+            adminFormMessage.style.color = 'lightgreen';
+            adminTimelineForm.reset();
+            const editingIdField = adminTimelineForm.querySelector('input[name="editingPostId"]');
+            if (editingIdField) editingIdField.remove();
+            submitBtn.innerHTML = '<i class="fas fa-plus"></i> Ajouter au Timeline';
+            fetchAndRenderPosts();
+        } catch (error) {
+            adminFormMessage.textContent = `Erreur: ${error.message}`;
+            adminFormMessage.style.color = 'var(--accent-danger)';
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnHtml;
+            setTimeout(() => adminFormMessage.textContent = '', 3000);
+        }
     }
+
     async function deletePost(postId) {
         if (!confirm('Êtes-vous sûr de vouloir supprimer ce post ?')) return;
         try {
@@ -188,14 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // MUSIC
     function renderMusicFiles() {
-        const searchTerm = musicSearchInput.value.toLowerCase();
         let filesToRender = allMusicFiles;
-
-        if (searchTerm) {
-            filesToRender = allMusicFiles.filter(file => 
-                formatSongPathToTitle(file).toLowerCase().includes(searchTerm)
-            );
-        }
 
         if (filesToRender.length === 0) {
             musicManagementContainer.innerHTML = `<p>Aucun fichier de musique trouvé.</p>`;
@@ -334,6 +313,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // ... other playlist functions are unchanged ...
     async function createPlaylist(playlistName) {
         const createPlaylistMessage = document.getElementById('createPlaylistMessage');
+        const submitBtn = createPlaylistForm.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
         try {
             const response = await fetch('create_playlist.php', {
                 method: 'POST',
@@ -350,6 +332,8 @@ document.addEventListener('DOMContentLoaded', () => {
             createPlaylistMessage.textContent = `Erreur: ${error.message}`;
             createPlaylistMessage.style.color = 'var(--accent-danger)';
         } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Créer Playlist';
             setTimeout(() => createPlaylistMessage.textContent = '', 3000);
         }
     }
@@ -392,18 +376,16 @@ document.addEventListener('DOMContentLoaded', () => {
         currentEditingPlaylist = JSON.parse(JSON.stringify(playlist));
         editingPlaylistNameSpan.textContent = currentEditingPlaylist.name;
         
-        adminSections.forEach(section => section.style.display = 'none');
-        playlistEditModal.style.display = 'flex'; // Use flex for new layout
-        navLinks.forEach(navLink => navLink.classList.remove('active'));
+        playlistEditModal.classList.add('active');
 
         renderCurrentPlaylistSongs();
         renderAllAvailableSongsForEdit();
     }
 
     function cancelPlaylistEdit() {
-        document.querySelector('.nav-link[data-section="playlists"]').click();
-        fetchPlaylists();
+        playlistEditModal.classList.remove('active');
         currentEditingPlaylist = null;
+        fetchPlaylists(); // Refresh list in case changes were made but not saved
     }
     // ... renderCurrentPlaylistSongs, renderAllAvailableSongsForEdit, savePlaylistChanges are unchanged ...
     function renderCurrentPlaylistSongs() {
@@ -423,7 +405,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentPlaylistSongsUl.appendChild(li);
             });
         } else {
-            currentPlaylistSongsUl.innerHTML = '<p>Aucune chanson dans cette playlist.</p>';
+            currentPlaylistSongsUl.innerHTML = '<li>Aucune chanson dans cette playlist.</li>';
         }
     }
 
@@ -434,7 +416,7 @@ document.addEventListener('DOMContentLoaded', () => {
         );
 
         if (filteredSongs.length === 0) {
-            allAvailableSongsForEditUl.innerHTML = '<p>Aucune chanson trouvée.</p>';
+            allAvailableSongsForEditUl.innerHTML = '<li>Aucune chanson trouvée.</li>';
             return;
         }
 
@@ -459,6 +441,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function savePlaylistChanges() {
         if (!currentEditingPlaylist) return;
+        savePlaylistChangesBtn.disabled = true;
+        savePlaylistChangesBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
         try {
             const response = await fetch('update_playlist.php', {
                 method: 'POST',
@@ -474,6 +458,9 @@ document.addEventListener('DOMContentLoaded', () => {
             cancelPlaylistEdit();
         } catch (error) {
             alert(`Erreur: ${error.message}`);
+        } finally {
+            savePlaylistChangesBtn.disabled = false;
+            savePlaylistChangesBtn.innerHTML = '<i class="fas fa-save"></i> Enregistrer';
         }
     }
 
@@ -483,13 +470,6 @@ document.addEventListener('DOMContentLoaded', () => {
         sessionStorage.removeItem('loggedIn');
         window.location.href = 'login.html';
     });
-
-    // Collapsible sections
-    setupCollapsible('togglePostsBtn', 'collapsiblePosts');
-    setupCollapsible('toggleMusicBtn', 'collapsibleMusic');
-
-    // Search and filters
-    musicSearchInput.addEventListener('input', renderMusicFiles);
 
     // Event Delegation for dynamic buttons
     document.body.addEventListener('click', async (e) => {
@@ -607,19 +587,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Initial Load ---
     function initializeAdminPanel() {
-        setupNavigation();
-        setupCollapsible('togglePostsBtn', 'collapsiblePosts');
-        setupCollapsible('toggleMusicBtn', 'collapsibleMusic');
-        
         populateArtistDropdown();
         fetchAndRenderPosts();
         fetchAndRenderMusic();
         fetchAllSongs();
         fetchPlaylists();
-        
-        // Set initial view
-        document.querySelector('.nav-link[data-section="timeline"]').click();
     }
-
-    initializeAdminPanel();
-});
