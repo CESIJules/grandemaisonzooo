@@ -394,6 +394,50 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  async function deletePlaylist(playlistName) {
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer la playlist "${playlistName}" ?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch('delete_playlist.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: playlistName })
+      });
+      const result = await response.json();
+
+      if (result.status === 'success') {
+        alert('Playlist supprimée avec succès!');
+        fetchPlaylists(); // Refresh the list
+      } else {
+        throw new Error(result.message || 'Erreur lors de la suppression.');
+      }
+    } catch (error) {
+      alert(`Erreur: ${error.message}`);
+    }
+  }
+
+  async function setActivePlaylist(playlistName) {
+    try {
+      const response = await fetch('set_active_playlist.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: playlistName })
+      });
+      const result = await response.json();
+
+      if (result.status === 'success') {
+        alert('Playlist activée avec succès!');
+        fetchPlaylists(); // Refresh the list to show the (ACTIVE) tag
+      } else {
+        throw new Error(result.message || 'Erreur lors de l\'activation.');
+      }
+    } catch (error) {
+      alert(`Erreur: ${error.message}`);
+    }
+  }
+
   function renderPlaylists(playlists) {
     existingPlaylistsContainer.innerHTML = ''; // Clear existing playlists
 
@@ -518,11 +562,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderAllAvailableSongsForEdit(filter = '') {
-    console.log('renderAllAvailableSongsForEdit: allAvailableSongs', allAvailableSongs);
+    console.log('START renderAllAvailableSongsForEdit. Filter:', filter);
+    console.log('Total available songs:', allAvailableSongs.length);
     allAvailableSongsForEditUl.innerHTML = '';
     const filteredSongs = allAvailableSongs.filter(songPath => 
       formatSongPathToTitle(songPath).toLowerCase().includes(filter.toLowerCase())
     );
+
+    console.log('Filtered songs count:', filteredSongs.length);
 
     if (filteredSongs.length === 0) {
       allAvailableSongsForEditUl.innerHTML = '<p>Aucune chanson trouvée.</p>';
