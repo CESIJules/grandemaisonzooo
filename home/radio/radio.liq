@@ -1,5 +1,5 @@
 # Path to the playlist configuration file
-playlist_config_file = "/var/www/html/grandemaisonzooo/playlist.json"
+playlist_config_file = "/var/www/html/playlist.json"
 
 # Function to get the active playlist songs
 def get_active_playlist_songs()
