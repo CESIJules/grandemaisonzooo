@@ -414,9 +414,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Radar Points Initialization
     const radarPoints = [];
     // --- CONFIGURATION RADAR ---
-    const numRadarPoints = 10; // Nombre de points
-    const fadeDuration = 10.0;  // Durée totale de visibilité (secondes)
-    const fadeOutStart = 0.2;  // Délai avant le début du fade-out (secondes)
+    const numRadarPoints = 7; // Nombre de points
+    const fadeDuration = 7.0;  // Durée totale de visibilité (secondes)
+    const fadeOutStart = 0;  // Délai avant le début du fade-out (secondes)
     // ---------------------------
 
     for (let i = 0; i < numRadarPoints; i++) {
@@ -689,19 +689,29 @@ document.addEventListener('DOMContentLoaded', () => {
                       // Point has left the FOV (trail passed), respawn it for the next pass
                       // This creates a sense of randomness without reallocating objects
                       p.r = Math.sqrt(Math.random());
-                      p.theta = Math.random() * 2 * Math.PI;
                       p.size = Math.random() * 2 + 1;
                       p.freqFactor = Math.random() * 0.8;
                       p.seen = false;
 
-                      // Avoid placing it directly in the current sweep (prevent pop-in)
-                      let newDiff = sweepAngle - p.theta;
-                      while (newDiff < 0) newDiff += 2 * Math.PI;
-                      while (newDiff >= 2 * Math.PI) newDiff -= 2 * Math.PI;
+                      // Calculate a safe zone to spawn the point so it doesn't pop in
+                      // The safe zone is the area NOT currently covered by the sweep trail (FOV)
+                      // FOV covers [sweepAngle - fov, sweepAngle]
+                      // We want to spawn in [sweepAngle, sweepAngle + (2PI - fov)]
                       
-                      if (newDiff < fov) {
-                          // If we accidentally placed it in the view, flip it to the opposite side
-                          p.theta = (p.theta + Math.PI) % (2 * Math.PI);
+                      // Ensure we have at least a small gap
+                      const safeMargin = 0.2; // radians
+                      const safeZoneStart = fov + safeMargin;
+                      const safeZoneEnd = 2 * Math.PI - safeMargin;
+                      
+                      if (safeZoneEnd > safeZoneStart) {
+                          // Pick a random angle in the "invisible" sector
+                          const randomOffset = safeZoneStart + Math.random() * (safeZoneEnd - safeZoneStart);
+                          // diff = sweepAngle - theta  =>  theta = sweepAngle - diff
+                          p.theta = sweepAngle - randomOffset;
+                      } else {
+                          // Fallback if FOV is huge (covers almost entire circle)
+                          // Just place it directly ahead of the sweep
+                          p.theta = sweepAngle + safeMargin;
                       }
                   }
               });
