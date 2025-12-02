@@ -1708,12 +1708,46 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateTitleUI(title) {
       if (!currentSong) return;
       const currentTitle = currentSong.querySelector('.title').textContent;
+      
       if (title !== currentTitle) {
+          // 1. Fixer la taille actuelle explicitement pour permettre l'animation
+          const startWidth = currentSong.offsetWidth;
+          const startHeight = currentSong.offsetHeight;
+          currentSong.style.width = `${startWidth}px`;
+          currentSong.style.height = `${startHeight}px`;
+
           currentSong.classList.add("fade");
+          
           setTimeout(() => {
+              // 2. Changer le contenu
               currentSong.querySelector('.title').textContent = title;
+              
+              // 3. Calculer la nouvelle taille naturelle
+              currentSong.style.width = 'auto';
+              currentSong.style.height = 'auto';
+              const newWidth = currentSong.offsetWidth;
+              const newHeight = currentSong.offsetHeight;
+              
+              // 4. Remettre la taille de départ pour animer
+              currentSong.style.width = `${startWidth}px`;
+              currentSong.style.height = `${startHeight}px`;
+              
+              // Force reflow
+              currentSong.offsetHeight; 
+
+              // 5. Animer vers la nouvelle taille
+              currentSong.style.width = `${newWidth}px`;
+              currentSong.style.height = `${newHeight}px`;
+              
               currentSong.classList.remove("fade");
               updateRCInfo(title);
+
+              // 6. Nettoyer après l'animation (0.5s match CSS transition)
+              setTimeout(() => {
+                  currentSong.style.width = 'auto';
+                  currentSong.style.height = 'auto';
+              }, 500);
+
           }, 300);
       } else {
           updateRCInfo(title);

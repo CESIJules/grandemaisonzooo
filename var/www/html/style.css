@@ -1088,6 +1088,10 @@ body.menu-open {
   justify-content: center;
   overflow: hidden;
   text-overflow: ellipsis;
+
+  /* Animation de taille */
+  transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), height 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: width, height;
 }
 
 #currentSong .title {
