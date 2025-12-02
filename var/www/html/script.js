@@ -414,8 +414,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Radar Points Initialization
     const radarPoints = [];
     // --- CONFIGURATION RADAR ---
-    const numRadarPoints = 30; // Moins de points (Modifiable ici)
-    const fadeOutStart = 0.1;  // Début du fade-out (0.0 = immédiat, 1.0 = fin du sillage)
+    const numRadarPoints = 10; // Nombre de points
+    const fadeDuration = 10.0;  // Durée totale de visibilité (secondes)
+    const fadeOutStart = 0.2;  // Délai avant le début du fade-out (secondes)
     // ---------------------------
 
     for (let i = 0; i < numRadarPoints; i++) {
@@ -610,7 +611,10 @@ document.addEventListener('DOMContentLoaded', () => {
               // The sweep tip is at `normalizedAngle`.
               const sweepAngle = normalizedAngle; 
               
-              const fov = Math.PI; // Extended trail (180 degrees) for longer fade out
+              // Calculate speed and FOV based on time settings
+              const cycleDuration = 12.0; 
+              const speed = (2 * Math.PI) / cycleDuration; // radians per second
+              const fov = speed * fadeDuration; // FOV matches the desired duration
 
               // Electric Effect Setup - Red & Shiny
               radarCtx.shadowColor = '#ff0000'; 
@@ -629,8 +633,8 @@ document.addEventListener('DOMContentLoaded', () => {
                       // It is in FOV!
                       p.seen = true; // Mark as seen
                       
-                      // Calculate "age" of the detection (0.0 to 1.0) inside the FOV
-                      const age = diff / fov;
+                      // Calculate time since the sweep passed this point
+                      const timeSincePass = diff / speed; // seconds
 
                       // Get frequency data for subtle pulsing (not visibility gating)
                       const freqIndex = Math.floor(p.freqFactor * bufferLength); 
@@ -646,9 +650,10 @@ document.addEventListener('DOMContentLoaded', () => {
                       const transitionPoint = 0.2; // First 20% of the trail is the transition
                       let r, g, b;
                       
-                      if (age < transitionPoint) {
+                      // Use time for color transition too (e.g. first 0.2s is white)
+                      if (timeSincePass < 0.2) {
                           // Interpolate White (255,255,255) to Red (255,0,0)
-                          const t = age / transitionPoint; // 0.0 to 1.0
+                          const t = timeSincePass / 0.2; 
                           r = 255;
                           g = Math.floor(255 * (1 - t));
                           b = Math.floor(255 * (1 - t));
@@ -659,12 +664,13 @@ document.addEventListener('DOMContentLoaded', () => {
                           b = 0;
                       }
 
-                      // Alpha: Fade out logic (Controlled by variables)
+                      // Alpha: Fade out logic (Time based)
                       let alpha = 1.0;
-                      if (age > fadeOutStart) {
-                          // Ensure it reaches 0 exactly when age reaches 1.0 (end of FOV)
-                          const fadeDuration = 10.0 - fadeOutStart;
-                          alpha = Math.max(0, 1.0 - ((age - fadeOutStart) / fadeDuration));
+                      if (timeSincePass > fadeOutStart) {
+                          const fadeWindow = fadeDuration - fadeOutStart;
+                          // Calculate progress from 0.0 to 1.0 over the fadeWindow
+                          const fadeProgress = (timeSincePass - fadeOutStart) / fadeWindow;
+                          alpha = Math.max(0, 1.0 - fadeProgress);
                       }
                       
                       // Size pulsing (Subtle)
