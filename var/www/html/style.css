@@ -276,17 +276,17 @@ body.menu-open {
   z-index: 999;
   
   /* Dark transparent background with blur */
-  background: rgba(10, 10, 12, 0.5);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(10, 10, 10, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   
   /* Initial state - off-screen to the right */
   transform: translateX(100%);
   opacity: 0;
   
   /* Animation transition */
-  transition: transform 0.5s cubic-bezier(0.52, 0.07, 0.35, 0.96),
-              opacity 0.5s cubic-bezier(0.3,-0.01, 0.58, 1);
+  transition: transform 1s cubic-bezier(0.52, 0.07, 0.35, 0.96),
+              opacity 1s cubic-bezier(0.3,-0.01, 0.58, 1);
   
   /* Layout for content */
   display: flex;
@@ -1610,7 +1610,7 @@ body.menu-open {
 .artiste-actions { display: flex; flex-wrap: wrap; gap: 12px; padding-left: 4px;}
 .artiste-socials { display: flex; gap: 14px; margin-top: 12px; padding-left: 5px;}
 .artiste-socials a { color: #eee; font-size: 24px; transition: color 0.3s; }
-.artiste-socials a:hover { color: #ff4081; }
+.artiste-socials a:hover { color: #2b2b2bcf; }
 
 /* Colonne droite: image */
 .artiste {
