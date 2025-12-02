@@ -1608,45 +1608,52 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- PiP Logic ---
     const pipBtn = document.getElementById('rcPipBtn');
+    const mainPipBtn = document.getElementById('mainPipBtn');
     let pipVideo = null;
 
-    if (pipBtn) {
-        pipBtn.addEventListener('click', async () => {
-            if (document.pictureInPictureElement) {
-                await document.exitPictureInPicture();
-            } else {
-                if (!pipVideo) {
-                    pipVideo = document.createElement('video');
-                    pipVideo.muted = true;
-                    pipVideo.playsInline = true;
-                    // Force small dimensions for the video element itself
-                    pipVideo.width = 200;
-                    pipVideo.height = 200;
-                    
-                    // Use radarCanvas stream if available
-                    if (radarCanvas) {
-                        // Capture stream at 20fps
-                        const stream = radarCanvas.captureStream(20); 
-                        pipVideo.srcObject = stream;
-                    }
-                    
-                    // Sync PiP play/pause with audio
-                    pipVideo.addEventListener('play', () => {
-                        if (audio.paused) playBtn.click();
-                    });
-                    pipVideo.addEventListener('pause', () => {
-                        if (!audio.paused) playBtn.click();
-                    });
+    async function togglePiP() {
+        if (document.pictureInPictureElement) {
+            await document.exitPictureInPicture();
+        } else {
+            if (!pipVideo) {
+                pipVideo = document.createElement('video');
+                pipVideo.muted = true;
+                pipVideo.playsInline = true;
+                // Force small dimensions for the video element itself
+                pipVideo.width = 100;
+                pipVideo.height = 100;
+                
+                // Use radarCanvas stream if available
+                if (radarCanvas) {
+                    // Capture stream at 20fps
+                    const stream = radarCanvas.captureStream(20); 
+                    pipVideo.srcObject = stream;
                 }
-                try {
-                    // Must play before requesting PiP
-                    await pipVideo.play();
-                    await pipVideo.requestPictureInPicture();
-                } catch (error) {
-                    console.error('PiP failed:', error);
-                }
+                
+                // Sync PiP play/pause with audio
+                pipVideo.addEventListener('play', () => {
+                    if (audio.paused) playBtn.click();
+                });
+                pipVideo.addEventListener('pause', () => {
+                    if (!audio.paused) playBtn.click();
+                });
             }
-        });
+            try {
+                // Must play before requesting PiP
+                await pipVideo.play();
+                await pipVideo.requestPictureInPicture();
+            } catch (error) {
+                console.error('PiP failed:', error);
+            }
+        }
+    }
+
+    if (pipBtn) {
+        pipBtn.addEventListener('click', togglePiP);
+    }
+    
+    if (mainPipBtn) {
+        mainPipBtn.addEventListener('click', togglePiP);
     }
 
     // Initial fetch of song info and listeners
