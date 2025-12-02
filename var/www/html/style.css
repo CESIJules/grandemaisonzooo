@@ -1733,18 +1733,28 @@ body.menu-open {
   border-radius: 50%;
   
   /* Glassmorphism Style */
-  backdrop-filter: blur(3px);
+  background-color: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
-  border: 3px solid rgb(102 255 148 / 59%);
-  background-image: linear-gradient(rgb(102 255 148 / 59%) 1px, transparent 1px), linear-gradient(90deg, rgb(102 255 148 / 59%) 1px, transparent 1px), linear-gradient(45deg, rgb(102 255 148 / 59%) 1px, transparent 1px), linear-gradient(135deg, rgb
-  #66ff9496
-  (102 255 148 / 59%) 1px, transparent 1px), radial-gradient(circle closest-side, transparent 20%, rgb(102 255 148 / 59%) 20%, rgb(102 255 148 / 59%) 21%, transparent 21%, transparent 40%, rgb(102 255 148 / 59%) 40%, rgb(102 255 148 / 59%) 41%, transparent 41%, transparent 60%, rgb(102 255 148 / 59%) 60%, rgb(102 255 148 / 59%) 61%, transparent 61%, transparent 80%, rgb(102 255 148 / 59%) 80%, rgb(102 255 148 / 59%) 81%, transparent 81%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  
+  /* Radar Grid (More visible lines + Diagonals) */
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(45deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+    radial-gradient(circle closest-side, transparent 20%, rgba(255, 255, 255, 0.15) 20%, rgba(255, 255, 255, 0.15) 21%, transparent 21%, transparent 40%, rgba(255, 255, 255, 0.15) 40%, rgba(255, 255, 255, 0.15) 41%, transparent 41%, transparent 60%, rgba(255, 255, 255, 0.15) 60%, rgba(255, 255, 255, 0.15) 61%, transparent 61%, transparent 80%, rgba(255, 255, 255, 0.15) 80%, rgba(255, 255, 255, 0.15) 81%, transparent 81%);
   background-size: 50px 50px, 50px 50px, 50px 50px, 50px 50px, 100% 100%;
   background-position: center center;
-  box-shadow: 0 0 15px rgb(102 255 148 / 59%), inset 0 0 20px rgb(102 255 148 / 59%), 0 0 20px rgb(102 255 148 / 59%);
-  transition: transform 0.1s 
-  ease, box-shadow 0.3s 
-  ease;
+  
+  /* Electric Glow Shadow */
+  box-shadow: 
+    0 0 15px rgba(255, 255, 255, 0.1),
+    inset 0 0 20px rgba(255, 255, 255, 0.05),
+    0 0 20px rgba(255, 255, 255, 0.2);
+    
+  transition: transform 0.1s ease, box-shadow 0.3s ease; /* Faster transform for audio reactivity */
   overflow: hidden;
 }
 
