@@ -4,7 +4,7 @@
 # It is generated and updated by the PHP admin panel.
 playlist_file = "/home/radio/current.playlist"
 
-log(level="info", "Starting radio... Playlist file: " + playlist_file)
+
 
 # Create a playlist source that watches the playlist file for changes.
 # If the playlist is empty or does not exist, it will wait for it.
