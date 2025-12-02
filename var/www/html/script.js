@@ -1145,13 +1145,22 @@ document.addEventListener('DOMContentLoaded', () => {
           // Normalize
           let gasIntensity = (noise + 1.75) / 3.5;
           
-          // "Estompe bien" / "Fondu"
-          // Use a slightly softer power curve (3 instead of 4) to extend the gradients
-          // This creates a longer "fade" from light to dark
-          gasIntensity = Math.pow(gasIntensity, 3); 
+          // "Manque un peu de noir" -> Create distinct black voids
+          // Shift values down so that low-intensity noise becomes pure black
+          gasIntensity -= 0.35;
           
-          // Boost peaks but avoid hard clipping for a smoother look
-          gasIntensity *= 1.6; 
+          if (gasIntensity < 0) {
+              gasIntensity = 0;
+          } else {
+              // "Le dégradé ne fonctionne pas bien" -> Fix gradient smoothness
+              // Stretch the remaining signal (approx 0..0.65) back to 0..1
+              gasIntensity *= 1.8;
+              
+              // Apply a soft power curve to create a long, smooth fade-in from black
+              // This ensures the "edges" of the patterns are very gradual (fondus)
+              gasIntensity = Math.pow(gasIntensity, 2.5);
+          }
+          
           if (gasIntensity > 1) gasIntensity = 1;
 
           // --- 2. Mouse Calculation (Restored "Animation d'avant") ---
