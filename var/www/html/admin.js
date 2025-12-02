@@ -368,6 +368,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  async function createPlaylist(playlistName) {
+    try {
+      const response = await fetch('create_playlist.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: playlistName })
+      });
+      const result = await response.json();
+
+      if (result.status === 'success') {
+        createPlaylistMessage.textContent = 'Playlist créée avec succès!';
+        createPlaylistMessage.style.color = 'green';
+        newPlaylistNameInput.value = ''; // Clear input
+        fetchPlaylists(); // Refresh the list of playlists
+      } else {
+        throw new Error(result.message || 'Erreur lors de la création de la playlist.');
+      }
+    } catch (error) {
+      createPlaylistMessage.textContent = `Erreur: ${error.message}`;
+      createPlaylistMessage.style.color = 'red';
+    } finally {
+      setTimeout(() => {
+        createPlaylistMessage.textContent = '';
+      }, 3000);
+    }
+  }
+
   function renderPlaylists(playlists) {
     existingPlaylistsContainer.innerHTML = ''; // Clear existing playlists
 
