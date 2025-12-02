@@ -64,8 +64,13 @@ def set_title_artist(m)
       # Extract filename from the full path
       parts = string.split(separator="/", m["filename"])
       filename = list.nth(default="", parts, list.length(parts) - 1)
-      # Remove extension
-      string.split(separator=".", filename)[0]
+      # Remove extension safely
+      filename_parts = string.split(separator=".", filename)
+      if list.length(filename_parts) > 1 then
+        list.first(filename_parts)
+      else
+        filename
+      end
     end
   [("title", title), ("artist", "")]
 end
