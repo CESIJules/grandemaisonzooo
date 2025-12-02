@@ -419,6 +419,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const circularVisualizer = document.getElementById('circularVisualizer');
   const radarCanvas = document.getElementById('radarPoints');
   const vinylDisc = document.getElementById('vinyl-disc');
+  const vinylDiscContainer = document.getElementById('vinyl-disc-container');
   // --- Progress Bar Elements ---
   const progressInfo = document.getElementById('progress-info');
   const progressBar = document.getElementById('progress-bar');
@@ -1569,6 +1570,7 @@ document.addEventListener('DOMContentLoaded', () => {
               playBtn.innerHTML = '<i class="fas fa-pause"></i>';
               if (vinylDisc) {
                  vinylDisc.classList.add('playing');
+                 if (vinylDiscContainer) vinylDiscContainer.classList.add('playing');
                  radarStartTime = Date.now();
               }
               updateVolumeButtonPosition();
@@ -1582,6 +1584,7 @@ document.addEventListener('DOMContentLoaded', () => {
           audio.pause();
           playBtn.innerHTML = '<i class="fas fa-play"></i>';
           if (vinylDisc) vinylDisc.classList.remove('playing');
+          if (vinylDiscContainer) vinylDiscContainer.classList.remove('playing');
           updateVolumeButtonPosition();
         }
       } catch (err) {
