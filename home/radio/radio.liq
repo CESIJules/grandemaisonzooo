@@ -15,12 +15,13 @@ def get_active_playlist_songs()
     found_playlist = false
     current_playlist_songs = []
     
-    for p in all_playlists do
-      if p["name"] == active_playlist_name then
-        current_playlist_songs = p["songs"]
-        found_playlist = true
-        break
-      end
+    found_playlist_obj = list.find(fun p -> p["name"] == active_playlist_name, all_playlists)
+    if is_nil(found_playlist_obj) then
+      found_playlist = false
+      current_playlist_songs = []
+    else
+      found_playlist = true
+      current_playlist_songs = found_playlist_obj["songs"]
     end
 
     if not found_playlist or list.length(current_playlist_songs) == 0 then
