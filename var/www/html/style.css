@@ -1067,10 +1067,11 @@ body.menu-open {
   margin: 0;
   position: relative;
   line-height: 1;
-  opacity: 0.5;
+  /* opacity: 0.5; Removed to fix grey text issue */
   z-index: 20;
   mix-blend-mode: difference;
   color: #fff;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
 }
 
 #currentSong {
