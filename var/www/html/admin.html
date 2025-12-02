@@ -1,280 +1,244 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
+  <head>
     <meta charset="UTF-8" />
     <title>Admin - GRANDE MAISON</title>
-    <meta name="theme-color" content="#050505" />
+    <meta name="theme-color" content="#000000" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;700&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;700&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="style.css" />
     <style>
-        .form-actions {
-            grid-column: 1 / -1; /* Span full width */
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-            margin-top: 16px;
-        }
-
-        /* --- New Filter & Collapse Styles --- */
-        .section-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-        .filter-bar {
-            display: flex;
-            gap: 8px;
-        }
-        .collapsible-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.5s ease-in-out;
-        }
-        .collapsible-content.expanded {
-            max-height: 1000vh; /* Large value to allow full expansion */
-        }
-
-        /* --- Tables / Lists --- */
-        .item-list {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .item-list th, .item-list td {
-            padding: 14px 16px;
-            text-align: left;
-            border-bottom: 1px solid var(--surface-border);
-        }
-        .item-list th {
-            font-family: var(--font-heading);
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            text-transform: uppercase;
-        }
-        .item-list tbody tr:nth-child(odd) {
-            background-color: var(--surface-color-light);
-        }
-        .item-list tbody tr:hover {
-            background-color: var(--surface-hover);
-        }
-        .item-list td.actions {
-            text-align: right;
-            white-space: nowrap;
-        }
-        .item-list .actions .btn {
-            padding: 6px 10px;
-            font-size: 0.8rem;
-        }
-        .item-list tr.playing {
-            background-color: var(--accent-primary-translucent);
-            border-left: 3px solid var(--accent-primary);
-        }
-        .item-list tr.playing td:first-child {
-            font-weight: 700;
-        }
-        .item-list .playing::before {
-            content: ''; /* Removed the play icon from here, handled in JS */
-        }
-
-        /* --- Playlist Editor --- */
-        #playlistEditModal {
-            display: none;
-            flex-direction: column;
-            /* Full height of the main content area */
-            height: 100%; 
-        }
-        .playlist-editor-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            flex-grow: 1; /* Make this container grow */
-            min-height: 0; /* CRITICAL for flex + overflow */
-        }
-        .playlist-songs-panel, .all-available-songs-panel {
-            background-color: var(--bg-color);
-            border-radius: 8px;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-        }
-        .panel-content {
-            overflow-y: auto; /* Allow scrolling within the panel */
-            flex-grow: 1;
-        }
-        .panel-content ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        .panel-content li {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            border-radius: 4px;
-            transition: background-color 0.2s ease;
-        }
-        .panel-content li:hover {
-            background-color: var(--surface-hover);
-        }
-        #songSearchInput, #musicSearchInput {
-            width: 100%;
-            margin-bottom: 16px;
-        }
-        #playlistEditModal .form-actions {
-            flex-shrink: 0; /* Prevent this from shrinking */
-            padding-top: 20px;
-        }
+      /* Additional styles for admin page */
+      .admin-container {
+        width: 100%;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .post-management {
+        background-color: #222;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .post-management .post-info {
+        text-align: left;
+      }
+      .delete-btn {
+        background-color: #dc3545;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .delete-btn:hover {
+        background-color: #c82333;
+      }
+      .edit-btn {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-right: 5px;
+      }
+      .edit-btn:hover {
+        background-color: #0056b3;
+      }
+      #logoutBtn {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        z-index: 1000;
+      }
+      .playing {
+        color: red;
+      }
+      /* Tab menu styles */
+      .tab-menu {
+        display: flex;
+        border-bottom: 2px solid #444;
+        margin-bottom: 20px;
+      }
+      .tab-link {
+        background: none;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        color: #ccc;
+        font-size: 1.1em;
+        transition: all 0.2s ease-in-out;
+        border-bottom: 2px solid transparent;
+      }
+      .tab-link.active {
+        color: #fff;
+        border-bottom-color: #007bff;
+      }
+      .tab-link:hover {
+        background-color: #333;
+      }
+      .tab-content {
+        display: none; /* Hidden by default */
+      }
+      .tab-content.active {
+        display: block; /* Shown when active */
+      }
+      /* Fix scrolling */
+      body {
+        overflow-y: auto !important;
+        background-color: #000;
+      }
+      main {
+        height: auto !important;
+        overflow: visible !important;
+      }
+      #admin-section.screen {
+        display: block !important;
+        height: auto !important;
+        min-height: 100vh;
+        padding-bottom: 50px;
+      }
     </style>
-</head>
-<body>
-    <nav class="admin-sidebar">
-        <div class="sidebar-header">GMZ ADMIN</div>
-        <div class="sidebar-nav">
-            <ul>
-                <li><a href="#" class="nav-link active" data-section="timeline"><i class="fas fa-stream"></i> Timeline</a></li>
-                <li><a href="#" class="nav-link" data-section="music"><i class="fas fa-music"></i> Musique</a></li>
-                <li><a href="#" class="nav-link" data-section="playlists"><i class="fas fa-list-ol"></i> Playlists</a></li>
-            </ul>
-        </div>
-        <div class="sidebar-footer">
-            <button id="logoutBtn" class="btn btn-danger" style="width: 100%;"><i class="fas fa-sign-out-alt"></i> Logout</button>
-        </div>
-    </nav>
+  </head>
+  <body>
+    <script>
+      if (!sessionStorage.getItem("loggedIn")) {
+        window.location.href = "login.html";
+      }
+    </script>
+    <button id="logoutBtn" class="btn">Logout</button>
+    <main>
+      <section id="admin-section" class="screen">
+        <div class="admin-container">
+          <div class="tab-menu">
+            <button class="tab-link active" data-tab="admin-timeline">
+              Timeline
+            </button>
+            <button class="tab-link" data-tab="music">Musique</button>
+            <button class="tab-link" data-tab="playlists">Playlists</button>
+          </div>
 
-    <main class="admin-main-content">
-        <!-- SECTION: TIMELINE -->
-        <section id="timeline" class="admin-section active">
-            <h2>Gestion de la Timeline</h2>
-            <div class="card">
-                <h3>Ajouter / Modifier un Post</h3>
-                <form id="adminTimelineForm">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="postSubtitle">Titre du Projet</label>
-                            <input type="text" id="postSubtitle" placeholder="Ex: Nouveau single">
-                        </div>
-                        <div class="form-group">
-                            <label for="postArtist">Artiste</label>
-                            <select id="postArtist" required></select>
-                        </div>
-                        <div class="form-group">
-                            <label for="postDate">Date</label>
-                            <input type="date" id="postDate" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="postLink">Lien (optionnel)</label>
-                            <input type="url" id="postLink" placeholder="https://...">
-                        </div>
-                        <div class="form-group" style="grid-column: 1 / -1;">
-                            <label for="postImage">Image du post</label>
-                            <input type="file" id="postImage" accept="image/*">
-                        </div>
-                    </div>
-                    <div class="form-actions">
-                        <span id="adminFormMessage"></span>
-                        <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> Ajouter au Timeline</button>
-                    </div>
-                </form>
-            </div>
-            <div class="card">
-                <div class="section-controls">
-                    <h3>Posts Existants</h3>
-                    <button id="togglePostsBtn" class="btn"><i class="fas fa-chevron-down"></i> Afficher</button>
-                </div>
-                <div id="postFilters" class="filter-bar"></div>
-                <div id="collapsiblePosts" class="collapsible-content">
-                    <div id="postsManagementContainer"></div>
-                </div>
-            </div>
-        </section>
+          <div id="admin-timeline" class="tab-content active">
+            <h2>Admin Timeline</h2>
+            <form id="adminTimelineForm" class="contact-form">
+              <input
+                type="text"
+                id="postSubtitle"
+                placeholder="Titre du Projet"
+              />
+              <input type="url" id="postLink" placeholder="Lien (optionnel)" />
+              <label for="postImage">Image du post</label>
+              <input type="file" id="postImage" accept="image/*" />
+              <input type="date" id="postDate" required />
+              <select id="postArtist" required>
+                <option value="" disabled selected>Choisir un artiste</option>
+              </select>
+              <button type="submit" class="btn">Ajouter au Timeline</button>
+              <span id="adminFormMessage"></span>
+            </form>
 
-        <!-- SECTION: MUSIQUE -->
-        <section id="music" class="admin-section">
-            <h2>Gestion de la Musique</h2>
-            <div class="card">
-                <h3>Télécharger depuis YouTube</h3>
-                <form id="youtubeDownloadForm" class="form-grid">
-                    <div class="form-group" style="grid-column: 1 / -1;">
-                        <label for="youtubeUrl">URL de la vidéo YouTube</label>
-                        <input type="url" id="youtubeUrl" placeholder="https://www.youtube.com/watch?v=..." required>
-                    </div>
-                    <div class="form-actions">
-                        <span id="youtubeFormMessage"></span>
-                        <button type="submit" class="btn btn-primary"><i class="fab fa-youtube"></i> Télécharger en MP3</button>
-                    </div>
-                </form>
-            </div>
-            <div class="card">
-                <div class="section-controls">
-                    <h3>Fichiers sur le serveur</h3>
-                    <button id="toggleMusicBtn" class="btn"><i class="fas fa-chevron-down"></i> Afficher</button>
-                </div>
-                <div class="form-group">
-                    <input type="text" id="musicSearchInput" placeholder="Rechercher une musique..." style="max-width: 400px;">
-                </div>
-                <div id="collapsibleMusic" class="collapsible-content">
-                    <div id="musicManagementContainer"></div>
-                </div>
-            </div>
-        </section>
+            <hr style="margin-top: 40px; margin-bottom: 20px" />
 
-        <!-- SECTION: PLAYLISTS -->
-        <section id="playlists" class="admin-section">
-            <h2>Gestion des Playlists</h2>
-            <div class="card">
-                <h3>Créer une nouvelle Playlist</h3>
-                <form id="createPlaylistForm" class="form-grid">
-                    <div class="form-group" style="grid-column: 1 / -1;">
-                        <label for="newPlaylistName">Nom de la nouvelle playlist</label>
-                        <input type="text" id="newPlaylistName" placeholder="Ex: Chill Vibes" required />
-                    </div>
-                    <div class="form-actions">
-                        <span id="createPlaylistMessage"></span>
-                        <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> Créer Playlist</button>
-                    </div>
-                </form>
+            <h2>Gérer les posts</h2>
+            <div id="postsManagementContainer">
+              <!-- Posts will be listed here -->
             </div>
-            <div class="card">
-                <h3>Playlists Existantes</h3>
-                <div id="existingPlaylistsContainer"></div>
-            </div>
-        </section>
+          </div>
 
-        <!-- MODAL/SECTION: PLAYLIST EDITOR -->
-        <section id="playlistEditModal" class="admin-section">
+          <div id="music" class="tab-content">
+            <h2>Gérer les musiques</h2>
+            <button id="refreshMusicBtn" class="btn">
+              Rafraîchir la liste
+            </button>
+
+            <div id="musicManagementContainer">
+              <!-- Music files will be listed here -->
+            </div>
+            <div style="text-align: center; margin-top: 10px">
+              <button id="showMoreMusicBtn" class="btn" style="display: none">
+                Voir plus ▼
+              </button>
+            </div>
+
+            <hr style="margin: 40px 0" />
+
+            <h2>Télécharger depuis YouTube</h2>
+            <form id="youtubeDownloadForm" class="contact-form">
+              <input
+                type="url"
+                id="youtubeUrl"
+                placeholder="https://www.youtube.com/watch?v=..."
+                required
+              />
+              <button type="submit" class="btn">
+                Télécharger et convertir en MP3
+              </button>
+              <span id="youtubeFormMessage"></span>
+            </form>
+          </div>
+
+          <div id="playlists" class="tab-content">
+            <h2>Gérer les Playlists</h2>
+
+            <div id="playlistControls">
+              <h3>Créer une nouvelle Playlist</h3>
+              <form id="createPlaylistForm" class="contact-form">
+                <input type="text" id="newPlaylistName" placeholder="Nom de la playlist" required />
+                <button type="submit" class="btn">Créer Playlist</button>
+                <span id="createPlaylistMessage"></span>
+              </form>
+
+              <h3>Playlists Existantes</h3>
+              <div id="existingPlaylistsContainer">
+                <!-- Existing playlists will be listed here -->
+              </div>
+            </div>
+
+            <hr style="margin: 40px 0" />
+
+            <h2>Toutes les Musiques Disponibles</h2>
+            <div id="allSongsList">
+              <!-- All available songs will be listed here for adding to playlists -->
+            </div>
+          </div>
+
+          <!-- Playlist Edit Modal/Section -->
+          <div id="playlistEditModal" class="tab-content" style="display: none;">
             <h2>Éditer Playlist: <span id="editingPlaylistName"></span></h2>
             <div class="playlist-editor-container">
-                <div class="playlist-songs-panel card">
-                    <h3>Chansons de la Playlist</h3>
-                    <div class="panel-content">
-                        <ul id="currentPlaylistSongs"></ul>
-                    </div>
-                </div>
-                <div class="all-available-songs-panel card">
-                    <h3>Toutes les Musiques</h3>
-                    <input type="text" id="songSearchInput" class="form-group" placeholder="Rechercher une musique..." />
-                    <div class="panel-content">
-                        <ul id="allAvailableSongsForEdit"></ul>
-                    </div>
-                </div>
+              <div class="playlist-songs-panel">
+                <h3>Chansons de la Playlist</h3>
+                <ul id="currentPlaylistSongs">
+                  <!-- Songs in the playlist will be listed here -->
+                </ul>
+              </div>
+              <div class="all-available-songs-panel">
+                <h3>Toutes les Musiques Disponibles</h3>
+                <input type="text" id="songSearchInput" placeholder="Rechercher des musiques..." />
+                <ul id="allAvailableSongsForEdit">
+                  <!-- All available songs will be listed here -->
+                </ul>
+              </div>
             </div>
-            <div class="form-actions">
-                <button id="cancelPlaylistEditBtn" class="btn"><i class="fas fa-times"></i> Annuler</button>
-                <button id="savePlaylistChangesBtn" class="btn btn-primary"><i class="fas fa-save"></i> Enregistrer</button>
+            <div class="edit-playlist-actions">
+              <button id="savePlaylistChangesBtn" class="btn">Enregistrer les Modifications</button>
+              <button id="cancelPlaylistEditBtn" class="btn delete-btn">Annuler</button>
             </div>
-        </section>
+          </div>
+
+        </div>
+      </section>
     </main>
-
-    <!-- Legacy IDs for JS compatibility -->
-    <div style="display:none;">
-        <div id="admin-timeline"></div>
-    </div>
-
     <script src="admin.js"></script>
-</body>
+  </body>
 </html>
