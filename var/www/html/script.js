@@ -1180,8 +1180,8 @@ document.addEventListener('DOMContentLoaded', () => {
           // --- Drawing ---
           
           // Blending: Avoid dark ring by taking max of mouse and gas
-          // Gas is capped at ~65% brightness (Reduced opacity by ~10% as requested)
-          const combinedIntensity = Math.max(mouseIntensity, gasIntensity * 0.65);
+          // Gas is capped at ~50% brightness (Lowered further)
+          const combinedIntensity = Math.max(mouseIntensity, gasIntensity * 0.5);
 
           // Lower threshold significantly to avoid "popping" artifacts at the edges
           if (combinedIntensity > 0.01) {
@@ -1242,13 +1242,7 @@ document.addEventListener('DOMContentLoaded', () => {
              
              const offset = (charSize * scale - charSize) / 2;
              
-             // 1. Draw Orange "Shadow" / Aberration manually behind
-             // Modulate opacity with intensity so it doesn't overpower the white at low levels
-             const orangeAlpha = 0.6 * combinedIntensity;
-             ctx.fillStyle = `rgba(204, 85, 0, ${orangeAlpha})`;
-             ctx.fillText(displayChar, px - offset + 2, py - offset);
-
-             // 2. Draw Main Character on top
+             // Draw Main Character
              ctx.fillStyle = mainColor;
              ctx.fillText(displayChar, px - offset, py - offset);
              
