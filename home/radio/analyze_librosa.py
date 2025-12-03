@@ -41,6 +41,13 @@ def analyze_audio(file_path):
         # --- 1. SEPARATION ---
         y_harmonic, y_percussive = librosa.effects.hpss(y)
 
+        # --- 1.5 GLOBAL ANCHOR ---
+        # Calculate a global BPM on the whole file to act as a stabilizer
+        # This helps avoid "rhythmic aliases" (e.g. detecting 1.33x or 1.5x tempo)
+        onset_env_global = librosa.onset.onset_strength(y=y_percussive, sr=sr, aggregate=np.median)
+        t_global = librosa.feature.tempo(onset_envelope=onset_env_global, sr=sr)
+        global_bpm = t_global[0] if isinstance(t_global, np.ndarray) else t_global
+
         # --- 2. BPM ANALYSIS (Hybrid Voting System) ---
         # We combine two analysis passes to get the best of both worlds:
         # 1. Standard Resolution (hop=512): Robust to noise and distortion (Good for 'Dirty' tracks)
@@ -52,6 +59,21 @@ def analyze_audio(file_path):
         
         candidates = []
         weights = []
+
+        def get_anchor_weight(candidate, anchor):
+            if anchor == 0: return 1.0
+            ratio = candidate / anchor
+            
+            # Exact match or octave (strong support)
+            if 0.90 < ratio < 1.10: return 2.0
+            if 1.90 < ratio < 2.10: return 1.5
+            if 0.45 < ratio < 0.55: return 1.5
+            
+            # Common aliases (3/2, 4/3) - Penalize to avoid "drifting"
+            # 1.33 (4/3) and 1.5 (3/2) are common errors
+            if 1.25 < ratio < 1.75: return 0.5 
+            
+            return 0.8 # Neutral for others
         
         # Iterate through windows
         for start in range(0, len(y_percussive) - window_size, step_size):
@@ -79,20 +101,23 @@ def analyze_audio(file_path):
                 t_hi = librosa.feature.tempo(onset_envelope=onset_hi, sr=sr, hop_length=hop_hi, prior=None)
                 tempo_hi = t_hi[0] if isinstance(t_hi, np.ndarray) else t_hi
                 
-                # Vote
+                # Vote with Anchor Weighting
+                w_std = get_anchor_weight(tempo_std, global_bpm)
+                w_hi = get_anchor_weight(tempo_hi, global_bpm)
+
                 if 50 < tempo_std < 220:
                     candidates.append(tempo_std)
-                    weights.append(clarity_std * 1.2) # Bonus for stability
+                    weights.append(clarity_std * 1.2 * w_std) # Bonus for stability + Anchor
                     
                 if 50 < tempo_hi < 220:
                     candidates.append(tempo_hi)
-                    weights.append(clarity_hi) # Pure clarity
+                    weights.append(clarity_hi * w_hi) # Pure clarity + Anchor
             except:
                 continue
         
         # --- 3. AGGREGATION ---
         if not candidates:
-            bpm = 120 # Fail safe
+            bpm = global_bpm if global_bpm > 0 else 120
         else:
             # Weighted Histogram
             bins = np.arange(50, 220, 1) # 1 BPM precision
@@ -105,16 +130,12 @@ def analyze_audio(file_path):
         rms = librosa.feature.rms(y=y)[0]
         energy = np.mean(rms)
         
-        # Recalculate global onset for danceability
-        onset_env_global = librosa.onset.onset_strength(y=y, sr=sr)
+        # Danceability (using the global onset we already computed)
         danceability = np.std(onset_env_global)
 
-        # --- 5. DOUBLE TIME CHECK (Internal) ---
-        # If energy is high and BPM is low, it's likely Trap/DnB
-        # We do this here because we have the raw energy data
-        # Threshold 0.1 is conservative for RMS
-        if bpm < 100 and energy > 0.1: 
-             bpm *= 2
+        # --- 5. DOUBLE TIME CHECK (REMOVED) ---
+        # We rely on the Hybrid Voting (High Res pass) and Global Anchor to find the correct octave.
+        # Hardcoded energy checks often fail for Boom Bap (High Energy, Low BPM).
 
         # --- 6. KEY ---
         chroma = librosa.feature.chroma_cqt(y=y_harmonic, sr=sr)
