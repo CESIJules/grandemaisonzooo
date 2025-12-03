@@ -130,35 +130,65 @@ def analyze_audio(file_path):
             key_idx = np.argmax(min_corrs)
             mode = 0 # Minor
 
-        # --- 4. ENERGY & DANCEABILITY ---
-        # Energy: RMS (Loudness) + Onset Strength (Activity)
+        # --- 4. ENERGY & DANCEABILITY (Tunebat-style) ---
+        
+        # A. ENERGY
+        # 1. RMS (Loudness)
         rms = librosa.feature.rms(y=y)[0]
-        rms_mean = np.mean(rms)
+        rms_val = np.mean(rms)
+        # Normalize RMS (typical 0.0 to 0.5) -> 0-100
+        feat_loudness = min(1.0, rms_val / 0.25) 
         
-        # Onset strength of the full signal (for activity and danceability)
+        # 2. Spectral Centroid (Brightness)
+        cent = librosa.feature.spectral_centroid(y=y, sr=sr)[0]
+        cent_val = np.mean(cent)
+        # Normalize Centroid (typical 500 to 5000) -> 0-100
+        feat_brightness = min(1.0, cent_val / 4000.0)
+        
+        # 3. Onset Density (Busyness)
         onset_env = librosa.onset.onset_strength(y=y, sr=sr)
-        onset_mean = np.mean(onset_env)
+        onset_density = np.mean(onset_env)
+        # Normalize (typical 0.5 to 2.0)
+        feat_density = min(1.0, onset_density / 1.5)
         
-        # Formula: RMS contributes to loudness, Onset to "busyness"
-        # RMS typical: 0.05 - 0.3 -> Scale x25 -> 1.25 - 7.5
-        # Onset typical: 0.5 - 1.5 -> Scale x2 -> 1.0 - 3.0
-        energy = (rms_mean * 25) + (onset_mean * 2)
-        energy = min(10.0, max(0.0, energy))
+        # Weighted Energy Score
+        # Loudness is key, but brightness and density add the "hype"
+        raw_energy = (0.5 * feat_loudness) + (0.3 * feat_brightness) + (0.2 * feat_density)
+        energy = raw_energy * 100
         
-        # Danceability: Beat Strength
-        # We look at how strong the onsets are specifically at the beat locations.
-        # Strong onsets on beat = High Danceability.
+        # B. DANCEABILITY
+        # 1. Beat Stability (Regularity)
         tempo, beats = librosa.beat.beat_track(onset_envelope=onset_env, sr=sr)
         
-        if len(beats) > 0:
-            # Average strength of onsets at beat frames
-            beat_strength = np.mean(onset_env[beats])
-            # Typical beat_strength: 1.0 (Weak) to 4.0 (Strong)
-            danceability = beat_strength * 2.5
-        else:
-            danceability = 0.0
+        if len(beats) > 2:
+            # Calculate Inter-Beat Intervals (IBI)
+            beat_times = librosa.frames_to_time(beats, sr=sr)
+            ibi = np.diff(beat_times)
             
-        danceability = min(10.0, max(0.0, danceability))
+            # Coefficient of Variation (CV) - Lower is more stable
+            cv = np.std(ibi) / (np.mean(ibi) + 0.0001)
+            
+            # Stability Score (0.0 to 1.0)
+            # CV < 0.05 is very stable (1.0), CV > 0.2 is unstable (0.0)
+            stability = max(0.0, min(1.0, 1.0 - (cv * 5)))
+            
+            # 2. Beat Strength
+            beat_strength = np.mean(onset_env[beats])
+            feat_strength = min(1.0, beat_strength / 2.0)
+            
+            # 3. Tempo Preference (100-130 is ideal for dancing)
+            # Gaussian curve centered at 120
+            tempo_factor = np.exp(-((bpm - 120)**2) / (2 * 40**2))
+            
+            raw_dance = (0.5 * stability) + (0.3 * feat_strength) + (0.2 * tempo_factor)
+            danceability = raw_dance * 100
+        else:
+            # Fallback if no clear beats found (Ambient, Drone, or very messy)
+            danceability = onset_density * 20 # Low score based on activity
+            
+        # Clamp
+        energy = round(min(100.0, max(0.0, energy)), 2)
+        danceability = round(min(100.0, max(0.0, danceability)), 2)
 
         return {
             'bpm': round(float(bpm), 1),
