@@ -63,6 +63,13 @@ if ($return_var === 0) {
             break;
         }
     }
+
+    // --- SYNC FALLBACK ---
+    // Automatically add the new song to the fallback folder
+    require_once 'playlists.php';
+    $pm = new PlaylistManager();
+    $pm->syncFallbackDirectory();
+
     echo json_encode(['status' => 'success', 'message' => "$filename a été téléchargé, converti et ajouté."]);
 } else {
     http_response_code(500);

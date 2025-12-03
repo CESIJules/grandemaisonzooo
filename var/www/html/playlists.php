@@ -48,6 +48,37 @@ class PlaylistManager {
         }
     }
 
+    public function syncFallbackDirectory() {
+        if (!is_dir($this->fallbackDir)) {
+            mkdir($this->fallbackDir, 0775, true);
+        }
+
+        // Get all music files (excluding . and ..)
+        $musicFiles = array_diff(scandir($this->musicDir), ['.', '..']);
+        
+        // Get current fallback files
+        $fallbackFiles = array_diff(scandir($this->fallbackDir), ['.', '..']);
+        
+        // 1. Add missing symlinks
+        foreach ($musicFiles as $file) {
+            $sourcePath = $this->musicDir . '/' . $file;
+            $linkPath = $this->fallbackDir . '/' . $file;
+            
+            // Only link files, not directories
+            if (is_file($sourcePath) && !file_exists($linkPath)) {
+                symlink($sourcePath, $linkPath);
+            }
+        }
+        
+        // 2. Remove orphaned symlinks (files in fallback that are not in musicDir)
+        foreach ($fallbackFiles as $file) {
+            $linkPath = $this->fallbackDir . '/' . $file;
+            if (!in_array($file, $musicFiles)) {
+                unlink($linkPath);
+            }
+        }
+    }
+
     public function getAllPlaylists() {
         $data = $this->readPlaylists();
         return ['status' => 'success', 'data' => $data];
@@ -155,6 +186,11 @@ class PlaylistManager {
     public function setActivePlaylist($name) {
         $data = $this->readPlaylists();
         $targetDir = $this->fallbackDir; // Default to fallback
+
+        if ($name === null) {
+            // If switching to fallback, sync it first to ensure it has all new music
+            $this->syncFallbackDirectory();
+        }
 
         if ($name !== null) {
             $found = false;
