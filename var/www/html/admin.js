@@ -59,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let allMusicFiles = [];
     let currentActivePlaylist = null;
     let currentEditingPlaylist = null;
+    let suggestionSortMode = 'bpm'; // Default sort mode
 
     // --- Utility Functions ---
     function formatSongPathToTitle(songPath) {
@@ -220,6 +221,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     
                     <div style="margin-top: 6px;"><small style="font-size: 0.7em; color: #666;">Source: ${source}</small></div>
+                    
+                    <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #333; display: flex; align-items: center; gap: 10px;">
+                        <small style="color: var(--text-secondary);">Trier par :</small>
+                        <button id="sortBpmBtn" class="btn btn-sm ${suggestionSortMode === 'bpm' ? 'btn-primary' : 'btn-outline-secondary'}" style="padding: 2px 8px; font-size: 0.75rem;">BPM</button>
+                        <button id="sortKeyBtn" class="btn btn-sm ${suggestionSortMode === 'key' ? 'btn-primary' : 'btn-outline-secondary'}" style="padding: 2px 8px; font-size: 0.75rem;">Clé</button>
+                    </div>
                 </div>
                 <button id="forceRefreshBtn" class="btn btn-sm btn-outline-secondary" title="Forcer la réanalyse" style="margin-top: 5px;">
                     <i class="fas fa-sync"></i>
@@ -227,6 +234,16 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
         suggestionsUl.appendChild(headerDiv);
+        
+        // Sort Listeners
+        document.getElementById('sortBpmBtn').addEventListener('click', () => {
+            suggestionSortMode = 'bpm';
+            renderSuggestions();
+        });
+        document.getElementById('sortKeyBtn').addEventListener('click', () => {
+            suggestionSortMode = 'key';
+            renderSuggestions();
+        });
         
         document.getElementById('forceRefreshBtn').addEventListener('click', async () => {
             const btn = document.getElementById('forceRefreshBtn');
@@ -309,6 +326,17 @@ document.addEventListener('DOMContentLoaded', () => {
             // Remove indicator
             if (loadingIndicator.parentNode) loadingIndicator.parentNode.removeChild(loadingIndicator);
         }
+
+        // SORTING LOGIC
+        candidates.sort((a, b) => {
+            if (suggestionSortMode === 'bpm') {
+                // Sort by BPM (Ascending)
+                return a.meta.bpm - b.meta.bpm;
+            } else {
+                // Sort by Key (Camelot) - Numeric sort handles 1A vs 10A correctly
+                return a.meta.camelot.localeCompare(b.meta.camelot, undefined, {numeric: true});
+            }
+        });
 
         if (candidates.length === 0) {
             suggestionsUl.innerHTML += '<p>Aucune suggestion trouvée pour le moment.</p>';
