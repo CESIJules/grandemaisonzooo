@@ -67,6 +67,146 @@ document.addEventListener('DOMContentLoaded', () => {
         return filename.replace(/\.[^/.]+$/, "").replace(/_/g, ' ').replace(/\s*-\s*/g, ' - ').toUpperCase();
     }
 
+    // --- Harmonic Mixing Logic ---
+    const camelotWheel = {
+        '1B': { compatible: ['1B', '12B', '2B', '1A'], name: 'B Major' },
+        '2B': { compatible: ['2B', '1B', '3B', '2A'], name: 'F# Major' },
+        '3B': { compatible: ['3B', '2B', '4B', '3A'], name: 'Db Major' },
+        '4B': { compatible: ['4B', '3B', '5B', '4A'], name: 'Ab Major' },
+        '5B': { compatible: ['5B', '4B', '6B', '5A'], name: 'Eb Major' },
+        '6B': { compatible: ['6B', '5B', '7B', '6A'], name: 'Bb Major' },
+        '7B': { compatible: ['7B', '6B', '8B', '7A'], name: 'F Major' },
+        '8B': { compatible: ['8B', '7B', '9B', '8A'], name: 'C Major' },
+        '9B': { compatible: ['9B', '8B', '10B', '9A'], name: 'G Major' },
+        '10B': { compatible: ['10B', '9B', '11B', '10A'], name: 'D Major' },
+        '11B': { compatible: ['11B', '10B', '12B', '11A'], name: 'A Major' },
+        '12B': { compatible: ['12B', '11B', '1B', '12A'], name: 'E Major' },
+        '1A': { compatible: ['1A', '12A', '2A', '1B'], name: 'Ab Minor' },
+        '2A': { compatible: ['2A', '1A', '3A', '2B'], name: 'Eb Minor' },
+        '3A': { compatible: ['3A', '2A', '4A', '3B'], name: 'Bb Minor' },
+        '4A': { compatible: ['4A', '3A', '5A', '4B'], name: 'F Minor' },
+        '5A': { compatible: ['5A', '4A', '6A', '5B'], name: 'C Minor' },
+        '6A': { compatible: ['6A', '5A', '7A', '6B'], name: 'G Minor' },
+        '7A': { compatible: ['7A', '6A', '8A', '7B'], name: 'D Minor' },
+        '8A': { compatible: ['8A', '7A', '9A', '8B'], name: 'A Minor' },
+        '9A': { compatible: ['9A', '8A', '10A', '9B'], name: 'E Minor' },
+        '10A': { compatible: ['10A', '9A', '11A', '10B'], name: 'B Minor' },
+        '11A': { compatible: ['11A', '10A', '12A', '11B'], name: 'F# Minor' },
+        '12A': { compatible: ['12A', '11A', '1A', '12B'], name: 'Db Minor' }
+    };
+
+    const metadataCache = {};
+
+    async function getMusicMetadata(filename) {
+        if (metadataCache[filename]) return metadataCache[filename];
+        
+        try {
+            const response = await fetch('get_music_metadata.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename: filename })
+            });
+            const result = await response.json();
+            if (result.status === 'success') {
+                metadataCache[filename] = result.data;
+                return result.data;
+            }
+        } catch (error) {
+            console.error('Error fetching metadata:', error);
+        }
+        return null;
+    }
+
+    async function renderSuggestions() {
+        const suggestionsUl = document.getElementById('harmonicSuggestions');
+        suggestionsUl.innerHTML = '<p>Analyse en cours...</p>';
+
+        if (!currentEditingPlaylist || currentEditingPlaylist.songs.length === 0) {
+            suggestionsUl.innerHTML = '<p>Ajoutez des chansons à la playlist pour voir des suggestions.</p>';
+            return;
+        }
+
+        // Get last song
+        const lastSongPath = currentEditingPlaylist.songs[currentEditingPlaylist.songs.length - 1];
+        const lastSongFilename = lastSongPath.split('/').pop();
+        
+        const lastSongMeta = await getMusicMetadata(lastSongFilename);
+        
+        if (!lastSongMeta || !lastSongMeta.camelot) {
+            suggestionsUl.innerHTML = `<p>Impossible d'analyser la dernière chanson (${formatSongPathToTitle(lastSongPath)}).</p>`;
+            return;
+        }
+
+        const targetBpm = lastSongMeta.bpm;
+        const targetKey = lastSongMeta.camelot;
+        const compatibleKeys = camelotWheel[targetKey]?.compatible || [];
+
+        suggestionsUl.innerHTML = `<p>Basé sur: <strong>${formatSongPathToTitle(lastSongPath)}</strong> (${targetBpm} BPM, ${targetKey})</p>`;
+
+        // Filter candidates
+        const candidates = [];
+        
+        // We need to check metadata for other songs. This might be slow if we do it one by one.
+        // Ideally, we should fetch all metadata at once, but for now let's iterate.
+        // To avoid freezing, we'll check only the first 20 available songs or implement a bulk fetch later.
+        // For this demo, we will iterate through allAvailableSongs but limit the number of API calls if not cached.
+        
+        let matchCount = 0;
+        
+        for (const songPath of allAvailableSongs) {
+            if (currentEditingPlaylist.songs.includes(songPath)) continue; // Skip already in playlist
+            if (matchCount >= 5) break; // Limit suggestions
+
+            const filename = songPath.split('/').pop();
+            // Optimistic check: if not in cache, we might skip to avoid heavy load, 
+            // OR we just analyze on demand. Let's analyze on demand but show a loading state.
+            
+            const meta = await getMusicMetadata(filename);
+            if (!meta) continue;
+
+            // Check BPM (±5%)
+            const bpmDiff = Math.abs(meta.bpm - targetBpm);
+            const bpmMatch = bpmDiff <= (targetBpm * 0.05);
+
+            // Check Key
+            const keyMatch = compatibleKeys.includes(meta.camelot);
+
+            if (bpmMatch && keyMatch) {
+                candidates.push({ path: songPath, meta: meta });
+                matchCount++;
+            }
+        }
+
+        if (candidates.length === 0) {
+            suggestionsUl.innerHTML += '<p>Aucune suggestion trouvée pour le moment.</p>';
+            return;
+        }
+
+        const list = document.createElement('ul');
+        candidates.forEach(cand => {
+            const li = document.createElement('li');
+            li.className = 'suggestion-item';
+            li.innerHTML = `
+                <div class="suggestion-info">
+                    <span>${formatSongPathToTitle(cand.path)}</span>
+                    <span class="suggestion-badge badge-bpm">${cand.meta.bpm} BPM</span>
+                    <span class="suggestion-badge badge-key">${cand.meta.camelot}</span>
+                </div>
+            `;
+            const addBtn = document.createElement('button');
+            addBtn.innerHTML = '<i class="fas fa-plus"></i>';
+            addBtn.className = 'btn btn-primary';
+            addBtn.addEventListener('click', () => {
+                currentEditingPlaylist.songs.push(cand.path);
+                renderCurrentPlaylistSongs();
+                renderSuggestions(); // Refresh suggestions based on new last song
+            });
+            li.appendChild(addBtn);
+            list.appendChild(li);
+        });
+        suggestionsUl.appendChild(list);
+    }
+
     // --- API & Rendering Functions ---
 
     // RADIO CONTROL
@@ -451,6 +591,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         renderCurrentPlaylistSongs();
         renderAllAvailableSongsForEdit();
+        renderSuggestions();
     }
 
     function cancelPlaylistEdit() {
@@ -471,6 +612,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 removeBtn.addEventListener('click', () => {
                     currentEditingPlaylist.songs.splice(index, 1);
                     renderCurrentPlaylistSongs();
+                    renderSuggestions();
                 });
                 li.appendChild(removeBtn);
                 currentPlaylistSongsUl.appendChild(li);
@@ -501,6 +643,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!currentEditingPlaylist.songs.includes(songPath)) {
                     currentEditingPlaylist.songs.push(songPath);
                     renderCurrentPlaylistSongs();
+                    renderSuggestions();
                 }
             });
             li.appendChild(addBtn);
