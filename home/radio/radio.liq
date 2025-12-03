@@ -36,5 +36,5 @@ output.icecast(
   )
   
   # Activation du serveur Telnet pour le contrôle (ex: skip)
-  server.telnet.start(port=1234)
+  server.telnet(port=1234)
   
