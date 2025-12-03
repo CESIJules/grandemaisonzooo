@@ -283,71 +283,165 @@
         }
 
         /* --- Playlist Editor --- */
-        #playlistEditModal { display: none; } /* Keep this for initial state */
+        #playlistEditModal { display: none; }
+        
         .playlist-editor-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            height: 60vh;
+            gap: 24px;
+            /* Hauteur ajustée pour éviter le tassement */
+            height: calc(100vh - 250px);
+            min-height: 600px;
         }
-        .playlist-songs-panel, .all-available-songs-panel, .suggestions-panel {
-            background-color: var(--bg-color);
-            border-radius: 8px;
-            padding: 16px;
+
+        .playlist-songs-panel, .all-available-songs-panel {
+            /* Les panneaux du haut prennent l'espace disponible mais pas tout */
+            flex: 1;
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            /* Style plus doux */
+            background-color: rgba(30, 30, 30, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
+
         .suggestions-panel {
-            grid-column: 1 / -1; /* Full width below */
-            height: 300px;
-            margin-top: 20px;
+            grid-column: 1 / -1; /* Prend toute la largeur */
+            /* Hauteur fixe pour la section suggestions en bas */
+            height: 35%; 
+            min-height: 250px;
+            margin-top: 0; /* Géré par le grid gap */
+            background-color: rgba(30, 30, 30, 0.8); /* Un peu plus opaque pour le focus */
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
-        .suggestion-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            border-bottom: 1px solid var(--surface-border);
+
+        /* Ajustement de la grille pour que le bas soit fixe et le haut flexible */
+        .playlist-editor-container {
+            grid-template-rows: 1fr auto;
         }
-        .suggestion-info {
-            display: flex;
-            gap: 15px;
-            align-items: center;
+        
+        .playlist-songs-panel, .all-available-songs-panel {
+            grid-row: 1;
         }
-        .suggestion-badge {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            font-weight: bold;
+        
+        .suggestions-panel {
+            grid-row: 2;
         }
-        .badge-bpm { background-color: #4a4a4a; color: #fff; }
-        .badge-key { background-color: #007bff; color: #fff; }
-        .badge-match { background-color: #28a745; color: #fff; }
-        .panel-content {
-            overflow-y: auto;
-            flex-grow: 1;
-            min-height: 0;
+
+        /* Titres de section plus discrets */
+        .card h3 {
+            font-size: 1.1rem;
+            color: #e0e0e0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 12px;
+            margin-bottom: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
         }
+
+        /* Listes plus aérées */
         .panel-content ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
+            padding-right: 5px; /* Espace pour la scrollbar */
         }
+        
         .panel-content li {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            border-radius: 4px;
-            transition: background-color 0.2s ease;
+            background-color: rgba(255, 255, 255, 0.02);
+            margin-bottom: 6px;
+            padding: 12px 16px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
         }
+
         .panel-content li:hover {
-            background-color: var(--surface-hover);
+            background-color: rgba(255, 255, 255, 0.06);
+            transform: translateX(2px);
         }
+
+        /* Scrollbar personnalisée et discrète */
+        .panel-content::-webkit-scrollbar {
+            width: 6px;
+        }
+        .panel-content::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        .panel-content::-webkit-scrollbar-thumb {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-radius: 3px;
+        }
+        .panel-content::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(255, 255, 255, 0.25);
+        }
+
+        /* Champs de recherche plus intégrés */
         #songSearchInput {
-            width: 100%;
-            margin-bottom: 16px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+        }
+        #songSearchInput:focus {
+            border-color: var(--accent-primary);
+            background-color: rgba(0, 0, 0, 0.3);
+        }
+
+        /* Suggestions Items - Plus lisibles */
+        .suggestion-item {
+            background-color: rgba(255, 255, 255, 0.03);
+            border: none;
+            border-left: 3px solid transparent;
+        }
+        .suggestion-item:hover {
+            background-color: rgba(255, 255, 255, 0.07);
+            border-left-color: var(--accent-primary);
+        }
+        
+        .suggestion-info strong {
+            font-weight: 600;
+            color: #f0f0f0;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        /* Badges moins agressifs */
+        .suggestion-badge {
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 4px;
+            opacity: 0.9;
+            letter-spacing: 0.5px;
+        }
+        .badge-bpm { background-color: rgba(255, 255, 255, 0.1); color: #ddd; border: 1px solid rgba(255,255,255,0.1); }
+        .badge-key { background-color: rgba(0, 123, 255, 0.2); color: #80bdff; border: 1px solid rgba(0, 123, 255, 0.3); }
+
+        /* Boutons d'action dans les listes (petits ronds) */
+        .panel-content li .btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.7;
+            transition: opacity 0.2s, transform 0.2s, background-color 0.2s;
+            border: none;
+            background: rgba(255,255,255,0.1);
+        }
+        .panel-content li .btn:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+        .panel-content li .btn-danger:hover {
+            background-color: rgba(220, 53, 69, 0.8);
+            color: white;
+        }
+        .panel-content li .btn-primary:hover, .panel-content li .btn:not(.btn-danger):hover {
+            background-color: var(--accent-primary);
+            color: white;
         }
 
         /* --- Section Layout Improvements --- */
@@ -493,49 +587,31 @@
 
         <!-- MODAL/SECTION: PLAYLIST EDITOR -->
         <section id="playlistEditModal" class="admin-section">
-            <div class="editor-header-row">
-                <h2>Éditer Playlist: <span id="editingPlaylistName" class="highlight-text"></span></h2>
-                <div class="editor-actions-top">
-                    <button id="cancelPlaylistEditBtn" class="btn"><i class="fas fa-times"></i> Annuler</button>
-                    <button id="savePlaylistChangesBtn" class="btn btn-primary"><i class="fas fa-save"></i> Enregistrer</button>
+            <h2>Éditer Playlist: <span id="editingPlaylistName"></span></h2>
+            <div class="playlist-editor-container">
+                <div class="playlist-songs-panel card">
+                    <h3>Chansons de la Playlist</h3>
+                    <div class="panel-content">
+                        <ul id="currentPlaylistSongs"></ul>
+                    </div>
+                </div>
+                <div class="all-available-songs-panel card">
+                    <h3>Toutes les Musiques</h3>
+                    <input type="text" id="songSearchInput" class="form-group" placeholder="Rechercher une musique..." />
+                    <div class="panel-content">
+                        <ul id="allAvailableSongsForEdit"></ul>
+                    </div>
+                </div>
+                <div class="suggestions-panel card">
+                    <h3>Suggestions Harmoniques (Mixable avec le dernier son)</h3>
+                    <div class="panel-content">
+                        <ul id="harmonicSuggestions"></ul>
+                    </div>
                 </div>
             </div>
-            
-            <div class="playlist-editor-grid">
-                <!-- Column 1: Current Playlist -->
-                <div class="editor-column card playlist-column">
-                    <div class="column-header">
-                        <h3><i class="fas fa-list-ul"></i> Ma Playlist</h3>
-                    </div>
-                    <div class="column-content custom-scrollbar">
-                        <ul id="currentPlaylistSongs" class="song-list"></ul>
-                    </div>
-                </div>
-
-                <!-- Column 2: Suggestions & Analysis -->
-                <div class="editor-column card suggestions-column">
-                    <div class="column-header">
-                        <h3><i class="fas fa-magic"></i> Suggestions</h3>
-                    </div>
-                    <div class="column-content custom-scrollbar">
-                        <!-- The JS populates this container. Changed to div because JS injects a header div inside it. -->
-                        <div id="harmonicSuggestions" class="suggestion-list-container"></div>
-                    </div>
-                </div>
-
-                <!-- Column 3: Library -->
-                <div class="editor-column card library-column">
-                    <div class="column-header">
-                        <h3><i class="fas fa-music"></i> Bibliothèque</h3>
-                    </div>
-                    <div class="search-container">
-                        <i class="fas fa-search search-icon"></i>
-                        <input type="text" id="songSearchInput" placeholder="Rechercher..." />
-                    </div>
-                    <div class="column-content custom-scrollbar">
-                        <ul id="allAvailableSongsForEdit" class="song-list"></ul>
-                    </div>
-                </div>
+            <div class="form-actions">
+                <button id="cancelPlaylistEditBtn" class="btn"><i class="fas fa-times"></i> Annuler</button>
+                <button id="savePlaylistChangesBtn" class="btn btn-primary"><i class="fas fa-save"></i> Enregistrer</button>
             </div>
         </section>
     </main>
