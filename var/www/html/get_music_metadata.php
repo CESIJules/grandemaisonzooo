@@ -154,6 +154,11 @@ if ($trackInfo) {
     } else {
         // Check if features contains an error
         $errorMsg = isset($features['error']) ? $features['error']['message'] : 'Audio features missing';
+        // Debug: include raw response if no specific error message
+        if ($errorMsg === 'Audio features missing') {
+             $errorMsg .= ' Raw: ' . json_encode($features);
+        }
+        
         echo json_encode([
             'status' => 'error', 
             'message' => "Found '{$trackInfo['name']}' by '{$trackInfo['artist']}' but no audio features. ($errorMsg)"
