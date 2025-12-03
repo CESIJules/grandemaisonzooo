@@ -1,6 +1,9 @@
 import sys
 import os
 
+# Set Numba cache dir to a writable location just in case
+os.environ['NUMBA_CACHE_DIR'] = '/tmp'
+
 # Redirect stderr to null immediately to prevent library warnings from breaking JSON output
 try:
     sys.stderr = open(os.devnull, 'w')
@@ -17,7 +20,7 @@ warnings.filterwarnings('ignore')
 
 def analyze_audio(file_path):
     try:
-        # Load only 60 seconds from the middle to save RAM
+        # Load only 45 seconds (compromise)
         # Get duration first (lightweight)
         duration = librosa.get_duration(path=file_path)
         
@@ -28,7 +31,8 @@ def analyze_audio(file_path):
             offset = (duration / 2) - 30
             
         # Load audio
-        y, sr = librosa.load(file_path, sr=22050, offset=offset, duration=60)
+        # sr=22050 is standard for music analysis, mono=True saves RAM
+        y, sr = librosa.load(file_path, sr=22050, offset=offset, duration=45)
         
         if len(y) == 0:
             return {"error": "Empty audio"}
@@ -98,4 +102,9 @@ if __name__ == "__main__":
         sys.exit(1)
         
     file_path = sys.argv[1]
+    # Ensure file exists
+    if not os.path.exists(file_path):
+        print(json.dumps({"error": f"File not found: {file_path}"}))
+        sys.exit(1)
+
     print(json.dumps(analyze_audio(file_path)))
