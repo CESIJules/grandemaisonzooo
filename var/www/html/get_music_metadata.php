@@ -56,10 +56,12 @@ $danceability = 0;
 $key_key = -1;
 $key_mode = 0;
 $source = 'librosa';
+$librosa_error = null;
 
 if (!$pyData || isset($pyData['error'])) {
     // LIBROSA FAILED - FALLBACK TO BPM-TOOLS
     $source = 'fallback_bpm_tools';
+    $librosa_error = $pyData['error'] ?? 'JSON Decode Error or Empty Output';
     
     $bpmPath = trim(shell_exec("which bpm"));
     if ($bpmPath) {
@@ -164,7 +166,8 @@ $result = [
     'danceability' => $danceability,
     'valence' => 0.5, // Placeholder
     'acousticness' => 0.0, // Placeholder
-    'source' => $source
+    'source' => $source,
+    'librosa_error' => $librosa_error
 ];
 
 // 5. SAVE TO CACHE
