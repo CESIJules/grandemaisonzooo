@@ -37,35 +37,31 @@ if (!file_exists($filePath)) {
 }
 
 // --- A. BPM via AUBIO ---
-// Check if aubio is installed
-// Use 'aubio tempo' instead of 'aubio beat' for better BPM estimation
+// We use 'aubio tempo' to get BPM estimates across the file and take the median.
+// This is generally more stable than calculating intervals from 'aubio beat'.
 $aubioCmd = "aubio tempo " . escapeshellarg($filePath) . " 2>&1";
 $aubioOutput = shell_exec($aubioCmd);
 
 $bpm = 0;
 if ($aubioOutput) {
-    // aubio tempo returns a list of BPM estimates per frame.
-    // We take the median or mode.
     $lines = explode("\n", trim($aubioOutput));
-    $values = [];
+    $bpms = [];
     foreach ($lines as $line) {
-        if (is_numeric(trim($line))) {
-            $val = floatval($line);
-            if ($val > 40 && $val < 250) { // Filter unreasonable values
-                $values[] = $val;
-            }
+        // aubio tempo outputs lines like "120.000000"
+        $val = floatval($line);
+        if ($val > 40 && $val < 250) { // Sanity check range
+            $bpms[] = $val;
         }
     }
-    
-    if (count($values) > 0) {
-        // Calculate median
-        sort($values);
-        $count = count($values);
+
+    if (count($bpms) > 0) {
+        sort($bpms);
+        $count = count($bpms);
         $middle = floor(($count - 1) / 2);
         if ($count % 2) {
-            $bpm = $values[$middle];
+            $bpm = $bpms[$middle];
         } else {
-            $bpm = ($values[$middle] + $values[$middle + 1]) / 2.0;
+            $bpm = ($bpms[$middle] + $bpms[$middle + 1]) / 2.0;
         }
         $bpm = round($bpm);
     }
@@ -94,39 +90,12 @@ if (!$pyData || isset($pyData['error'])) {
     $danceability = 0;
     $key_key = -1;
     $key_mode = 0;
-    $pyBpm = 0;
     $errorMsg = $pyData['error'] ?? "Python analysis failed";
 } else {
     $energy = $pyData['energy'];
     $danceability = $pyData['danceability'];
     $key_key = $pyData['key_key'];
     $key_mode = $pyData['key_mode'];
-    $pyBpm = $pyData['bpm'] ?? 0;
-}
-
-// If aubio failed or returned 0, try to use Python BPM
-if ($bpm == 0 && $pyBpm > 0) {
-    $bpm = $pyBpm;
-}
-
-// Conflict Resolution:
-// If Aubio and Python disagree significantly (> 10 BPM)
-if (abs($bpm - $pyBpm) > 10 && $pyBpm > 0 && $bpm > 0) {
-    // Case 1: 3:2 Polyrhythm (e.g. 110 vs 165)
-    // If Python is approx 1.5x Aubio, prefer Python (likely faster tempo detected)
-    $ratio = $pyBpm / $bpm;
-    if ($ratio > 1.4 && $ratio < 1.6) {
-        $bpm = $pyBpm;
-    }
-    // Case 2: Double Time (e.g. 70 vs 140)
-    // If Python is approx 2x Aubio, prefer Python
-    else if ($ratio > 1.9 && $ratio < 2.1) {
-        $bpm = $pyBpm;
-    }
-    // Case 3: Aubio is unreasonably slow (< 80) and Python is normal (> 80)
-    else if ($bpm < 80 && $pyBpm > 80) {
-        $bpm = $pyBpm;
-    }
 }
 
 // 3. CONVERT TO CAMELOT
