@@ -7,6 +7,7 @@ header('Content-Type: application/json');
 
 $input = json_decode(file_get_contents('php://input'), true);
 $filename = $input['filename'] ?? null;
+$force = $input['force'] ?? false;
 
 if (!$filename) {
     echo json_encode(['status' => 'error', 'message' => 'No filename provided']);
@@ -23,7 +24,7 @@ if (file_exists($metadataFile)) {
     $metadata = json_decode(file_get_contents($metadataFile), true) ?? [];
 }
 
-if (isset($metadata[$filename])) {
+if (!$force && isset($metadata[$filename])) {
     // Return cached data
     echo json_encode(['status' => 'success', 'data' => $metadata[$filename]]);
     exit;

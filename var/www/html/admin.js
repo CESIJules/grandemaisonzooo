@@ -97,14 +97,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const metadataCache = {};
 
-    async function getMusicMetadata(filename) {
-        if (metadataCache[filename]) return metadataCache[filename];
+    async function getMusicMetadata(filename, force = false) {
+        if (!force && metadataCache[filename]) return metadataCache[filename];
         
         try {
             const response = await fetch('get_music_metadata.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ filename: filename })
+                body: JSON.stringify({ filename: filename, force: force })
             });
             const result = await response.json();
             if (result.status === 'success') {
@@ -138,6 +138,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!lastSongMeta || lastSongMeta.error || !lastSongMeta.camelot) {
             const errorDetails = lastSongMeta && lastSongMeta.error ? `<br><small>${lastSongMeta.message} ${lastSongMeta.debug ? '<br>Debug: ' + lastSongMeta.debug : ''}</small>` : '';
             suggestionsUl.innerHTML = `<p style="color: var(--accent-danger);">Impossible d'analyser la dernière chanson (${formatSongPathToTitle(lastSongPath)}).${errorDetails}</p>`;
+            
+            // Add retry button
+            const retryBtn = document.createElement('button');
+            retryBtn.className = 'btn btn-sm btn-secondary';
+            retryBtn.style.marginTop = '10px';
+            retryBtn.innerHTML = '<i class="fas fa-sync"></i> Réessayer (Forcer)';
+            retryBtn.onclick = async () => {
+                suggestionsUl.innerHTML = '<p>Réanalyse forcée en cours...</p>';
+                await getMusicMetadata(lastSongFilename, true);
+                renderSuggestions();
+            };
+            suggestionsUl.appendChild(retryBtn);
             return;
         }
 
@@ -145,7 +157,35 @@ document.addEventListener('DOMContentLoaded', () => {
         const targetKey = lastSongMeta.camelot;
         const compatibleKeys = camelotWheel[targetKey]?.compatible || [];
 
-        suggestionsUl.innerHTML = `<p>Basé sur: <strong>${formatSongPathToTitle(lastSongPath)}</strong> (${targetBpm} BPM, ${targetKey})</p>`;
+        suggestionsUl.innerHTML = '';
+        
+        // Header with current song info and refresh button
+        const headerDiv = document.createElement('div');
+        headerDiv.style.marginBottom = '15px';
+        headerDiv.style.paddingBottom = '10px';
+        headerDiv.style.borderBottom = '1px solid var(--surface-border)';
+        headerDiv.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <small>Basé sur:</small><br>
+                    <strong>${formatSongPathToTitle(lastSongPath)}</strong> 
+                    <span class="suggestion-badge badge-bpm">${targetBpm} BPM</span> 
+                    <span class="suggestion-badge badge-key">${targetKey}</span>
+                </div>
+                <button id="forceRefreshBtn" class="btn btn-sm btn-outline-secondary" title="Forcer la réanalyse">
+                    <i class="fas fa-sync"></i>
+                </button>
+            </div>
+        `;
+        suggestionsUl.appendChild(headerDiv);
+        
+        document.getElementById('forceRefreshBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('forceRefreshBtn');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.disabled = true;
+            await getMusicMetadata(lastSongFilename, true);
+            renderSuggestions();
+        });
 
         // Filter candidates
         const candidates = [];
