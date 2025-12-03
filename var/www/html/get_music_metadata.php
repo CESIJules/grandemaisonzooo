@@ -37,8 +37,9 @@ if (isset($metadata[$filename])) {
 // Note: This might take a few seconds.
 // Ensure www-data has permission to execute python and read the file.
 // We use 2>&1 to capture stderr as well for debugging
-// Force UTF-8 encoding for Python IO to handle special characters in filenames
-$command = "export PYTHONIOENCODING=utf-8; " . $pythonExecutable . " " . escapeshellarg($pythonScript) . " " . escapeshellarg($filePath) . " 2>&1";
+// Force UTF-8 encoding for Python IO
+// Disable Numba JIT to prevent memory spikes and segfaults on low-resource servers
+$command = "export PYTHONIOENCODING=utf-8; export NUMBA_DISABLE_JIT=1; " . $pythonExecutable . " " . escapeshellarg($pythonScript) . " " . escapeshellarg($filePath) . " 2>&1";
 $output = shell_exec($command);
 $result = json_decode($output, true);
 
