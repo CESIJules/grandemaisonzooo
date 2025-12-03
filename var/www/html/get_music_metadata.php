@@ -60,7 +60,8 @@ function getSpotifyToken($clientId, $clientSecret) {
 function searchTrack($query, $token) {
     $query = urlencode($query);
     $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, "https://api.spotify.com/v1/search?q=$query&type=track&limit=1");
+    // Added market=FR to ensure we get IDs valid for the region
+    curl_setopt($ch, CURLOPT_URL, "https://api.spotify.com/v1/search?q=$query&type=track&limit=1&market=FR");
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
         "Authorization: Bearer $token"
     ]);
@@ -160,7 +161,7 @@ if ($trackInfo) {
         
         echo json_encode([
             'status' => 'error', 
-            'message' => "Found '{$trackInfo['name']}' by '{$trackInfo['artist']}' but no audio features. Debug: $debugInfo"
+            'message' => "Found '{$trackInfo['name']}' (ID: {$trackInfo['id']}) by '{$trackInfo['artist']}' but API error. Debug: $debugInfo"
         ]);
     }
 } else {
