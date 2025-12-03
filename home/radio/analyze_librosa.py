@@ -163,38 +163,47 @@ def analyze_audio(file_path):
         # Hardcoded energy checks often fail for Boom Bap (High Energy, Low BPM).
 
         # --- 6. KEY ---
-        # 1. Estimate tuning (important for samples/vinyl rips)
-        tuning = librosa.estimate_tuning(y=y_harmonic, sr=sr)
-        
-        # 2. Compute Chroma CQT with tuning correction
-        # We use Harmonic component to avoid percussive noise
-        chroma = librosa.feature.chroma_cqt(y=y_harmonic, sr=sr, tuning=tuning)
-        
-        # Median over time (Robust to transient noise/wrong notes compared to Sum)
-        chroma_vals = np.median(chroma, axis=1)
-        
-        # Krumhansl-Schmuckler Profiles (Standard, often better for general detection than Temperley)
-        # Major
-        maj_profile = np.array([6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88])
-        # Minor
-        min_profile = np.array([6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17])
-        
-        maj_corrs = []
-        min_corrs = []
-        
-        for i in range(12):
-            maj_corrs.append(np.corrcoef(np.roll(maj_profile, i), chroma_vals)[0, 1])
-            min_corrs.append(np.corrcoef(np.roll(min_profile, i), chroma_vals)[0, 1])
+        try:
+            # 1. Estimate tuning (important for samples/vinyl rips)
+            # Check if we have enough signal
+            if np.mean(np.abs(y_harmonic)) < 0.001:
+                tuning = 0.0
+            else:
+                tuning = librosa.estimate_tuning(y=y_harmonic, sr=sr)
             
-        max_maj = np.max(maj_corrs)
-        max_min = np.max(min_corrs)
-        
-        if max_maj > max_min:
-            key_idx = np.argmax(maj_corrs)
-            mode = 1 # Major
-        else:
-            key_idx = np.argmax(min_corrs)
-            mode = 0 # Minor
+            # 2. Compute Chroma CQT with tuning correction
+            # We use Harmonic component to avoid percussive noise
+            chroma = librosa.feature.chroma_cqt(y=y_harmonic, sr=sr, tuning=tuning)
+            
+            # Median over time (Robust to transient noise/wrong notes compared to Sum)
+            chroma_vals = np.median(chroma, axis=1)
+            
+            # Krumhansl-Schmuckler Profiles (Standard, often better for general detection than Temperley)
+            # Major
+            maj_profile = np.array([6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88])
+            # Minor
+            min_profile = np.array([6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17])
+            
+            maj_corrs = []
+            min_corrs = []
+            
+            for i in range(12):
+                maj_corrs.append(np.corrcoef(np.roll(maj_profile, i), chroma_vals)[0, 1])
+                min_corrs.append(np.corrcoef(np.roll(min_profile, i), chroma_vals)[0, 1])
+                
+            max_maj = np.max(maj_corrs)
+            max_min = np.max(min_corrs)
+            
+            if max_maj > max_min:
+                key_idx = np.argmax(maj_corrs)
+                mode = 1 # Major
+            else:
+                key_idx = np.argmax(min_corrs)
+                mode = 0 # Minor
+        except:
+            # Fallback if Key detection fails
+            key_idx = 0
+            mode = 1
 
         return {
             'bpm': round(float(bpm), 1),
