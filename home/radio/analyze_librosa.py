@@ -97,7 +97,10 @@ def analyze_audio(file_path):
                 onset_std = librosa.onset.onset_strength(S=librosa.power_to_db(S_std, ref=np.max), sr=sr, hop_length=hop_std, aggregate=np.median)
                 clarity_std = np.std(onset_std)
                 
-                t_std = librosa.feature.tempo(onset_envelope=onset_std, sr=sr, hop_length=hop_std, prior=None)
+                # Use global_bpm as a prior (start_bpm) to guide the local estimation
+                # This prevents octave jumps in short windows
+                prior_bpm = global_bpm if global_bpm > 0 else 120
+                t_std = librosa.feature.tempo(onset_envelope=onset_std, sr=sr, hop_length=hop_std, start_bpm=prior_bpm)
                 tempo_std = t_std[0] if isinstance(t_std, np.ndarray) else t_std
                 
                 # PASS 2: High-Res (Sensitive)
@@ -106,7 +109,7 @@ def analyze_audio(file_path):
                 onset_hi = librosa.onset.onset_strength(S=librosa.power_to_db(S_hi, ref=np.max), sr=sr, hop_length=hop_hi, aggregate=np.median)
                 clarity_hi = np.std(onset_hi)
                 
-                t_hi = librosa.feature.tempo(onset_envelope=onset_hi, sr=sr, hop_length=hop_hi, prior=None)
+                t_hi = librosa.feature.tempo(onset_envelope=onset_hi, sr=sr, hop_length=hop_hi, start_bpm=prior_bpm)
                 tempo_hi = t_hi[0] if isinstance(t_hi, np.ndarray) else t_hi
                 
                 # Vote with Anchor Weighting
@@ -132,7 +135,24 @@ def analyze_audio(file_path):
             hist, bin_edges = np.histogram(candidates, bins=bins, weights=weights)
             
             best_bin_idx = np.argmax(hist)
-            bpm = (bin_edges[best_bin_idx] + bin_edges[best_bin_idx+1]) / 2
+            
+            # Refinement: Take weighted average of candidates in the peak bin (and neighbors)
+            # to get sub-integer precision without forcing 0.5 steps (which happens if we just take bin center)
+            target_range_min = bin_edges[best_bin_idx] - 1.5
+            target_range_max = bin_edges[best_bin_idx+1] + 1.5
+            
+            refined_candidates = []
+            refined_weights = []
+            
+            for c, w in zip(candidates, weights):
+                if target_range_min <= c <= target_range_max:
+                    refined_candidates.append(c)
+                    refined_weights.append(w)
+            
+            if refined_candidates:
+                bpm = np.average(refined_candidates, weights=refined_weights)
+            else:
+                bpm = (bin_edges[best_bin_idx] + bin_edges[best_bin_idx+1]) / 2
 
         # --- 4. ENERGY & DANCEABILITY ---
         rms = librosa.feature.rms(y=y)[0]
