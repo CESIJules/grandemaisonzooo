@@ -5,7 +5,8 @@ class PlaylistManager {
     private $playlistsDir = '/home/radio/playlists';
     private $musicDir = '/home/radio/musique';
     private $livePlaylistLink = '/home/radio/live-playlist';
-    private $fallbackDir = '/home/radio/fallback';
+    // Point fallback directly to the main music directory so all songs are included automatically
+    private $fallbackDir = '/home/radio/musique';
     private $defaultContent = [
         "active_playlist" => null,
         "playlists" => []
