@@ -42,14 +42,28 @@ def analyze_audio(file_path):
         # This drastically improves BPM detection on complex tracks
         y_harmonic, y_percussive = librosa.effects.hpss(y)
 
-        # --- 2. BPM ---
-        # Use ONLY the percussive component for beat tracking
+        # --- 2. BPM (Tempogram Method - Unbiased) ---
+        # Use ONLY the percussive component
         onset_env = librosa.onset.onset_strength(y=y_percussive, sr=sr)
         
-        # Use librosa.feature.tempo which is often more stable than beat_track's internal estimator
-        # aggregate=np.median helps ignore outliers
-        tempo_arr = librosa.feature.tempo(onset_envelope=onset_env, sr=sr, aggregate=None)
-        bpm = np.median(tempo_arr)
+        # Compute tempogram (autocorrelation of onset strength)
+        # This avoids the "120 BPM bias" of the standard beat_track
+        tempogram = librosa.feature.tempogram(onset_envelope=onset_env, sr=sr)
+        
+        # Average the tempogram over time to get a global tempo profile
+        ac_global = np.mean(tempogram, axis=1)
+        
+        # Get the BPM values corresponding to the tempogram bins
+        bpms = librosa.tempo_frequencies(len(ac_global), sr=sr)
+        
+        # Filter out unrealistic BPMs (e.g. < 50 or > 220)
+        # We zero out the strength of invalid BPMs
+        mask = (bpms >= 50) & (bpms <= 220)
+        ac_global[~mask] = 0
+        
+        # Find the peak (the strongest tempo)
+        best_idx = np.argmax(ac_global)
+        bpm = bpms[best_idx]
 
         # --- 3. Key ---
         # Use ONLY the harmonic component for key detection
