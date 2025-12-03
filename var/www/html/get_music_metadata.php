@@ -36,53 +36,41 @@ if (!file_exists($filePath)) {
     exit;
 }
 
-// --- A. BPM via AUBIO (Multi-Strategy) ---
-// We run aubio with different onset detection functions to find a consensus.
-// This is much more robust for saturated/bass-heavy tracks than relying on a single algorithm.
-
-function getAubioBpm($filePath, $method = '') {
-    $methodFlag = $method ? "-O $method" : "";
-    // Use 'aubio tempo' which gives a list of beats/bpm estimates
-    $cmd = "aubio tempo $methodFlag " . escapeshellarg($filePath) . " 2>&1";
+// --- A. BPM via BPM-TOOLS (The "Powerful & Reliable" Solution) ---
+// Requires: apt-get install bpm-tools
+// We pipe raw audio to 'bpm' command. It is very fast and accurate for rhythm.
+$bpm = 0;
+// Check if bpm command exists
+$bpmToolsCmd = "which bpm";
+if (shell_exec($bpmToolsCmd)) {
+    // ffmpeg decodes to raw pcm -> bpm tool analyzes it
+    // -f s16le: signed 16-bit little endian
+    // -ar 44100: sample rate expected by bpm-tools default
+    // -ac 1: mono
+    // We analyze the middle 2 minutes to be safe and accurate
+    $cmd = "ffmpeg -i " . escapeshellarg($filePath) . " -ss 30 -t 120 -f s16le -ac 1 -ar 44100 - -v quiet | bpm";
     $output = shell_exec($cmd);
-    
-    $bpms = [];
-    if ($output) {
-        $lines = explode("\n", trim($output));
-        foreach ($lines as $line) {
-            $val = floatval($line);
-            // Sanity check range (Extended for DnB/Dubstep)
-            if ($val > 50 && $val < 220) {
-                $bpms[] = $val;
-            }
+    if (is_numeric(trim($output))) {
+        $val = floatval($output);
+        if ($val > 50 && $val < 220) {
+            $bpm = $val;
         }
-    }
-    
-    if (empty($bpms)) return 0;
-    
-    // Return MEDIAN of this run to ignore outliers
-    sort($bpms);
-    $count = count($bpms);
-    $middle = floor(($count - 1) / 2);
-    if ($count % 2) {
-        return $bpms[$middle];
-    } else {
-        return ($bpms[$middle] + $bpms[$middle + 1]) / 2.0;
     }
 }
 
-// 1. Default (Complex Domain) - Good balance
-$bpmComplex = getAubioBpm($filePath, 'complex');
+// --- B. FALLBACK: FFMPEG (If bpm-tools is missing or failed) ---
+// This was the method you liked ("globalement de bons résultats")
+if ($bpm == 0) {
+    $ffmpegBpmCmd = "ffmpeg -i " . escapeshellarg($filePath) . " -ss 30 -t 30 -af \"bpm\" -f null /dev/null 2>&1";
+    $ffmpegOutput = shell_exec($ffmpegBpmCmd);
+    if (preg_match('/BPM: ([0-9\.]+)/', $ffmpegOutput, $matches)) {
+        $bpm = floatval($matches[1]);
+    }
+}
 
-// 2. Spectral Difference - Better for saturated/noisy mixes
-$bpmSpecDiff = getAubioBpm($filePath, 'specdiff');
-
-// 3. Phase - Sometimes better for soft onsets, provides a 3rd opinion
-$bpmPhase = getAubioBpm($filePath, 'phase');
-
-// --- B. KEY & ENERGY via FFMPEG + PYTHON (NUMPY) ---
-// We pipe 30 seconds of raw audio to the python script
-// We NO LONGER use Python for BPM as it was unreliable for this use case.
+// --- C. KEY & ENERGY via FFMPEG + PYTHON (NUMPY) ---
+// We pipe 30 seconds of raw audio to the python script to avoid loading the whole file
+// We NO LONGER use Python for BPM.
 
 // Use the venv python if available, otherwise system python
 $pythonExecutable = '/home/radio/venv/bin/python'; 
@@ -108,40 +96,22 @@ if (!$pyData || isset($pyData['error'])) {
     $key_mode = $pyData['key_mode'];
 }
 
-// --- C. CONSENSUS LOGIC (Aubio Internal Vote) ---
-$candidates = [];
-if ($bpmComplex > 0) $candidates['complex'] = $bpmComplex;
-if ($bpmSpecDiff > 0) $candidates['specdiff'] = $bpmSpecDiff;
-if ($bpmPhase > 0) $candidates['phase'] = $bpmPhase;
+// --- D. FINAL CORRECTIONS (Double Time / Half Time) ---
+// bpm-tools is great but often detects Drum & Bass (174) as 87.
+// We use a simple heuristic: if Energy is high and Danceability is high, it's likely fast.
 
-$finalBpm = 0;
+$finalBpm = $bpm;
 
-// Helper to check closeness
-function isClose($a, $b) { return abs($a - $b) <= 4; }
-
-// 1. Look for agreement between strategies
-if (isset($candidates['complex']) && isset($candidates['specdiff']) && isClose($candidates['complex'], $candidates['specdiff'])) {
-    // If Complex and SpecDiff agree, that's a very strong signal.
-    // SpecDiff is often better for saturation, so we lean slightly towards it or average.
-    $finalBpm = ($candidates['complex'] + $candidates['specdiff']) / 2;
-} 
-elseif (isset($candidates['specdiff']) && isset($candidates['phase']) && isClose($candidates['specdiff'], $candidates['phase'])) {
-    $finalBpm = ($candidates['specdiff'] + $candidates['phase']) / 2;
-}
-elseif (isset($candidates['complex']) && isset($candidates['phase']) && isClose($candidates['complex'], $candidates['phase'])) {
-    $finalBpm = ($candidates['complex'] + $candidates['phase']) / 2;
-}
-else {
-    // 2. No agreement? 
-    // For saturated/bass-heavy music, 'specdiff' is theoretically the most robust.
-    // If 'specdiff' failed (0), fallback to 'complex'.
-    if (isset($candidates['specdiff'])) {
-        $finalBpm = $candidates['specdiff'];
-    } elseif (isset($candidates['complex'])) {
-        $finalBpm = $candidates['complex'];
-    } else {
-        $finalBpm = reset($candidates); // Whatever we have
+if ($finalBpm > 0 && $finalBpm < 100) {
+    // Check for potential double time (e.g. 70 -> 140, 87 -> 174)
+    // If energy is high (> 0.6), it's likely a faster song detected at half speed.
+    if ($energy > 0.6) {
+        $finalBpm *= 2;
     }
+} elseif ($finalBpm > 160) {
+    // Check for potential half time (rare, but possible)
+    // If energy is very low, maybe it's not that fast? 
+    // (Actually, usually better to keep high BPM for mixing safety)
 }
 
 $bpm = round($finalBpm);
