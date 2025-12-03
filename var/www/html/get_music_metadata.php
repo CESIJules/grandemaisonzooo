@@ -44,7 +44,13 @@ if (!file_exists($pythonExecutable)) {
     $pythonExecutable = 'python3';
 }
 
-$scriptPath = '/home/radio/analyze_librosa.py';
+// Use relative path to ensure we use the version in the workspace
+$scriptPath = realpath(__DIR__ . '/../../../home/radio/analyze_librosa.py');
+if (!$scriptPath || !file_exists($scriptPath)) {
+    // Fallback to absolute path if relative fails (e.g. different deployment structure)
+    $scriptPath = '/home/radio/analyze_librosa.py';
+}
+
 // Remove 2>&1 to keep stderr out of stdout (shell_exec returns stdout)
 $cmd = $pythonExecutable . " " . escapeshellarg($scriptPath) . " " . escapeshellarg($filePath);
 $output = shell_exec($cmd);
