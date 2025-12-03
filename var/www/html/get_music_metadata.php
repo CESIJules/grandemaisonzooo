@@ -35,8 +35,15 @@ if (!file_exists($filePath)) {
     exit;
 }
 
+// CONFIGURATION PYTHON
+// Remplacez ce chemin par celui de votre environnement virtuel si nécessaire
+// Ex: '/home/radio/venv/bin/python' ou '/var/www/html/venv/bin/python'
+$pythonExecutable = '/home/radio/venv/bin/python'; 
+// Si ça ne marche pas, essayez simplement 'python3' si les libs sont installées en global
+// $pythonExecutable = 'python3';
+
 // Call Python script
-$cmd = "python3 /home/radio/analyze_audio_light.py " . escapeshellarg($filePath);
+$cmd = $pythonExecutable . " /home/radio/analyze_audio_light.py " . escapeshellarg($filePath) . " 2>&1";
 $output = shell_exec($cmd);
 $analysis = json_decode($output, true);
 
