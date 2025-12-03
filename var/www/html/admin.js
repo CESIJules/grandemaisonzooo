@@ -97,6 +97,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const metadataCache = {};
 
+    // --- Metadata Cache Management ---
+    async function loadAllMetadata() {
+        try {
+            const response = await fetch('get_all_metadata.php');
+            if (response.ok) {
+                const data = await response.json();
+                // Merge with existing cache
+                Object.assign(metadataCache, data);
+                console.log('Bulk metadata loaded:', Object.keys(data).length, 'items');
+            }
+        } catch (e) {
+            console.error('Failed to load bulk metadata:', e);
+        }
+    }
+
+    // Load metadata on startup
+    loadAllMetadata();
+
     async function getMusicMetadata(filename, force = false) {
         if (!force && metadataCache[filename]) return metadataCache[filename];
         
@@ -195,24 +213,30 @@ document.addEventListener('DOMContentLoaded', () => {
         // Filter candidates
         const candidates = [];
         
-        // We need to check metadata for other songs. This might be slow if we do it one by one.
-        // Ideally, we should fetch all metadata at once, but for now let's iterate.
-        // To avoid freezing, we'll check only the first 20 available songs or implement a bulk fetch later.
-        // For this demo, we will iterate through allAvailableSongs but limit the number of API calls if not cached.
-        
-        let matchCount = 0;
+        // OPTIMIZATION: Prioritize cached songs to avoid waiting for analysis
+        // 1. Split songs into cached and uncached
+        const cachedSongs = [];
+        const uncachedSongs = [];
         
         for (const songPath of allAvailableSongs) {
-            if (currentEditingPlaylist.songs.includes(songPath)) continue; // Skip already in playlist
-            if (matchCount >= 5) break; // Limit suggestions
-
+            if (currentEditingPlaylist.songs.includes(songPath)) continue;
             const filename = songPath.split('/').pop();
-            // Optimistic check: if not in cache, we might skip to avoid heavy load, 
-            // OR we just analyze on demand. Let's analyze on demand but show a loading state.
+            if (metadataCache[filename]) {
+                cachedSongs.push(songPath);
+            } else {
+                uncachedSongs.push(songPath);
+            }
+        }
+        
+        // 2. Check cached songs first (Instant)
+        let matchCount = 0;
+        
+        for (const songPath of cachedSongs) {
+            if (matchCount >= 5) break;
             
-            const meta = await getMusicMetadata(filename);
-            if (!meta) continue;
-
+            const filename = songPath.split('/').pop();
+            const meta = metadataCache[filename]; // Guaranteed to exist
+            
             // Check BPM (±5%)
             const bpmDiff = Math.abs(meta.bpm - targetBpm);
             const bpmMatch = bpmDiff <= (targetBpm * 0.05);
@@ -224,6 +248,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 candidates.push({ path: songPath, meta: meta });
                 matchCount++;
             }
+        }
+        
+        // 3. If we don't have enough matches, try to analyze a few uncached songs
+        // Limit to analyzing max 3 songs to prevent UI freeze
+        if (matchCount < 5 && uncachedSongs.length > 0) {
+            let analyzedCount = 0;
+            const maxAnalyze = 3; 
+            
+            // Show a small indicator that we are analyzing more
+            const loadingIndicator = document.createElement('div');
+            loadingIndicator.innerHTML = '<small><i>Recherche approfondie...</i></small>';
+            suggestionsUl.appendChild(loadingIndicator);
+            
+            for (const songPath of uncachedSongs) {
+                if (matchCount >= 5 || analyzedCount >= maxAnalyze) break;
+                
+                const filename = songPath.split('/').pop();
+                const meta = await getMusicMetadata(filename); // Triggers analysis
+                analyzedCount++;
+                
+                if (!meta) continue;
+
+                const bpmDiff = Math.abs(meta.bpm - targetBpm);
+                const bpmMatch = bpmDiff <= (targetBpm * 0.05);
+                const keyMatch = compatibleKeys.includes(meta.camelot);
+
+                if (bpmMatch && keyMatch) {
+                    candidates.push({ path: songPath, meta: meta });
+                    matchCount++;
+                }
+            }
+            
+            // Remove indicator
+            if (loadingIndicator.parentNode) loadingIndicator.parentNode.removeChild(loadingIndicator);
         }
 
         if (candidates.length === 0) {
