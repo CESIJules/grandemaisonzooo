@@ -1,4 +1,12 @@
 import sys
+import os
+
+# Redirect stderr to null immediately to prevent library warnings from breaking JSON output
+try:
+    sys.stderr = open(os.devnull, 'w')
+except:
+    pass
+
 import json
 import numpy as np
 import librosa

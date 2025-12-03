@@ -45,19 +45,51 @@ if (!file_exists($pythonExecutable)) {
 }
 
 $scriptPath = '/home/radio/analyze_librosa.py';
-$cmd = $pythonExecutable . " " . escapeshellarg($scriptPath) . " " . escapeshellarg($filePath) . " 2>&1";
+// Remove 2>&1 to keep stderr out of stdout (shell_exec returns stdout)
+$cmd = $pythonExecutable . " " . escapeshellarg($scriptPath) . " " . escapeshellarg($filePath);
 $output = shell_exec($cmd);
 $pyData = json_decode($output, true);
 
+$bpm = 0;
+$energy = 0;
+$danceability = 0;
+$key_key = -1;
+$key_mode = 0;
+$source = 'librosa';
+
 if (!$pyData || isset($pyData['error'])) {
-    // Fallback values if analysis fails
-    $bpm = 0;
-    $energy = 0;
-    $danceability = 0;
-    $key_key = -1;
-    $key_mode = 0;
-    $errorMsg = $pyData['error'] ?? 'Unknown error';
-    // Log error if needed, or just return 0s
+    // LIBROSA FAILED - FALLBACK TO BPM-TOOLS
+    $source = 'fallback_bpm_tools';
+    
+    $bpmPath = trim(shell_exec("which bpm"));
+    if ($bpmPath) {
+        // Analyze 2 minutes from 30s mark
+        $cmd = "ffmpeg -i " . escapeshellarg($filePath) . " -ss 30 -t 120 -f s16le -ac 1 -ar 44100 - -v quiet | " . $bpmPath;
+        $bpmOutput = shell_exec($cmd);
+        if (is_numeric(trim($bpmOutput))) {
+            $val = floatval($bpmOutput);
+            if ($val > 50 && $val < 220) $bpm = $val;
+        }
+    }
+    
+    // If bpm-tools failed, try FFMPEG filter
+    if ($bpm == 0) {
+        $source = 'fallback_ffmpeg';
+        $ffmpegBpmCmd = "ffmpeg -i " . escapeshellarg($filePath) . " -ss 30 -t 30 -af \"bpm\" -f null /dev/null 2>&1";
+        $ffmpegOutput = shell_exec($ffmpegBpmCmd);
+        if (preg_match_all('/BPM: ([0-9\.]+)/', $ffmpegOutput, $matches)) {
+            $vals = array_map('floatval', $matches[1]);
+            $vals = array_filter($vals, function($v) { return $v > 50 && $v < 220; });
+            if (count($vals) > 0) {
+                sort($vals);
+                $bpm = $vals[floor((count($vals)-1)/2)]; // Median
+            }
+        }
+    }
+    
+    // If still 0, default to 120
+    if ($bpm == 0) $bpm = 120;
+
 } else {
     $bpm = $pyData['bpm'];
     $energy = $pyData['energy'];
@@ -132,7 +164,7 @@ $result = [
     'danceability' => $danceability,
     'valence' => 0.5, // Placeholder
     'acousticness' => 0.0, // Placeholder
-    'source' => 'librosa_optimized'
+    'source' => $source
 ];
 
 // 5. SAVE TO CACHE
