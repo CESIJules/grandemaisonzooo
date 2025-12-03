@@ -45,16 +45,29 @@ def analyze_audio(file_path):
         # Isolate Low Frequencies (Kick/Bass) for Rhythm
         # This avoids confusion with fast hi-hats (Trap/Drill) or complex melodies
         # Simple low-pass filter via STFT masking
-        D = librosa.stft(y_percussive)
-        freqs = librosa.fft_frequencies(sr=sr)
-        D[freqs > 300] = 0 # Cut everything above 300Hz
-        y_bass = librosa.istft(D)
+        try:
+            D = librosa.stft(y_percussive)
+            freqs = librosa.fft_frequencies(sr=sr)
+            # Ensure shapes match for broadcasting if needed, though usually they align on axis 0
+            if D.shape[0] == len(freqs):
+                D[freqs > 300] = 0 # Cut everything above 300Hz
+            
+            y_bass = librosa.istft(D)
 
-        onset_env_bass = librosa.onset.onset_strength(y=y_bass, sr=sr, aggregate=np.median)
-        tempo_bass = librosa.feature.tempo(onset_envelope=onset_env_bass, sr=sr)[0]
+            onset_env_bass = librosa.onset.onset_strength(y=y_bass, sr=sr, aggregate=np.median)
+            tempo_bass_arr = librosa.feature.tempo(onset_envelope=onset_env_bass, sr=sr)
+            tempo_bass = tempo_bass_arr[0] if len(tempo_bass_arr) > 0 else 0
+        except:
+            tempo_bass = 0
         
         # Use this Bass BPM as the strong anchor
         global_bpm = tempo_bass
+        
+        # Fallback: If bass analysis yields nothing (ambient/acoustic), use full spectrum
+        if global_bpm < 40:
+             onset_env_global = librosa.onset.onset_strength(y=y_percussive, sr=sr, aggregate=np.median)
+             t_global = librosa.feature.tempo(onset_envelope=onset_env_global, sr=sr)
+             global_bpm = t_global[0] if len(t_global) > 0 else 120
         
         # Ensure scalar
         if isinstance(global_bpm, np.ndarray):
