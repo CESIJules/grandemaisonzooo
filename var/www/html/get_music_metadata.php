@@ -36,19 +36,13 @@ if (!file_exists($filePath)) {
     exit;
 }
 
-// --- A. BPM via BPM-TOOLS (The "Powerful & Reliable" Solution) ---
+// --- A. BPM via BPM-TOOLS (Primary) ---
 // Requires: apt-get install bpm-tools
-// We pipe raw audio to 'bpm' command. It is very fast and accurate for rhythm.
 $bpm = 0;
-// Check if bpm command exists
-$bpmToolsCmd = "which bpm";
-if (shell_exec($bpmToolsCmd)) {
-    // ffmpeg decodes to raw pcm -> bpm tool analyzes it
-    // -f s16le: signed 16-bit little endian
-    // -ar 44100: sample rate expected by bpm-tools default
-    // -ac 1: mono
-    // We analyze the middle 2 minutes to be safe and accurate
-    $cmd = "ffmpeg -i " . escapeshellarg($filePath) . " -ss 30 -t 120 -f s16le -ac 1 -ar 44100 - -v quiet | bpm";
+$bpmPath = trim(shell_exec("which bpm"));
+if ($bpmPath) {
+    // Analyze 2 minutes from 30s mark
+    $cmd = "ffmpeg -i " . escapeshellarg($filePath) . " -ss 30 -t 120 -f s16le -ac 1 -ar 44100 - -v quiet | " . $bpmPath;
     $output = shell_exec($cmd);
     if (is_numeric(trim($output))) {
         $val = floatval($output);
@@ -58,13 +52,41 @@ if (shell_exec($bpmToolsCmd)) {
     }
 }
 
-// --- B. FALLBACK: FFMPEG (If bpm-tools is missing or failed) ---
-// This was the method you liked ("globalement de bons résultats")
+// --- B. FALLBACK: FFMPEG (Secondary) ---
 if ($bpm == 0) {
     $ffmpegBpmCmd = "ffmpeg -i " . escapeshellarg($filePath) . " -ss 30 -t 30 -af \"bpm\" -f null /dev/null 2>&1";
     $ffmpegOutput = shell_exec($ffmpegBpmCmd);
     if (preg_match('/BPM: ([0-9\.]+)/', $ffmpegOutput, $matches)) {
-        $bpm = floatval($matches[1]);
+        $val = floatval($matches[1]);
+        if ($val > 50 && $val < 220) {
+            $bpm = $val;
+        }
+    }
+}
+
+// --- C. FALLBACK: AUBIO (Tertiary - Last Resort) ---
+// If both above failed, use Aubio which almost always returns something.
+if ($bpm == 0) {
+    $aubioCmd = "aubio tempo " . escapeshellarg($filePath) . " 2>&1";
+    $aubioOutput = shell_exec($aubioCmd);
+    if ($aubioOutput) {
+        $lines = explode("\n", trim($aubioOutput));
+        $bpms = [];
+        foreach ($lines as $line) {
+            $val = floatval($line);
+            if ($val > 50 && $val < 220) $bpms[] = $val;
+        }
+        if (count($bpms) > 0) {
+            // Median
+            sort($bpms);
+            $count = count($bpms);
+            $middle = floor(($count - 1) / 2);
+            if ($count % 2) {
+                $bpm = $bpms[$middle];
+            } else {
+                $bpm = ($bpms[$middle] + $bpms[$middle + 1]) / 2.0;
+            }
+        }
     }
 }
 
