@@ -36,41 +36,53 @@ if (!file_exists($filePath)) {
     exit;
 }
 
-// --- A. BPM via AUBIO ---
-// We use 'aubio tempo' to get BPM estimates across the file and take the median.
-// This is generally more stable than calculating intervals from 'aubio beat'.
-$aubioCmd = "aubio tempo " . escapeshellarg($filePath) . " 2>&1";
-$aubioOutput = shell_exec($aubioCmd);
+// --- A. BPM via AUBIO (Multi-Strategy) ---
+// We run aubio with different onset detection functions to find a consensus.
+// This is much more robust for saturated/bass-heavy tracks than relying on a single algorithm.
 
-$bpm = 0;
-if ($aubioOutput) {
-    $lines = explode("\n", trim($aubioOutput));
+function getAubioBpm($filePath, $method = '') {
+    $methodFlag = $method ? "-O $method" : "";
+    // Use 'aubio tempo' which gives a list of beats/bpm estimates
+    $cmd = "aubio tempo $methodFlag " . escapeshellarg($filePath) . " 2>&1";
+    $output = shell_exec($cmd);
+    
     $bpms = [];
-    foreach ($lines as $line) {
-        // aubio tempo outputs lines like "120.000000"
-        $val = floatval($line);
-        if ($val > 40 && $val < 250) { // Sanity check range
-            $bpms[] = $val;
+    if ($output) {
+        $lines = explode("\n", trim($output));
+        foreach ($lines as $line) {
+            $val = floatval($line);
+            // Sanity check range (Extended for DnB/Dubstep)
+            if ($val > 50 && $val < 220) {
+                $bpms[] = $val;
+            }
         }
     }
-
-    if (count($bpms) > 0) {
-        sort($bpms);
-        $count = count($bpms);
-        $middle = floor(($count - 1) / 2);
-        if ($count % 2) {
-            $bpm = $bpms[$middle];
-        } else {
-            $bpm = ($bpms[$middle] + $bpms[$middle + 1]) / 2.0;
-        }
-        $bpm = round($bpm);
+    
+    if (empty($bpms)) return 0;
+    
+    // Return MEDIAN of this run to ignore outliers
+    sort($bpms);
+    $count = count($bpms);
+    $middle = floor(($count - 1) / 2);
+    if ($count % 2) {
+        return $bpms[$middle];
+    } else {
+        return ($bpms[$middle] + $bpms[$middle + 1]) / 2.0;
     }
 }
 
+// 1. Default (Complex Domain) - Good balance
+$bpmComplex = getAubioBpm($filePath, 'complex');
+
+// 2. Spectral Difference - Better for saturated/noisy mixes
+$bpmSpecDiff = getAubioBpm($filePath, 'specdiff');
+
+// 3. Phase - Sometimes better for soft onsets, provides a 3rd opinion
+$bpmPhase = getAubioBpm($filePath, 'phase');
+
 // --- B. KEY & ENERGY via FFMPEG + PYTHON (NUMPY) ---
-// We pipe 30 seconds of raw audio to the python script to avoid loading the whole file
-// ffmpeg -i input.mp3 -ss 30 -t 30 -f s16le -ac 1 -ar 22050 -
-// This requires ffmpeg to be installed.
+// We pipe 30 seconds of raw audio to the python script
+// We NO LONGER use Python for BPM as it was unreliable for this use case.
 
 // Use the venv python if available, otherwise system python
 $pythonExecutable = '/home/radio/venv/bin/python'; 
@@ -85,87 +97,50 @@ $pythonOutput = shell_exec($pythonCmd);
 $pyData = json_decode($pythonOutput, true);
 
 if (!$pyData || isset($pyData['error'])) {
-    // Fallback if python fails
     $energy = 0;
     $danceability = 0;
     $key_key = -1;
     $key_mode = 0;
-    $errorMsg = $pyData['error'] ?? "Python analysis failed";
 } else {
     $energy = $pyData['energy'];
     $danceability = $pyData['danceability'];
     $key_key = $pyData['key_key'];
     $key_mode = $pyData['key_mode'];
-    $pyBpm = $pyData['bpm'] ?? 0;
 }
 
-// --- C. BPM via FFMPEG (Third Opinion) ---
-// ffmpeg -i input.mp3 -ss 30 -t 30 -af "bpm" -f null /dev/null
-// Output is in stderr: "[Parsed_bpm_0 @ ...] BPM: 123.456"
-$ffmpegBpmCmd = "ffmpeg -i " . escapeshellarg($filePath) . " -ss 30 -t 30 -af \"bpm\" -f null /dev/null 2>&1";
-$ffmpegOutput = shell_exec($ffmpegBpmCmd);
-$ffmpegBpm = 0;
-if (preg_match('/BPM: ([0-9\.]+)/', $ffmpegOutput, $matches)) {
-    $ffmpegBpm = floatval($matches[1]);
-}
-
-// --- D. CONSENSUS LOGIC ---
-// We have $bpm (Aubio), $pyBpm (Python), $ffmpegBpm (FFmpeg)
+// --- C. CONSENSUS LOGIC (Aubio Internal Vote) ---
 $candidates = [];
-if ($bpm > 0) $candidates['aubio'] = $bpm;
-if ($pyBpm > 0) $candidates['python'] = $pyBpm;
-if ($ffmpegBpm > 0) $candidates['ffmpeg'] = $ffmpegBpm;
-
-// Function to check if two BPMs are "close" (within 4 BPM)
-// We use a fixed threshold because 5% of 120 is 6, which is too loose.
-function isClose($a, $b) {
-    return abs($a - $b) <= 4;
-}
+if ($bpmComplex > 0) $candidates['complex'] = $bpmComplex;
+if ($bpmSpecDiff > 0) $candidates['specdiff'] = $bpmSpecDiff;
+if ($bpmPhase > 0) $candidates['phase'] = $bpmPhase;
 
 $finalBpm = 0;
 
-// 1. Check for agreement between any two sources
-// If they agree, we prefer the one that is closer to an integer or just Aubio/FFmpeg directly
-// Averaging can introduce decimals that round poorly.
-if (isset($candidates['aubio']) && isset($candidates['python']) && isClose($candidates['aubio'], $candidates['python'])) {
-    $finalBpm = $candidates['aubio']; // Trust Aubio if confirmed by Python
-} elseif (isset($candidates['aubio']) && isset($candidates['ffmpeg']) && isClose($candidates['aubio'], $candidates['ffmpeg'])) {
-    $finalBpm = $candidates['aubio']; // Trust Aubio if confirmed by FFmpeg
-} elseif (isset($candidates['python']) && isset($candidates['ffmpeg']) && isClose($candidates['python'], $candidates['ffmpeg'])) {
-    $finalBpm = $candidates['ffmpeg']; // Trust FFmpeg if confirmed by Python
-} else {
-    // 2. No agreement? Fallback logic.
-    // Revert to FFmpeg priority as it was "really good" before.
-    
-    $validCandidates = array_filter($candidates, function($v) { return $v >= 70 && $v <= 180; });
-    
-    if (!empty($validCandidates)) {
-        if (isset($validCandidates['ffmpeg'])) $finalBpm = $validCandidates['ffmpeg'];
-        elseif (isset($validCandidates['aubio'])) $finalBpm = $validCandidates['aubio'];
-        else $finalBpm = reset($validCandidates);
-    } else {
-        $finalBpm = $ffmpegBpm ?: ($bpm ?: $pyBpm);
-    }
-}
+// Helper to check closeness
+function isClose($a, $b) { return abs($a - $b) <= 4; }
 
-// 3. Polyrhythm / Double Time Correction (The "Tunebat" issue)
-// If the result is low (< 100) and we had a candidate that was ~1.5x or ~2x, consider it.
-// Example: Result 111, but Python said 165 (1.5x). 165 is a common tempo.
-if ($finalBpm > 0) {
-    foreach ($candidates as $source => $val) {
-        if ($val > $finalBpm) {
-            $ratio = $val / $finalBpm;
-            // Check for 1.5x (e.g. 110 vs 165)
-            if ($ratio > 1.4 && $ratio < 1.6 && $val < 185) {
-                $finalBpm = $val; // Upgrade to the faster tempo
-                break;
-            }
-            // Check for 2x (e.g. 70 vs 140)
-            if ($ratio > 1.9 && $ratio < 2.1 && $val < 185) {
-                $finalBpm = $val;
-                break;
-            }
-        }
+// 1. Look for agreement between strategies
+if (isset($candidates['complex']) && isset($candidates['specdiff']) && isClose($candidates['complex'], $candidates['specdiff'])) {
+    // If Complex and SpecDiff agree, that's a very strong signal.
+    // SpecDiff is often better for saturation, so we lean slightly towards it or average.
+    $finalBpm = ($candidates['complex'] + $candidates['specdiff']) / 2;
+} 
+elseif (isset($candidates['specdiff']) && isset($candidates['phase']) && isClose($candidates['specdiff'], $candidates['phase'])) {
+    $finalBpm = ($candidates['specdiff'] + $candidates['phase']) / 2;
+}
+elseif (isset($candidates['complex']) && isset($candidates['phase']) && isClose($candidates['complex'], $candidates['phase'])) {
+    $finalBpm = ($candidates['complex'] + $candidates['phase']) / 2;
+}
+else {
+    // 2. No agreement? 
+    // For saturated/bass-heavy music, 'specdiff' is theoretically the most robust.
+    // If 'specdiff' failed (0), fallback to 'complex'.
+    if (isset($candidates['specdiff'])) {
+        $finalBpm = $candidates['specdiff'];
+    } elseif (isset($candidates['complex'])) {
+        $finalBpm = $candidates['complex'];
+    } else {
+        $finalBpm = reset($candidates); // Whatever we have
     }
 }
 
