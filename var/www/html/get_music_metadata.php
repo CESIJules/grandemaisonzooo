@@ -152,7 +152,9 @@ $result = [
     'valence' => 0.5, // Placeholder
     'acousticness' => 0.0, // Placeholder
     'source' => $source,
-    'librosa_error' => $librosa_error
+    'librosa_error' => $librosa_error,
+    'debug_script_path' => $scriptPath,
+    'debug_python_version' => $pyData['version'] ?? 'unknown'
 ];
 
 // 5. SAVE TO CACHE
