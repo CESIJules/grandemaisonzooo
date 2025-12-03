@@ -61,22 +61,25 @@ def analyze_audio(file_path):
                 continue
                 
             # --- ROBUST ONSET DETECTION ---
-            # 1. Limit frequency range to ignore high-end saturation/noise
-            # Saturation adds high-freq harmonics that confuse detection.
-            # We focus on 0Hz to 6000Hz (Kick, Snare, main rhythm elements)
-            S = librosa.feature.melspectrogram(y=y_chunk, sr=sr, n_mels=128, fmax=6000)
+            # 1. Broadband (up to 6000Hz) - General Rhythm
+            S_broad = librosa.feature.melspectrogram(y=y_chunk, sr=sr, n_mels=128, fmax=6000)
+            onset_broad = librosa.onset.onset_strength(S=librosa.power_to_db(S_broad, ref=np.max), sr=sr, aggregate=np.median)
             
-            # 2. Use Median aggregation to ignore transient noise spikes
-            # Standard is mean, but median is more robust to "dirty" mixes
-            onset_env = librosa.onset.onset_strength(S=librosa.power_to_db(S, ref=np.max), sr=sr, aggregate=np.median)
+            # 2. Low-End (20-250Hz) - The Kick/Sub Foundation
+            # This is crucial for Trap/Drill/Techno where the kick drives everything and is often cleaner than the mids
+            S_low = librosa.feature.melspectrogram(y=y_chunk, sr=sr, n_mels=64, fmin=20, fmax=250)
+            onset_low = librosa.onset.onset_strength(S=librosa.power_to_db(S_low, ref=np.max), sr=sr, aggregate=np.median)
+            
+            # Combine: Give more weight to the low end (60%) as it's the most reliable timekeeper in modern music
+            min_len = min(len(onset_broad), len(onset_low))
+            onset_combined = 0.4 * onset_broad[:min_len] + 0.6 * onset_low[:min_len]
             
             # Pulse Clarity (Weight): How distinct is the beat?
-            # High variance = strong beat. Low variance = ambient/noise.
-            clarity = np.std(onset_env)
+            clarity = np.std(onset_combined)
             
             # Calculate Tempo for this chunk
             # prior=None removes the 120 BPM bias
-            tempo_arr = librosa.feature.tempo(onset_envelope=onset_env, sr=sr, prior=None)
+            tempo_arr = librosa.feature.tempo(onset_envelope=onset_combined, sr=sr, prior=None)
             tempo = tempo_arr[0] if isinstance(tempo_arr, np.ndarray) else tempo_arr
             
             if 50 < tempo < 220:
@@ -84,10 +87,17 @@ def analyze_audio(file_path):
                 weights.append(clarity)
         
         if not candidates:
-            # Fallback to global analysis if no windows worked
-            S = librosa.feature.melspectrogram(y=y_percussive, sr=sr, n_mels=128, fmax=6000)
-            onset_env = librosa.onset.onset_strength(S=librosa.power_to_db(S, ref=np.max), sr=sr, aggregate=np.median)
-            tempo_arr = librosa.feature.tempo(onset_envelope=onset_env, sr=sr, prior=None)
+            # Fallback to global analysis if no windows worked (using same logic)
+            S_broad = librosa.feature.melspectrogram(y=y_percussive, sr=sr, n_mels=128, fmax=6000)
+            onset_broad = librosa.onset.onset_strength(S=librosa.power_to_db(S_broad, ref=np.max), sr=sr, aggregate=np.median)
+            
+            S_low = librosa.feature.melspectrogram(y=y_percussive, sr=sr, n_mels=64, fmin=20, fmax=250)
+            onset_low = librosa.onset.onset_strength(S=librosa.power_to_db(S_low, ref=np.max), sr=sr, aggregate=np.median)
+            
+            min_len = min(len(onset_broad), len(onset_low))
+            onset_combined = 0.4 * onset_broad[:min_len] + 0.6 * onset_low[:min_len]
+            
+            tempo_arr = librosa.feature.tempo(onset_envelope=onset_combined, sr=sr, prior=None)
             bpm = tempo_arr[0] if isinstance(tempo_arr, np.ndarray) else tempo_arr
         else:
             # Weighted Average of the top cluster
