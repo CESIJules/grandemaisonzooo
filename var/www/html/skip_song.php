@@ -1,8 +1,8 @@
 <?php
 header('Content-Type: application/json');
 
-// Commande pour envoyer "request.skip" à Liquidsoap via netcat
-$command = "echo 'request.skip' | nc localhost 1234";
+// Commande pour envoyer "radio.skip" à Liquidsoap via netcat
+$command = "echo 'radio.skip' | nc 127.0.0.1 1234";
 
 // Exécuter la commande
 // L'utilisateur 'www-data' (ou celui sous lequel tourne PHP) 

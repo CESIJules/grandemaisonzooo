@@ -24,6 +24,9 @@ radio = map_metadata(set_title_artist, radio)
 # Securite : silence si playlist vide
 radio = fallback(track_sensitive=false, [radio, blank()]) 
 
+# Identification de la source pour le controle a distance
+radio = source.id(id="radio", radio)
+
 # Diffusion vers Icecast
 output.icecast(
   %mp3,
