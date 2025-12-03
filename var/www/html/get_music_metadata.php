@@ -105,8 +105,23 @@ if (!$pyData || isset($pyData['error'])) {
 $ffmpegBpmCmd = "ffmpeg -i " . escapeshellarg($filePath) . " -ss 30 -t 30 -af \"bpm\" -f null /dev/null 2>&1";
 $ffmpegOutput = shell_exec($ffmpegBpmCmd);
 $ffmpegBpm = 0;
-if (preg_match('/BPM: ([0-9\.]+)/', $ffmpegOutput, $matches)) {
-    $ffmpegBpm = floatval($matches[1]);
+
+// Parse ALL BPM values from FFmpeg output and take the median
+if (preg_match_all('/BPM: ([0-9\.]+)/', $ffmpegOutput, $matches)) {
+    $f_bpms = array_map('floatval', $matches[1]);
+    // Filter out initial instability (often 0 or very low/high)
+    $f_bpms = array_filter($f_bpms, function($v) { return $v > 50 && $v < 220; });
+    
+    if (count($f_bpms) > 0) {
+        sort($f_bpms);
+        $count = count($f_bpms);
+        $middle = floor(($count - 1) / 2);
+        if ($count % 2) {
+            $ffmpegBpm = $f_bpms[$middle];
+        } else {
+            $ffmpegBpm = ($f_bpms[$middle] + $f_bpms[$middle + 1]) / 2.0;
+        }
+    }
 }
 
 // --- D. CONSENSUS LOGIC ---
@@ -132,19 +147,18 @@ if (isset($candidates['aubio']) && isset($candidates['python']) && isClose($cand
     $finalBpm = ($candidates['python'] + $candidates['ffmpeg']) / 2;
 } else {
     // 2. No agreement? Fallback logic.
-    // Prefer FFmpeg as it's a standard filter, then Aubio, then Python.
-    // But check for "sane" ranges (70-180)
+    // Priority: Aubio > FFmpeg > Python
+    // Aubio 'tempo' with median filter is generally the most robust for electronic/pop.
     
     $validCandidates = array_filter($candidates, function($v) { return $v >= 70 && $v <= 180; });
     
     if (!empty($validCandidates)) {
-        // If we have valid candidates, pick the one from the most trusted source available
-        if (isset($validCandidates['ffmpeg'])) $finalBpm = $validCandidates['ffmpeg'];
-        elseif (isset($validCandidates['aubio'])) $finalBpm = $validCandidates['aubio'];
+        if (isset($validCandidates['aubio'])) $finalBpm = $validCandidates['aubio'];
+        elseif (isset($validCandidates['ffmpeg'])) $finalBpm = $validCandidates['ffmpeg'];
         else $finalBpm = reset($validCandidates);
     } else {
-        // If all are outside range (e.g. DnB at 175+ or Dubstep at 140/70), just take FFmpeg or Aubio
-        $finalBpm = $ffmpegBpm ?: ($bpm ?: $pyBpm);
+        // If all are outside range, just take Aubio or FFmpeg
+        $finalBpm = $bpm ?: ($ffmpegBpm ?: $pyBpm);
     }
 }
 
