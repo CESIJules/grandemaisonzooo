@@ -138,15 +138,18 @@ def analyze_audio(file_path):
         # Hardcoded energy checks often fail for Boom Bap (High Energy, Low BPM).
 
         # --- 6. KEY ---
-        # Reverting to CQT on Harmonic component as it was more accurate
-        chroma = librosa.feature.chroma_cqt(y=y_harmonic, sr=sr)
+        # Use Chroma CENS (Energy Normalized) which is robust to dynamics and timbre
+        # We use the raw audio 'y' because HPSS can sometimes remove tonal components in dirty mixes
+        chroma = librosa.feature.chroma_cens(y=y, sr=sr)
         
         # Sum over time
         chroma_vals = np.sum(chroma, axis=1)
         
-        # Major/Minor profiles
-        maj_profile = np.array([6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88])
-        min_profile = np.array([6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17])
+        # Temperley Profiles (often better for modern music than Krumhansl-Schmuckler)
+        # Major
+        maj_profile = np.array([5.0, 2.0, 3.5, 2.0, 4.5, 4.0, 2.0, 4.5, 2.0, 3.5, 1.5, 4.0])
+        # Minor
+        min_profile = np.array([5.0, 2.0, 3.5, 4.5, 2.0, 4.0, 2.0, 4.5, 3.5, 2.0, 1.5, 4.0])
         
         maj_corrs = []
         min_corrs = []
