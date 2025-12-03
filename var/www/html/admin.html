@@ -287,18 +287,16 @@
         
         .playlist-editor-container {
             display: grid;
-            grid-template-columns: 1fr 1fr; /* Deux colonnes égales */
-            grid-template-rows: 1fr 1fr; /* Deux lignes égales */
-            gap: 24px;
-            height: 80vh; /* Hauteur confortable */
+            /* 3 Colonnes : Playlist (Large), Suggestions (Moyenne), Bibliothèque (Moyenne) */
+            grid-template-columns: 1.2fr 1fr 1fr;
+            gap: 20px;
+            height: 80vh;
             min-height: 600px;
         }
 
-        /* Colonne de Gauche : Ma Playlist (Prend toute la hauteur) */
+        /* Colonne 1 : Ma Playlist */
         .playlist-songs-panel {
             grid-column: 1;
-            grid-row: 1 / span 2;
-            
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -307,43 +305,41 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        /* Colonne de Droite, Haut : Bibliothèque */
-        .all-available-songs-panel {
-            grid-column: 2;
-            grid-row: 1;
-            
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            background-color: rgba(30, 30, 30, 0.6);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        /* Colonne de Droite, Bas : Suggestions (Plus haute et moins large qu'avant) */
+        /* Colonne 2 : Suggestions (Maintenant au milieu, toute la hauteur) */
         .suggestions-panel {
             grid-column: 2;
-            grid-row: 2;
-            
             display: flex;
             flex-direction: column;
             overflow: hidden;
             margin-top: 0;
             background-color: rgba(30, 30, 30, 0.8);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            /* Bordure accentuée pour la mettre en valeur */
-            border-left: 2px solid var(--accent-primary);
+            border-top: 2px solid var(--accent-primary); /* Accent en haut */
+            border-left: none;
+        }
+
+        /* Colonne 3 : Bibliothèque */
+        .all-available-songs-panel {
+            grid-column: 3;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-color: rgba(30, 30, 30, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         /* Titres de section */
         .card h3 {
-            font-size: 1.1rem;
-            color: #e0e0e0;
+            font-size: 1rem;
+            text-transform: uppercase;
+            color: #aaa;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            padding-bottom: 12px;
-            margin-bottom: 12px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
+            padding: 16px;
+            margin: 0;
+            background: rgba(0,0,0,0.2);
+            font-weight: 700;
+            letter-spacing: 1px;
         }
 
         /* Contenu scrollable */
@@ -351,92 +347,114 @@
             flex: 1;
             overflow-y: auto;
             min-height: 0;
-            padding-right: 5px;
+            padding: 10px;
         }
         
         .panel-content ul {
-            padding-right: 5px;
+            padding: 0;
         }
         
         .panel-content li {
-            background-color: rgba(255, 255, 255, 0.02);
+            background-color: rgba(255, 255, 255, 0.03);
             margin-bottom: 8px;
-            padding: 12px 16px;
-            border-radius: 8px;
+            padding: 10px;
+            border-radius: 6px;
             border: 1px solid transparent;
             transition: all 0.2s ease;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
         }
 
         .panel-content li:hover {
             background-color: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255,255,255,0.1);
         }
 
+        /* Gestion du texte long dans les listes */
+        .panel-content li > span, 
+        .suggestion-info strong,
+        .suggestion-header {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+        
+        /* Wrapper pour le texte de la chanson pour qu'il prenne l'espace dispo */
+        .panel-content li {
+            flex-wrap: nowrap;
+        }
+        /* On suppose que le texte est directement dans le li ou dans un wrapper */
+        
         /* Scrollbar */
-        .panel-content::-webkit-scrollbar { width: 6px; }
-        .panel-content::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.1); }
-        .panel-content::-webkit-scrollbar-thumb { background-color: rgba(255, 255, 255, 0.15); border-radius: 3px; }
-        .panel-content::-webkit-scrollbar-thumb:hover { background-color: rgba(255, 255, 255, 0.25); }
+        .panel-content::-webkit-scrollbar { width: 5px; }
+        .panel-content::-webkit-scrollbar-track { background: transparent; }
+        .panel-content::-webkit-scrollbar-thumb { background-color: rgba(255, 255, 255, 0.1); border-radius: 3px; }
+        .panel-content::-webkit-scrollbar-thumb:hover { background-color: rgba(255, 255, 255, 0.2); }
 
         /* Recherche */
         #songSearchInput {
-            background-color: rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background-color: rgba(0, 0, 0, 0.3);
+            border: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             color: #fff;
-            padding: 10px 14px;
-            margin-bottom: 12px;
-            border-radius: 6px;
+            padding: 12px 16px;
+            margin: 0;
+            border-radius: 0;
+            width: 100%;
         }
         #songSearchInput:focus {
-            border-color: var(--accent-primary);
-            background-color: rgba(0, 0, 0, 0.3);
+            border-bottom-color: var(--accent-primary);
+            background-color: rgba(0, 0, 0, 0.4);
         }
 
         /* Suggestions Items */
         .suggestion-item {
-            background-color: rgba(255, 255, 255, 0.03);
-            border: none;
+            flex-direction: column;
+            align-items: stretch !important; /* Override default align-items: center */
+            gap: 10px;
         }
-        .suggestion-item:hover {
-            background-color: rgba(255, 255, 255, 0.07);
+        .suggestion-info {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 5px;
+            width: 100%;
         }
-        
-        .suggestion-info strong {
-            font-weight: 600;
-            color: #f0f0f0;
-            display: block;
-            margin-bottom: 4px;
+        .suggestion-badges {
+            display: flex;
+            gap: 5px;
         }
-
-        /* Badges */
-        .suggestion-badge {
-            font-size: 0.75rem;
-            padding: 3px 8px;
-            border-radius: 4px;
-            opacity: 0.9;
-            letter-spacing: 0.5px;
+        .suggestion-stats {
+            width: 100%;
         }
-        .badge-bpm { background-color: rgba(255, 255, 255, 0.1); color: #ddd; border: 1px solid rgba(255,255,255,0.1); }
-        .badge-key { background-color: rgba(0, 123, 255, 0.2); color: #80bdff; border: 1px solid rgba(0, 123, 255, 0.3); }
 
         /* BOUTONS MODERNES (Style identique à Enregistrer/Annuler) */
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.7rem;
+            border-radius: 4px;
+            white-space: nowrap;
+            flex-shrink: 0; /* Empêche le bouton de rétrécir */
+        }
+
         .panel-content li .btn {
+            /* Reset des styles précédents */
             width: auto;
             height: auto;
             aspect-ratio: auto;
-            border-radius: 8px;
-            padding: 8px 16px;
-            font-family: var(--font-body);
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.5px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 6px;
-            transition: all 0.2s ease;
+            font-family: var(--font-body);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
             cursor: pointer;
+            transition: all 0.2s ease;
         }
 
         /* Bouton Ajouter (Bleu plein) */
@@ -448,10 +466,10 @@
         .panel-content li .btn:not(.btn-danger):hover {
             background-color: #0056b3;
             border-color: #0056b3;
-            transform: translateY(-2px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
 
-        /* Bouton Supprimer (Rouge contour ou plein au survol) */
+        /* Bouton Supprimer (Rouge contour) */
         .panel-content li .btn-danger {
             background-color: transparent;
             border: 1px solid var(--accent-danger);
@@ -460,12 +478,7 @@
         .panel-content li .btn-danger:hover {
             background-color: var(--accent-danger);
             color: #fff;
-            transform: translateY(-2px);
-        }
-
-        /* Icônes dans les boutons */
-        .panel-content li .btn i {
-            font-size: 0.9em;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
 
         /* --- Section Layout Improvements --- */

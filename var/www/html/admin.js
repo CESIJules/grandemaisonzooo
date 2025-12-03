@@ -383,8 +383,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
             const addBtn = document.createElement('button');
-            addBtn.innerHTML = '<i class="fas fa-plus"></i>';
-            addBtn.className = 'btn btn-primary';
+            addBtn.innerHTML = '<i class="fas fa-plus"></i> AJOUTER';
+            addBtn.className = 'btn btn-primary btn-sm';
             addBtn.addEventListener('click', () => {
                 currentEditingPlaylist.songs.push(cand.path);
                 renderCurrentPlaylistSongs();
@@ -796,8 +796,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const li = document.createElement('li');
                 li.textContent = formatSongPathToTitle(songPath);
                 const removeBtn = document.createElement('button');
-                removeBtn.innerHTML = '<i class="fas fa-minus-circle"></i>';
-                removeBtn.className = 'btn btn-danger';
+                removeBtn.innerHTML = '<i class="fas fa-minus-circle"></i> RETIRER';
+                removeBtn.className = 'btn btn-danger btn-sm';
                 removeBtn.addEventListener('click', () => {
                     currentEditingPlaylist.songs.splice(index, 1);
                     renderCurrentPlaylistSongs();
@@ -826,8 +826,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const li = document.createElement('li');
             li.textContent = formatSongPathToTitle(songPath);
             const addBtn = document.createElement('button');
-            addBtn.innerHTML = '<i class="fas fa-plus-circle"></i>';
-            addBtn.className = 'btn';
+            addBtn.innerHTML = '<i class="fas fa-plus-circle"></i> AJOUTER';
+            addBtn.className = 'btn btn-sm';
             addBtn.addEventListener('click', async () => {
                 if (!currentEditingPlaylist.songs.includes(songPath)) {
                     currentEditingPlaylist.songs.push(songPath);
