@@ -79,10 +79,9 @@ def estimate_key(y, sr):
 
 def analyze(file_path):
     try:
-        # Load audio (first 60s is usually enough for BPM/Key)
-        # Use audioread backend explicitly if needed, or try to force ffmpeg via librosa
-        # res_type='kaiser_fast' is faster and uses less memory
-        y, sr = librosa.load(file_path, duration=60, res_type='kaiser_fast')
+        # Load audio (first 30s is usually enough for BPM/Key)
+        # sr=None loads at native sampling rate, avoiding resampling (and resampy dependency for load)
+        y, sr = librosa.load(file_path, duration=30, sr=None)
         
         # BPM
         # Use a simpler beat tracker if the default one is causing issues
