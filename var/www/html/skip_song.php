@@ -1,22 +1,34 @@
 <?php
 header('Content-Type: application/json');
 
-// Commande pour envoyer "radio.skip" à Liquidsoap via netcat
-$command = "echo 'radio.skip' | nc 127.0.0.1 1234";
+$host = '127.0.0.1';
+$port = 1234;
+$timeout = 3;
 
-// Exécuter la commande
-// L'utilisateur 'www-data' (ou celui sous lequel tourne PHP) 
-// doit avoir les permissions nécessaires pour exécuter 'nc'.
-$output = shell_exec($command);
+$fp = @fsockopen($host, $port, $errno, $errstr, $timeout);
 
-// Vérifier si la commande a pu être exécutée (shell_exec peut retourner null)
-if ($output === null) {
-    // Cela peut indiquer que la commande a échoué ou n'a rien retourné,
-    // ce qui est normal pour une commande 'echo | nc'.
-    // On suppose que ça a marché si aucune erreur évidente n'est capturée.
-    echo json_encode(['status' => 'success', 'message' => 'Commande de skip envoyée.']);
-} else {
-    // Si nc retourne quelque chose (par ex. une erreur), on le log/renvoie
-    echo json_encode(['status' => 'success', 'message' => 'Commande envoyée, réponse: ' . trim($output)]);
+if (!$fp) {
+    http_response_code(500);
+    echo json_encode(['status' => 'error', 'message' => "Impossible de se connecter à Liquidsoap: $errstr ($errno)"]);
+    exit;
 }
+
+// Set stream timeout
+stream_set_timeout($fp, 2);
+
+// Send command
+fwrite($fp, "radio.skip\n");
+fwrite($fp, "quit\n");
+
+// Read response
+$response = '';
+while (!feof($fp)) {
+    $line = fgets($fp, 128);
+    if ($line === false) break;
+    $response .= $line;
+}
+
+fclose($fp);
+
+echo json_encode(['status' => 'success', 'message' => 'Commande envoyée.', 'telnet_response' => $response]);
 ?>
