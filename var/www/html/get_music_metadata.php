@@ -89,15 +89,6 @@ if ($bpm > 0 && $bpm < 100) {
 }
 
 $bpm = round($bpm);
-// Librosa is usually good, but can sometimes halve the tempo for D&B.
-if ($bpm > 0 && $bpm < 100) {
-    // If energy is high (> 0.6), it's likely a faster song detected at half speed.
-    if ($energy > 0.6) {
-        $bpm *= 2;
-    }
-}
-
-$bpm = round($bpm);
 
 // 3. CONVERT TO CAMELOT
 function convertToCamelot($key, $mode) {
