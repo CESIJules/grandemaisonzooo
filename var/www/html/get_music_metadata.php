@@ -38,8 +38,8 @@ if (isset($metadata[$filename])) {
 // Ensure www-data has permission to execute python and read the file.
 // We use 2>&1 to capture stderr as well for debugging
 // Force UTF-8 encoding for Python IO
-// Disable Numba JIT to prevent memory spikes and segfaults on low-resource servers
-$command = "export PYTHONIOENCODING=utf-8; export NUMBA_DISABLE_JIT=1; " . $pythonExecutable . " " . escapeshellarg($pythonScript) . " " . escapeshellarg($filePath) . " 2>&1";
+// Set OMP_NUM_THREADS=1 to reduce memory overhead from threading
+$command = "export PYTHONIOENCODING=utf-8; export OMP_NUM_THREADS=1; " . $pythonExecutable . " " . escapeshellarg($pythonScript) . " " . escapeshellarg($filePath) . " 2>&1";
 $output = shell_exec($command);
 $result = json_decode($output, true);
 
