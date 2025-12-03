@@ -1,6 +1,6 @@
 # Playlist principale : lit les fichiers d'un dossier.
 # Ce dossier sera un lien symbolique vers la playlist active.
-radio = playlist(mode="random.smart", reload=30, "/home/radio/live-playlist")
+radio = playlist(id="main_playlist", mode="random.smart", reload=30, "/home/radio/live-playlist")
 
 # Fonction de mise a jour des metadonnees
 def set_title_artist(m) =

@@ -17,7 +17,7 @@ if (!$fp) {
 stream_set_timeout($fp, 2);
 
 // Send command
-fwrite($fp, "radio.skip\n");
+fwrite($fp, "main_playlist.skip\n");
 fwrite($fp, "quit\n");
 
 // Read response
