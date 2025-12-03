@@ -59,38 +59,17 @@ $source = 'librosa';
 $librosa_error = null;
 
 if (!$pyData || isset($pyData['error'])) {
-    // LIBROSA FAILED - FALLBACK TO BPM-TOOLS
-    $source = 'fallback_bpm_tools';
-    $librosa_error = $pyData['error'] ?? 'JSON Decode Error or Empty Output';
+    // LIBROSA FAILED
+    // User requested ONLY librosa. No fallbacks.
+    $source = 'librosa_failed';
+    $librosa_error = $pyData['error'] ?? 'JSON Decode Error (Crash?)';
     
-    $bpmPath = trim(shell_exec("which bpm"));
-    if ($bpmPath) {
-        // Analyze 2 minutes from 30s mark
-        $cmd = "ffmpeg -i " . escapeshellarg($filePath) . " -ss 30 -t 120 -f s16le -ac 1 -ar 44100 - -v quiet | " . $bpmPath;
-        $bpmOutput = shell_exec($cmd);
-        if (is_numeric(trim($bpmOutput))) {
-            $val = floatval($bpmOutput);
-            if ($val > 50 && $val < 220) $bpm = $val;
-        }
-    }
-    
-    // If bpm-tools failed, try FFMPEG filter
-    if ($bpm == 0) {
-        $source = 'fallback_ffmpeg';
-        $ffmpegBpmCmd = "ffmpeg -i " . escapeshellarg($filePath) . " -ss 30 -t 30 -af \"bpm\" -f null /dev/null 2>&1";
-        $ffmpegOutput = shell_exec($ffmpegBpmCmd);
-        if (preg_match_all('/BPM: ([0-9\.]+)/', $ffmpegOutput, $matches)) {
-            $vals = array_map('floatval', $matches[1]);
-            $vals = array_filter($vals, function($v) { return $v > 50 && $v < 220; });
-            if (count($vals) > 0) {
-                sort($vals);
-                $bpm = $vals[floor((count($vals)-1)/2)]; // Median
-            }
-        }
-    }
-    
-    // If still 0, default to 120
-    if ($bpm == 0) $bpm = 120;
+    // Return 0 or error state
+    $bpm = 0;
+    $energy = 0;
+    $danceability = 0;
+    $key_key = -1;
+    $key_mode = 0;
 
 } else {
     $bpm = $pyData['bpm'];
@@ -101,6 +80,15 @@ if (!$pyData || isset($pyData['error'])) {
 }
 
 // --- FINAL CORRECTIONS (Double Time / Half Time) ---
+// Librosa is usually good, but can sometimes halve the tempo for D&B.
+if ($bpm > 0 && $bpm < 100) {
+    // If energy is high (> 0.6), it's likely a faster song detected at half speed.
+    if ($energy > 0.6) {
+        $bpm *= 2;
+    }
+}
+
+$bpm = round($bpm);
 // Librosa is usually good, but can sometimes halve the tempo for D&B.
 if ($bpm > 0 && $bpm < 100) {
     // If energy is high (> 0.6), it's likely a faster song detected at half speed.
