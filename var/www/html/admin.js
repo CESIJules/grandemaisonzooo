@@ -109,6 +109,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await response.json();
             if (result.status === 'success') {
                 metadataCache[filename] = result.data;
+                // Log full metadata for debugging
+                console.log(`Metadata for ${filename}:`, result.data);
                 return result.data;
             } else {
                 console.error('Metadata error:', result);
@@ -155,6 +157,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const targetBpm = lastSongMeta.bpm;
         const targetKey = lastSongMeta.camelot;
+        const source = lastSongMeta.source || 'unknown';
+        const librosaError = lastSongMeta.librosa_error ? ` (Error: ${lastSongMeta.librosa_error})` : '';
         const compatibleKeys = camelotWheel[targetKey]?.compatible || [];
 
         suggestionsUl.innerHTML = '';
@@ -169,8 +173,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div>
                     <small>Basé sur:</small><br>
                     <strong>${formatSongPathToTitle(lastSongPath)}</strong> 
-                    <span class="suggestion-badge badge-bpm">${targetBpm} BPM</span> 
+                    <span class="suggestion-badge badge-bpm" title="Source: ${source}${librosaError}">${targetBpm} BPM</span> 
                     <span class="suggestion-badge badge-key">${targetKey}</span>
+                    <br><small style="font-size: 0.7em; color: #888;">Source: ${source}</small>
                 </div>
                 <button id="forceRefreshBtn" class="btn btn-sm btn-outline-secondary" title="Forcer la réanalyse">
                     <i class="fas fa-sync"></i>
