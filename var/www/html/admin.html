@@ -411,7 +411,7 @@
         <!-- SECTION: MUSIQUE -->
         <section id="music" class="admin-section">
             <h2>Gestion de la Musique</h2>
-            <div class="section-grid">
+            <div class="section-grid" style="margin-bottom: 30px;">
                 <div class="card">
                     <h3>Télécharger depuis YouTube</h3>
                     <form id="youtubeDownloadForm" class="form-grid">
@@ -426,18 +426,18 @@
                     </form>
                 </div>
                 <div class="card">
-                    <h3>Fichiers sur le serveur</h3>
-                    <div class="form-group" style="margin-bottom: 16px;">
-                        <input type="text" id="musicSearchInput" placeholder="Rechercher une musique..." class="form-group">
-                    </div>
-                    <div id="musicManagementContainer" class="item-list-container"></div>
-                </div>
-                <div class="card">
                     <h3>Contrôle de la Radio</h3>
                     <div class="form-actions" style="justify-content: center;">
                         <button id="skipSongBtn" class="btn"><i class="fas fa-forward"></i> Passer au son suivant</button>
                     </div>
                 </div>
+            </div>
+            <div class="card">
+                <h3>Fichiers sur le serveur</h3>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <input type="text" id="musicSearchInput" placeholder="Rechercher une musique..." class="form-group">
+                </div>
+                <div id="musicManagementContainer" class="item-list-container"></div>
             </div>
         </section>
 
