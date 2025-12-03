@@ -32,38 +32,74 @@ def analyze_audio(file_path):
             
         # Load audio
         # sr=22050 is standard for music analysis, mono=True saves RAM
-        y, sr = librosa.load(file_path, sr=22050, offset=offset, duration=45)
+        # We load 50 seconds to have enough chunks
+        y, sr = librosa.load(file_path, sr=22050, offset=offset, duration=50)
         
         if len(y) == 0:
             return {"error": "Empty audio"}
 
-        # --- 1. Separation (The Secret Sauce) ---
-        # Separate the audio into Harmonic (melody) and Percussive (beats) components
-        # This drastically improves BPM detection on complex tracks
+        # --- 1. SEPARATION ---
         y_harmonic, y_percussive = librosa.effects.hpss(y)
 
-        # --- 2. BPM (Tempogram Method - Unbiased) ---
-        # Use ONLY the percussive component
-        onset_env = librosa.onset.onset_strength(y=y_percussive, sr=sr)
+        # --- 2. ROBUST BPM (Windowed Voting) ---
+        # Instead of analyzing the whole 50s at once (which can be confused by breakdowns),
+        # we slice the track into 5-second windows and vote.
         
-        # Compute tempogram (autocorrelation of onset strength)
-        # This avoids the "120 BPM bias" of the standard beat_track
-        tempogram = librosa.feature.tempogram(onset_envelope=onset_env, sr=sr)
+        window_size = 5 * sr # 5 seconds
+        hop_length = int(2.5 * sr) # 50% overlap
         
-        # Average the tempogram over time to get a global tempo profile
-        ac_global = np.mean(tempogram, axis=1)
+        candidates = []
+        weights = []
         
-        # Get the BPM values corresponding to the tempogram bins
-        bpms = librosa.tempo_frequencies(len(ac_global), sr=sr)
+        # Iterate through windows
+        for start in range(0, len(y_percussive) - window_size, hop_length):
+            end = start + window_size
+            y_chunk = y_percussive[start:end]
+            
+            # Skip silent chunks
+            if np.mean(np.abs(y_chunk)) < 0.001:
+                continue
+                
+            # Calculate Onset Strength for this chunk
+            onset_env = librosa.onset.onset_strength(y=y_chunk, sr=sr)
+            
+            # Pulse Clarity (Weight): How distinct is the beat?
+            # High variance = strong beat. Low variance = ambient/noise.
+            clarity = np.std(onset_env)
+            
+            # Calculate Tempo for this chunk
+            # prior=None removes the 120 BPM bias
+            tempo_arr = librosa.feature.tempo(onset_envelope=onset_env, sr=sr, prior=None)
+            tempo = tempo_arr[0] if isinstance(tempo_arr, np.ndarray) else tempo_arr
+            
+            if 50 < tempo < 220:
+                candidates.append(tempo)
+                weights.append(clarity)
         
-        # Filter out unrealistic BPMs (e.g. < 50 or > 220)
-        # We zero out the strength of invalid BPMs
-        mask = (bpms >= 50) & (bpms <= 220)
-        ac_global[~mask] = 0
-        
-        # Find the peak (the strongest tempo)
-        best_idx = np.argmax(ac_global)
-        bpm = bpms[best_idx]
+        if not candidates:
+            # Fallback to global analysis if no windows worked
+            onset_env = librosa.onset.onset_strength(y=y_percussive, sr=sr)
+            tempo_arr = librosa.feature.tempo(onset_envelope=onset_env, sr=sr, prior=None)
+            bpm = tempo_arr[0] if isinstance(tempo_arr, np.ndarray) else tempo_arr
+        else:
+            # Weighted Average of the top cluster
+            # 1. Round candidates to group them
+            candidates = np.array(candidates)
+            weights = np.array(weights)
+            
+            # Find the most common BPM range (histogram)
+            bins = np.arange(50, 220, 2) # 2 BPM bins
+            hist, bin_edges = np.histogram(candidates, bins=bins, weights=weights)
+            
+            best_bin_idx = np.argmax(hist)
+            best_bpm_center = (bin_edges[best_bin_idx] + bin_edges[best_bin_idx+1]) / 2
+            
+            # 2. Refine: Take weighted average of candidates close to this center
+            mask = np.abs(candidates - best_bpm_center) <= 4 # +/- 4 BPM
+            if np.sum(mask) > 0:
+                bpm = np.average(candidates[mask], weights=weights[mask])
+            else:
+                bpm = best_bpm_center
 
         # --- 3. Key ---
         # Use ONLY the harmonic component for key detection
