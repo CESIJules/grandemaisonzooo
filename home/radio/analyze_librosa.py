@@ -119,8 +119,8 @@ def analyze_audio(file_path):
         if not candidates:
             bpm = global_bpm if global_bpm > 0 else 120
         else:
-            # Weighted Histogram with higher precision
-            bins = np.arange(50, 220, 0.5) # 0.5 BPM precision
+            # Weighted Histogram
+            bins = np.arange(50, 220, 1) # 1 BPM precision
             hist, bin_edges = np.histogram(candidates, bins=bins, weights=weights)
             
             best_bin_idx = np.argmax(hist)
@@ -138,9 +138,8 @@ def analyze_audio(file_path):
         # Hardcoded energy checks often fail for Boom Bap (High Energy, Low BPM).
 
         # --- 6. KEY ---
-        # Use Chroma CENS on raw audio (y) instead of harmonic (y_harmonic)
-        # This is more robust for saturated/dirty tracks where HPSS might remove too much tone
-        chroma = librosa.feature.chroma_cens(y=y, sr=sr)
+        # Reverting to CQT on Harmonic component as it was more accurate
+        chroma = librosa.feature.chroma_cqt(y=y_harmonic, sr=sr)
         
         # Sum over time
         chroma_vals = np.sum(chroma, axis=1)
