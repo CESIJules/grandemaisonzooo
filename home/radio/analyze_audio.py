@@ -17,8 +17,8 @@ except ImportError:
     sys.exit(1)
 
 def estimate_key(y, sr):
-    # Chroma CQT is robust for key detection
-    chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
+    # Use chroma_stft instead of cqt for lower memory usage
+    chroma = librosa.feature.chroma_stft(y=y, sr=sr)
     chroma_avg = np.mean(chroma, axis=1)
     
     # Krumhansl-Schmuckler key profiles
@@ -31,27 +31,21 @@ def estimate_key(y, sr):
     
     max_corr = -1
     best_key = None
-    best_mode = None
     
     # Pitch classes
     notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
     
     # Camelot mapping (approximate)
-    # Major: B=1B, F#=2B, Db=3B, Ab=4B, Eb=5B, Bb=6B, F=7B, C=8B, G=9B, D=10B, A=11B, E=12B
-    # Minor: Ab=1A, Eb=2A, Bb=3A, F=4A, C=5A, G=6A, D=7A, A=8A, E=9A, B=10A, F#=11A, Db=12A
-    
     camelot_major = {
         'B': '1B', 'F#': '2B', 'C#': '3B', 'G#': '4B', 'D#': '5B', 'A#': '6B', 
         'F': '7B', 'C': '8B', 'G': '9B', 'D': '10B', 'A': '11B', 'E': '12B'
     }
-    # Handle enharmonics for Major
     camelot_major.update({'Db': '3B', 'Ab': '4B', 'Eb': '5B', 'Bb': '6B', 'Gb': '2B'})
 
     camelot_minor = {
         'G#': '1A', 'D#': '2A', 'A#': '3A', 'F': '4A', 'C': '5A', 'G': '6A', 
         'D': '7A', 'A': '8A', 'E': '9A', 'B': '10A', 'F#': '11A', 'C#': '12A'
     }
-    # Handle enharmonics for Minor
     camelot_minor.update({'Ab': '1A', 'Eb': '2A', 'Bb': '3A', 'Db': '12A', 'Gb': '11A'})
 
     for i in range(12):
@@ -62,7 +56,6 @@ def estimate_key(y, sr):
             max_corr = corr
             note = notes[i]
             best_key = f"{note} Major"
-            best_mode = 'Major'
             camelot = camelot_major.get(note, 'Unknown')
             
         # Minor
@@ -72,19 +65,21 @@ def estimate_key(y, sr):
             max_corr = corr
             note = notes[i]
             best_key = f"{note} Minor"
-            best_mode = 'Minor'
             camelot = camelot_minor.get(note, 'Unknown')
             
     return best_key, camelot
 
 def analyze(file_path):
     try:
-        # Load audio (first 30s is usually enough for BPM/Key)
-        # sr=None loads at native sampling rate, avoiding resampling (and resampy dependency for load)
-        y, sr = librosa.load(file_path, duration=30, sr=None)
+        # Load audio: 
+        # - duration=15s (enough for estimation, saves RAM)
+        # - offset=10s (skip intro silence/buildup)
+        # - sr=None (native rate, avoids resampling overhead)
+        # - mono=True (halves memory usage)
+        y, sr = librosa.load(file_path, offset=10, duration=15, sr=None, mono=True)
         
         # BPM
-        # Use a simpler beat tracker if the default one is causing issues
+        # hop_length=512 is standard, but increasing it slightly can save compute
         tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
         bpm = round(float(tempo))
         
