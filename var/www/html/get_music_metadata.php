@@ -5,18 +5,6 @@ error_reporting(E_ALL);
 
 header('Content-Type: application/json');
 
-// Check for cURL extension
-if (!extension_loaded('curl')) {
-    echo json_encode(['status' => 'error', 'message' => 'PHP cURL extension is not installed. Please install it (apt install php-curl).']);
-    exit;
-}
-
-// --- CONFIGURATION SPOTIFY ---
-// REMPLACE CES VALEURS PAR LES TIENNES
-$clientId = 'b4852c105cd94d43a40128a8a8acb894';
-$clientSecret = '92f8fcf08a424af1b0759fadb7567b04';
-// -----------------------------
-
 $input = json_decode(file_get_contents('php://input'), true);
 $filename = $input['filename'] ?? null;
 
@@ -26,6 +14,8 @@ if (!$filename) {
 }
 
 $metadataFile = __DIR__ . '/music_metadata.json';
+$musicDir = '/home/radio/musique';
+$filePath = $musicDir . '/' . $filename;
 
 // 1. CHECK CACHE
 $metadata = [];
@@ -39,132 +29,81 @@ if (isset($metadata[$filename])) {
     exit;
 }
 
-// 2. SPOTIFY AUTHENTICATION
-function getSpotifyToken($clientId, $clientSecret) {
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, 'https://accounts.spotify.com/api/token');
-    curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, 'grant_type=client_credentials');
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Authorization: Basic ' . base64_encode($clientId . ':' . $clientSecret)
-    ]);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    $response = curl_exec($ch);
-    curl_close($ch);
-    
-    $data = json_decode($response, true);
-    return $data['access_token'] ?? null;
-}
-
-// 3. SEARCH TRACK
-function searchTrack($query, $token) {
-    $query = urlencode($query);
-    $ch = curl_init();
-    // Added market=FR to ensure we get IDs valid for the region
-    curl_setopt($ch, CURLOPT_URL, "https://api.spotify.com/v1/search?q=$query&type=track&limit=1&market=FR");
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        "Authorization: Bearer $token"
-    ]);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    $response = curl_exec($ch);
-    curl_close($ch);
-    
-    $data = json_decode($response, true);
-    if (isset($data['tracks']['items'][0])) {
-        $item = $data['tracks']['items'][0];
-        return [
-            'id' => $item['id'],
-            'name' => $item['name'],
-            'artist' => $item['artists'][0]['name']
-        ];
-    }
-    return null;
-}
-
-// 4. GET AUDIO FEATURES
-function getAudioFeatures($trackId, $token) {
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, "https://api.spotify.com/v1/audio-features/$trackId");
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        "Authorization: Bearer $token"
-    ]);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    $response = curl_exec($ch);
-    curl_close($ch);
-    
-    return json_decode($response, true);
-}
-
-// 5. CONVERT TO CAMELOT
-function convertToCamelot($key, $mode) {
-    // Spotify: key 0=C, 1=C#, etc. | mode 1=Major, 0=Minor
-    // Camelot Wheel Mapping
-    $majorMap = [
-        0 => '8B', 1 => '3B', 2 => '10B', 3 => '5B', 4 => '12B', 5 => '7B', 
-        6 => '2B', 7 => '9B', 8 => '4B', 9 => '11B', 10 => '6B', 11 => '1B'
-    ];
-    $minorMap = [
-        0 => '5A', 1 => '12A', 2 => '7A', 3 => '2A', 4 => '9A', 5 => '4A', 
-        6 => '11A', 7 => '6A', 8 => '1A', 9 => '8A', 10 => '3A', 11 => '10A'
-    ];
-    
-    if ($key === -1) return null; // No key detected
-    
-    return ($mode == 1) ? ($majorMap[$key] ?? null) : ($minorMap[$key] ?? null);
-}
-
-// --- MAIN LOGIC ---
-
-// Clean filename for search
-$searchQuery = pathinfo($filename, PATHINFO_FILENAME);
-// Replace underscores and dashes with spaces
-$searchQuery = preg_replace('/[_\-]/', ' ', $searchQuery);
-// Remove multiple spaces
-$searchQuery = preg_replace('/\s+/', ' ', $searchQuery);
-$searchQuery = trim($searchQuery);
-
-$token = getSpotifyToken($clientId, $clientSecret);
-
-if (!$token) {
-    echo json_encode(['status' => 'error', 'message' => 'Spotify Auth Failed. Check API Keys.']);
+// 2. LOCAL ANALYSIS
+if (!file_exists($filePath)) {
+    echo json_encode(['status' => 'error', 'message' => 'File not found on server']);
     exit;
 }
 
-$trackInfo = searchTrack($searchQuery, $token);
+// Call Python script
+$cmd = "python3 /home/radio/analyze_audio_light.py " . escapeshellarg($filePath);
+$output = shell_exec($cmd);
+$analysis = json_decode($output, true);
 
-if ($trackInfo) {
-    $features = getAudioFeatures($trackInfo['id'], $token);
-    
-    if ($features && isset($features['tempo'], $features['key'], $features['mode'])) {
-        $bpm = round($features['tempo']);
-        $camelot = convertToCamelot($features['key'], $features['mode']);
-        
-        $result = [
-            'bpm' => $bpm,
-            'key' => $features['key'],
-            'camelot' => $camelot,
-            'source' => 'spotify',
-            'matched_track' => $trackInfo['name'] . ' - ' . $trackInfo['artist']
-        ];
-        
-        // Save to cache
-        $metadata[$filename] = $result;
-        file_put_contents($metadataFile, json_encode($metadata, JSON_PRETTY_PRINT));
-        
-        echo json_encode(['status' => 'success', 'data' => $result]);
-    } else {
-        // DEBUG: Dump everything
-        $debugInfo = json_encode($features);
-        if (!$features) {
-            $debugInfo = "NULL (json_last_error: " . json_last_error_msg() . ")";
-        }
-        
-        echo json_encode([
-            'status' => 'error', 
-            'message' => "Found '{$trackInfo['name']}' (ID: {$trackInfo['id']}) by '{$trackInfo['artist']}' but API error. Debug: $debugInfo"
-        ]);
-    }
-} else {
-    echo json_encode(['status' => 'error', 'message' => "Track not found on Spotify for query: '$searchQuery'"]);
+if (!$analysis || isset($analysis['error'])) {
+    echo json_encode(['status' => 'error', 'message' => $analysis['error'] ?? 'Analysis failed']);
+    exit;
 }
+
+// 3. CONVERT TO CAMELOT
+function convertToCamelot($key, $mode) {
+    // key: 0=C, 1=C#, ... 11=B
+    // mode: 1=Major, 0=Minor
+    
+    $camelotMajor = [
+        0 => '8B',  // C
+        1 => '3B',  // Db/C#
+        2 => '10B', // D
+        3 => '5B',  // Eb/D#
+        4 => '12B', // E
+        5 => '7B',  // F
+        6 => '2B',  // Gb/F#
+        7 => '9B',  // G
+        8 => '4B',  // Ab/G#
+        9 => '11B', // A
+        10 => '6B', // Bb/A#
+        11 => '1B'  // B
+    ];
+
+    $camelotMinor = [
+        0 => '5A',  // C
+        1 => '12A', // Db/C#
+        2 => '7A',  // D
+        3 => '2A',  // Eb/D#
+        4 => '9A',  // E
+        5 => '4A',  // F
+        6 => '11A', // Gb/F#
+        7 => '6A',  // G
+        8 => '1A',  // Ab/G#
+        9 => '8A',  // A
+        10 => '3A', // Bb/A#
+        11 => '10A' // B
+    ];
+
+    if ($mode == 1) {
+        return $camelotMajor[$key] ?? 'Unknown';
+    } else {
+        return $camelotMinor[$key] ?? 'Unknown';
+    }
+}
+
+$camelot = convertToCamelot($analysis['key_key'], $analysis['key_mode']);
+
+// 4. PREPARE RESULT
+$result = [
+    'bpm' => $analysis['bpm'],
+    'key' => $analysis['key_key'],
+    'camelot' => $camelot,
+    'energy' => $analysis['energy'],
+    'danceability' => $analysis['danceability'],
+    'valence' => $analysis['valence'], // Placeholder
+    'acousticness' => $analysis['acousticness'], // Placeholder
+    'source' => 'local_analysis'
+];
+
+// 5. SAVE TO CACHE
+$metadata[$filename] = $result;
+file_put_contents($metadataFile, json_encode($metadata, JSON_PRETTY_PRINT));
+
+echo json_encode(['status' => 'success', 'data' => $result]);
 ?>

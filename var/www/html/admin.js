@@ -190,11 +190,39 @@ document.addEventListener('DOMContentLoaded', () => {
         candidates.forEach(cand => {
             const li = document.createElement('li');
             li.className = 'suggestion-item';
+            
+            const energyPercent = Math.round((cand.meta.energy || 0) * 100);
+            const dancePercent = Math.round((cand.meta.danceability || 0) * 100);
+
             li.innerHTML = `
                 <div class="suggestion-info">
-                    <span>${formatSongPathToTitle(cand.path)}</span>
-                    <span class="suggestion-badge badge-bpm">${cand.meta.bpm} BPM</span>
-                    <span class="suggestion-badge badge-key">${cand.meta.camelot}</span>
+                    <div class="suggestion-header">
+                        <strong>${formatSongPathToTitle(cand.path)}</strong>
+                    </div>
+                    <div class="suggestion-badges">
+                        <span class="suggestion-badge badge-bpm">${cand.meta.bpm} BPM</span>
+                        <span class="suggestion-badge badge-key">${cand.meta.camelot}</span>
+                    </div>
+                    <div class="suggestion-stats" style="margin-top: 8px; display: flex; gap: 10px;">
+                        <div class="stat-item" style="flex: 1;">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.7rem; margin-bottom: 2px;">
+                                <span>Energy</span>
+                                <span>${energyPercent}%</span>
+                            </div>
+                            <div style="height: 4px; background: #333; border-radius: 2px;">
+                                <div style="height: 100%; width: ${energyPercent}%; background: #ffc107; border-radius: 2px;"></div>
+                            </div>
+                        </div>
+                        <div class="stat-item" style="flex: 1;">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.7rem; margin-bottom: 2px;">
+                                <span>Dance</span>
+                                <span>${dancePercent}%</span>
+                            </div>
+                            <div style="height: 4px; background: #333; border-radius: 2px;">
+                                <div style="height: 100%; width: ${dancePercent}%; background: #0dcaf0; border-radius: 2px;"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             `;
             const addBtn = document.createElement('button');
