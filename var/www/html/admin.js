@@ -711,10 +711,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const addBtn = document.createElement('button');
             addBtn.innerHTML = '<i class="fas fa-plus-circle"></i>';
             addBtn.className = 'btn';
-            addBtn.addEventListener('click', () => {
+            addBtn.addEventListener('click', async () => {
                 if (!currentEditingPlaylist.songs.includes(songPath)) {
                     currentEditingPlaylist.songs.push(songPath);
                     renderCurrentPlaylistSongs();
+                    
+                    // Force refresh metadata for the added song
+                    const suggestionsUl = document.getElementById('harmonicSuggestions');
+                    if(suggestionsUl) suggestionsUl.innerHTML = '<p>Analyse et recalcul du BPM en cours...</p>';
+                    
+                    const filename = songPath.split('/').pop();
+                    await getMusicMetadata(filename, true);
+                    
                     renderSuggestions();
                 }
             });
