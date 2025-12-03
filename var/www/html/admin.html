@@ -287,40 +287,55 @@
         
         .playlist-editor-container {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 300px; /* Fixed height for suggestions at bottom */
+            grid-template-columns: 1fr 1fr; /* Deux colonnes égales */
+            grid-template-rows: 1fr 1fr; /* Deux lignes égales */
             gap: 24px;
-            height: 75vh; /* Fixed height relative to viewport */
+            height: 80vh; /* Hauteur confortable */
             min-height: 600px;
         }
 
-        .playlist-songs-panel, .all-available-songs-panel {
-            grid-row: 1;
-            height: 100%; /* Fill the grid cell */
+        /* Colonne de Gauche : Ma Playlist (Prend toute la hauteur) */
+        .playlist-songs-panel {
+            grid-column: 1;
+            grid-row: 1 / span 2;
+            
             display: flex;
             flex-direction: column;
-            min-height: 0; /* Important for nested flex scrolling */
             overflow: hidden;
-            /* Style plus doux */
             background-color: rgba(30, 30, 30, 0.6);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .suggestions-panel {
-            grid-column: 1 / -1; /* Prend toute la largeur */
-            grid-row: 2;
-            height: 100%; /* Fill the 300px row */
+        /* Colonne de Droite, Haut : Bibliothèque */
+        .all-available-songs-panel {
+            grid-column: 2;
+            grid-row: 1;
+            
             display: flex;
             flex-direction: column;
-            min-height: 0;
             overflow: hidden;
-            margin-top: 0; /* Géré par le grid gap */
-            background-color: rgba(30, 30, 30, 0.8); /* Un peu plus opaque pour le focus */
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background-color: rgba(30, 30, 30, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        /* Titres de section plus discrets */
+        /* Colonne de Droite, Bas : Suggestions (Plus haute et moins large qu'avant) */
+        .suggestions-panel {
+            grid-column: 2;
+            grid-row: 2;
+            
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            margin-top: 0;
+            background-color: rgba(30, 30, 30, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            /* Bordure accentuée pour la mettre en valeur */
+            border-left: 2px solid var(--accent-primary);
+        }
+
+        /* Titres de section */
         .card h3 {
             font-size: 1.1rem;
             color: #e0e0e0;
@@ -331,23 +346,23 @@
             letter-spacing: 0.5px;
         }
 
-        /* Listes plus aérées */
+        /* Contenu scrollable */
         .panel-content {
             flex: 1;
-            overflow-y: auto; /* Force scroll */
-            min-height: 0; /* Firefox fix */
+            overflow-y: auto;
+            min-height: 0;
             padding-right: 5px;
         }
         
         .panel-content ul {
-            padding-right: 5px; /* Espace pour la scrollbar */
+            padding-right: 5px;
         }
         
         .panel-content li {
             background-color: rgba(255, 255, 255, 0.02);
-            margin-bottom: 6px;
+            margin-bottom: 8px;
             padding: 12px 16px;
-            border-radius: 6px;
+            border-radius: 8px;
             border: 1px solid transparent;
             transition: all 0.2s ease;
             font-size: 0.95rem;
@@ -355,46 +370,35 @@
 
         .panel-content li:hover {
             background-color: rgba(255, 255, 255, 0.06);
-            transform: translateX(2px);
         }
 
-        /* Scrollbar personnalisée et discrète */
-        .panel-content::-webkit-scrollbar {
-            width: 6px;
-        }
-        .panel-content::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.1);
-        }
-        .panel-content::-webkit-scrollbar-thumb {
-            background-color: rgba(255, 255, 255, 0.15);
-            border-radius: 3px;
-        }
-        .panel-content::-webkit-scrollbar-thumb:hover {
-            background-color: rgba(255, 255, 255, 0.25);
-        }
+        /* Scrollbar */
+        .panel-content::-webkit-scrollbar { width: 6px; }
+        .panel-content::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.1); }
+        .panel-content::-webkit-scrollbar-thumb { background-color: rgba(255, 255, 255, 0.15); border-radius: 3px; }
+        .panel-content::-webkit-scrollbar-thumb:hover { background-color: rgba(255, 255, 255, 0.25); }
 
-        /* Champs de recherche plus intégrés */
+        /* Recherche */
         #songSearchInput {
             background-color: rgba(0, 0, 0, 0.2);
             border: 1px solid rgba(255, 255, 255, 0.1);
             color: #fff;
             padding: 10px 14px;
             margin-bottom: 12px;
+            border-radius: 6px;
         }
         #songSearchInput:focus {
             border-color: var(--accent-primary);
             background-color: rgba(0, 0, 0, 0.3);
         }
 
-        /* Suggestions Items - Plus lisibles */
+        /* Suggestions Items */
         .suggestion-item {
             background-color: rgba(255, 255, 255, 0.03);
             border: none;
-            border-left: 3px solid transparent;
         }
         .suggestion-item:hover {
             background-color: rgba(255, 255, 255, 0.07);
-            border-left-color: var(--accent-primary);
         }
         
         .suggestion-info strong {
@@ -404,7 +408,7 @@
             margin-bottom: 4px;
         }
 
-        /* Badges moins agressifs */
+        /* Badges */
         .suggestion-badge {
             font-size: 0.75rem;
             padding: 3px 8px;
@@ -415,37 +419,53 @@
         .badge-bpm { background-color: rgba(255, 255, 255, 0.1); color: #ddd; border: 1px solid rgba(255,255,255,0.1); }
         .badge-key { background-color: rgba(0, 123, 255, 0.2); color: #80bdff; border: 1px solid rgba(0, 123, 255, 0.3); }
 
-        /* Boutons d'action dans les listes (Rectangulaires et propres) */
+        /* BOUTONS MODERNES (Style identique à Enregistrer/Annuler) */
         .panel-content li .btn {
             width: auto;
             height: auto;
-            border-radius: 4px;
-            padding: 6px 12px;
             aspect-ratio: auto;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-family: var(--font-body);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            opacity: 1;
-            background-color: transparent;
-            border: 1px solid rgba(255,255,255,0.2);
-            color: var(--text-secondary);
+            gap: 6px;
             transition: all 0.2s ease;
+            cursor: pointer;
         }
-        .panel-content li .btn:hover {
-            transform: translateY(-1px);
-            background-color: rgba(255,255,255,0.1);
-            color: var(--text-primary);
-            border-color: rgba(255,255,255,0.4);
+
+        /* Bouton Ajouter (Bleu plein) */
+        .panel-content li .btn:not(.btn-danger) {
+            background-color: var(--accent-primary);
+            border: 1px solid var(--accent-primary);
+            color: #fff;
         }
-        .panel-content li .btn-danger:hover {
-            background-color: rgba(220, 53, 69, 0.2);
-            border-color: var(--accent-danger);
+        .panel-content li .btn:not(.btn-danger):hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        /* Bouton Supprimer (Rouge contour ou plein au survol) */
+        .panel-content li .btn-danger {
+            background-color: transparent;
+            border: 1px solid var(--accent-danger);
             color: var(--accent-danger);
         }
-        .panel-content li .btn-primary:hover {
-            background-color: rgba(0, 123, 255, 0.2);
-            border-color: var(--accent-primary);
-            color: var(--accent-primary);
+        .panel-content li .btn-danger:hover {
+            background-color: var(--accent-danger);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        /* Icônes dans les boutons */
+        .panel-content li .btn i {
+            font-size: 0.9em;
         }
 
         /* --- Section Layout Improvements --- */
