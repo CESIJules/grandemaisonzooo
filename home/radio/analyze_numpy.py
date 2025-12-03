@@ -102,11 +102,39 @@ def analyze_pcm():
             key_idx = np.argmax(min_corrs)
             mode = 0 # Minor
 
+        # --- 4. BPM Detection (Simple Autocorrelation) ---
+        # Downsample envelope to ~100Hz
+        target_sr = 100
+        step = int(sr / target_sr)
+        if step < 1: step = 1
+        env_low = envelope_smooth[::step]
+        env_low = env_low - np.mean(env_low)
+        
+        # Autocorrelation
+        corr = np.correlate(env_low, env_low, mode='full')
+        corr = corr[len(corr)//2:]
+        
+        # Search range: 60-190 BPM
+        min_bpm = 60
+        max_bpm = 190
+        min_lag = int(60 * target_sr / max_bpm)
+        max_lag = int(60 * target_sr / min_bpm)
+        
+        bpm = 0
+        if len(corr) > max_lag:
+            window = corr[min_lag:max_lag]
+            if len(window) > 0:
+                peak_idx = np.argmax(window)
+                true_lag = min_lag + peak_idx
+                if true_lag > 0:
+                    bpm = 60 * target_sr / true_lag
+
         return {
             "energy": round(float(energy), 2),
             "danceability": round(float(danceability), 2),
             "key_key": int(key_idx),
-            "key_mode": int(mode)
+            "key_mode": int(mode),
+            "bpm": round(float(bpm))
         }
 
     except Exception as e:
