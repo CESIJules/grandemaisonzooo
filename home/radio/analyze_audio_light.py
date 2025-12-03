@@ -4,6 +4,11 @@ import os
 import numpy as np
 import warnings
 
+# Attempt to prevent segfaults related to Numba/Threading
+os.environ['NUMBA_DISABLE_JIT'] = '1'
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
+
 # Suppress warnings to keep stdout clean for JSON
 warnings.filterwarnings('ignore')
 
@@ -14,24 +19,34 @@ def analyze_track(file_path):
         return {"error": "Librosa not installed"}
 
     try:
-        # 1. Load only 30 seconds from the middle to save RAM
+        # 1. Load only 15 seconds from the middle to save RAM
         # Get duration first (fast)
-        duration = librosa.get_duration(path=file_path)
-        offset = max(0, (duration - 30) / 2)
+        try:
+            duration = librosa.get_duration(path=file_path)
+        except:
+            duration = 30 # Fallback
+            
+        offset = max(0, (duration - 15) / 2)
         
-        # Load audio: mono=True, sr=22050 (standard for analysis)
-        y, sr = librosa.load(file_path, sr=22050, mono=True, offset=offset, duration=30)
+        # OPTIMIZATION: sr=None avoids resampling (which is memory intensive and causes segfaults)
+        # We will work with the native sample rate.
+        y, sr = librosa.load(file_path, sr=None, mono=True, offset=offset, duration=15)
 
         # 2. BPM
+        # Use a faster, lighter beat tracker if possible, or standard
         tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
         bpm = float(tempo)
 
         # 3. Key (Simple Chroma)
-        chroma = librosa.feature.chroma_stft(y=y, sr=sr)
+        # Reduce resolution of STFT to save memory
+        n_fft = 2048
+        if len(y) < n_fft:
+            n_fft = len(y)
+            
+        chroma = librosa.feature.chroma_stft(y=y, sr=sr, n_fft=n_fft)
         chroma_avg = np.mean(chroma, axis=1)
         
         # Simple template matching for Major/Minor
-        # (Simplified for speed/memory)
         maj_profile = np.array([6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88])
         min_profile = np.array([6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17])
         
@@ -66,11 +81,6 @@ def analyze_track(file_path):
         pulse = librosa.beat.plp(onset_envelope=onset_env, sr=sr)
         danceability = float(np.mean(pulse)) # Proxy for beat clarity
         
-        # Camelot conversion
-        camelot = ""
-        # (Simplified mapping logic)
-        # ... implementation of convertToCamelot logic in python or just return key/mode
-        
         return {
             "bpm": round(bpm),
             "key_key": key_idx,
@@ -78,8 +88,8 @@ def analyze_track(file_path):
             "key_string": key_str + (" Major" if mode == 1 else " Minor"),
             "energy": round(energy_norm, 2),
             "danceability": round(danceability, 2),
-            "valence": 0.5, # Hard to calculate locally without ML models
-            "acousticness": 0.0 # Hard to calculate locally
+            "valence": 0.5, 
+            "acousticness": 0.0
         }
 
     except Exception as e:
