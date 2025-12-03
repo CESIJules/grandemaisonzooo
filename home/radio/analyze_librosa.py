@@ -131,17 +131,40 @@ def analyze_audio(file_path):
             mode = 0 # Minor
 
         # --- 4. ENERGY & DANCEABILITY ---
+        # Energy: RMS (Loudness) + Onset Strength (Activity)
         rms = librosa.feature.rms(y=y)[0]
-        energy = np.mean(rms)
+        rms_mean = np.mean(rms)
         
-        onset_env_global = librosa.onset.onset_strength(y=y_percussive, sr=sr)
-        danceability = np.std(onset_env_global)
+        # Onset strength of the full signal (for activity and danceability)
+        onset_env = librosa.onset.onset_strength(y=y, sr=sr)
+        onset_mean = np.mean(onset_env)
+        
+        # Formula: RMS contributes to loudness, Onset to "busyness"
+        # RMS typical: 0.05 - 0.3 -> Scale x25 -> 1.25 - 7.5
+        # Onset typical: 0.5 - 1.5 -> Scale x2 -> 1.0 - 3.0
+        energy = (rms_mean * 25) + (onset_mean * 2)
+        energy = min(10.0, max(0.0, energy))
+        
+        # Danceability: Beat Strength
+        # We look at how strong the onsets are specifically at the beat locations.
+        # Strong onsets on beat = High Danceability.
+        tempo, beats = librosa.beat.beat_track(onset_envelope=onset_env, sr=sr)
+        
+        if len(beats) > 0:
+            # Average strength of onsets at beat frames
+            beat_strength = np.mean(onset_env[beats])
+            # Typical beat_strength: 1.0 (Weak) to 4.0 (Strong)
+            danceability = beat_strength * 2.5
+        else:
+            danceability = 0.0
+            
+        danceability = min(10.0, max(0.0, danceability))
 
         return {
             'bpm': round(float(bpm), 1),
             'key_key': int(key_idx),
             'key_mode': int(mode),
-            'energy': round(float(energy * 10), 2),
+            'energy': round(float(energy), 2),
             'danceability': round(float(danceability), 2)
         }
 
