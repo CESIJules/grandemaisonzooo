@@ -175,6 +175,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const targetBpm = lastSongMeta.bpm;
         const targetKey = lastSongMeta.camelot;
+        const targetEnergy = Math.round((lastSongMeta.energy || 0) * 100);
+        const targetDance = Math.round((lastSongMeta.danceability || 0) * 100);
         const source = lastSongMeta.source || 'unknown';
         const librosaError = lastSongMeta.librosa_error ? ` (Error: ${lastSongMeta.librosa_error})` : '';
         const compatibleKeys = camelotWheel[targetKey]?.compatible || [];
@@ -187,15 +189,39 @@ document.addEventListener('DOMContentLoaded', () => {
         headerDiv.style.paddingBottom = '10px';
         headerDiv.style.borderBottom = '1px solid var(--surface-border)';
         headerDiv.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <small>Basé sur:</small><br>
-                    <strong>${formatSongPathToTitle(lastSongPath)}</strong> 
-                    <span class="suggestion-badge badge-bpm" title="Source: ${source}${librosaError}">${targetBpm} BPM</span> 
-                    <span class="suggestion-badge badge-key">${targetKey}</span>
-                    <br><small style="font-size: 0.7em; color: #888;">Source: ${source}</small>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div style="flex-grow: 1; margin-right: 15px;">
+                    <small style="color: var(--text-secondary);">Basé sur:</small><br>
+                    <div style="margin-bottom: 5px;"><strong>${formatSongPathToTitle(lastSongPath)}</strong></div>
+                    <div style="margin-bottom: 8px;">
+                        <span class="suggestion-badge badge-bpm" title="Source: ${source}${librosaError}">${targetBpm} BPM</span> 
+                        <span class="suggestion-badge badge-key">${targetKey}</span>
+                    </div>
+                    
+                    <div style="display: flex; gap: 15px; max-width: 300px;">
+                        <div class="stat-item" style="flex: 1;">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.7rem; margin-bottom: 3px; color: var(--text-secondary);">
+                                <span>Energy</span>
+                                <span style="color: var(--text-primary);">${targetEnergy}%</span>
+                            </div>
+                            <div style="height: 4px; background: #333; border-radius: 2px; overflow: hidden;">
+                                <div style="height: 100%; width: ${targetEnergy}%; background: #ffc107; border-radius: 2px;"></div>
+                            </div>
+                        </div>
+                        <div class="stat-item" style="flex: 1;">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.7rem; margin-bottom: 3px; color: var(--text-secondary);">
+                                <span>Dance</span>
+                                <span style="color: var(--text-primary);">${targetDance}%</span>
+                            </div>
+                            <div style="height: 4px; background: #333; border-radius: 2px; overflow: hidden;">
+                                <div style="height: 100%; width: ${targetDance}%; background: #0dcaf0; border-radius: 2px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 6px;"><small style="font-size: 0.7em; color: #666;">Source: ${source}</small></div>
                 </div>
-                <button id="forceRefreshBtn" class="btn btn-sm btn-outline-secondary" title="Forcer la réanalyse">
+                <button id="forceRefreshBtn" class="btn btn-sm btn-outline-secondary" title="Forcer la réanalyse" style="margin-top: 5px;">
                     <i class="fas fa-sync"></i>
                 </button>
             </div>
