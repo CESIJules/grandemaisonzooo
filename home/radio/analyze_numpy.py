@@ -103,15 +103,26 @@ def analyze_pcm():
             mode = 0 # Minor
 
         # --- 4. BPM Detection (Simple Autocorrelation) ---
-        # Downsample envelope to ~100Hz
+        # Improved: Use onset strength (derivative of envelope) instead of raw envelope
+        # This focuses on the attacks (transients) rather than the sustained volume
+        
+        # 1. Differentiate smoothed envelope (calculated in Danceability section)
+        diff_env = np.diff(envelope_smooth)
+        # 2. Half-wave rectify (only positive changes = attacks)
+        onset_env = np.maximum(0, diff_env)
+        
+        # 3. Downsample to ~100Hz for correlation
         target_sr = 100
         step = int(sr / target_sr)
         if step < 1: step = 1
-        env_low = envelope_smooth[::step]
-        env_low = env_low - np.mean(env_low)
+        
+        onset_sub = onset_env[::step]
+        
+        # Remove DC component
+        onset_sub = onset_sub - np.mean(onset_sub)
         
         # Autocorrelation
-        corr = np.correlate(env_low, env_low, mode='full')
+        corr = np.correlate(onset_sub, onset_sub, mode='full')
         corr = corr[len(corr)//2:]
         
         # Search range: 60-190 BPM
@@ -124,10 +135,25 @@ def analyze_pcm():
         if len(corr) > max_lag:
             window = corr[min_lag:max_lag]
             if len(window) > 0:
+                # Find peaks
                 peak_idx = np.argmax(window)
                 true_lag = min_lag + peak_idx
+                
                 if true_lag > 0:
                     bpm = 60 * target_sr / true_lag
+                    
+                    # Heuristic: If BPM is very low (< 90) and there's a strong peak at 2x tempo, take 2x
+                    # (Simple check)
+                    if bpm < 90:
+                        # Check if there is significant energy at half the lag (double tempo)
+                        half_lag = true_lag // 2
+                        if half_lag >= min_lag:
+                            # Check amplitude at half lag in the correlation window
+                            # We need to map back to window indices
+                            half_lag_idx = half_lag - min_lag
+                            if 0 <= half_lag_idx < len(window):
+                                if window[half_lag_idx] > 0.5 * window[peak_idx]:
+                                    bpm *= 2
 
         return {
             "energy": round(float(energy), 2),

@@ -107,10 +107,25 @@ if (!$pyData || isset($pyData['error'])) {
 if ($bpm == 0 && $pyBpm > 0) {
     $bpm = $pyBpm;
 }
-// If both exist but differ significantly, prefer Aubio (usually better) 
-// unless Aubio is weird (e.g. < 60 or > 190) and Python is normal.
-if ($bpm < 60 && $pyBpm > 60) {
-    $bpm = $pyBpm;
+
+// Conflict Resolution:
+// If Aubio and Python disagree significantly (> 10 BPM)
+if (abs($bpm - $pyBpm) > 10 && $pyBpm > 0 && $bpm > 0) {
+    // Case 1: 3:2 Polyrhythm (e.g. 110 vs 165)
+    // If Python is approx 1.5x Aubio, prefer Python (likely faster tempo detected)
+    $ratio = $pyBpm / $bpm;
+    if ($ratio > 1.4 && $ratio < 1.6) {
+        $bpm = $pyBpm;
+    }
+    // Case 2: Double Time (e.g. 70 vs 140)
+    // If Python is approx 2x Aubio, prefer Python
+    else if ($ratio > 1.9 && $ratio < 2.1) {
+        $bpm = $pyBpm;
+    }
+    // Case 3: Aubio is unreasonably slow (< 80) and Python is normal (> 80)
+    else if ($bpm < 80 && $pyBpm > 80) {
+        $bpm = $pyBpm;
+    }
 }
 
 // 3. CONVERT TO CAMELOT
