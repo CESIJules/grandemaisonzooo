@@ -287,16 +287,20 @@
         
         .playlist-editor-container {
             display: grid;
-            /* 3 Colonnes : Playlist (Large), Suggestions (Moyenne), Bibliothèque (Moyenne) */
-            grid-template-columns: 1.2fr 1fr 1fr;
+            grid-template-columns: 1fr 1fr;
+            /* Ligne 1 (Playlist/Biblio) : 35% de la hauteur */
+            /* Ligne 2 (Suggestions) : Le reste (65%) */
+            grid-template-rows: 35vh 1fr;
             gap: 20px;
-            height: 80vh;
+            height: 85vh;
             min-height: 600px;
         }
 
-        /* Colonne 1 : Ma Playlist */
+        /* Colonne 1, Ligne 1 : Ma Playlist */
         .playlist-songs-panel {
             grid-column: 1;
+            grid-row: 1;
+            
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -305,28 +309,32 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        /* Colonne 2 : Suggestions (Maintenant au milieu, toute la hauteur) */
-        .suggestions-panel {
+        /* Colonne 2, Ligne 1 : Bibliothèque */
+        .all-available-songs-panel {
             grid-column: 2;
+            grid-row: 1;
+            
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-color: rgba(30, 30, 30, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Ligne 2 (Toute largeur) : Suggestions */
+        .suggestions-panel {
+            grid-column: 1 / -1;
+            grid-row: 2;
+            
             display: flex;
             flex-direction: column;
             overflow: hidden;
             margin-top: 0;
             background-color: rgba(30, 30, 30, 0.8);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            border-top: 2px solid var(--accent-primary); /* Accent en haut */
-            border-left: none;
-        }
-
-        /* Colonne 3 : Bibliothèque */
-        .all-available-songs-panel {
-            grid-column: 3;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            background-color: rgba(30, 30, 30, 0.6);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-top: 2px solid var(--accent-primary);
+            border-left: 1px solid rgba(255, 255, 255, 0.08); /* Reset border left */
         }
 
         /* Titres de section */
@@ -413,22 +421,27 @@
 
         /* Suggestions Items */
         .suggestion-item {
-            flex-direction: column;
-            align-items: stretch !important; /* Override default align-items: center */
-            gap: 10px;
+            flex-direction: row; /* Retour à l'horizontale pour la liste large */
+            align-items: center !important;
+            gap: 20px;
         }
         .suggestion-info {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 5px;
-            width: 100%;
+            flex-direction: row;
+            align-items: center;
+            gap: 20px;
+            width: auto;
+            flex-grow: 1;
+        }
+        .suggestion-header {
+            min-width: 200px; /* Largeur min pour le titre */
         }
         .suggestion-badges {
             display: flex;
-            gap: 5px;
+            gap: 10px;
         }
         .suggestion-stats {
-            width: 100%;
+            width: 300px; /* Largeur fixe pour les barres */
+            margin-top: 0 !important; /* Reset margin */
         }
 
         /* BOUTONS MODERNES (Style identique à Enregistrer/Annuler) */
