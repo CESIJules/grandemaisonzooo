@@ -160,36 +160,42 @@ def analyze_audio(file_path):
         energy = raw_energy
         
         # B. DANCEABILITY
-        # 1. Beat Stability (Regularity)
-        tempo, beats = librosa.beat.beat_track(onset_envelope=onset_env, sr=sr)
+        # We use Pulse Clarity + Beat Strength + Tempo
         
-        if len(beats) > 2:
-            # Calculate Inter-Beat Intervals (IBI)
-            beat_times = librosa.frames_to_time(beats, sr=sr)
-            ibi = np.diff(beat_times)
-            
-            # Coefficient of Variation (CV) - Lower is more stable
-            cv = np.std(ibi) / (np.mean(ibi) + 0.0001)
-            
-            # Stability Score (0.0 to 1.0)
-            # Relaxed penalty: CV 0.3 (30% var) -> 0.1 score
-            stability = max(0.0, min(1.0, 1.0 - (cv * 3)))
-            
-            # 2. Beat Strength
-            beat_strength = np.mean(onset_env[beats])
-            # Lower threshold for strength
-            feat_strength = min(1.0, beat_strength / 1.5)
-            
-            # 3. Tempo Preference (100-130 is ideal for dancing)
-            # Gaussian curve centered at 120
-            tempo_factor = np.exp(-((bpm - 120)**2) / (2 * 40**2))
-            
-            raw_dance = (0.4 * stability) + (0.4 * feat_strength) + (0.2 * tempo_factor)
-            danceability = raw_dance
+        # 1. Pulse Clarity (Regularity of the rhythm)
+        # We compute the tempogram and look at how "focused" the rhythm is.
+        # A clear peak = stable rhythm = danceable.
+        tempogram = librosa.feature.tempogram(onset_envelope=onset_env, sr=sr)
+        t_mean = np.mean(tempogram, axis=1)
+        
+        # "Peakiness" of the tempogram
+        if np.sum(t_mean) > 0:
+            # Normalize to sum to 1
+            t_norm = t_mean / np.sum(t_mean)
+            # Measure how concentrated the energy is in the main tempo
+            # Typical values: 0.05 (messy) to 0.2+ (very clear)
+            pulse_clarity = np.max(t_norm) * 8.0 
         else:
-            # Fallback: Use regularity of onsets if beats failed
-            danceability = min(1.0, onset_density / 2.0) * 0.5
+            pulse_clarity = 0.0
             
+        feat_pulse = min(1.0, pulse_clarity)
+        
+        # 2. Beat Strength (Punch)
+        # Variance of onset envelope: High variance = distinct beats. Low variance = constant noise.
+        onset_var = np.var(onset_env)
+        feat_strength = min(1.0, onset_var / 2.0)
+        
+        # 3. Tempo (Widened for Hip-Hop/Trap)
+        # 120 is ideal, but 90 (HipHop) or 140 (Trap) should be okay.
+        # Sigma=50 gives: 120->1.0, 70->0.6, 170->0.6
+        tempo_factor = np.exp(-((bpm - 120)**2) / (2 * 50**2))
+        
+        # Weighted Score
+        # Pulse is king.
+        raw_dance = (0.5 * feat_pulse) + (0.3 * feat_strength) + (0.2 * tempo_factor)
+        
+        danceability = raw_dance
+        
         # Clamp to 0.0 - 1.0 range for frontend percentage
         energy = round(min(1.0, max(0.0, energy)), 2)
         danceability = round(min(1.0, max(0.0, danceability)), 2)
