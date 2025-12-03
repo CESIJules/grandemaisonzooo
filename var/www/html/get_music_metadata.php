@@ -35,26 +35,61 @@ if (!file_exists($filePath)) {
     exit;
 }
 
-// CONFIGURATION PYTHON
-// Remplacez ce chemin par celui de votre environnement virtuel si nécessaire
-// Ex: '/home/radio/venv/bin/python' ou '/var/www/html/venv/bin/python'
-$pythonExecutable = '/home/radio/venv/bin/python'; 
-// Si ça ne marche pas, essayez simplement 'python3' si les libs sont installées en global
-// $pythonExecutable = 'python3';
+// --- A. BPM via AUBIO ---
+// Check if aubio is installed
+$aubioCmd = "aubio beat " . escapeshellarg($filePath) . " 2>&1";
+$aubioOutput = shell_exec($aubioCmd);
 
-// Call Python script
-$cmd = $pythonExecutable . " /home/radio/analyze_audio_light.py " . escapeshellarg($filePath) . " 2>&1";
-$output = shell_exec($cmd);
-$analysis = json_decode($output, true);
-
-if (!$analysis || isset($analysis['error'])) {
-    $errorMsg = $analysis['error'] ?? 'Analysis failed';
-    if (!$analysis) {
-        // Debug: Show why it failed (e.g. "command not found" or python traceback)
-        $errorMsg .= " (Raw output: " . trim($output) . ")";
+$bpm = 0;
+if ($aubioOutput) {
+    // aubio beat returns a list of timestamps. We calculate BPM from intervals.
+    $lines = explode("\n", trim($aubioOutput));
+    $beats = array_filter($lines, function($line) { return is_numeric($line); });
+    $beats = array_values($beats);
+    
+    if (count($beats) > 1) {
+        $intervals = [];
+        for ($i = 0; $i < count($beats) - 1; $i++) {
+            $intervals[] = $beats[$i+1] - $beats[$i];
+        }
+        if (count($intervals) > 0) {
+            $avgInterval = array_sum($intervals) / count($intervals);
+            if ($avgInterval > 0) {
+                $bpm = round(60 / $avgInterval);
+            }
+        }
     }
-    echo json_encode(['status' => 'error', 'message' => $errorMsg]);
-    exit;
+}
+
+// --- B. KEY & ENERGY via FFMPEG + PYTHON (NUMPY) ---
+// We pipe 30 seconds of raw audio to the python script to avoid loading the whole file
+// ffmpeg -i input.mp3 -ss 30 -t 30 -f s16le -ac 1 -ar 22050 -
+// This requires ffmpeg to be installed.
+
+// Use the venv python if available, otherwise system python
+$pythonExecutable = '/home/radio/venv/bin/python'; 
+if (!file_exists($pythonExecutable)) {
+    $pythonExecutable = 'python3';
+}
+
+$ffmpegCmd = "ffmpeg -i " . escapeshellarg($filePath) . " -ss 30 -t 30 -f s16le -ac 1 -ar 22050 - -v quiet";
+$pythonCmd = "$ffmpegCmd | $pythonExecutable /home/radio/analyze_numpy.py";
+
+$pythonOutput = shell_exec($pythonCmd);
+$pyData = json_decode($pythonOutput, true);
+
+if (!$pyData || isset($pyData['error'])) {
+    // Fallback if python fails
+    $energy = 0;
+    $danceability = 0;
+    $key_key = -1;
+    $key_mode = 0;
+    $errorMsg = $pyData['error'] ?? "Python analysis failed";
+} else {
+    $energy = $pyData['energy'];
+    $danceability = $pyData['danceability'];
+    $key_key = $pyData['key_key'];
+    $key_mode = $pyData['key_mode'];
 }
 
 // 3. CONVERT TO CAMELOT
@@ -92,6 +127,8 @@ function convertToCamelot($key, $mode) {
         11 => '10A' // B
     ];
 
+    if ($key === -1) return 'Unknown';
+
     if ($mode == 1) {
         return $camelotMajor[$key] ?? 'Unknown';
     } else {
@@ -99,18 +136,18 @@ function convertToCamelot($key, $mode) {
     }
 }
 
-$camelot = convertToCamelot($analysis['key_key'], $analysis['key_mode']);
+$camelot = convertToCamelot($key_key, $key_mode);
 
 // 4. PREPARE RESULT
 $result = [
-    'bpm' => $analysis['bpm'],
-    'key' => $analysis['key_key'],
+    'bpm' => $bpm,
+    'key' => $key_key,
     'camelot' => $camelot,
-    'energy' => $analysis['energy'],
-    'danceability' => $analysis['danceability'],
-    'valence' => $analysis['valence'], // Placeholder
-    'acousticness' => $analysis['acousticness'], // Placeholder
-    'source' => 'local_analysis'
+    'energy' => $energy,
+    'danceability' => $danceability,
+    'valence' => 0.5, // Placeholder
+    'acousticness' => 0.0, // Placeholder
+    'source' => 'local_aubio_numpy'
 ];
 
 // 5. SAVE TO CACHE
