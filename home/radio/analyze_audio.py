@@ -1,12 +1,20 @@
 import sys
 import json
-import librosa
-import numpy as np
 import os
 
 # Suppress warnings
 import warnings
 warnings.filterwarnings('ignore')
+
+# Import numpy first
+import numpy as np
+
+# Try importing librosa safely
+try:
+    import librosa
+except ImportError:
+    print(json.dumps({"status": "error", "message": "Failed to import librosa"}))
+    sys.exit(1)
 
 def estimate_key(y, sr):
     # Chroma CQT is robust for key detection
@@ -72,9 +80,12 @@ def estimate_key(y, sr):
 def analyze(file_path):
     try:
         # Load audio (first 60s is usually enough for BPM/Key)
-        y, sr = librosa.load(file_path, duration=60)
+        # Use audioread backend explicitly if needed, or try to force ffmpeg via librosa
+        # res_type='kaiser_fast' is faster and uses less memory
+        y, sr = librosa.load(file_path, duration=60, res_type='kaiser_fast')
         
         # BPM
+        # Use a simpler beat tracker if the default one is causing issues
         tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
         bpm = round(float(tempo))
         
