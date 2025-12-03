@@ -37,20 +37,22 @@ def analyze_audio(file_path):
         if len(y) == 0:
             return {"error": "Empty audio"}
 
-        # --- 1. BPM ---
-        # Use dynamic beat tracking
-        onset_env = librosa.onset.onset_strength(y=y, sr=sr)
-        tempo, _ = librosa.beat.beat_track(onset_envelope=onset_env, sr=sr)
-        
-        # Librosa returns a scalar or a 1-element array
-        if isinstance(tempo, np.ndarray):
-            bpm = tempo.item()
-        else:
-            bpm = tempo
+        # --- 1. Separation (The Secret Sauce) ---
+        # Separate the audio into Harmonic (melody) and Percussive (beats) components
+        # This drastically improves BPM detection on complex tracks
+        y_harmonic, y_percussive = librosa.effects.hpss(y)
 
-        # --- 2. Key ---
-        # Harmonic-Percussive separation (better for key detection)
-        y_harmonic, _ = librosa.effects.hpss(y)
+        # --- 2. BPM ---
+        # Use ONLY the percussive component for beat tracking
+        onset_env = librosa.onset.onset_strength(y=y_percussive, sr=sr)
+        
+        # Use librosa.feature.tempo which is often more stable than beat_track's internal estimator
+        # aggregate=np.median helps ignore outliers
+        tempo_arr = librosa.feature.tempo(onset_envelope=onset_env, sr=sr, aggregate=None)
+        bpm = np.median(tempo_arr)
+
+        # --- 3. Key ---
+        # Use ONLY the harmonic component for key detection
         chroma = librosa.feature.chroma_cqt(y=y_harmonic, sr=sr)
         
         # Sum over time
