@@ -197,15 +197,22 @@ def analyze_audio(file_path):
         danceability = raw_dance
         
         # Clamp to 0.0 - 1.0 range for frontend percentage
-        energy = round(min(1.0, max(0.0, energy)), 2)
-        danceability = round(min(1.0, max(0.0, danceability)), 2)
+        energy = float(energy)
+        danceability = float(danceability)
+        
+        # Absolute safety clamp to prevent 4000% issues
+        if energy > 1.0: energy = 1.0
+        if energy < 0.0: energy = 0.0
+        
+        if danceability > 1.0: danceability = 1.0
+        if danceability < 0.0: danceability = 0.0
 
         return {
             'bpm': round(float(bpm), 1),
             'key_key': int(key_idx),
             'key_mode': int(mode),
-            'energy': round(float(energy), 2),
-            'danceability': round(float(danceability), 2)
+            'energy': round(energy, 2),
+            'danceability': round(danceability, 2)
         }
 
     except Exception as e:
