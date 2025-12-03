@@ -110,11 +110,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (result.status === 'success') {
                 metadataCache[filename] = result.data;
                 return result.data;
+            } else {
+                console.error('Metadata error:', result);
+                return { error: true, message: result.message, debug: result.debug };
             }
         } catch (error) {
             console.error('Error fetching metadata:', error);
+            return { error: true, message: error.message };
         }
-        return null;
     }
 
     async function renderSuggestions() {
@@ -132,8 +135,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const lastSongMeta = await getMusicMetadata(lastSongFilename);
         
-        if (!lastSongMeta || !lastSongMeta.camelot) {
-            suggestionsUl.innerHTML = `<p>Impossible d'analyser la dernière chanson (${formatSongPathToTitle(lastSongPath)}).</p>`;
+        if (!lastSongMeta || lastSongMeta.error || !lastSongMeta.camelot) {
+            const errorDetails = lastSongMeta && lastSongMeta.error ? `<br><small>${lastSongMeta.message} ${lastSongMeta.debug ? '<br>Debug: ' + lastSongMeta.debug : ''}</small>` : '';
+            suggestionsUl.innerHTML = `<p style="color: var(--accent-danger);">Impossible d'analyser la dernière chanson (${formatSongPathToTitle(lastSongPath)}).${errorDetails}</p>`;
             return;
         }
 
