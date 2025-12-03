@@ -48,7 +48,12 @@ $output = shell_exec($cmd);
 $analysis = json_decode($output, true);
 
 if (!$analysis || isset($analysis['error'])) {
-    echo json_encode(['status' => 'error', 'message' => $analysis['error'] ?? 'Analysis failed']);
+    $errorMsg = $analysis['error'] ?? 'Analysis failed';
+    if (!$analysis) {
+        // Debug: Show why it failed (e.g. "command not found" or python traceback)
+        $errorMsg .= " (Raw output: " . trim($output) . ")";
+    }
+    echo json_encode(['status' => 'error', 'message' => $errorMsg]);
     exit;
 }
 
