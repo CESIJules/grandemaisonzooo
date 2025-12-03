@@ -820,7 +820,6 @@ body.menu-open {
 .rc-container.docked {
   /* Ensure only the 40px handle is visible */
   transform: translateX(calc(100% - 20px)) !important; 
-  
 }
 
 /* Handle / Toggle */
@@ -1025,6 +1024,7 @@ body.menu-open {
 
 #rcVolumeSlider::-webkit-slider-thumb {
   -webkit-appearance: none;
+  appearance: none;
   width: 10px;
   height: 10px;
   border-radius: 50%;
@@ -1726,7 +1726,6 @@ body.menu-open {
   font-size: 0.8rem;
   color: #ccc;
   min-width: 35px; /* Empêche le layout de sauter */
-  text-align: center;
 }
 
 /* Custom timeline image style */
@@ -1869,439 +1868,160 @@ body.menu-open {
   backdrop-filter: blur(2px);
 }
 
-/* ===== General Responsive Adjustments ===== */
-@media (max-width: 1536px) {
-  #accueil h1 {
-    font-size: 6em;
-  }
-  #radio h2, #timeline h2, #contact h2 {
-    font-size: 4em;
-  }
-  .artiste-info h3 {
-    font-size: 3.5rem;
-  }
-}
-
-@media (max-width: 1280px) {
-  /* Add specific styles for 1280px breakpoint if needed */
-}
-
-@media (max-width: 1024px) {
-  /* Reduce font sizes for tablets */
-  #accueil h1 {
-    font-size: 5.2em;
-  }
-
-  #radio h2, #timeline h2, #contact h2 {
-    font-size: 3.5em;
-  }
-
-  .artiste-info h3 {
-    font-size: 3.2rem;
-  }
-
-  /* Make the radio vinyl disc a bit smaller */
-  #vinyl-disc-container {
-    width: 350px;
-    height: 350px;
-  }
-  
-  .artiste { gap: 24px; padding: 32px; }
-}
-
-@media (max-width: 768px) {
-  .screen {
-      padding: 60px 12px; /* Reduce padding on all sections */
-  }
-
-  /* Reduce font sizes for mobile */
-  h1, #accueil h1 {
-    font-size: 4em;
-  }
-
-  h2, #timeline h2 {
-    font-size: 2.2em;
-  }
-  
-  .artiste-info h3 {
-    font-size: 2.5rem;
-  }
-
-  #radio h2, #contact h2 {
-    font-size: 2.2em;
-  }
-
-  /* --- Radio Page Fixes --- */
-  #radio {
-    justify-content: space-evenly; /* Better vertical distribution */
-    gap: 0;
-    padding-bottom: 120px; /* Add padding to avoid overlap with fixed currentSong */
-  }
-
-  #visualizer {
+/* --- New Playlist Editor Layout --- */
+#playlistEditModal {
     display: none;
-  }
-
-  .radio-header {
-    position: static;
-    flex-direction: column;
-  }
-
-  #currentSong {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
-    max-width: none;
-    transform: none;
-    padding: 12px 15px;
-    margin: 0;
-    z-index: 25;
-    background-color: transparent;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    border: none;
-    box-shadow: none;
-    white-space: normal;
-    text-align: center;
-    border-radius: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 50px;
-  }
-  #currentSong .label {
-    display: none;
-  }
-  #currentSong .title {
-    font-size: 0.9em;
-    font-weight: 600;
-    margin: 0;
-  }
-  #progress-info {
-    width: 100%;
-    position: static;
-    transform: none;
-    margin-top: 10px;
-    display: none !important; /* Hide progress bar in this compact view */
-  }
-
-  .player {
-    position: static; /* Ensure player is in the normal flow */
-    margin-top: 20px;
-  }
-
-  #vinyl-disc-container {
-    width: 70vw; /* Use viewport width for more fluidity */
-    height: 70vw;
-    max-width: 280px;
-    max-height: 280px;
-  }
-  /* --- End Radio Page Fixes --- */
-
-  .contact-form {
-      width: 100%;
-  }
-
-  /* Responsive Radio Controller */
-  .rc-container {
-    min-width: 0;
-    width: calc(100% - 20px);
-    left: 10px;
-    right: 10px;
-    bottom: 10px;
-    /* When not docked, it's visible. We override the transform for docking. */
-  }
-  
-  .rc-container.docked {
-    /* Hides the controller off-screen when docked on mobile */
-    transform: translateY(150%) !important;
-  }
-
-  .rc-handle {
-    /* On mobile, maybe we don't want the handle to be the only thing showing */
-    display: none; 
-  }
-
-    /* --- Timeline Mobile Rework --- */
-    #timeline {
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-      padding: 0;
-      justify-content: flex-start;
-    }
-    
-    .timeline-header-wrapper {
-      flex-shrink: 0; /* Prevent header from shrinking */
-      position: static;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 15px;
-      padding: 30px 20px 20px 20px; /* Align with burger button */
-    }
-  
-    #timeline h2 {
-      font-size: 1.8em; /* Slightly larger */
-      position: static;
-      transform: none;
-    }
-    
-    .timeline-filters {
-      flex-wrap: wrap;
-      gap: 8px; /* Reduce gap between buttons */
-    }
-
-    .timeline-filters .btn {
-      padding: 8px 14px;
-      font-size: 12px;
-    }
-
-    .timeline-container {
-      flex-grow: 1; /* Allow container to fill remaining space */
-      min-height: 0; /* Crucial for flex-grow in a scrollable context */
-      flex-direction: column;
-      overflow-y: auto;
-      overflow-x: hidden;
-      align-items: flex-start;
-      padding: 0;
-      background: linear-gradient(#555, #555) repeat-y 40px center / 2px 1px;
-      -ms-overflow-style: auto;
-      scrollbar-width: thin;
-      -webkit-overflow-scrolling: touch; /* Momentum scrolling */
-    }
-    .timeline-container::-webkit-scrollbar {
-      display: block;
-      width: 4px;
-    }
-    .timeline-container::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    .timeline-container::-webkit-scrollbar-thumb {
-      background: #555;
-      border-radius: 2px;
-    }
-
-    .timeline-item {
-      position: relative;
-      width: 100%;
-      padding-left: 80px;
-      padding-right: 20px;
-      margin: 0 0 50px 0;
-    }
-
-    .timeline-item:nth-child(odd) .timeline-content,
-    .timeline-item:nth-child(even) .timeline-content {
-      position: static;
-      margin: 0;
-      width: 100%;
-      text-align: left;
-    }
-
-    .timeline-item:nth-child(odd)::before,
-    .timeline-item:nth-child(even)::before {
-      display: none;
-    }
-
-    .timeline-item::after {
-      content: '';
-      position: absolute;
-      width: 16px;
-      height: 16px;
-      background-color: #333;
-      border: 3px solid #fff;
-      border-radius: 50%;
-      top: 0;
-      left: 40px;
-      transform: translateX(-50%);
-      z-index: 3;
-      box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
-    }
-    
-    .timeline-item h3, .timeline-item h4, .timeline-item p {
-        text-align: left;
-    }
-    /* --- End Timeline Rework --- */
-    
-  .artiste {
-    height: auto;                 /* sur mobile, on laisse respirer */
+    height: 100%;
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    padding: 20px;
-  }
-  .artiste-image {
-    width: 100%;
-    height: 50vh;                 /* présence visuelle forte */
-    order: 1; /* L'image est toujours en premier */
-  }
-  .artiste-info {
-    text-align: center;
+}
+
+.editor-header-row {
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    padding-left: 0; /* Assure un centrage parfait */
-    order: 2; /* Le texte est toujours en second */
-  }
-
-  .artiste-actions .btn {
-    padding: 10px 16px;
-    font-size: 13px;
-  }
+    margin-bottom: 20px;
 }
 
-@media (max-width: 640px) {
-  /* Add specific styles for 640px breakpoint if needed */
+.highlight-text {
+    color: var(--accent-primary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
-@media (max-width: 480px) {
-  h1, #accueil h1 {
-    font-size: 1.8em; /* Further reduce main title size */
-    letter-spacing: -2px;
-  }
-
-  h2, #timeline h2 {
-    font-size: 1.6em; /* Further reduce section title size */
-  }
-
-  #radio h2, #contact h2 {
-    font-size: 1.6em;
-  }
-
-  .artiste-info h3 {
-    font-size: 2rem;
-  }
-
-  #playRadio {
-    width: 60px;
-    height: 60px;
-    font-size: 24px;
-  }
-
-    .btn {
-      padding: 16px 20px;
-      font-size: 12px;
-    }
-
-  .burger {
-    top: 15px;
-    right: 15px;
-    width: 50px;
-    height: 50px;
-  }
-
-  .rc-content {
-    padding: 15px;
-  }
-  
-  /* --- Timeline Fixes for small screens --- */
-  .timeline-item {
-    padding-left: 60px;
-    padding-right: 10px;
-  }
-   .timeline-item::after {
-     left: 30px;
-   }
-   .timeline-container {
-      background: linear-gradient(#555, #555) repeat-y 30px center / 2px 1px;
-   }
-
-  .timeline-content {
-      padding: 15px;
-  }
-  .timeline-item h3 {
-      font-size: 1em;
-  }
-  .timeline-item p {
-      font-size: 0.8em;
-  }
-  /* --- End Timeline Fixes --- */
+.editor-actions-top {
+    display: flex;
+    gap: 10px;
 }
 
-
-@media (max-width: 768px) {
-  #currentSong {
-    pointer-events: none;
-  }
+.playlist-editor-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr 1fr; /* Middle column slightly wider */
+    gap: 20px;
+    height: calc(100vh - 200px); /* Adjust based on header/padding */
+    min-height: 500px;
 }
 
-@media (width: 1920px) {
-  #timeline h2 {
-    font-size: 3.5em; /* Reduce timeline title size */
-  }
-  .timeline-item {
-    width: 220px; /* Reduced from 240px */
-  }
-  .timeline-content {
-    padding: 15px; /* Reduce padding */
-  }
-  .timeline-item h3 {
-    font-size: 1.1em; /* Reduce title font size */
-    white-space: nowrap;
+.editor-column {
+    display: flex;
+    flex-direction: column;
+    padding: 0; /* Reset card padding */
     overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .timeline-item h3.artist-title {
-    white-space: normal; /* Allow artist name to wrap if needed, but it should be short enough */
-    overflow: visible;
-    text-overflow: clip;
+    background-color: var(--surface-color);
+    border: 1px solid var(--surface-border);
+    border-radius: 12px;
+}
+
+.column-header {
+    padding: 16px 20px;
+    background-color: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid var(--surface-border);
+}
+
+.column-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--text-secondary);
     display: flex;
-    justify-content: center;
-  }
-  .timeline-item p {
-    font-size: 0.85em; /* Reduce paragraph font size */
-  }
-  .timeline-image {
-    height: 180px; /* Reduced from 200px */
-  }
+    align-items: center;
+    gap: 10px;
 }
 
-/* Scroll Arrow */
-.scroll-arrow {
-  position: fixed;
-  bottom: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 100;
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 24px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  padding: 10px;
-  /* Glassmorphism background for better visibility */
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(2px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.column-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 10px;
 }
 
-.scroll-arrow:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.3);
-  /* Pause bounce on hover to avoid conflict with scale */
-  animation-play-state: paused; 
-  transform: translateX(-50%) translateY(-3px) scale(1.1);
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: var(--surface-border);
+    border-radius: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: var(--text-secondary);
 }
 
-.scroll-arrow.hidden {
-  opacity: 0;
-  pointer-events: none;
-  transform: translateX(-50%) translateY(20px);
+/* Search Bar in Column */
+.search-container {
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--surface-border);
+    position: relative;
+}
+.search-container input {
+    width: 100%;
+    padding: 10px 10px 10px 35px;
+    background-color: rgba(0,0,0,0.2);
+    border: 1px solid var(--surface-border);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+}
+.search-container .search-icon {
+    position: absolute;
+    left: 25px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
 }
 
-@keyframes bounce {
-  0%, 20%, 50%, 80%, 100% {
-    transform: translateX(-50%) translateY(0);
-  }
-  40% {
-    transform: translateX(-50%) translateY(-10px);
-  }
-  60% {
-    transform: translateX(-50%) translateY(-5px);
-  }
+/* Song Lists */
+.song-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.song-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 6px;
+    margin-bottom: 4px;
+    background-color: rgba(255,255,255,0.02);
+    transition: background-color 0.2s;
+    font-size: 0.9rem;
+}
+.song-list li:hover {
+    background-color: var(--surface-hover);
+}
+
+/* Suggestions Specifics */
+.suggestions-column {
+    border-color: var(--accent-primary); /* Highlight this column */
+    box-shadow: 0 0 15px rgba(0, 123, 255, 0.05);
+}
+.suggestion-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.suggestion-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.suggestion-list-container ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .playlist-editor-grid {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+    }
+    .suggestions-column {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
 }

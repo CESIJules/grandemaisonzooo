@@ -493,31 +493,49 @@
 
         <!-- MODAL/SECTION: PLAYLIST EDITOR -->
         <section id="playlistEditModal" class="admin-section">
-            <h2>Éditer Playlist: <span id="editingPlaylistName"></span></h2>
-            <div class="playlist-editor-container">
-                <div class="playlist-songs-panel card">
-                    <h3>Chansons de la Playlist</h3>
-                    <div class="panel-content">
-                        <ul id="currentPlaylistSongs"></ul>
-                    </div>
-                </div>
-                <div class="all-available-songs-panel card">
-                    <h3>Toutes les Musiques</h3>
-                    <input type="text" id="songSearchInput" class="form-group" placeholder="Rechercher une musique..." />
-                    <div class="panel-content">
-                        <ul id="allAvailableSongsForEdit"></ul>
-                    </div>
-                </div>
-                <div class="suggestions-panel card">
-                    <h3>Suggestions Harmoniques (Mixable avec le dernier son)</h3>
-                    <div class="panel-content">
-                        <ul id="harmonicSuggestions"></ul>
-                    </div>
+            <div class="editor-header-row">
+                <h2>Éditer Playlist: <span id="editingPlaylistName" class="highlight-text"></span></h2>
+                <div class="editor-actions-top">
+                    <button id="cancelPlaylistEditBtn" class="btn"><i class="fas fa-times"></i> Annuler</button>
+                    <button id="savePlaylistChangesBtn" class="btn btn-primary"><i class="fas fa-save"></i> Enregistrer</button>
                 </div>
             </div>
-            <div class="form-actions">
-                <button id="cancelPlaylistEditBtn" class="btn"><i class="fas fa-times"></i> Annuler</button>
-                <button id="savePlaylistChangesBtn" class="btn btn-primary"><i class="fas fa-save"></i> Enregistrer</button>
+            
+            <div class="playlist-editor-grid">
+                <!-- Column 1: Current Playlist -->
+                <div class="editor-column card playlist-column">
+                    <div class="column-header">
+                        <h3><i class="fas fa-list-ul"></i> Ma Playlist</h3>
+                    </div>
+                    <div class="column-content custom-scrollbar">
+                        <ul id="currentPlaylistSongs" class="song-list"></ul>
+                    </div>
+                </div>
+
+                <!-- Column 2: Suggestions & Analysis -->
+                <div class="editor-column card suggestions-column">
+                    <div class="column-header">
+                        <h3><i class="fas fa-magic"></i> Suggestions</h3>
+                    </div>
+                    <div class="column-content custom-scrollbar">
+                        <!-- The JS populates this container. Changed to div because JS injects a header div inside it. -->
+                        <div id="harmonicSuggestions" class="suggestion-list-container"></div>
+                    </div>
+                </div>
+
+                <!-- Column 3: Library -->
+                <div class="editor-column card library-column">
+                    <div class="column-header">
+                        <h3><i class="fas fa-music"></i> Bibliothèque</h3>
+                    </div>
+                    <div class="search-container">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" id="songSearchInput" placeholder="Rechercher..." />
+                    </div>
+                    <div class="column-content custom-scrollbar">
+                        <ul id="allAvailableSongsForEdit" class="song-list"></ul>
+                    </div>
+                </div>
             </div>
         </section>
     </main>
