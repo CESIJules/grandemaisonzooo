@@ -60,29 +60,37 @@ def analyze_audio(file_path):
             if np.mean(np.abs(y_chunk)) < 0.001:
                 continue
                 
+        # --- 2. BPM ANALYSIS (High-Res Windowed) ---
+        # We use a smaller hop_length for better time resolution (crucial for fast hi-hats/rolls)
+        hop_length = 256 # ~11ms at 22050Hz
+        
+        window_time = 6.0 # 6 seconds windows
+        window_size = int(window_time * sr)
+        step_size = int(window_size / 2) # 50% overlap
+        
+        candidates = []
+        weights = []
+        
         # Iterate through windows
-        for start in range(0, len(y_percussive) - window_size, hop_length):
+        for start in range(0, len(y_percussive) - window_size, step_size):
             end = start + window_size
             y_chunk = y_percussive[start:end]
             
             # Skip silent chunks
-            if np.mean(np.abs(y_chunk)) < 0.001:
-                continue
+            if np.mean(np.abs(y_chunk)) < 0.001: continue
                 
             try:
-                # --- ROBUST ONSET DETECTION (Restored & Tuned) ---
-                # We use the percussive component, but we limit frequencies to 8000Hz
-                # to avoid high-end noise while keeping the snare crisp.
-                S = librosa.feature.melspectrogram(y=y_chunk, sr=sr, n_mels=128, fmax=8000)
+                # A. Onset Strength (Percussive only, limited freq)
+                # fmax=8000 keeps snares but removes hiss
+                S = librosa.feature.melspectrogram(y=y_chunk, sr=sr, n_mels=128, fmax=8000, hop_length=hop_length)
+                onset_env = librosa.onset.onset_strength(S=librosa.power_to_db(S, ref=np.max), sr=sr, hop_length=hop_length, aggregate=np.median)
                 
-                # Median aggregation is key for dirty mixes
-                onset_env = librosa.onset.onset_strength(S=librosa.power_to_db(S, ref=np.max), sr=sr, aggregate=np.median)
-                
-                # Pulse Clarity
+                # B. Pulse Clarity
                 clarity = np.std(onset_env)
                 
-                # Calculate Tempo
-                tempo_arr = librosa.feature.tempo(onset_envelope=onset_env, sr=sr, prior=None)
+                # C. Tempo
+                # prior=None removes the 120 BPM bias
+                tempo_arr = librosa.feature.tempo(onset_envelope=onset_env, sr=sr, hop_length=hop_length, prior=None)
                 tempo = tempo_arr[0] if isinstance(tempo_arr, np.ndarray) else tempo_arr
                 
                 if 50 < tempo < 220:
@@ -91,34 +99,33 @@ def analyze_audio(file_path):
             except:
                 continue
         
+        # --- 3. AGGREGATION ---
         if not candidates:
-            # Fallback to global analysis
-            S = librosa.feature.melspectrogram(y=y_percussive, sr=sr, n_mels=128, fmax=8000)
-            onset_env = librosa.onset.onset_strength(S=librosa.power_to_db(S, ref=np.max), sr=sr, aggregate=np.median)
-            tempo_arr = librosa.feature.tempo(onset_envelope=onset_env, sr=sr, prior=None)
-            bpm = tempo_arr[0] if isinstance(tempo_arr, np.ndarray) else tempo_arr
+            bpm = 120 # Fail safe
         else:
-            # Weighted Average of the top cluster
-            # 1. Round candidates to group them
-            candidates = np.array(candidates)
-            weights = np.array(weights)
-            
-            # Find the most common BPM range (histogram)
-            bins = np.arange(50, 220, 2) # 2 BPM bins
+            # Weighted Histogram
+            bins = np.arange(50, 220, 1) # 1 BPM precision
             hist, bin_edges = np.histogram(candidates, bins=bins, weights=weights)
             
             best_bin_idx = np.argmax(hist)
-            best_bpm_center = (bin_edges[best_bin_idx] + bin_edges[best_bin_idx+1]) / 2
-            
-            # 2. Refine: Take weighted average of candidates close to this center
-            mask = np.abs(candidates - best_bpm_center) <= 4 # +/- 4 BPM
-            if np.sum(mask) > 0:
-                bpm = np.average(candidates[mask], weights=weights[mask])
-            else:
-                bpm = best_bpm_center
+            bpm = (bin_edges[best_bin_idx] + bin_edges[best_bin_idx+1]) / 2
 
-        # --- 3. Key ---
-        # Use ONLY the harmonic component for key detection
+        # --- 4. ENERGY & DANCEABILITY ---
+        rms = librosa.feature.rms(y=y)[0]
+        energy = np.mean(rms)
+        
+        # Recalculate global onset for danceability
+        onset_env_global = librosa.onset.onset_strength(y=y, sr=sr)
+        danceability = np.std(onset_env_global)
+
+        # --- 5. DOUBLE TIME CHECK (Internal) ---
+        # If energy is high and BPM is low, it's likely Trap/DnB
+        # We do this here because we have the raw energy data
+        # Threshold 0.1 is conservative for RMS
+        if bpm < 100 and energy > 0.1: 
+             bpm *= 2
+
+        # --- 6. KEY ---
         chroma = librosa.feature.chroma_cqt(y=y_harmonic, sr=sr)
         
         # Sum over time
