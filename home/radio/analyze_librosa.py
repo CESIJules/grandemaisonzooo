@@ -39,7 +39,10 @@ def analyze_audio(file_path):
             return {'error': 'Empty audio'}
 
         # --- 1. SEPARATION ---
-        y_harmonic, y_percussive = librosa.effects.hpss(y)
+        # Use a high margin for the harmonic component to filter out "muddy" modern mixes
+        # margin=(4.0, 1.0) -> Harmonic must be 4x stronger than Percussive to be kept.
+        # Percussive stays standard (1.0) to preserve BPM accuracy.
+        y_harmonic, y_percussive = librosa.effects.hpss(y, margin=(4.0, 1.0))
 
         # --- 1.5 GLOBAL ANCHOR ---
         # Calculate a global BPM on the whole file to act as a stabilizer
@@ -152,36 +155,15 @@ def analyze_audio(file_path):
             
             # 2. Chroma CQT with Tuning
             # Filter out very low frequencies (often muddy 808s) by starting at C2 (approx 65Hz)
-            # This focuses on the clear harmonic content (chords, melody)
             chroma = librosa.feature.chroma_cqt(y=y_harmonic, sr=sr, tuning=tuning, fmin=librosa.note_to_hz('C2'))
             
-            # 3. Segmented Normalization (Consistency Fix)
-            # Instead of a global average, we split into chunks, normalize each, then average.
-            # This prevents a loud section (chorus) from dominating the key detection if it modulates,
-            # or if there's a loud noise burst.
-            n_segments = 4
-            segment_length = chroma.shape[1] // n_segments
-            chroma_segments = []
-            
-            for i in range(n_segments):
-                start = i * segment_length
-                end = (i + 1) * segment_length
-                seg = chroma[:, start:end]
-                if seg.shape[1] == 0: continue
-                
-                # Sum and Normalize this segment
-                seg_sum = np.sum(seg, axis=1)
-                seg_max = np.max(seg_sum)
-                if seg_max > 0:
-                    chroma_segments.append(seg_sum / seg_max)
-            
-            if not chroma_segments:
-                chroma_vals = np.sum(chroma, axis=1) # Fallback
-            else:
-                chroma_vals = np.mean(chroma_segments, axis=0)
+            # 3. Median Aggregation (The "Modern" Fix)
+            # Instead of averaging (which is sensitive to loud bridges/effects), we take the MEDIAN.
+            # In modern loop-based music (Trap, Drill, Pop), the key is the set of notes present
+            # >50% of the time. Median captures this perfectly and ignores transient noise.
+            chroma_vals = np.median(chroma, axis=1)
             
             # 4. Temperley Profiles (Robust for Modern Music)
-            # Proven to be more consistent for Pop/Rap/Electronic than Krumhansl-Schmuckler
             maj_profile = np.array([5.0, 2.0, 3.5, 2.0, 4.5, 4.0, 2.0, 4.5, 2.0, 3.5, 1.5, 4.0])
             min_profile = np.array([5.0, 2.0, 3.5, 4.5, 2.0, 4.0, 2.0, 4.5, 3.5, 2.0, 1.5, 4.0])
             
