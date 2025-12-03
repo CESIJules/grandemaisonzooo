@@ -35,5 +35,7 @@ output.icecast(
   radio
 )
 
-# Activation du serveur Telnet pour le controle (ex: skip)
-server.telnet(port=1234)
+# Configuration du serveur telnet pour le controle a distance
+settings.server.telnet.set(true)
+settings.server.telnet.bind_addr.set("127.0.0.1")
+settings.server.telnet.port.set(1234)
