@@ -152,16 +152,15 @@ if ($trackInfo) {
         
         echo json_encode(['status' => 'success', 'data' => $result]);
     } else {
-        // Check if features contains an error
-        $errorMsg = isset($features['error']) ? $features['error']['message'] : 'Audio features missing';
-        // Debug: include raw response if no specific error message
-        if ($errorMsg === 'Audio features missing') {
-             $errorMsg .= ' Raw: ' . json_encode($features);
+        // DEBUG: Dump everything
+        $debugInfo = json_encode($features);
+        if (!$features) {
+            $debugInfo = "NULL (json_last_error: " . json_last_error_msg() . ")";
         }
         
         echo json_encode([
             'status' => 'error', 
-            'message' => "Found '{$trackInfo['name']}' by '{$trackInfo['artist']}' but no audio features. ($errorMsg)"
+            'message' => "Found '{$trackInfo['name']}' by '{$trackInfo['artist']}' but no audio features. Debug: $debugInfo"
         ]);
     }
 } else {
