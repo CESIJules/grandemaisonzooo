@@ -41,11 +41,20 @@ def analyze_audio(file_path):
         # --- 1. SEPARATION ---
         y_harmonic, y_percussive = librosa.effects.hpss(y)
 
-        # --- 1.5 GLOBAL ANCHOR ---
-        # Calculate a global BPM using Beat Tracking (Dynamic Programming)
-        # This is more robust than simple histogram estimation for the anchor
-        onset_env_global = librosa.onset.onset_strength(y=y_percussive, sr=sr, aggregate=np.median)
-        global_bpm, _ = librosa.beat.beat_track(onset_envelope=onset_env_global, sr=sr, tightness=100)
+        # --- 1.5 GLOBAL ANCHOR (BASS FOCUSED) ---
+        # Isolate Low Frequencies (Kick/Bass) for Rhythm
+        # This avoids confusion with fast hi-hats (Trap/Drill) or complex melodies
+        # Simple low-pass filter via STFT masking
+        D = librosa.stft(y_percussive)
+        freqs = librosa.fft_frequencies(sr=sr)
+        D[freqs > 300] = 0 # Cut everything above 300Hz
+        y_bass = librosa.istft(D)
+
+        onset_env_bass = librosa.onset.onset_strength(y=y_bass, sr=sr, aggregate=np.median)
+        tempo_bass = librosa.feature.tempo(onset_envelope=onset_env_bass, sr=sr)[0]
+        
+        # Use this Bass BPM as the strong anchor
+        global_bpm = tempo_bass
         
         # Ensure scalar
         if isinstance(global_bpm, np.ndarray):
@@ -142,20 +151,20 @@ def analyze_audio(file_path):
 
         # --- 6. KEY ---
         # 1. Estimate tuning (important for samples/vinyl rips)
-        tuning = librosa.estimate_tuning(y=y, sr=sr)
+        tuning = librosa.estimate_tuning(y=y_harmonic, sr=sr)
         
         # 2. Compute Chroma CQT with tuning correction
-        # We use raw 'y' to avoid HPSS artifacts in the tonal content
-        chroma = librosa.feature.chroma_cqt(y=y, sr=sr, tuning=tuning)
+        # We use Harmonic component to avoid percussive noise
+        chroma = librosa.feature.chroma_cqt(y=y_harmonic, sr=sr, tuning=tuning)
         
         # Median over time (Robust to transient noise/wrong notes compared to Sum)
         chroma_vals = np.median(chroma, axis=1)
         
-        # Temperley Profiles (optimized for pop/rock/modern)
+        # Krumhansl-Schmuckler Profiles (Standard, often better for general detection than Temperley)
         # Major
-        maj_profile = np.array([5.0, 2.0, 3.5, 2.0, 4.5, 4.0, 2.0, 4.5, 2.0, 3.5, 1.5, 4.0])
+        maj_profile = np.array([6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88])
         # Minor
-        min_profile = np.array([5.0, 2.0, 3.5, 4.5, 2.0, 4.0, 2.0, 4.5, 3.5, 2.0, 1.5, 4.0])
+        min_profile = np.array([6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17])
         
         maj_corrs = []
         min_corrs = []
