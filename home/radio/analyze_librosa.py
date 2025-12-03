@@ -138,14 +138,17 @@ def analyze_audio(file_path):
         # Hardcoded energy checks often fail for Boom Bap (High Energy, Low BPM).
 
         # --- 6. KEY ---
-        # Use Chroma CENS (Energy Normalized) which is robust to dynamics and timbre
-        # We use the raw audio 'y' because HPSS can sometimes remove tonal components in dirty mixes
-        chroma = librosa.feature.chroma_cens(y=y, sr=sr)
+        # 1. Estimate tuning (important for samples/vinyl rips)
+        tuning = librosa.estimate_tuning(y=y, sr=sr)
+        
+        # 2. Compute Chroma CQT with tuning correction
+        # We use raw 'y' to avoid HPSS artifacts in the tonal content
+        chroma = librosa.feature.chroma_cqt(y=y, sr=sr, tuning=tuning)
         
         # Sum over time
         chroma_vals = np.sum(chroma, axis=1)
         
-        # Temperley Profiles (often better for modern music than Krumhansl-Schmuckler)
+        # Temperley Profiles (optimized for pop/rock/modern)
         # Major
         maj_profile = np.array([5.0, 2.0, 3.5, 2.0, 4.5, 4.0, 2.0, 4.5, 2.0, 3.5, 1.5, 4.0])
         # Minor
