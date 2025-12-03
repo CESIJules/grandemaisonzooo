@@ -80,7 +80,37 @@ function searchTrack($query, $token) {
     return null;
 }
 
-// ... (rest of functions)
+// 4. GET AUDIO FEATURES
+function getAudioFeatures($trackId, $token) {
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, "https://api.spotify.com/v1/audio-features/$trackId");
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        "Authorization: Bearer $token"
+    ]);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $response = curl_exec($ch);
+    curl_close($ch);
+    
+    return json_decode($response, true);
+}
+
+// 5. CONVERT TO CAMELOT
+function convertToCamelot($key, $mode) {
+    // Spotify: key 0=C, 1=C#, etc. | mode 1=Major, 0=Minor
+    // Camelot Wheel Mapping
+    $majorMap = [
+        0 => '8B', 1 => '3B', 2 => '10B', 3 => '5B', 4 => '12B', 5 => '7B', 
+        6 => '2B', 7 => '9B', 8 => '4B', 9 => '11B', 10 => '6B', 11 => '1B'
+    ];
+    $minorMap = [
+        0 => '5A', 1 => '12A', 2 => '7A', 3 => '2A', 4 => '9A', 5 => '4A', 
+        6 => '11A', 7 => '6A', 8 => '1A', 9 => '8A', 10 => '3A', 11 => '10A'
+    ];
+    
+    if ($key === -1) return null; // No key detected
+    
+    return ($mode == 1) ? ($majorMap[$key] ?? null) : ($minorMap[$key] ?? null);
+}
 
 // --- MAIN LOGIC ---
 
