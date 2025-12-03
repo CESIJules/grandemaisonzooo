@@ -368,6 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td class="actions">
                         <div class="action-buttons-container">
                             <button class="btn activate-playlist-btn" title="Activer" data-playlist-name="${playlist.name}" ${playlist.name === currentActivePlaylist ? 'disabled' : ''}><i class="fas fa-play-circle"></i></button>
+                            <button class="btn deactivate-playlist-btn" title="Désactiver" data-playlist-name="${playlist.name}" ${playlist.name !== currentActivePlaylist ? 'disabled' : ''}><i class="fas fa-stop-circle"></i></button>
                             <button class="btn edit-playlist-btn" title="Modifier" data-playlist-name="${playlist.name}"><i class="fas fa-edit"></i></button>
                             <button class="btn btn-danger delete-playlist-btn" title="Supprimer" data-playlist-name="${playlist.name}"><i class="fas fa-trash"></i></button>
                         </div>
@@ -430,7 +431,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const result = await response.json();
             if (result.status !== 'success') throw new Error(result.message || 'Erreur inconnue.');
-            alert('Playlist activée ! La radio changera de source dans les 30 secondes.');
+            
+            const message = playlistName ? 'Playlist activée !' : 'Playlist désactivée (retour au fallback).';
+            alert(`${message} La radio changera de source dans les 30 secondes.`);
             fetchPlaylists();
         } catch (error) {
             alert(`Erreur: ${error.message}`);
@@ -629,10 +632,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     existingPlaylistsContainer.addEventListener('click', (e) => {
         const activateBtn = e.target.closest('.activate-playlist-btn');
+        const deactivateBtn = e.target.closest('.deactivate-playlist-btn');
         const editBtn = e.target.closest('.edit-playlist-btn');
         const deleteBtn = e.target.closest('.delete-playlist-btn');
 
         if (activateBtn) setActivePlaylist(activateBtn.dataset.playlistName);
+        if (deactivateBtn) setActivePlaylist(null);
         if (deleteBtn) deletePlaylist(deleteBtn.dataset.playlistName);
         if (editBtn) {
             fetch('get_playlists.php').then(res => res.json()).then(result => {
