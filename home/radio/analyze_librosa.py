@@ -136,25 +136,28 @@ def analyze_audio(file_path):
         # 1. RMS (Loudness)
         rms = librosa.feature.rms(y=y)[0]
         rms_val = np.mean(rms)
-        # Normalize RMS (typical 0.0 to 0.5) -> 0-100
-        feat_loudness = min(1.0, rms_val / 0.25) 
+        # Normalize RMS. 
+        # 0.05 (-26dB) -> Low Energy
+        # 0.20 (-14dB) -> High Energy
+        feat_loudness = min(1.0, rms_val / 0.15) 
         
         # 2. Spectral Centroid (Brightness)
         cent = librosa.feature.spectral_centroid(y=y, sr=sr)[0]
         cent_val = np.mean(cent)
-        # Normalize Centroid (typical 500 to 5000) -> 0-100
-        feat_brightness = min(1.0, cent_val / 4000.0)
+        # Normalize Centroid (typical 500 to 5000)
+        feat_brightness = min(1.0, cent_val / 3500.0)
         
         # 3. Onset Density (Busyness)
         onset_env = librosa.onset.onset_strength(y=y, sr=sr)
         onset_density = np.mean(onset_env)
         # Normalize (typical 0.5 to 2.0)
-        feat_density = min(1.0, onset_density / 1.5)
+        feat_density = min(1.0, onset_density / 1.2)
         
         # Weighted Energy Score
         # Loudness is key, but brightness and density add the "hype"
+        # We boost the base value to avoid very low scores for quiet but active tracks
         raw_energy = (0.5 * feat_loudness) + (0.3 * feat_brightness) + (0.2 * feat_density)
-        energy = raw_energy * 100
+        energy = raw_energy
         
         # B. DANCEABILITY
         # 1. Beat Stability (Regularity)
@@ -169,26 +172,27 @@ def analyze_audio(file_path):
             cv = np.std(ibi) / (np.mean(ibi) + 0.0001)
             
             # Stability Score (0.0 to 1.0)
-            # CV < 0.05 is very stable (1.0), CV > 0.2 is unstable (0.0)
-            stability = max(0.0, min(1.0, 1.0 - (cv * 5)))
+            # Relaxed penalty: CV 0.3 (30% var) -> 0.1 score
+            stability = max(0.0, min(1.0, 1.0 - (cv * 3)))
             
             # 2. Beat Strength
             beat_strength = np.mean(onset_env[beats])
-            feat_strength = min(1.0, beat_strength / 2.0)
+            # Lower threshold for strength
+            feat_strength = min(1.0, beat_strength / 1.5)
             
             # 3. Tempo Preference (100-130 is ideal for dancing)
             # Gaussian curve centered at 120
             tempo_factor = np.exp(-((bpm - 120)**2) / (2 * 40**2))
             
-            raw_dance = (0.5 * stability) + (0.3 * feat_strength) + (0.2 * tempo_factor)
-            danceability = raw_dance * 100
+            raw_dance = (0.4 * stability) + (0.4 * feat_strength) + (0.2 * tempo_factor)
+            danceability = raw_dance
         else:
-            # Fallback if no clear beats found (Ambient, Drone, or very messy)
-            danceability = onset_density * 20 # Low score based on activity
+            # Fallback: Use regularity of onsets if beats failed
+            danceability = min(1.0, onset_density / 2.0) * 0.5
             
-        # Clamp
-        energy = round(min(100.0, max(0.0, energy)), 2)
-        danceability = round(min(100.0, max(0.0, danceability)), 2)
+        # Clamp to 0.0 - 1.0 range for frontend percentage
+        energy = round(min(1.0, max(0.0, energy)), 2)
+        danceability = round(min(1.0, max(0.0, danceability)), 2)
 
         return {
             'bpm': round(float(bpm), 1),
