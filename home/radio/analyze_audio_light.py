@@ -4,8 +4,7 @@ import os
 import numpy as np
 import warnings
 
-# Attempt to prevent segfaults related to Numba/Threading
-os.environ['NUMBA_DISABLE_JIT'] = '1'
+# Attempt to prevent segfaults related to Threading (keep JIT enabled as disabling it causes errors in recent librosa)
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
 
