@@ -212,7 +212,8 @@ def analyze_audio(file_path):
             'key_key': int(key_idx),
             'key_mode': int(mode),
             'energy': round(energy, 2),
-            'danceability': round(danceability, 2)
+            'danceability': round(danceability, 2),
+            'version': 'v3_clamped_verified'
         }
 
     except Exception as e:
