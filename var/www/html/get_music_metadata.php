@@ -105,23 +105,8 @@ if (!$pyData || isset($pyData['error'])) {
 $ffmpegBpmCmd = "ffmpeg -i " . escapeshellarg($filePath) . " -ss 30 -t 30 -af \"bpm\" -f null /dev/null 2>&1";
 $ffmpegOutput = shell_exec($ffmpegBpmCmd);
 $ffmpegBpm = 0;
-
-// Parse ALL BPM values from FFmpeg output and take the median
-if (preg_match_all('/BPM: ([0-9\.]+)/', $ffmpegOutput, $matches)) {
-    $f_bpms = array_map('floatval', $matches[1]);
-    // Filter out initial instability (often 0 or very low/high)
-    $f_bpms = array_filter($f_bpms, function($v) { return $v > 50 && $v < 220; });
-    
-    if (count($f_bpms) > 0) {
-        sort($f_bpms);
-        $count = count($f_bpms);
-        $middle = floor(($count - 1) / 2);
-        if ($count % 2) {
-            $ffmpegBpm = $f_bpms[$middle];
-        } else {
-            $ffmpegBpm = ($f_bpms[$middle] + $f_bpms[$middle + 1]) / 2.0;
-        }
-    }
+if (preg_match('/BPM: ([0-9\.]+)/', $ffmpegOutput, $matches)) {
+    $ffmpegBpm = floatval($matches[1]);
 }
 
 // --- D. CONSENSUS LOGIC ---
@@ -131,34 +116,35 @@ if ($bpm > 0) $candidates['aubio'] = $bpm;
 if ($pyBpm > 0) $candidates['python'] = $pyBpm;
 if ($ffmpegBpm > 0) $candidates['ffmpeg'] = $ffmpegBpm;
 
-// Function to check if two BPMs are "close" (within 5%)
+// Function to check if two BPMs are "close" (within 4 BPM)
+// We use a fixed threshold because 5% of 120 is 6, which is too loose.
 function isClose($a, $b) {
-    return abs($a - $b) < ($a * 0.05);
+    return abs($a - $b) <= 4;
 }
 
 $finalBpm = 0;
 
 // 1. Check for agreement between any two sources
+// If they agree, we prefer the one that is closer to an integer or just Aubio/FFmpeg directly
+// Averaging can introduce decimals that round poorly.
 if (isset($candidates['aubio']) && isset($candidates['python']) && isClose($candidates['aubio'], $candidates['python'])) {
-    $finalBpm = ($candidates['aubio'] + $candidates['python']) / 2;
+    $finalBpm = $candidates['aubio']; // Trust Aubio if confirmed by Python
 } elseif (isset($candidates['aubio']) && isset($candidates['ffmpeg']) && isClose($candidates['aubio'], $candidates['ffmpeg'])) {
-    $finalBpm = ($candidates['aubio'] + $candidates['ffmpeg']) / 2;
+    $finalBpm = $candidates['aubio']; // Trust Aubio if confirmed by FFmpeg
 } elseif (isset($candidates['python']) && isset($candidates['ffmpeg']) && isClose($candidates['python'], $candidates['ffmpeg'])) {
-    $finalBpm = ($candidates['python'] + $candidates['ffmpeg']) / 2;
+    $finalBpm = $candidates['ffmpeg']; // Trust FFmpeg if confirmed by Python
 } else {
     // 2. No agreement? Fallback logic.
-    // Priority: Aubio > FFmpeg > Python
-    // Aubio 'tempo' with median filter is generally the most robust for electronic/pop.
+    // Revert to FFmpeg priority as it was "really good" before.
     
     $validCandidates = array_filter($candidates, function($v) { return $v >= 70 && $v <= 180; });
     
     if (!empty($validCandidates)) {
-        if (isset($validCandidates['aubio'])) $finalBpm = $validCandidates['aubio'];
-        elseif (isset($validCandidates['ffmpeg'])) $finalBpm = $validCandidates['ffmpeg'];
+        if (isset($validCandidates['ffmpeg'])) $finalBpm = $validCandidates['ffmpeg'];
+        elseif (isset($validCandidates['aubio'])) $finalBpm = $validCandidates['aubio'];
         else $finalBpm = reset($validCandidates);
     } else {
-        // If all are outside range, just take Aubio or FFmpeg
-        $finalBpm = $bpm ?: ($ffmpegBpm ?: $pyBpm);
+        $finalBpm = $ffmpegBpm ?: ($bpm ?: $pyBpm);
     }
 }
 
