@@ -31,6 +31,10 @@ output.icecast(
   port     = 8000,
   password = "hacklaradio",
   mount    = "/stream",
-  name     = "Radio GRANDE MAISON",
-  radio
-)
+    name     = "Radio GRANDE MAISON",
+    radio
+  )
+  
+  # Activation du serveur Telnet pour le contrôle (ex: skip)
+  server.telnet.start(port=1234)
+  

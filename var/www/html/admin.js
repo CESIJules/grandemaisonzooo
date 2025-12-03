@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const youtubeFormMessage = document.getElementById('youtubeFormMessage');
     const musicManagementContainer = document.getElementById('musicManagementContainer');
     const musicSearchInput = document.getElementById('musicSearchInput');
+    const skipSongBtn = document.getElementById('skipSongBtn');
 
     // --- Playlist Section ---
     const createPlaylistForm = document.getElementById('createPlaylistForm');
@@ -67,6 +68,37 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- API & Rendering Functions ---
+
+    // RADIO CONTROL
+    async function skipSong() {
+        const originalBtnHtml = skipSongBtn.innerHTML;
+        skipSongBtn.disabled = true;
+        skipSongBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi...';
+
+        try {
+            const response = await fetch('skip_song.php', {
+                method: 'POST',
+                cache: 'no-store'
+            });
+            if (!response.ok) throw new Error(`Erreur serveur: ${response.statusText}`);
+            const result = await response.json();
+            if (result.status !== 'success') throw new Error(result.message || 'Erreur inconnue.');
+            
+            // Provide visual feedback
+            skipSongBtn.innerHTML = '<i class="fas fa-check"></i> Succès !';
+
+        } catch (error) {
+            console.error('Failed to skip song:', error);
+            skipSongBtn.innerHTML = '<i class="fas fa-times"></i> Erreur';
+            alert(`Erreur lors de la commande de skip : ${error.message}`);
+        } finally {
+            // Restore button after a short delay
+            setTimeout(() => {
+                skipSongBtn.disabled = false;
+                skipSongBtn.innerHTML = originalBtnHtml;
+            }, 2000);
+        }
+    }
 
     // ARTISTS
     async function populateArtistDropdown() {
@@ -466,8 +498,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!currentEditingPlaylist.songs.includes(songPath)) {
                     currentEditingPlaylist.songs.push(songPath);
                     renderCurrentPlaylistSongs();
-                } else {
-                    alert('Cette chanson est déjà dans la playlist.');
                 }
             });
             li.appendChild(addBtn);
@@ -500,6 +530,8 @@ document.addEventListener('DOMContentLoaded', () => {
         sessionStorage.removeItem('loggedIn');
         window.location.href = 'login.html';
     });
+
+    skipSongBtn.addEventListener('click', skipSong);
 
     adminTimelineForm.addEventListener('submit', async (e) => {
         e.preventDefault();
