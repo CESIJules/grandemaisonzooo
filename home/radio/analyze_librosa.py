@@ -21,7 +21,7 @@ warnings.filterwarnings('ignore')
 def analyze_audio(file_path):
     try:
         # --- LOAD AUDIO ---
-        # Load 60 seconds to get a good representation
+        # Load 50 seconds (Standard)
         duration = librosa.get_duration(path=file_path)
         
         offset = 30
@@ -30,71 +30,88 @@ def analyze_audio(file_path):
         elif duration > 120:
             offset = (duration / 2) - 30
             
-        y, sr = librosa.load(file_path, sr=22050, offset=offset, duration=60)
+        y, sr = librosa.load(file_path, sr=22050, offset=offset, duration=50)
         
         if len(y) == 0:
             return {'error': 'Empty audio'}
 
-        # --- 1. BPM ANALYSIS (Standard Global Anchor) ---
-        # We use standard HPSS for separation
-        y_harmonic, y_percussive = librosa.effects.hpss(y)
+        # --- 1. SEPARATION ---
+        # Standard HPSS (margin 1.0) preserves more detail than high-margin
+        # This is better for key detection in complex mixes
+        y_harmonic, y_percussive = librosa.effects.hpss(y, margin=1.0)
+
+        # --- 2. BPM ANALYSIS (Classic Global Anchor) ---
+        # This method was the most stable in our tests.
+        # It uses a global tempo estimation to guide local windows.
         
-        # Global BPM (The Anchor)
-        # Use beat_track which is very robust for finding the main pulse
-        tempo, _ = librosa.beat.beat_track(y=y_percussive, sr=sr)
-        global_bpm = tempo
+        # Global Anchor
+        onset_env_global = librosa.onset.onset_strength(y=y_percussive, sr=sr, aggregate=np.median)
+        t_global = librosa.feature.tempo(onset_envelope=onset_env_global, sr=sr)
+        global_bpm = t_global[0] if len(t_global) > 0 else 120
         
-        # Windowed Analysis to refine stability
+        # Windowed Analysis
         window_time = 6.0
         window_size = int(window_time * sr)
         step_size = int(window_size / 2)
         
         candidates = []
+        weights = []
         
         for start in range(0, len(y_percussive) - window_size, step_size):
             end = start + window_size
             y_chunk = y_percussive[start:end]
             
-            # Skip silent chunks
             if np.mean(np.abs(y_chunk)) < 0.001: continue
             
-            # Local tempo estimation guided by global_bpm
-            onset_env = librosa.onset.onset_strength(y=y_chunk, sr=sr)
-            t = librosa.feature.tempo(onset_envelope=onset_env, sr=sr, start_bpm=global_bpm)
-            
-            local_bpm = t[0] if isinstance(t, np.ndarray) else t
-            
-            # Only keep candidates that are somewhat related to the global anchor
-            # (Same octave, or close)
-            ratio = local_bpm / global_bpm
-            if 0.8 < ratio < 1.2 or 1.8 < ratio < 2.2 or 0.4 < ratio < 0.6:
-                candidates.append(local_bpm)
+            try:
+                # Standard Onset Strength
+                onset_env = librosa.onset.onset_strength(y=y_chunk, sr=sr)
+                clarity = np.std(onset_env)
+                
+                # Guide local estimation with global anchor
+                t = librosa.feature.tempo(onset_envelope=onset_env, sr=sr, start_bpm=global_bpm)
+                local_bpm = t[0] if isinstance(t, np.ndarray) else t
+                
+                # Weighting: Clarity * Proximity to Anchor
+                ratio = local_bpm / global_bpm
+                anchor_weight = 1.0
+                
+                # Bonus for being close to anchor or related octaves
+                if 0.9 < ratio < 1.1: anchor_weight = 2.0 
+                elif 1.9 < ratio < 2.1: anchor_weight = 1.5
+                elif 0.45 < ratio < 0.55: anchor_weight = 1.5
+                
+                if 50 < local_bpm < 220:
+                    candidates.append(local_bpm)
+                    weights.append(clarity * anchor_weight)
+            except:
+                continue
         
-        # Aggregation
+        # Aggregation (Weighted Histogram)
         if not candidates:
             bpm = global_bpm
         else:
-            # Simple median of valid candidates is very robust
-            bpm = np.median(candidates)
+            bins = np.arange(50, 220, 1)
+            hist, bin_edges = np.histogram(candidates, bins=bins, weights=weights)
+            best_bin_idx = np.argmax(hist)
+            bpm = (bin_edges[best_bin_idx] + bin_edges[best_bin_idx+1]) / 2
 
-        # --- 2. KEY ANALYSIS (Chroma CENS) ---
-        # CENS (Chroma Energy Normalized Statistics) is robust to loudness and timbre
-        # It smooths the chroma over time, making it perfect for global key detection
+        # --- 3. KEY ANALYSIS (Chroma CQT + Median) ---
+        # We revert to CQT + Median because CENS was too smooth for Trap/Drill.
+        # Median aggregation is excellent for ignoring noise in loop-based music.
         
-        # Tuning correction first
+        # Tuning Correction
         tuning = librosa.estimate_tuning(y=y_harmonic, sr=sr)
         
-        # CENS with tuning
-        # fmin=C1 to avoid low rumble, n_octaves=7
-        chroma_cens = librosa.feature.chroma_cens(y=y_harmonic, sr=sr, tuning=tuning, fmin=librosa.note_to_hz('C1'))
+        # CQT (Sharp frequency resolution)
+        chroma = librosa.feature.chroma_cqt(y=y_harmonic, sr=sr, tuning=tuning, fmin=librosa.note_to_hz('C2'))
         
-        # Sum over time (CENS is already normalized, so sum is fine)
-        chroma_vals = np.sum(chroma_cens, axis=1)
+        # Median Aggregation (The "Modern" Fix)
+        chroma_vals = np.median(chroma, axis=1)
         
-        # Standard Profiles (Krumhansl-Schmuckler)
-        # These work well with CENS
-        maj_profile = np.array([6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88])
-        min_profile = np.array([6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17])
+        # Temperley Profiles (Robust)
+        maj_profile = np.array([5.0, 2.0, 3.5, 2.0, 4.5, 4.0, 2.0, 4.5, 2.0, 3.5, 1.5, 4.0])
+        min_profile = np.array([5.0, 2.0, 3.5, 4.5, 2.0, 4.0, 2.0, 4.5, 3.5, 2.0, 1.5, 4.0])
         
         maj_corrs = []
         min_corrs = []
@@ -113,11 +130,10 @@ def analyze_audio(file_path):
             key_idx = np.argmax(min_corrs)
             mode = 0 # Minor
 
-        # --- 3. ENERGY & DANCEABILITY ---
+        # --- 4. ENERGY & DANCEABILITY ---
         rms = librosa.feature.rms(y=y)[0]
         energy = np.mean(rms)
         
-        # Danceability: variance of the global onset envelope
         onset_env_global = librosa.onset.onset_strength(y=y_percussive, sr=sr)
         danceability = np.std(onset_env_global)
 
