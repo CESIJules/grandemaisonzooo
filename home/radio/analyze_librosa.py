@@ -145,40 +145,76 @@ def analyze_audio(file_path):
         # --- 6. KEY ---
         try:
             # 1. Tuning Correction
-            # Essential for tracks that are slightly off-pitch (vinyl rips, old samples)
             if np.mean(np.abs(y_harmonic)) < 0.001:
                 tuning = 0.0
             else:
                 tuning = librosa.estimate_tuning(y=y_harmonic, sr=sr)
             
             # 2. Chroma CQT with Tuning
-            # We use the Harmonic component to avoid percussive noise
             chroma = librosa.feature.chroma_cqt(y=y_harmonic, sr=sr, tuning=tuning)
             
-            # 3. Aggregation
-            # Sum over time (Standard approach, robust enough if tuning is correct)
-            chroma_vals = np.sum(chroma, axis=1)
+            # 3. Feature Aggregation (Mean & Median)
+            # Using both helps cover different song structures (consistent chords vs transient ones)
+            chroma_mean = np.mean(chroma, axis=1)
+            chroma_median = np.median(chroma, axis=1)
             
-            # Major/Minor profiles (Krumhansl-Schmuckler)
-            maj_profile = np.array([6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88])
-            min_profile = np.array([6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17])
+            # Normalize
+            chroma_mean /= (np.max(chroma_mean) + 1e-9)
+            chroma_median /= (np.max(chroma_median) + 1e-9)
             
-            maj_corrs = []
-            min_corrs = []
+            # 4. Multi-Profile Voting
+            # We test against 3 different profiles to find the best fit for the genre
             
-            for i in range(12):
-                maj_corrs.append(np.corrcoef(np.roll(maj_profile, i), chroma_vals)[0, 1])
-                min_corrs.append(np.corrcoef(np.roll(min_profile, i), chroma_vals)[0, 1])
+            # Krumhansl-Schmuckler (Classic)
+            ks_maj = np.array([6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88])
+            ks_min = np.array([6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17])
+            
+            # Temperley (Pop/Modern)
+            t_maj = np.array([5.0, 2.0, 3.5, 2.0, 4.5, 4.0, 2.0, 4.5, 2.0, 3.5, 1.5, 4.0])
+            t_min = np.array([5.0, 2.0, 3.5, 4.5, 2.0, 4.0, 2.0, 4.5, 3.5, 2.0, 1.5, 4.0])
+            
+            # Sha'ath (Electronic)
+            s_maj = np.array([6.6, 2.0, 3.5, 2.3, 4.6, 4.0, 2.5, 5.2, 2.4, 3.7, 2.3, 3.4])
+            s_min = np.array([6.3, 2.7, 3.5, 5.4, 2.6, 3.5, 2.5, 4.8, 4.0, 2.7, 3.4, 3.2])
+
+            profiles = [
+                (ks_maj, ks_min),
+                (t_maj, t_min),
+                (s_maj, s_min)
+            ]
+            
+            best_score = -1
+            key_idx = 0
+            mode = 1
+            
+            # Brute-force best correlation across all profiles and feature types
+            for maj_p, min_p in profiles:
+                # Normalize profiles
+                maj_p = maj_p / np.max(maj_p)
+                min_p = min_p / np.max(min_p)
                 
-            max_maj = np.max(maj_corrs)
-            max_min = np.max(min_corrs)
-            
-            if max_maj > max_min:
-                key_idx = np.argmax(maj_corrs)
-                mode = 1 # Major
-            else:
-                key_idx = np.argmax(min_corrs)
-                mode = 0 # Minor
+                for feat in [chroma_mean, chroma_median]:
+                    for i in range(12):
+                        # Correlation
+                        # Handle potential NaN if variance is 0 (unlikely but safe)
+                        try:
+                            corr_maj = np.corrcoef(np.roll(maj_p, i), feat)[0, 1]
+                            corr_min = np.corrcoef(np.roll(min_p, i), feat)[0, 1]
+                        except:
+                            continue
+                            
+                        if np.isnan(corr_maj): corr_maj = -1
+                        if np.isnan(corr_min): corr_min = -1
+                        
+                        if corr_maj > best_score:
+                            best_score = corr_maj
+                            key_idx = i
+                            mode = 1
+                            
+                        if corr_min > best_score:
+                            best_score = corr_min
+                            key_idx = i
+                            mode = 0
         except:
             key_idx = 0
             mode = 1
