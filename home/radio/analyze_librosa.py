@@ -60,8 +60,15 @@ def analyze_audio(file_path):
             if np.mean(np.abs(y_chunk)) < 0.001:
                 continue
                 
-            # Calculate Onset Strength for this chunk
-            onset_env = librosa.onset.onset_strength(y=y_chunk, sr=sr)
+            # --- ROBUST ONSET DETECTION ---
+            # 1. Limit frequency range to ignore high-end saturation/noise
+            # Saturation adds high-freq harmonics that confuse detection.
+            # We focus on 0Hz to 6000Hz (Kick, Snare, main rhythm elements)
+            S = librosa.feature.melspectrogram(y=y_chunk, sr=sr, n_mels=128, fmax=6000)
+            
+            # 2. Use Median aggregation to ignore transient noise spikes
+            # Standard is mean, but median is more robust to "dirty" mixes
+            onset_env = librosa.onset.onset_strength(S=librosa.power_to_db(S, ref=np.max), sr=sr, aggregate=np.median)
             
             # Pulse Clarity (Weight): How distinct is the beat?
             # High variance = strong beat. Low variance = ambient/noise.
@@ -78,7 +85,8 @@ def analyze_audio(file_path):
         
         if not candidates:
             # Fallback to global analysis if no windows worked
-            onset_env = librosa.onset.onset_strength(y=y_percussive, sr=sr)
+            S = librosa.feature.melspectrogram(y=y_percussive, sr=sr, n_mels=128, fmax=6000)
+            onset_env = librosa.onset.onset_strength(S=librosa.power_to_db(S, ref=np.max), sr=sr, aggregate=np.median)
             tempo_arr = librosa.feature.tempo(onset_envelope=onset_env, sr=sr, prior=None)
             bpm = tempo_arr[0] if isinstance(tempo_arr, np.ndarray) else tempo_arr
         else:
