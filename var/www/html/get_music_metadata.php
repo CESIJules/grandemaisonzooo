@@ -96,7 +96,80 @@ if (!$pyData || isset($pyData['error'])) {
     $danceability = $pyData['danceability'];
     $key_key = $pyData['key_key'];
     $key_mode = $pyData['key_mode'];
+    $pyBpm = $pyData['bpm'] ?? 0;
 }
+
+// --- C. BPM via FFMPEG (Third Opinion) ---
+// ffmpeg -i input.mp3 -ss 30 -t 30 -af "bpm" -f null /dev/null
+// Output is in stderr: "[Parsed_bpm_0 @ ...] BPM: 123.456"
+$ffmpegBpmCmd = "ffmpeg -i " . escapeshellarg($filePath) . " -ss 30 -t 30 -af \"bpm\" -f null /dev/null 2>&1";
+$ffmpegOutput = shell_exec($ffmpegBpmCmd);
+$ffmpegBpm = 0;
+if (preg_match('/BPM: ([0-9\.]+)/', $ffmpegOutput, $matches)) {
+    $ffmpegBpm = floatval($matches[1]);
+}
+
+// --- D. CONSENSUS LOGIC ---
+// We have $bpm (Aubio), $pyBpm (Python), $ffmpegBpm (FFmpeg)
+$candidates = [];
+if ($bpm > 0) $candidates['aubio'] = $bpm;
+if ($pyBpm > 0) $candidates['python'] = $pyBpm;
+if ($ffmpegBpm > 0) $candidates['ffmpeg'] = $ffmpegBpm;
+
+// Function to check if two BPMs are "close" (within 5%)
+function isClose($a, $b) {
+    return abs($a - $b) < ($a * 0.05);
+}
+
+$finalBpm = 0;
+
+// 1. Check for agreement between any two sources
+if (isset($candidates['aubio']) && isset($candidates['python']) && isClose($candidates['aubio'], $candidates['python'])) {
+    $finalBpm = ($candidates['aubio'] + $candidates['python']) / 2;
+} elseif (isset($candidates['aubio']) && isset($candidates['ffmpeg']) && isClose($candidates['aubio'], $candidates['ffmpeg'])) {
+    $finalBpm = ($candidates['aubio'] + $candidates['ffmpeg']) / 2;
+} elseif (isset($candidates['python']) && isset($candidates['ffmpeg']) && isClose($candidates['python'], $candidates['ffmpeg'])) {
+    $finalBpm = ($candidates['python'] + $candidates['ffmpeg']) / 2;
+} else {
+    // 2. No agreement? Fallback logic.
+    // Prefer FFmpeg as it's a standard filter, then Aubio, then Python.
+    // But check for "sane" ranges (70-180)
+    
+    $validCandidates = array_filter($candidates, function($v) { return $v >= 70 && $v <= 180; });
+    
+    if (!empty($validCandidates)) {
+        // If we have valid candidates, pick the one from the most trusted source available
+        if (isset($validCandidates['ffmpeg'])) $finalBpm = $validCandidates['ffmpeg'];
+        elseif (isset($validCandidates['aubio'])) $finalBpm = $validCandidates['aubio'];
+        else $finalBpm = reset($validCandidates);
+    } else {
+        // If all are outside range (e.g. DnB at 175+ or Dubstep at 140/70), just take FFmpeg or Aubio
+        $finalBpm = $ffmpegBpm ?: ($bpm ?: $pyBpm);
+    }
+}
+
+// 3. Polyrhythm / Double Time Correction (The "Tunebat" issue)
+// If the result is low (< 100) and we had a candidate that was ~1.5x or ~2x, consider it.
+// Example: Result 111, but Python said 165 (1.5x). 165 is a common tempo.
+if ($finalBpm > 0) {
+    foreach ($candidates as $source => $val) {
+        if ($val > $finalBpm) {
+            $ratio = $val / $finalBpm;
+            // Check for 1.5x (e.g. 110 vs 165)
+            if ($ratio > 1.4 && $ratio < 1.6 && $val < 185) {
+                $finalBpm = $val; // Upgrade to the faster tempo
+                break;
+            }
+            // Check for 2x (e.g. 70 vs 140)
+            if ($ratio > 1.9 && $ratio < 2.1 && $val < 185) {
+                $finalBpm = $val;
+                break;
+            }
+        }
+    }
+}
+
+$bpm = round($finalBpm);
 
 // 3. CONVERT TO CAMELOT
 function convertToCamelot($key, $mode) {
