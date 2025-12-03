@@ -290,7 +290,7 @@
             gap: 30px;
             height: 60vh;
         }
-        .playlist-songs-panel, .all-available-songs-panel {
+        .playlist-songs-panel, .all-available-songs-panel, .suggestions-panel {
             background-color: var(--bg-color);
             border-radius: 8px;
             padding: 16px;
@@ -298,6 +298,32 @@
             flex-direction: column;
             overflow: hidden;
         }
+        .suggestions-panel {
+            grid-column: 1 / -1; /* Full width below */
+            height: 300px;
+            margin-top: 20px;
+        }
+        .suggestion-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid var(--surface-border);
+        }
+        .suggestion-info {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .suggestion-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .badge-bpm { background-color: #4a4a4a; color: #fff; }
+        .badge-key { background-color: #007bff; color: #fff; }
+        .badge-match { background-color: #28a745; color: #fff; }
         .panel-content {
             overflow-y: auto;
             flex-grow: 1;
@@ -480,6 +506,12 @@
                     <input type="text" id="songSearchInput" class="form-group" placeholder="Rechercher une musique..." />
                     <div class="panel-content">
                         <ul id="allAvailableSongsForEdit"></ul>
+                    </div>
+                </div>
+                <div class="suggestions-panel card">
+                    <h3>Suggestions Harmoniques (Mixable avec le dernier son)</h3>
+                    <div class="panel-content">
+                        <ul id="harmonicSuggestions"></ul>
                     </div>
                 </div>
             </div>
