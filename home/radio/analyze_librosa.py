@@ -45,25 +45,23 @@ def analyze_audio(file_path):
         y_harmonic, y_percussive = librosa.effects.hpss(y, margin=(4.0, 1.0))
 
         # --- 1.5 GLOBAL ANCHOR ---
-        # Use Beat Tracking for a tighter global estimate
-        # This is more stable than simple tempo estimation for locking onto the grid
+        # Calculate a global BPM on the whole file to act as a stabilizer
+        # This helps avoid "rhythmic aliases" (e.g. detecting 1.33x or 1.5x tempo)
         onset_env_global = librosa.onset.onset_strength(y=y_percussive, sr=sr, aggregate=np.median)
-        try:
-            global_bpm, _ = librosa.beat.beat_track(onset_envelope=onset_env_global, sr=sr)
-        except:
-            t_global = librosa.feature.tempo(onset_envelope=onset_env_global, sr=sr)
-            global_bpm = t_global[0] if np.ndim(t_global) > 0 else t_global
+        t_global = librosa.feature.tempo(onset_envelope=onset_env_global, sr=sr)
         
         # Robustly extract scalar BPM
-        if np.ndim(global_bpm) > 0:
-            global_bpm = global_bpm[0] if len(global_bpm) > 0 else 120
+        if np.ndim(t_global) > 0:
+            global_bpm = t_global[0] if len(t_global) > 0 else 120
+        else:
+            global_bpm = t_global
 
         # --- 2. BPM ANALYSIS (Hybrid Voting System) ---
         # We combine two analysis passes to get the best of both worlds:
         # 1. Standard Resolution (hop=512): Robust to noise and distortion (Good for 'Dirty' tracks)
         # 2. High Resolution (hop=256): Sensitive to fast details (Good for Trap/Drill hi-hats)
         
-        window_time = 8.0 # Increased to 8s for better stability
+        window_time = 6.0 
         window_size = int(window_time * sr)
         step_size = int(window_size / 2)
         
@@ -71,19 +69,19 @@ def analyze_audio(file_path):
         weights = []
 
         def get_anchor_weight(candidate, anchor):
-            if anchor == 0 or anchor is None: return 1.0
+            if anchor == 0: return 1.0
             ratio = candidate / anchor
             
-            # Tight precision (3% tolerance)
-            # If anchor is 100, we accept 97-103.
-            if 0.97 < ratio < 1.03: return 4.0 # Massive bonus for locking in
+            # Exact match or octave (strong support)
+            if 0.90 < ratio < 1.10: return 2.0
+            if 1.90 < ratio < 2.10: return 1.5
+            if 0.45 < ratio < 0.55: return 1.5
             
-            # Octaves (still supported but less than exact match)
-            if 1.94 < ratio < 2.06: return 2.0
-            if 0.47 < ratio < 0.53: return 2.0
+            # Common aliases (3/2, 4/3) - Penalize to avoid "drifting"
+            # 1.33 (4/3) and 1.5 (3/2) are common errors
+            if 1.25 < ratio < 1.75: return 0.5 
             
-            # Penalize drift heavily
-            return 0.5 
+            return 0.8 # Neutral for others
         
         # Iterate through windows
         for start in range(0, len(y_percussive) - window_size, step_size):
