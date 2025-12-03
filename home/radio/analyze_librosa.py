@@ -60,13 +60,14 @@ def analyze_audio(file_path):
             if np.mean(np.abs(y_chunk)) < 0.001:
                 continue
                 
-        # --- 2. BPM ANALYSIS (High-Res Windowed) ---
-        # We use a smaller hop_length for better time resolution (crucial for fast hi-hats/rolls)
-        hop_length = 256 # ~11ms at 22050Hz
+        # --- 2. BPM ANALYSIS (Hybrid Voting System) ---
+        # We combine two analysis passes to get the best of both worlds:
+        # 1. Standard Resolution (hop=512): Robust to noise and distortion (Good for "Dirty" tracks)
+        # 2. High Resolution (hop=256): Sensitive to fast details (Good for Trap/Drill hi-hats)
         
-        window_time = 6.0 # 6 seconds windows
+        window_time = 6.0 
         window_size = int(window_time * sr)
-        step_size = int(window_size / 2) # 50% overlap
+        step_size = int(window_size / 2)
         
         candidates = []
         weights = []
@@ -76,26 +77,35 @@ def analyze_audio(file_path):
             end = start + window_size
             y_chunk = y_percussive[start:end]
             
-            # Skip silent chunks
             if np.mean(np.abs(y_chunk)) < 0.001: continue
                 
             try:
-                # A. Onset Strength (Percussive only, limited freq)
-                # fmax=8000 keeps snares but removes hiss
-                S = librosa.feature.melspectrogram(y=y_chunk, sr=sr, n_mels=128, fmax=8000, hop_length=hop_length)
-                onset_env = librosa.onset.onset_strength(S=librosa.power_to_db(S, ref=np.max), sr=sr, hop_length=hop_length, aggregate=np.median)
+                # PASS 1: Standard (Robust)
+                hop_std = 512
+                S_std = librosa.feature.melspectrogram(y=y_chunk, sr=sr, n_mels=128, fmax=8000, hop_length=hop_std)
+                onset_std = librosa.onset.onset_strength(S=librosa.power_to_db(S_std, ref=np.max), sr=sr, hop_length=hop_std, aggregate=np.median)
+                clarity_std = np.std(onset_std)
                 
-                # B. Pulse Clarity
-                clarity = np.std(onset_env)
+                t_std = librosa.feature.tempo(onset_envelope=onset_std, sr=sr, hop_length=hop_std, prior=None)
+                tempo_std = t_std[0] if isinstance(t_std, np.ndarray) else t_std
                 
-                # C. Tempo
-                # prior=None removes the 120 BPM bias
-                tempo_arr = librosa.feature.tempo(onset_envelope=onset_env, sr=sr, hop_length=hop_length, prior=None)
-                tempo = tempo_arr[0] if isinstance(tempo_arr, np.ndarray) else tempo_arr
+                # PASS 2: High-Res (Sensitive)
+                hop_hi = 256
+                S_hi = librosa.feature.melspectrogram(y=y_chunk, sr=sr, n_mels=128, fmax=8000, hop_length=hop_hi)
+                onset_hi = librosa.onset.onset_strength(S=librosa.power_to_db(S_hi, ref=np.max), sr=sr, hop_length=hop_hi, aggregate=np.median)
+                clarity_hi = np.std(onset_hi)
                 
-                if 50 < tempo < 220:
-                    candidates.append(tempo)
-                    weights.append(clarity)
+                t_hi = librosa.feature.tempo(onset_envelope=onset_hi, sr=sr, hop_length=hop_hi, prior=None)
+                tempo_hi = t_hi[0] if isinstance(t_hi, np.ndarray) else t_hi
+                
+                # Vote
+                if 50 < tempo_std < 220:
+                    candidates.append(tempo_std)
+                    weights.append(clarity_std * 1.2) # Bonus for stability
+                    
+                if 50 < tempo_hi < 220:
+                    candidates.append(tempo_hi)
+                    weights.append(clarity_hi) # Pure clarity
             except:
                 continue
         
