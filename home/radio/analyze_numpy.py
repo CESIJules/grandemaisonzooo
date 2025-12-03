@@ -130,6 +130,20 @@ def analyze_pcm():
             
             # FFT
             spectrogram = np.abs(np.fft.rfft(frames, axis=1))
+
+            # --- IMPROVEMENT FOR SATURATION/BASS ---
+            # 1. Logarithmic compression
+            # Helps with saturation/compression by reducing the dominance of loud peaks
+            spectrogram = np.log1p(spectrogram * 10)
+
+            # 2. Frequency limiting for Flux
+            # Heavy bass/saturation often has high frequency noise. 
+            # The beat is usually in the low-mids (0-1000Hz).
+            # Bin width = 22050 / 2048 ~= 10.7 Hz
+            # We keep bins 0 to 100 (~1000Hz) to focus on Kick/Bass/Snare fundamental
+            n_bins_to_keep = 100
+            if spectrogram.shape[1] > n_bins_to_keep:
+                spectrogram = spectrogram[:, :n_bins_to_keep]
             
             # 2. Spectral Flux
             # Calculate difference between consecutive frames
