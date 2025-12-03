@@ -32,8 +32,8 @@ def analyze_audio(file_path):
             
         # Load audio
         # sr=22050 is standard for music analysis, mono=True saves RAM
-        # We load 50 seconds to have enough chunks
-        y, sr = librosa.load(file_path, sr=22050, offset=offset, duration=50)
+        # We load 90 seconds (Heavy mode) to ensure we capture the core rhythm and tonal center
+        y, sr = librosa.load(file_path, sr=22050, offset=offset, duration=90)
         
         if len(y) == 0:
             return {'error': 'Empty audio'}
@@ -42,11 +42,14 @@ def analyze_audio(file_path):
         y_harmonic, y_percussive = librosa.effects.hpss(y)
 
         # --- 1.5 GLOBAL ANCHOR ---
-        # Calculate a global BPM on the whole file to act as a stabilizer
-        # This helps avoid "rhythmic aliases" (e.g. detecting 1.33x or 1.5x tempo)
+        # Calculate a global BPM using Beat Tracking (Dynamic Programming)
+        # This is more robust than simple histogram estimation for the anchor
         onset_env_global = librosa.onset.onset_strength(y=y_percussive, sr=sr, aggregate=np.median)
-        t_global = librosa.feature.tempo(onset_envelope=onset_env_global, sr=sr)
-        global_bpm = t_global[0] if isinstance(t_global, np.ndarray) else t_global
+        global_bpm, _ = librosa.beat.beat_track(onset_envelope=onset_env_global, sr=sr, tightness=100)
+        
+        # Ensure scalar
+        if isinstance(global_bpm, np.ndarray):
+            global_bpm = global_bpm[0] if len(global_bpm) > 0 else 120
 
         # --- 2. BPM ANALYSIS (Hybrid Voting System) ---
         # We combine two analysis passes to get the best of both worlds:
@@ -145,8 +148,8 @@ def analyze_audio(file_path):
         # We use raw 'y' to avoid HPSS artifacts in the tonal content
         chroma = librosa.feature.chroma_cqt(y=y, sr=sr, tuning=tuning)
         
-        # Sum over time
-        chroma_vals = np.sum(chroma, axis=1)
+        # Median over time (Robust to transient noise/wrong notes compared to Sum)
+        chroma_vals = np.median(chroma, axis=1)
         
         # Temperley Profiles (optimized for pop/rock/modern)
         # Major
