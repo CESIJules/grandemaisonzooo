@@ -32,8 +32,8 @@ def analyze_audio(file_path):
             
         # Load audio
         # sr=22050 is standard for music analysis, mono=True saves RAM
-        # We load 90 seconds (Heavy mode) to ensure we capture the core rhythm and tonal center
-        y, sr = librosa.load(file_path, sr=22050, offset=offset, duration=90)
+        # We load 50 seconds to have enough chunks
+        y, sr = librosa.load(file_path, sr=22050, offset=offset, duration=50)
         
         if len(y) == 0:
             return {'error': 'Empty audio'}
@@ -41,37 +41,12 @@ def analyze_audio(file_path):
         # --- 1. SEPARATION ---
         y_harmonic, y_percussive = librosa.effects.hpss(y)
 
-        # --- 1.5 GLOBAL ANCHOR (BASS FOCUSED) ---
-        # Isolate Low Frequencies (Kick/Bass) for Rhythm
-        # This avoids confusion with fast hi-hats (Trap/Drill) or complex melodies
-        # Simple low-pass filter via STFT masking
-        try:
-            D = librosa.stft(y_percussive)
-            freqs = librosa.fft_frequencies(sr=sr)
-            # Ensure shapes match for broadcasting if needed, though usually they align on axis 0
-            if D.shape[0] == len(freqs):
-                D[freqs > 300] = 0 # Cut everything above 300Hz
-            
-            y_bass = librosa.istft(D)
-
-            onset_env_bass = librosa.onset.onset_strength(y=y_bass, sr=sr, aggregate=np.median)
-            tempo_bass_arr = librosa.feature.tempo(onset_envelope=onset_env_bass, sr=sr)
-            tempo_bass = tempo_bass_arr[0] if len(tempo_bass_arr) > 0 else 0
-        except:
-            tempo_bass = 0
-        
-        # Use this Bass BPM as the strong anchor
-        global_bpm = tempo_bass
-        
-        # Fallback: If bass analysis yields nothing (ambient/acoustic), use full spectrum
-        if global_bpm < 40:
-             onset_env_global = librosa.onset.onset_strength(y=y_percussive, sr=sr, aggregate=np.median)
-             t_global = librosa.feature.tempo(onset_envelope=onset_env_global, sr=sr)
-             global_bpm = t_global[0] if len(t_global) > 0 else 120
-        
-        # Ensure scalar
-        if isinstance(global_bpm, np.ndarray):
-            global_bpm = global_bpm[0] if len(global_bpm) > 0 else 120
+        # --- 1.5 GLOBAL ANCHOR ---
+        # Calculate a global BPM on the whole file to act as a stabilizer
+        # This helps avoid "rhythmic aliases" (e.g. detecting 1.33x or 1.5x tempo)
+        onset_env_global = librosa.onset.onset_strength(y=y_percussive, sr=sr, aggregate=np.median)
+        t_global = librosa.feature.tempo(onset_envelope=onset_env_global, sr=sr)
+        global_bpm = t_global[0] if isinstance(t_global, np.ndarray) else t_global
 
         # --- 2. BPM ANALYSIS (Hybrid Voting System) ---
         # We combine two analysis passes to get the best of both worlds:
@@ -163,47 +138,31 @@ def analyze_audio(file_path):
         # Hardcoded energy checks often fail for Boom Bap (High Energy, Low BPM).
 
         # --- 6. KEY ---
-        try:
-            # 1. Estimate tuning (important for samples/vinyl rips)
-            # Check if we have enough signal
-            if np.mean(np.abs(y_harmonic)) < 0.001:
-                tuning = 0.0
-            else:
-                tuning = librosa.estimate_tuning(y=y_harmonic, sr=sr)
+        chroma = librosa.feature.chroma_cqt(y=y_harmonic, sr=sr)
+        
+        # Sum over time
+        chroma_vals = np.sum(chroma, axis=1)
+        
+        # Major/Minor profiles
+        maj_profile = np.array([6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88])
+        min_profile = np.array([6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17])
+        
+        maj_corrs = []
+        min_corrs = []
+        
+        for i in range(12):
+            maj_corrs.append(np.corrcoef(np.roll(maj_profile, i), chroma_vals)[0, 1])
+            min_corrs.append(np.corrcoef(np.roll(min_profile, i), chroma_vals)[0, 1])
             
-            # 2. Compute Chroma CQT with tuning correction
-            # We use Harmonic component to avoid percussive noise
-            chroma = librosa.feature.chroma_cqt(y=y_harmonic, sr=sr, tuning=tuning)
-            
-            # Median over time (Robust to transient noise/wrong notes compared to Sum)
-            chroma_vals = np.median(chroma, axis=1)
-            
-            # Krumhansl-Schmuckler Profiles (Standard, often better for general detection than Temperley)
-            # Major
-            maj_profile = np.array([6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88])
-            # Minor
-            min_profile = np.array([6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17])
-            
-            maj_corrs = []
-            min_corrs = []
-            
-            for i in range(12):
-                maj_corrs.append(np.corrcoef(np.roll(maj_profile, i), chroma_vals)[0, 1])
-                min_corrs.append(np.corrcoef(np.roll(min_profile, i), chroma_vals)[0, 1])
-                
-            max_maj = np.max(maj_corrs)
-            max_min = np.max(min_corrs)
-            
-            if max_maj > max_min:
-                key_idx = np.argmax(maj_corrs)
-                mode = 1 # Major
-            else:
-                key_idx = np.argmax(min_corrs)
-                mode = 0 # Minor
-        except:
-            # Fallback if Key detection fails
-            key_idx = 0
-            mode = 1
+        max_maj = np.max(maj_corrs)
+        max_min = np.max(min_corrs)
+        
+        if max_maj > max_min:
+            key_idx = np.argmax(maj_corrs)
+            mode = 1 # Major
+        else:
+            key_idx = np.argmax(min_corrs)
+            mode = 0 # Minor
 
         return {
             'bpm': round(float(bpm), 1),
