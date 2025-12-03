@@ -36,33 +36,14 @@ def analyze_audio(file_path):
         y, sr = librosa.load(file_path, sr=22050, offset=offset, duration=50)
         
         if len(y) == 0:
-            return {"error": "Empty audio"}
+            return {'error': 'Empty audio'}
 
         # --- 1. SEPARATION ---
         y_harmonic, y_percussive = librosa.effects.hpss(y)
 
-        # --- 2. ROBUST BPM (Windowed Voting) ---
-        # Instead of analyzing the whole 50s at once (which can be confused by breakdowns),
-        # we slice the track into 5-second windows and vote.
-        
-        window_size = 5 * sr # 5 seconds
-        hop_length = int(2.5 * sr) # 50% overlap
-        
-        candidates = []
-        weights = []
-        
-        # Iterate through windows
-        for start in range(0, len(y_percussive) - window_size, hop_length):
-            end = start + window_size
-            y_chunk = y_percussive[start:end]
-            
-            # Skip silent chunks
-            if np.mean(np.abs(y_chunk)) < 0.001:
-                continue
-                
         # --- 2. BPM ANALYSIS (Hybrid Voting System) ---
         # We combine two analysis passes to get the best of both worlds:
-        # 1. Standard Resolution (hop=512): Robust to noise and distortion (Good for "Dirty" tracks)
+        # 1. Standard Resolution (hop=512): Robust to noise and distortion (Good for 'Dirty' tracks)
         # 2. High Resolution (hop=256): Sensitive to fast details (Good for Trap/Drill hi-hats)
         
         window_time = 6.0 
@@ -162,34 +143,26 @@ def analyze_audio(file_path):
             key_idx = np.argmax(min_corrs)
             mode = 0 # Minor
 
-        # --- 3. Energy & Danceability ---
-        rms = librosa.feature.rms(y=y)[0]
-        energy = np.mean(rms)
-        
-        # Danceability proxy: Pulse clarity / beat strength
-        # We use the variance of the onset envelope as a proxy for "punchiness"
-        danceability = np.std(onset_env)
-
         return {
-            "bpm": round(float(bpm), 1),
-            "key_key": int(key_idx),
-            "key_mode": int(mode),
-            "energy": round(float(energy * 10), 2), # Scale up
-            "danceability": round(float(danceability), 2)
+            'bpm': round(float(bpm), 1),
+            'key_key': int(key_idx),
+            'key_mode': int(mode),
+            'energy': round(float(energy * 10), 2), # Scale up
+            'danceability': round(float(danceability), 2)
         }
 
     except Exception as e:
-        return {"error": str(e)}
+        return {'error': str(e)}
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     if len(sys.argv) < 2:
-        print(json.dumps({"error": "No file provided"}))
+        print(json.dumps({'error': 'No file provided'}))
         sys.exit(1)
         
     file_path = sys.argv[1]
     # Ensure file exists
     if not os.path.exists(file_path):
-        print(json.dumps({"error": f"File not found: {file_path}"}))
+        print(json.dumps({'error': f'File not found: {file_path}'}))
         sys.exit(1)
 
     print(json.dumps(analyze_audio(file_path)))
