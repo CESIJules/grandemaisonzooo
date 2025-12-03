@@ -288,17 +288,18 @@
         .playlist-editor-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 300px; /* Fixed height for suggestions at bottom */
             gap: 24px;
-            /* Hauteur ajustée pour éviter le tassement */
-            height: calc(100vh - 250px);
+            height: 75vh; /* Fixed height relative to viewport */
             min-height: 600px;
         }
 
         .playlist-songs-panel, .all-available-songs-panel {
-            /* Les panneaux du haut prennent l'espace disponible mais pas tout */
-            flex: 1;
+            grid-row: 1;
+            height: 100%; /* Fill the grid cell */
             display: flex;
             flex-direction: column;
+            min-height: 0; /* Important for nested flex scrolling */
             overflow: hidden;
             /* Style plus doux */
             background-color: rgba(30, 30, 30, 0.6);
@@ -308,25 +309,15 @@
 
         .suggestions-panel {
             grid-column: 1 / -1; /* Prend toute la largeur */
-            /* Hauteur fixe pour la section suggestions en bas */
-            height: 35%; 
-            min-height: 250px;
+            grid-row: 2;
+            height: 100%; /* Fill the 300px row */
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
             margin-top: 0; /* Géré par le grid gap */
             background-color: rgba(30, 30, 30, 0.8); /* Un peu plus opaque pour le focus */
             border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        /* Ajustement de la grille pour que le bas soit fixe et le haut flexible */
-        .playlist-editor-container {
-            grid-template-rows: 1fr auto;
-        }
-        
-        .playlist-songs-panel, .all-available-songs-panel {
-            grid-row: 1;
-        }
-        
-        .suggestions-panel {
-            grid-row: 2;
         }
 
         /* Titres de section plus discrets */
@@ -341,6 +332,13 @@
         }
 
         /* Listes plus aérées */
+        .panel-content {
+            flex: 1;
+            overflow-y: auto; /* Force scroll */
+            min-height: 0; /* Firefox fix */
+            padding-right: 5px;
+        }
+        
         .panel-content ul {
             padding-right: 5px; /* Espace pour la scrollbar */
         }
@@ -417,31 +415,37 @@
         .badge-bpm { background-color: rgba(255, 255, 255, 0.1); color: #ddd; border: 1px solid rgba(255,255,255,0.1); }
         .badge-key { background-color: rgba(0, 123, 255, 0.2); color: #80bdff; border: 1px solid rgba(0, 123, 255, 0.3); }
 
-        /* Boutons d'action dans les listes (petits ronds) */
+        /* Boutons d'action dans les listes (Rectangulaires et propres) */
         .panel-content li .btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            padding: 0;
-            display: flex;
+            width: auto;
+            height: auto;
+            border-radius: 4px;
+            padding: 6px 12px;
+            aspect-ratio: auto;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            opacity: 0.7;
-            transition: opacity 0.2s, transform 0.2s, background-color 0.2s;
-            border: none;
-            background: rgba(255,255,255,0.1);
+            opacity: 1;
+            background-color: transparent;
+            border: 1px solid rgba(255,255,255,0.2);
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
         }
         .panel-content li .btn:hover {
-            opacity: 1;
-            transform: scale(1.1);
+            transform: translateY(-1px);
+            background-color: rgba(255,255,255,0.1);
+            color: var(--text-primary);
+            border-color: rgba(255,255,255,0.4);
         }
         .panel-content li .btn-danger:hover {
-            background-color: rgba(220, 53, 69, 0.8);
-            color: white;
+            background-color: rgba(220, 53, 69, 0.2);
+            border-color: var(--accent-danger);
+            color: var(--accent-danger);
         }
-        .panel-content li .btn-primary:hover, .panel-content li .btn:not(.btn-danger):hover {
-            background-color: var(--accent-primary);
-            color: white;
+        .panel-content li .btn-primary:hover {
+            background-color: rgba(0, 123, 255, 0.2);
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
         }
 
         /* --- Section Layout Improvements --- */
