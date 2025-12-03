@@ -102,58 +102,96 @@ def analyze_pcm():
             key_idx = np.argmax(min_corrs)
             mode = 0 # Minor
 
-        # --- 4. BPM Detection (Simple Autocorrelation) ---
-        # Improved: Use onset strength (derivative of envelope) instead of raw envelope
-        # This focuses on the attacks (transients) rather than the sustained volume
+        # --- 4. BPM Detection (Spectral Flux + Autocorrelation) ---
+        # Improved algorithm: Spectral Flux Difference
+        # This detects beats based on energy changes in frequency bands, not just volume.
         
-        # 1. Differentiate smoothed envelope (calculated in Danceability section)
-        diff_env = np.diff(envelope_smooth)
-        # 2. Half-wave rectify (only positive changes = attacks)
-        onset_env = np.maximum(0, diff_env)
+        # STFT Parameters
+        n_fft = 2048
+        hop_length = 512
         
-        # 3. Downsample to ~100Hz for correlation
-        target_sr = 100
-        step = int(sr / target_sr)
-        if step < 1: step = 1
-        
-        onset_sub = onset_env[::step]
-        
-        # Remove DC component
-        onset_sub = onset_sub - np.mean(onset_sub)
-        
-        # Autocorrelation
-        corr = np.correlate(onset_sub, onset_sub, mode='full')
-        corr = corr[len(corr)//2:]
-        
-        # Search range: 60-190 BPM
-        min_bpm = 60
-        max_bpm = 190
-        min_lag = int(60 * target_sr / max_bpm)
-        max_lag = int(60 * target_sr / min_bpm)
-        
-        bpm = 0
-        if len(corr) > max_lag:
-            window = corr[min_lag:max_lag]
-            if len(window) > 0:
-                # Find peaks
-                peak_idx = np.argmax(window)
-                true_lag = min_lag + peak_idx
-                
-                if true_lag > 0:
-                    bpm = 60 * target_sr / true_lag
+        # 1. Compute STFT
+        # We need to slice the audio into overlapping windows
+        n_frames = (len(audio) - n_fft) // hop_length + 1
+        if n_frames < 1:
+            bpm = 0
+        else:
+            # Create strided array for efficient STFT
+            strides = audio.strides
+            frames = np.lib.stride_tricks.as_strided(
+                audio, 
+                shape=(n_frames, n_fft), 
+                strides=(strides[0] * hop_length, strides[0])
+            )
+            
+            # Apply Hanning window
+            window = np.hanning(n_fft)
+            frames = frames * window
+            
+            # FFT
+            spectrogram = np.abs(np.fft.rfft(frames, axis=1))
+            
+            # 2. Spectral Flux
+            # Calculate difference between consecutive frames
+            # We only care about positive changes (energy increasing)
+            diff = np.diff(spectrogram, axis=0)
+            flux = np.sum(np.maximum(0, diff), axis=1)
+            
+            # 3. Smooth the flux (ODF - Onset Detection Function)
+            # This ODF is our "rhythm signal"
+            # Sampling rate of ODF is sr / hop_length (~43Hz at 22050/512)
+            # We want higher precision, but 43Hz is okay for estimation. 
+            # Let's interpolate to 200Hz for better resolution.
+            
+            odf_sr = sr / hop_length
+            target_sr = 200
+            
+            old_indices = np.arange(len(flux))
+            new_indices = np.linspace(0, len(flux)-1, int(len(flux) * target_sr / odf_sr))
+            flux_resampled = np.interp(new_indices, old_indices, flux)
+            
+            # Remove DC and normalize
+            flux_resampled = flux_resampled - np.mean(flux_resampled)
+            flux_resampled /= (np.max(np.abs(flux_resampled)) + 1e-6)
+            
+            # 4. Autocorrelation
+            corr = np.correlate(flux_resampled, flux_resampled, mode='full')
+            corr = corr[len(corr)//2:]
+            
+            # 5. Peak Picking with Tempo Priors
+            # We apply a weighting curve to prefer standard tempos (90-140) slightly
+            # to avoid harmonics like 60 or 180 when 120 is likely.
+            
+            min_bpm = 60
+            max_bpm = 190
+            
+            best_bpm = 0
+            max_strength = 0
+            
+            # Scan BPMs
+            for b in range(min_bpm, max_bpm + 1):
+                lag = int(60 * target_sr / b)
+                if lag < len(corr):
+                    # Check the peak at this lag
+                    # We also check multiples (2x lag, 3x lag) to confirm rhythm
+                    strength = corr[lag]
                     
-                    # Heuristic: If BPM is very low (< 90) and there's a strong peak at 2x tempo, take 2x
-                    # (Simple check)
-                    if bpm < 90:
-                        # Check if there is significant energy at half the lag (double tempo)
-                        half_lag = true_lag // 2
-                        if half_lag >= min_lag:
-                            # Check amplitude at half lag in the correlation window
-                            # We need to map back to window indices
-                            half_lag_idx = half_lag - min_lag
-                            if 0 <= half_lag_idx < len(window):
-                                if window[half_lag_idx] > 0.5 * window[peak_idx]:
-                                    bpm *= 2
+                    # Add harmonics support (if the beat is strong, it repeats)
+                    if lag * 2 < len(corr):
+                        strength += 0.5 * corr[lag * 2]
+                    if lag * 4 < len(corr):
+                        strength += 0.25 * corr[lag * 4]
+                        
+                    # Gaussian weighting centered at 120 BPM (sigma=40)
+                    # This gently penalizes extreme BPMs unless the signal is very strong
+                    weight = np.exp(-0.5 * ((b - 120) / 40) ** 2)
+                    weighted_strength = strength * weight
+                    
+                    if weighted_strength > max_strength:
+                        max_strength = weighted_strength
+                        best_bpm = b
+            
+            bpm = best_bpm
 
         return {
             "energy": round(float(energy), 2),
