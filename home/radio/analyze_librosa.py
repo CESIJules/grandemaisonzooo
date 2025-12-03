@@ -46,7 +46,12 @@ def analyze_audio(file_path):
         # This helps avoid "rhythmic aliases" (e.g. detecting 1.33x or 1.5x tempo)
         onset_env_global = librosa.onset.onset_strength(y=y_percussive, sr=sr, aggregate=np.median)
         t_global = librosa.feature.tempo(onset_envelope=onset_env_global, sr=sr)
-        global_bpm = t_global[0] if isinstance(t_global, np.ndarray) else t_global
+        
+        # Robustly extract scalar BPM
+        if np.ndim(t_global) > 0:
+            global_bpm = t_global[0] if len(t_global) > 0 else 120
+        else:
+            global_bpm = t_global
 
         # --- 2. BPM ANALYSIS (Hybrid Voting System) ---
         # We combine two analysis passes to get the best of both worlds:
