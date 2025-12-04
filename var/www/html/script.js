@@ -1,9 +1,84 @@
 document.addEventListener('DOMContentLoaded', () => {
   // --- Global Variables & Helpers ---
   const mainContainer = document.querySelector('main');
-  const sections = document.querySelectorAll('section');
+  let sections = document.querySelectorAll('section');
   let currentSectionIndex = 0;
   let isNavigating = false;
+
+  // --- Dynamic Artists Loading ---
+  async function loadArtists() {
+    const container = document.getElementById('artists-container');
+    if (!container) return;
+
+    try {
+      const response = await fetch('get_artist_profiles.php');
+      if (!response.ok) throw new Error('Failed to load artists');
+      const artists = await response.json();
+
+      if (!artists || artists.length === 0) return;
+
+      // Update ARTISTES menu link to point to the first artist
+      const artistsLink = document.querySelector('a[href="#nelsonnorth"]');
+      if (artistsLink) {
+        artistsLink.setAttribute('href', `#${artists[0].id}`);
+      } else {
+          // Fallback: find by text
+          const links = document.querySelectorAll('.menu-link');
+          for (const link of links) {
+              if (link.textContent.trim() === 'ARTISTES') {
+                  link.setAttribute('href', `#${artists[0].id}`);
+                  break;
+              }
+          }
+      }
+
+      container.innerHTML = artists.map((artist, index) => {
+        // Alternate layout: even index -> image right (default), odd index -> image left
+        const isImageLeft = index % 2 !== 0;
+        
+        const imageHtml = `
+          <div class="artiste-image">
+            <img src="${artist.image}" alt="${artist.name}" />
+          </div>
+        `;
+        
+        const infoHtml = `
+          <div class="artiste-info">
+            <h3 class="nom-scene" id="${artist.id}Title">${artist.name.toUpperCase()}</h3>
+            <p class="localisation">${artist.location}</p>
+            <div class="artiste-actions">
+              <a href="${artist.listenLink}" target="_blank" class="btn">Écouter</a>
+              <a href="${artist.watchLink}" target="_blank" class="btn">Regarder</a>
+              <a href="#timeline" data-artist="${artist.name}" class="btn">Timeline</a>
+            </div>
+            <div class="artiste-socials">
+              <a href="${artist.instagramLink}" target="_blank"><i class="fab fa-instagram"></i></a>
+              <a href="#contact"><i class="fas fa-envelope"></i></a>
+            </div>
+          </div>
+        `;
+
+        return `
+          <section id="${artist.id}" class="screen artiste">
+            ${isImageLeft ? imageHtml + infoHtml : infoHtml + imageHtml}
+          </section>
+        `;
+      }).join('');
+
+      // Update sections list
+      sections = document.querySelectorAll('section');
+      
+      // Re-attach timeline link listeners
+      if (typeof handleArtistTimelineLinks === 'function') {
+          handleArtistTimelineLinks();
+      }
+      
+    } catch (error) {
+      console.error('Error loading artists:', error);
+    }
+  }
+
+  loadArtists();
 
   // --- START: Fullscreen height fix for mobile browsers ---
   function setMainHeight() {
@@ -2163,10 +2238,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   handleArtistTimelineLinks();
 
-  // Intercept all anchor clicks for smooth scrolling
-  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-      anchor.addEventListener('click', function (e) {
-          const targetId = this.getAttribute('href').substring(1);
+  // Intercept all anchor clicks for smooth scrolling (Delegation)
+  document.addEventListener('click', function (e) {
+      if (e.defaultPrevented) return; // Skip if already handled (e.g. by handleArtistTimelineLinks)
+      
+      const anchor = e.target.closest('a[href^="#"]');
+      if (anchor) {
+          const targetId = anchor.getAttribute('href').substring(1);
           const targetSection = document.getElementById(targetId);
           if (targetSection) {
               e.preventDefault();
@@ -2175,7 +2253,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   scrollToSection(index);
               }
           }
-      });
+      }
   });
 
   // Handle URL parameter for artist filter

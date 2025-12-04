@@ -54,6 +54,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const savePlaylistChangesBtn = document.getElementById('savePlaylistChangesBtn');
     const cancelPlaylistEditBtn = document.getElementById('cancelPlaylistEditBtn');
 
+    // --- Artists Section ---
+    const adminArtistForm = document.getElementById('adminArtistForm');
+    const artistFormMessage = document.getElementById('artistFormMessage');
+    const artistsManagementContainer = document.getElementById('artistsManagementContainer');
+    const cancelArtistEditBtn = document.getElementById('cancelArtistEditBtn');
+    const artistImagePreview = document.getElementById('artistImagePreview');
+    
+    let artistProfiles = [];
+
     // --- State ---
     let allAvailableSongs = [];
     let allMusicFiles = [];
@@ -868,128 +877,174 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Event Listeners ---
-    logoutBtn.addEventListener('click', () => {
-        sessionStorage.removeItem('loggedIn');
-        window.location.href = 'login.html';
-    });
-
-    skipSongBtn.addEventListener('click', skipSong);
-
-    adminTimelineForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData(adminTimelineForm);
-        const editingIdField = adminTimelineForm.querySelector('input[name="editingPostId"]');
-        if (editingIdField && editingIdField.value) {
-            formData.append('id', editingIdField.value);
-            await updatePost(formData);
-        } else {
-            formData.append('id', Date.now());
-            await addPost(formData);
+    // --- Artists Section ---
+    async function fetchArtistProfiles() {
+        try {
+            const response = await fetch('get_artist_profiles.php', { cache: 'no-store' });
+            if (!response.ok) throw new Error('Failed to fetch artist profiles');
+            artistProfiles = await response.json();
+            renderArtistProfiles();
+        } catch (error) {
+            console.error('Error fetching artist profiles:', error);
+            artistsManagementContainer.innerHTML = '<p style="color: var(--accent-danger);">Erreur de chargement des artistes.</p>';
         }
-    });
+    }
 
-    postsManagementContainer.addEventListener('click', async (e) => {
-        const editButton = e.target.closest('.edit-post-btn');
-        const deleteButton = e.target.closest('.delete-post-btn');
+    function renderArtistProfiles() {
+        if (artistProfiles.length === 0) {
+            artistsManagementContainer.innerHTML = '<p>Aucun profil artiste.</p>';
+            return;
+        }
 
-        if (editButton) {
-            const postId = editButton.dataset.id;
-            const response = await fetch('get_posts.php');
-            const posts = await response.json();
-            const postToEdit = posts.find(p => p.id == postId);
-            if (postToEdit) {
-                document.getElementById('postSubtitle').value = postToEdit.subtitle || '';
-                document.getElementById('postLink').value = postToEdit.link || '';
-                document.getElementById('postDate').value = new Date(postToEdit.date).toISOString().split('T')[0];
-                document.getElementById('postArtist').value = postToEdit.artist;
-                let editingIdField = adminTimelineForm.querySelector('input[name="editingPostId"]');
-                if (!editingIdField) {
-                    editingIdField = document.createElement('input');
-                    editingIdField.type = 'hidden';
-                    editingIdField.name = 'editingPostId';
-                    adminTimelineForm.appendChild(editingIdField);
+        const table = document.createElement('table');
+        table.className = 'item-list';
+        table.innerHTML = `<thead><tr><th>Image</th><th>Nom</th><th>Localisation</th><th class="actions">Actions</th></tr></thead>`;
+        const tbody = document.createElement('tbody');
+        
+        artistProfiles.forEach(artist => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><img src="${artist.image}" alt="${artist.name}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;"></td>
+                <td>${artist.name}</td>
+                <td>${artist.location}</td>
+                <td class="actions">
+                    <button class="btn edit-artist-btn" data-id="${artist.id}"><i class="fas fa-pencil-alt"></i></button>
+                    <button class="btn btn-danger delete-artist-btn" data-id="${artist.id}"><i class="fas fa-trash"></i></button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        artistsManagementContainer.innerHTML = '';
+        artistsManagementContainer.appendChild(table);
+    }
+
+    async function saveArtistProfile(formData) {
+        // Handle image upload first if present
+        const imageFile = formData.get('image');
+        let imagePath = formData.get('currentImage');
+
+        if (imageFile && imageFile.size > 0) {
+            const uploadData = new FormData();
+            uploadData.append('image', imageFile);
+            try {
+                const uploadRes = await fetch('upload_artist_image.php', { method: 'POST', body: uploadData });
+                const uploadResult = await uploadRes.json();
+                if (uploadResult.status === 'success') {
+                    imagePath = uploadResult.filepath;
+                } else {
+                    throw new Error(uploadResult.message);
                 }
-                editingIdField.value = postId;
-                adminTimelineForm.querySelector('button[type="submit"]').innerHTML = '<i class="fas fa-save"></i> Modifier le post';
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } catch (e) {
+                throw new Error('Erreur upload image: ' + e.message);
             }
         }
-        if (deleteButton) {
-            deletePost(deleteButton.dataset.id);
+
+        const artistData = {
+            id: formData.get('editingArtistId') || ('artist_' + Date.now()),
+            name: formData.get('name'),
+            location: formData.get('location'),
+            image: imagePath,
+            listenLink: formData.get('listenLink'),
+            watchLink: formData.get('watchLink'),
+            instagramLink: formData.get('instagramLink')
+        };
+
+        // Update or Add
+        const existingIndex = artistProfiles.findIndex(a => a.id === artistData.id);
+        if (existingIndex >= 0) {
+            artistProfiles[existingIndex] = artistData;
+        } else {
+            artistProfiles.push(artistData);
         }
-    });
 
-    postArtistFilter.addEventListener('change', () => {
-        renderAdminPosts(postArtistFilter.value);
-    });
+        await saveProfilesToServer();
+        resetArtistForm();
+    }
 
-    youtubeDownloadForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const url = youtubeUrlInput.value;
-        if (!url) return;
-        const submitBtn = e.target.querySelector('button[type="submit"]');
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Téléchargement...';
+    async function saveProfilesToServer() {
         try {
-            const response = await fetch('download_youtube.php', {
+            const response = await fetch('save_artist_profiles.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: url }),
+                body: JSON.stringify(artistProfiles)
             });
             const result = await response.json();
-            if (!response.ok) throw new Error(result.message || 'Erreur inconnue.');
-            youtubeFormMessage.textContent = result.message;
-            youtubeFormMessage.style.color = 'lightgreen';
-            youtubeDownloadForm.reset();
-            renderMusicFiles(musicSearchInput.value, true); // Refresh list
+            if (result.status !== 'success') throw new Error(result.message);
+            fetchArtistProfiles();
+            artistFormMessage.textContent = 'Sauvegardé !';
+            artistFormMessage.style.color = 'lightgreen';
+            setTimeout(() => artistFormMessage.textContent = '', 3000);
         } catch (error) {
-            youtubeFormMessage.textContent = `Erreur: ${error.message}`;
-            youtubeFormMessage.style.color = 'var(--accent-danger)';
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="fab fa-youtube"></i> Télécharger en MP3';
-            setTimeout(() => youtubeFormMessage.textContent = '', 3000);
+            artistFormMessage.textContent = 'Erreur: ' + error.message;
+            artistFormMessage.style.color = 'var(--accent-danger)';
         }
-    });
+    }
 
-    musicManagementContainer.addEventListener('click', (e) => {
-        const renameButton = e.target.closest('.rename-music-btn');
-        const deleteButton = e.target.closest('.delete-music-btn');
-        if (renameButton) renameMusicFile(renameButton.dataset.filename);
-        if (deleteButton) deleteMusicFile(deleteButton.dataset.filename);
-    });
+    function deleteArtistProfile(id) {
+        if (!confirm('Supprimer cet artiste ?')) return;
+        artistProfiles = artistProfiles.filter(a => a.id !== id);
+        saveProfilesToServer();
+    }
 
-    musicSearchInput.addEventListener('input', (e) => {
-        renderMusicFiles(e.target.value);
-    });
+    function editArtistProfile(id) {
+        const artist = artistProfiles.find(a => a.id === id);
+        if (!artist) return;
 
-    createPlaylistForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const playlistName = newPlaylistNameInput.value.trim();
-        if (playlistName) createPlaylist(playlistName);
-    });
-
-    existingPlaylistsContainer.addEventListener('click', (e) => {
-        const activateBtn = e.target.closest('.activate-playlist-btn');
-        const deactivateBtn = e.target.closest('.deactivate-playlist-btn');
-        const editBtn = e.target.closest('.edit-playlist-btn');
-        const deleteBtn = e.target.closest('.delete-playlist-btn');
-
-        if (activateBtn) setActivePlaylist(activateBtn.dataset.playlistName);
-        if (deactivateBtn) setActivePlaylist(null);
-        if (deleteBtn) deletePlaylist(deleteBtn.dataset.playlistName);
-        if (editBtn) {
-            fetch('get_playlists.php').then(res => res.json()).then(result => {
-                const playlist = result.data.playlists.find(p => p.name === editBtn.dataset.playlistName);
-                if (playlist) editPlaylist(playlist);
-            });
+        document.getElementById('editingArtistId').value = artist.id;
+        document.getElementById('artistName').value = artist.name;
+        document.getElementById('artistLocation').value = artist.location;
+        document.getElementById('artistListenLink').value = artist.listenLink || '';
+        document.getElementById('artistWatchLink').value = artist.watchLink || '';
+        document.getElementById('artistInstagramLink').value = artist.instagramLink || '';
+        document.getElementById('currentArtistImage').value = artist.image;
+        
+        if (artist.image) {
+            artistImagePreview.innerHTML = `<img src="${artist.image}" style="width: 100px; border-radius: 4px;">`;
+        } else {
+            artistImagePreview.innerHTML = '';
         }
-    });
 
-    savePlaylistChangesBtn.addEventListener('click', savePlaylistChanges);
-    cancelPlaylistEditBtn.addEventListener('click', cancelPlaylistEdit);
-    songSearchInput.addEventListener('input', (e) => renderAllAvailableSongsForEdit(e.target.value));
+        cancelArtistEditBtn.style.display = 'inline-block';
+        adminArtistForm.querySelector('button[type="submit"]').innerHTML = '<i class="fas fa-save"></i> Modifier l\'artiste';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function resetArtistForm() {
+        adminArtistForm.reset();
+        document.getElementById('editingArtistId').value = '';
+        document.getElementById('currentArtistImage').value = '';
+        artistImagePreview.innerHTML = '';
+        cancelArtistEditBtn.style.display = 'none';
+        adminArtistForm.querySelector('button[type="submit"]').innerHTML = '<i class="fas fa-plus"></i> Enregistrer l\'artiste';
+    }
+
+    // Event Listeners
+    if (adminArtistForm) {
+        adminArtistForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(adminArtistForm);
+            try {
+                await saveArtistProfile(formData);
+            } catch (error) {
+                artistFormMessage.textContent = error.message;
+                artistFormMessage.style.color = 'var(--accent-danger)';
+            }
+        });
+    }
+
+    if (cancelArtistEditBtn) {
+        cancelArtistEditBtn.addEventListener('click', resetArtistForm);
+    }
+
+    if (artistsManagementContainer) {
+        artistsManagementContainer.addEventListener('click', (e) => {
+            const editBtn = e.target.closest('.edit-artist-btn');
+            const deleteBtn = e.target.closest('.delete-artist-btn');
+            if (editBtn) editArtistProfile(editBtn.dataset.id);
+            if (deleteBtn) deleteArtistProfile(deleteBtn.dataset.id);
+        });
+    }
 
     // --- Initial Load ---
     function initializeAdminPanel() {
@@ -998,7 +1053,10 @@ document.addEventListener('DOMContentLoaded', () => {
         renderAdminPosts();
         renderMusicFiles();
         fetchAllSongs();
+        fetchArtistProfiles();
+    }
         fetchPlaylists();
+        fetchArtistProfiles();
         // Set initial view
         document.querySelector('.nav-link[data-section="timeline"]').click();
     }
