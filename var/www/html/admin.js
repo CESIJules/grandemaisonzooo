@@ -62,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const artistImagePreview = document.getElementById('artistImagePreview');
     
     let artistProfiles = [];
+    let allPosts = [];
 
     // --- State ---
     let allAvailableSongs = [];
@@ -484,6 +485,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error(`Erreur serveur: ${response.statusText}`);
             let posts = await response.json();
             posts.sort((a, b) => new Date(b.date) - new Date(a.date));
+            allPosts = posts; // Store globally
 
             if (artistFilter !== 'all') {
                 posts = posts.filter(post => post.artist === artistFilter);
@@ -576,6 +578,56 @@ document.addEventListener('DOMContentLoaded', () => {
             renderAdminPosts();
         } catch (error) {
             alert(`Erreur lors de la suppression: ${error.message}`);
+        }
+    }
+
+    function editPost(postId) {
+        const post = allPosts.find(p => p.id === postId);
+        if (!post) return;
+
+        document.getElementById('postSubtitle').value = post.subtitle;
+        document.getElementById('postArtist').value = post.artist;
+        document.getElementById('postDate').value = post.date;
+        document.getElementById('postLink').value = post.link;
+        document.getElementById('postType').value = post.type;
+        
+        // Handle hidden ID field
+        let editingIdField = adminTimelineForm.querySelector('input[name="editingPostId"]');
+        if (!editingIdField) {
+            editingIdField = document.createElement('input');
+            editingIdField.type = 'hidden';
+            editingIdField.name = 'editingPostId';
+            adminTimelineForm.appendChild(editingIdField);
+        }
+        editingIdField.value = post.id;
+
+        adminTimelineForm.querySelector('button[type="submit"]').innerHTML = '<i class="fas fa-save"></i> Modifier le Post';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function downloadYoutube(url) {
+        youtubeFormMessage.textContent = 'Téléchargement en cours...';
+        youtubeFormMessage.style.color = 'var(--text-primary)';
+        
+        try {
+            const response = await fetch('download_youtube.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: url })
+            });
+            const result = await response.json();
+            
+            if (result.status === 'success') {
+                youtubeFormMessage.textContent = 'Téléchargement réussi !';
+                youtubeFormMessage.style.color = 'lightgreen';
+                youtubeUrlInput.value = '';
+                renderMusicFiles('', true);
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (error) {
+            youtubeFormMessage.textContent = 'Erreur: ' + error.message;
+            youtubeFormMessage.style.color = 'var(--accent-danger)';
         }
     }
 
@@ -1044,6 +1096,103 @@ document.addEventListener('DOMContentLoaded', () => {
             if (editBtn) editArtistProfile(editBtn.dataset.id);
             if (deleteBtn) deleteArtistProfile(deleteBtn.dataset.id);
         });
+    }
+
+    // --- Event Listeners (Restored) ---
+    
+    // Timeline
+    if (adminTimelineForm) {
+        adminTimelineForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const formData = new FormData(adminTimelineForm);
+            const editingId = formData.get('editingPostId');
+            if (editingId) {
+                formData.append('id', editingId);
+                updatePost(formData);
+            } else {
+                addPost(formData);
+            }
+        });
+    }
+
+    if (postsManagementContainer) {
+        postsManagementContainer.addEventListener('click', (e) => {
+            const editBtn = e.target.closest('.edit-post-btn');
+            const deleteBtn = e.target.closest('.delete-post-btn');
+            
+            if (editBtn) editPost(editBtn.dataset.id);
+            if (deleteBtn) deletePost(deleteBtn.dataset.id);
+        });
+    }
+
+    if (postArtistFilter) {
+        postArtistFilter.addEventListener('change', (e) => {
+            renderAdminPosts(e.target.value);
+        });
+    }
+
+    // Music
+    if (youtubeDownloadForm) {
+        youtubeDownloadForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            downloadYoutube(youtubeUrlInput.value);
+        });
+    }
+
+    if (musicSearchInput) {
+        musicSearchInput.addEventListener('input', (e) => {
+            renderMusicFiles(e.target.value);
+        });
+    }
+
+    if (musicManagementContainer) {
+        musicManagementContainer.addEventListener('click', (e) => {
+            const renameBtn = e.target.closest('.rename-music-btn');
+            const deleteBtn = e.target.closest('.delete-music-btn');
+            if (renameBtn) renameMusicFile(renameBtn.dataset.filename);
+            if (deleteBtn) deleteMusicFile(deleteBtn.dataset.filename);
+        });
+    }
+
+    if (skipSongBtn) {
+        skipSongBtn.addEventListener('click', async () => {
+            await fetch('skip_song.php');
+        });
+    }
+
+    // Playlists
+    if (createPlaylistForm) {
+        createPlaylistForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            createPlaylist(newPlaylistNameInput.value);
+        });
+    }
+
+    if (existingPlaylistsContainer) {
+        existingPlaylistsContainer.addEventListener('click', (e) => {
+            const deleteBtn = e.target.closest('.delete-playlist-btn');
+            const editBtn = e.target.closest('.edit-playlist-btn');
+            const setActiveBtn = e.target.closest('.set-active-playlist-btn');
+
+            if (deleteBtn) deletePlaylist(deleteBtn.dataset.name);
+            if (editBtn) openPlaylistEditor(editBtn.dataset.name);
+            if (setActiveBtn) setActivePlaylist(setActiveBtn.dataset.name);
+        });
+    }
+
+    // Playlist Editor
+    if (songSearchInput) {
+        songSearchInput.addEventListener('input', (e) => {
+            renderAllAvailableSongsForEdit(e.target.value);
+        });
+    }
+
+    if (savePlaylistChangesBtn) {
+        savePlaylistChangesBtn.addEventListener('click', savePlaylistChanges);
+    }
+
+    if (cancelPlaylistEditBtn) {
+        cancelPlaylistEditBtn.addEventListener('click', cancelPlaylistEdit);
     }
 
     // --- Initial Load ---
