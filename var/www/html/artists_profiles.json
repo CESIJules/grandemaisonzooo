@@ -1,0 +1,38 @@
+[
+    {
+        "id": "nelsonnorth",
+        "name": "NELSON NORTH",
+        "location": "Nice, France",
+        "image": "images/nelson-north.png",
+        "listenLink": "https://music.apple.com/fr/artist/nelson-north/1575779612",
+        "watchLink": "https://www.youtube.com/@nelsonnorth",
+        "instagramLink": "https://www.instagram.com/nelsonnorth_"
+    },
+    {
+        "id": "req1",
+        "name": "REQ1",
+        "location": "Marseille, France",
+        "image": "images/req1.png",
+        "listenLink": "https://soundcloud.com/req1quor",
+        "watchLink": "https://www.youtube.com/@GRANDEMAISONzoo",
+        "instagramLink": "https://www.instagram.com/req1_sns"
+    },
+    {
+        "id": "mindset",
+        "name": "MINDSET",
+        "location": "Strasbourg, France",
+        "image": "images/mindset.jpg",
+        "listenLink": "https://lemage.grandemaisonzoo.com/another-time",
+        "watchLink": "https://www.youtube.com/@GRANDEMAISONzoo",
+        "instagramLink": "https://www.instagram.com/mindset.flp/"
+    },
+    {
+        "id": "shorebreak",
+        "name": "SHOREBREAK",
+        "location": "SUDEST, France",
+        "image": "images/shorebreak.png",
+        "listenLink": "https://music.apple.com/fr/artist/shore-break/1685728922",
+        "watchLink": "https://www.youtube.com/@GRANDEMAISONzoo",
+        "instagramLink": "https://www.instagram.com/shorebreaak/"
+    }
+]

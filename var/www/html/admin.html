@@ -524,6 +524,7 @@
         <div class="sidebar-nav">
             <ul>
                 <li><a href="#" class="nav-link active" data-section="timeline"><i class="fas fa-stream"></i> Timeline</a></li>
+                <li><a href="#" class="nav-link" data-section="artists"><i class="fas fa-users"></i> Artistes</a></li>
                 <li><a href="#" class="nav-link" data-section="music"><i class="fas fa-music"></i> Musique</a></li>
                 <li><a href="#" class="nav-link" data-section="playlists"><i class="fas fa-list-ol"></i> Playlists</a></li>
             </ul>
@@ -575,6 +576,54 @@
                 </div>
                 <div id="postsManagementContainer"></div>
 
+            </div>
+        </section>
+
+        <!-- SECTION: ARTISTES -->
+        <section id="artists" class="admin-section">
+            <h2>Gestion des Profils Artistes</h2>
+            <div class="card">
+                <h3>Ajouter / Modifier un Artiste</h3>
+                <form id="adminArtistForm">
+                    <input type="hidden" name="editingArtistId" id="editingArtistId">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="artistName">Nom de Scène</label>
+                            <input type="text" id="artistName" name="name" placeholder="Ex: Nelson North" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="artistLocation">Localisation</label>
+                            <input type="text" id="artistLocation" name="location" placeholder="Ex: Nice, France">
+                        </div>
+                        <div class="form-group">
+                            <label for="artistListenLink">Lien Écouter</label>
+                            <input type="url" id="artistListenLink" name="listenLink" placeholder="Apple Music, Spotify...">
+                        </div>
+                        <div class="form-group">
+                            <label for="artistWatchLink">Lien Regarder</label>
+                            <input type="url" id="artistWatchLink" name="watchLink" placeholder="YouTube...">
+                        </div>
+                        <div class="form-group">
+                            <label for="artistInstagramLink">Lien Instagram</label>
+                            <input type="url" id="artistInstagramLink" name="instagramLink" placeholder="Instagram URL">
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label for="artistImage">Image de l'artiste</label>
+                            <input type="file" id="artistImage" name="image" accept="image/*">
+                            <input type="hidden" id="currentArtistImage" name="currentImage">
+                            <div id="artistImagePreview" style="margin-top: 10px; max-width: 200px;"></div>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <span id="artistFormMessage"></span>
+                        <button type="button" id="cancelArtistEditBtn" class="btn" style="display: none;">Annuler</button>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> Enregistrer l'artiste</button>
+                    </div>
+                </form>
+            </div>
+            <div class="card">
+                <h3>Artistes Existants</h3>
+                <div id="artistsManagementContainer"></div>
             </div>
         </section>
 
