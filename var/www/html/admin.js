@@ -63,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     let artistProfiles = [];
     let allPosts = [];
+    let allPlaylists = [];
 
     // --- State ---
     let allAvailableSongs = [];
@@ -737,6 +738,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             currentActivePlaylist = result.data.active_playlist;
             const playlists = result.data.playlists;
+            allPlaylists = playlists; // Store globally
 
             if (playlists.length === 0) {
                 existingPlaylistsContainer.innerHTML = '<p>Aucune playlist créée.</p>';
@@ -1172,11 +1174,13 @@ document.addEventListener('DOMContentLoaded', () => {
         existingPlaylistsContainer.addEventListener('click', (e) => {
             const deleteBtn = e.target.closest('.delete-playlist-btn');
             const editBtn = e.target.closest('.edit-playlist-btn');
-            const setActiveBtn = e.target.closest('.set-active-playlist-btn');
+            const activateBtn = e.target.closest('.activate-playlist-btn');
+            const deactivateBtn = e.target.closest('.deactivate-playlist-btn');
 
-            if (deleteBtn) deletePlaylist(deleteBtn.dataset.name);
-            if (editBtn) openPlaylistEditor(editBtn.dataset.name);
-            if (setActiveBtn) setActivePlaylist(setActiveBtn.dataset.name);
+            if (deleteBtn) deletePlaylist(deleteBtn.dataset.playlistName);
+            if (editBtn) openPlaylistEditor(editBtn.dataset.playlistName);
+            if (activateBtn) setActivePlaylist(activateBtn.dataset.playlistName);
+            if (deactivateBtn) setActivePlaylist(null);
         });
     }
 
@@ -1211,4 +1215,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     initializeAdminPanel();
+
+    function openPlaylistEditor(playlistName) {
+        const playlist = allPlaylists.find(p => p.name === playlistName);
+        if (playlist) {
+            editPlaylist(playlist);
+        } else {
+            alert('Playlist introuvable.');
+        }
+    }
 });
