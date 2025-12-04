@@ -1053,12 +1053,12 @@ document.addEventListener('DOMContentLoaded', () => {
         renderAdminPosts();
         renderMusicFiles();
         fetchAllSongs();
-        fetchArtistProfiles();
-    }
         fetchPlaylists();
         fetchArtistProfiles();
+        
         // Set initial view
-        document.querySelector('.nav-link[data-section="timeline"]').click();
+        const timelineLink = document.querySelector('.nav-link[data-section="timeline"]');
+        if (timelineLink) timelineLink.click();
     }
 
     initializeAdminPanel();
