@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let sections = document.querySelectorAll('section');
   let currentSectionIndex = 0;
   let isNavigating = false;
+  let isIntroActive = false;
 
   // --- Dynamic Artists Loading ---
   async function loadArtists() {
@@ -209,6 +210,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Fonction pour terminer l'intro
   function endIntro() {
+    isIntroActive = false;
+    document.body.classList.remove('no-scroll');
     videoOverlay.classList.add('fade-out');
     sessionStorage.setItem('introPlayed', 'true');
     
@@ -275,6 +278,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function initLoader() {
+      isIntroActive = true;
+      document.body.classList.add('no-scroll');
+
       if (!marqueeContent) {
           playIntro();
           return;
@@ -2403,6 +2409,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Global Wheel Handler
   window.addEventListener('wheel', (e) => {
+    if (isIntroActive) {
+        e.preventDefault();
+        return;
+    }
+
     // --- MOBILE FIX: Disable scroll hijacking on small screens ---
     if (window.innerWidth < 900) return; 
 
@@ -2489,6 +2500,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }, { passive: false });
   
   window.addEventListener('touchmove', (e) => {
+      if (isIntroActive) {
+          e.preventDefault();
+          return;
+      }
+
       // --- MOBILE FIX: Disable scroll hijacking on small screens ---
       if (window.innerWidth < 900) return;
 
