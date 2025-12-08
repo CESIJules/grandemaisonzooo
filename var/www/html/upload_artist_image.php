@@ -14,6 +14,15 @@ if (!file_exists($target_dir)) {
     }
 }
 
+// Ensure writable
+if (!is_writable($target_dir)) {
+    @chmod($target_dir, 0777);
+    if (!is_writable($target_dir)) {
+        echo json_encode(['status' => 'error', 'message' => 'Images directory is not writable. Check permissions for: ' . $target_dir]);
+        exit;
+    }
+}
+
 $file_extension = strtolower(pathinfo($_FILES["image"]["name"], PATHINFO_EXTENSION));
 $new_filename = uniqid('artist_') . '.' . $file_extension;
 $target_file = $target_dir . $new_filename;
