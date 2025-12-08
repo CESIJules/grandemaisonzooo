@@ -526,7 +526,14 @@ document.addEventListener('DOMContentLoaded', () => {
     async function addPost(formData) {
         try {
             const response = await fetch('add_post.php', { method: 'POST', body: formData });
-            if (!response.ok) throw new Error(`Erreur serveur: ${response.statusText}`);
+            if (!response.ok) {
+                let errorMsg = `Erreur serveur: ${response.statusText}`;
+                try {
+                    const errorJson = await response.json();
+                    if (errorJson.message) errorMsg = errorJson.message;
+                } catch (e) { /* ignore JSON parse error */ }
+                throw new Error(errorMsg);
+            }
             const result = await response.json();
             if (result.status !== 'success') throw new Error(result.message || 'Erreur inconnue.');
             
@@ -545,7 +552,14 @@ document.addEventListener('DOMContentLoaded', () => {
     async function updatePost(formData) {
         try {
             const response = await fetch('update_post.php', { method: 'POST', body: formData });
-            if (!response.ok) throw new Error(`Erreur serveur: ${response.statusText}`);
+            if (!response.ok) {
+                let errorMsg = `Erreur serveur: ${response.statusText}`;
+                try {
+                    const errorJson = await response.json();
+                    if (errorJson.message) errorMsg = errorJson.message;
+                } catch (e) { /* ignore JSON parse error */ }
+                throw new Error(errorMsg);
+            }
             const result = await response.json();
             if (result.status !== 'success') throw new Error(result.message || 'Erreur inconnue.');
 

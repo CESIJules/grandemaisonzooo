@@ -56,7 +56,7 @@ $posts[$post_index]['artist'] = $_POST['artist'] ?? $posts[$post_index]['artist'
 $posts[$post_index]['link'] = $_POST['link'] ?? $posts[$post_index]['link'];
 
 // Handle image upload
-if (isset($_FILES['image'])) {
+if (isset($_FILES['image']) && $_FILES['image']['error'] !== UPLOAD_ERR_NO_FILE) {
     if ($_FILES['image']['error'] !== UPLOAD_ERR_OK) {
         $uploadErrorMessages = [
             UPLOAD_ERR_INI_SIZE => 'Le fichier dépasse la taille upload_max_filesize dans php.ini',
