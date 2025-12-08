@@ -21,7 +21,23 @@ try {
     $image_path = null;
 
     // Handle file upload
-    if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+    if (isset($_FILES['image'])) {
+        if ($_FILES['image']['error'] !== UPLOAD_ERR_OK) {
+            $uploadErrorMessages = [
+                UPLOAD_ERR_INI_SIZE => 'Le fichier dépasse la taille upload_max_filesize dans php.ini',
+                UPLOAD_ERR_FORM_SIZE => 'Le fichier dépasse la taille MAX_FILE_SIZE spécifiée dans le formulaire HTML',
+                UPLOAD_ERR_PARTIAL => 'Le fichier n\'a été que partiellement téléchargé',
+                UPLOAD_ERR_NO_FILE => 'Aucun fichier n\'a été téléchargé',
+                UPLOAD_ERR_NO_TMP_DIR => 'Un dossier temporaire est manquant',
+                UPLOAD_ERR_CANT_WRITE => 'Échec de l\'écriture du fichier sur le disque',
+                UPLOAD_ERR_EXTENSION => 'Une extension PHP a arrêté le téléchargement du fichier',
+            ];
+            $errorMessage = $uploadErrorMessages[$_FILES['image']['error']] ?? 'Erreur de téléchargement inconnue';
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => $errorMessage]);
+            exit;
+        }
+
         if (!file_exists($upload_dir)) {
             mkdir($upload_dir, 0777, true);
         }
