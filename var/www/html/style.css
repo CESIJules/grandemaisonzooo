@@ -215,6 +215,12 @@ main { -ms-overflow-style: none; scrollbar-width: none; }
   /* scroll-snap-align: start; Désactivé */
 }
 
+@media (max-width: 768px) {
+  .screen {
+    padding: 60px 16px 100px;
+  }
+}
+
 h1, h2, h3, h4, h5, h6 { 
   font-family: 'SyneGMZExtraBold', sans-serif;
   font-weight: 800; 
@@ -723,6 +729,38 @@ body.menu-open {
   gap: 15px;
 }
 
+@media (max-width: 768px) {
+  .radio-header {
+    flex-wrap: wrap;
+    justify-content: center;
+    top: 20px;
+    left: 20px;
+    width: calc(100% - 40px);
+  }
+  
+  #radio h2 {
+    font-size: 3em;
+    width: 100%;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  
+  #currentSong {
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+    width: 100%;
+    max-width: 100%;
+    margin-top: 10px;
+    order: 3;
+  }
+  
+  #visualizer {
+    display: none; /* Hide visualizer on mobile to save space/performance */
+  }
+}
+
 /* Circular Volume Control */
 .volume-container {
   position: relative;
@@ -811,6 +849,31 @@ body.menu-open {
   
   overflow: hidden;
   color: #fff;
+}
+
+@media (max-width: 480px) {
+  .rc-container {
+    min-width: auto;
+    width: calc(100vw - 40px);
+    right: 20px;
+    left: 20px;
+  }
+  
+  .rc-content {
+    padding: 15px;
+  }
+  
+  .rc-top-row {
+    gap: 10px;
+  }
+  
+  #rcTitle {
+    font-size: 14px;
+  }
+  
+  #rcArtist {
+    font-size: 12px;
+  }
 }
 
 .rc-container.hidden {
@@ -1291,19 +1354,48 @@ body.menu-open {
   background: #333;
   outline: none;
   cursor: pointer;
-  transform: rotate(-90deg); /* Makes the slider vertical */
-  transform-origin: center;
+#timeline h2 { 
+  margin: 0;
+  font-size: clamp(2.5em, 8vw, 4.5em);
+  position: absolute;
+  text-align: left;
+  pointer-events: none;
+  left: 40px;
+  top: 50%;
+  transform: translateY(-50%);
+  mix-blend-mode: difference;
+  color: #fff;
+  z-index: 10;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
 }
 
-.volume input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 2px;
-  height: 16px;
-  background: #999;
-  border: none;
-  cursor: pointer;
-  margin-top: -6px;
+@media (max-width: 768px) {
+  #timeline h2 {
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+    text-align: center;
+    margin-bottom: 20px;
+    width: 100%;
+  }
+  
+  .timeline-header-wrapper {
+    flex-direction: column;
+    position: absolute;
+    top: 20px;
+    height: auto;
+    pointer-events: none; /* Allow clicks to pass through wrapper */
+  }
+  
+  .timeline-filters {
+    pointer-events: auto; /* Re-enable clicks on buttons */
+    flex-wrap: wrap;
+  }
+  
+  .timeline-container {
+    margin-top: 100px; /* Space for header */
+  }
 }
 
 .volume input[type="range"]::-webkit-slider-runnable-track {
@@ -1335,13 +1427,20 @@ body.menu-open {
 }
 
 .timeline-header-wrapper {
-  position: absolute;
-  top: 20px;
-  left: 0;
-  right: 0;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
+.timeline-item { 
+  position: relative;
+  flex-shrink: 0;
+  width: 300px;
+  margin: 0 40px;
+  z-index: 2;
+}
+
+@media (max-width: 480px) {
+  .timeline-item {
+    width: 80vw;
+    margin: 0 20px;
+  }
+} align-items: center;
   justify-content: center;
   padding: 0 40px;
   /* z-index removed to allow mix-blend-mode on children */
@@ -1602,20 +1701,14 @@ body.menu-open {
   gap: 16px;
   margin-top: 20px;
 }
-
-.artistes-nav .btn {
-  font-size: 16px;
-  padding: 10px 20px;
-}
-
 /* Chaque artiste = section plein écran intégrée au one-scroll */
 .artiste {
   height: 100vh;
   display: grid;
   grid-template-columns: 1fr 1fr;
   align-items: center;
-  padding: 40px;
-  gap: 40px;
+  padding: 0;
+  gap: 0;
   /* scroll-snap-align: start; Désactivé */
 }
 
@@ -1627,11 +1720,54 @@ body.menu-open {
   gap: 16px;
   text-align: left;
   padding-left: 40px;   /* décalage vers la droite */
+  padding-right: 20px;
+}
+
+@media (max-width: 900px) {
+  .artiste {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .artiste-info {
+    padding: 40px 20px;
+    order: 2; /* Info below image on mobile */
+    align-items: center;
+    text-align: center;
+  }
+
+  .artiste-image {
+    height: 50vh;
+    order: 1;
+  }
+  
+  .artiste-info .localisation {
+    text-align: center;
+    padding-left: 0;
+  }
+  
+  .artiste-actions {
+    justify-content: center;
+    padding-left: 0;
+  }
+  
+  .artiste-socials {
+    justify-content: center;
+    padding-left: 0;
+  }
 }
 
 .artiste-info h3 { 
   margin: 0; 
   font-size: clamp(2rem, 8vw, 4rem); /* Fluid font size */
+  line-height: 0.9;
+  color: #fff;
+  white-space: normal; /* Allow wrapping */
+  mix-blend-mode: difference;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+} font-size: clamp(2rem, 8vw, 4rem); /* Fluid font size */
   line-height: 0.9;
   color: #fff;
   white-space: normal; /* Allow wrapping */
@@ -1751,6 +1887,11 @@ body.menu-open {
   position: relative;
   width: 400px;
   height: 400px;
+  /* Responsive size */
+  max-width: 80vw;
+  max-height: 80vw;
+  aspect-ratio: 1 / 1;
+  
   display: flex;
   align-items: center;
   justify-content: center;
