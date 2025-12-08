@@ -2683,3 +2683,9 @@ body.menu-open {
     font-size: 16px !important;
   }
 }
+
+/* Block scroll during intro/loading */
+body.no-scroll, body.no-scroll main {
+    overflow: hidden !important;
+    touch-action: none; /* Disable touch actions */
+}
