@@ -2093,7 +2093,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // If we have an explicit artist field, use it as the main title
         if (post.artist) {
             displayTitle = post.artist;
-            displaySubtitle = post.title;
+            
+            // Fix for legacy posts: if title equals artist, use subtitle as the project title
+            if (post.title && post.title.trim().toLowerCase() === post.artist.trim().toLowerCase() && post.subtitle) {
+                displaySubtitle = post.subtitle;
+            } else {
+                displaySubtitle = post.title;
+            }
         } else {
             // Legacy: Check if title contains artist name
             if (allArtists.length > 0) {
