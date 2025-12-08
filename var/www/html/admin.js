@@ -1026,6 +1026,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await response.json();
             if (result.status !== 'success') throw new Error(result.message);
             fetchArtistProfiles();
+            populateArtistDropdown(); // Refresh dropdowns
+            populateArtistFilterDropdown(); // Refresh filters
             artistFormMessage.textContent = 'Sauvegardé !';
             artistFormMessage.style.color = 'lightgreen';
             setTimeout(() => artistFormMessage.textContent = '', 3000);
