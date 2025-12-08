@@ -504,7 +504,7 @@ document.addEventListener('DOMContentLoaded', () => {
             posts.forEach(post => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${post.subtitle}</td>
+                    <td>${post.title}</td>
                     <td>${post.artist}</td>
                     <td>${new Date(post.date).toLocaleDateString('fr-FR')}</td>
                     <td class="actions">
@@ -597,7 +597,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function editPost(postId) {
-        const post = allPosts.find(p => p.id === postId);
+        // Convert postId to string for comparison because dataset.id is a string
+        const post = allPosts.find(p => String(p.id) === String(postId));
         if (!post) return;
 
         document.getElementById('postTitle').value = post.title;
