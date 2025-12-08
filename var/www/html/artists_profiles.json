@@ -4,7 +4,7 @@
         "name": "NELSON NORTH",
         "location": "Nice, France",
         "image": "images\/artist_6936d8e84d5d0.jpg",
-        "listenLink": "https:\/\/music.apple.com\/fr\/artist\/nelson-north\/1575779612",
+        "listenLink": "https:\/\/linktr.ee\/nelsonnorth",
         "watchLink": "https:\/\/www.youtube.com\/@nelsonnorth",
         "instagramLink": "https:\/\/www.instagram.com\/nelsonnorth_"
     },
@@ -34,5 +34,14 @@
         "listenLink": "https:\/\/music.apple.com\/fr\/artist\/shore-break\/1685728922",
         "watchLink": "https:\/\/www.youtube.com\/@GRANDEMAISONzoo",
         "instagramLink": "https:\/\/www.instagram.com\/shorebreaak\/"
+    },
+    {
+        "id": "artist_1765227496251",
+        "name": "GUKEY",
+        "location": "???,  \u00bf\u00bf\u00bf",
+        "image": "images\/artist_69373be834e7c.jpg",
+        "listenLink": "https:\/\/linktr.ee\/gukeyboi",
+        "watchLink": "https:\/\/www.youtube.com\/@gukeywakeup",
+        "instagramLink": "https:\/\/www.instagram.com\/gukeywakeup\/"
     }
 ]
