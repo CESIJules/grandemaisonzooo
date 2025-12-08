@@ -27,7 +27,15 @@ try {
         }
 
         $tmp_name = $_FILES['image']['tmp_name'];
-        $file_extension = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+        $file_extension = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
+        
+        $allowed_types = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        if (!in_array($file_extension, $allowed_types)) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Type de fichier image non valide. Extensions acceptées : jpg, jpeg, png, gif, webp.']);
+            exit;
+        }
+
         $new_filename = uniqid('post_', true) . '.' . $file_extension;
         $destination = $upload_dir . $new_filename;
 
