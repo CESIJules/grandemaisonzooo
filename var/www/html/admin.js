@@ -489,7 +489,7 @@ document.addEventListener('DOMContentLoaded', () => {
             allPosts = posts; // Store globally
 
             if (artistFilter !== 'all') {
-                posts = posts.filter(post => post.artist === artistFilter);
+                posts = posts.filter(post => post.artist && post.artist.toLowerCase() === artistFilter.toLowerCase());
             }
 
             if (posts.length === 0) {
