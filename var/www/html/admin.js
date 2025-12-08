@@ -1233,4 +1233,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function openPlaylistEditor(playlistName) {
         const playlist = allPlaylists.find(p => p.name === playlistName);
-        if
+        if (!playlist) return;
+
+        currentEditingPlaylist = JSON.parse(JSON.stringify(playlist)); // Deep copy
+        editingPlaylistNameSpan.textContent = playlist.name;
+        
+        renderCurrentPlaylistSongs();
+        renderAllAvailableSongsForEdit();
+        
+        playlistEditModal.style.display = 'block';
+    }
+});
