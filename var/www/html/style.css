@@ -2296,36 +2296,40 @@ body.menu-open {
   
   h2 { font-size: clamp(1.8em, 8vw, 3em) !important; }
   
-  /* Allow main container to scroll naturally on mobile */
+  /* Allow main container to scroll naturally on mobile but with Snap */
   html, body {
-    overflow-y: auto !important;
-    overflow-x: hidden;
-    height: auto !important;
-    min-height: 100%;
-    position: static !important;
+    overflow: hidden !important; /* Lock body, scroll main */
+    height: 100% !important;
+    position: fixed; /* Prevent bounce on iOS */
+    width: 100%;
   }
   
   main {
-    overflow: visible !important;
-    height: auto !important;
-    scroll-snap-type: none !important;
+    overflow-y: scroll !important;
+    height: 100dvh !important;
+    scroll-snap-type: y mandatory !important;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
   }
 
   .screen {
     padding: 80px 16px 100px;
-    min-height: 100dvh; /* Use dynamic viewport height */
+    min-height: 100dvh; /* Ensure full screen */
     height: auto; /* Allow content to grow */
     display: flex;
     flex-direction: column;
-    justify-content: flex-start; /* Start from top */
+    justify-content: flex-start;
+    scroll-snap-align: start; /* Snap to top of sections */
+    scroll-snap-stop: always; /* Force stop at sections */
   }
   
   /* Fix Accueil Centering */
   #accueil {
-    justify-content: center !important; /* Force centering for the landing section */
-    min-height: 100dvh !important; /* Ensure full height */
-    padding-top: 0 !important; /* Remove padding to center correctly */
+    justify-content: center !important;
+    min-height: 100dvh !important;
+    padding-top: 0 !important;
     padding-bottom: 0 !important;
+    scroll-snap-align: start;
   }
 
   /* --- Timeline Section (Vertical Mode) --- */
