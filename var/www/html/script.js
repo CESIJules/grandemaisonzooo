@@ -73,6 +73,13 @@ document.addEventListener('DOMContentLoaded', () => {
       if (typeof handleArtistTimelineLinks === 'function') {
           handleArtistTimelineLinks();
       }
+
+      // Setup Glitch Effects for loaded artists
+      artists.forEach(artist => {
+          if (artist.glitchName) {
+              setupGlitchEffect(`${artist.id}Title`, artist.glitchName, artist.name.toUpperCase());
+          }
+      });
       
     } catch (error) {
       console.error('Error loading artists:', error);
@@ -2672,12 +2679,6 @@ document.addEventListener('DOMContentLoaded', () => {
           }, 40);
       });
   }
-
-  // Apply effects
-  setupGlitchEffect('mindsetTitle', 'MįNDSET', 'MINDSET');
-  setupGlitchEffect('req1Title', 'REQŘ', 'REQ1');
-  setupGlitchEffect('nelsonTitle', 'NELSŚN NŚRTH', 'NELSON NORTH');
-  setupGlitchEffect('shorebreakTitle', 'ŪBREAK', 'SHOREBREAK');
 
 }); // End DOMContentLoaded
 // Secret Login Combo (Left -> Right -> Right -> Left)
