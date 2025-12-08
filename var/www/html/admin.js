@@ -601,7 +601,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!post) return;
 
         document.getElementById('postTitle').value = post.title;
-        document.getElementById('postSubtitle').value = post.subtitle || '';
         document.getElementById('postArtist').value = post.artist;
         document.getElementById('postDate').value = post.date;
         document.getElementById('postLink').value = post.link;
