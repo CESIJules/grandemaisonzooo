@@ -30,7 +30,7 @@ $relative_path = "images/" . $new_filename;
 
 $allowed_types = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
 if (!in_array($file_extension, $allowed_types)) {
-    echo json_encode(['status' => 'error', 'message' => 'Invalid file type']);
+    echo json_encode(['status' => 'error', 'message' => 'Type de fichier invalide. Extensions acceptées : jpg, jpeg, png, gif, webp.']);
     exit;
 }
 
