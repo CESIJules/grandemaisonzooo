@@ -2285,9 +2285,24 @@ body.menu-open {
 
 @media (max-width: 900px) {
   /* --- Global Typography & Layout --- */
-  h1 { font-size: clamp(2em, 10vw, 4em) !important; }
+  /* Fix Main Title Centering */
+  #accueil h1 {
+    font-size: clamp(2em, 10vw, 4em) !important;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
+  
   h2 { font-size: clamp(1.8em, 8vw, 3em) !important; }
   
+  /* Allow main container to scroll naturally on mobile */
+  main {
+    overflow-y: auto !important;
+    height: auto !important;
+    scroll-snap-type: none !important;
+  }
+
   .screen {
     padding: 80px 16px 100px;
     min-height: 100dvh; /* Use dynamic viewport height */
@@ -2303,9 +2318,8 @@ body.menu-open {
     min-height: 100dvh;
     flex-direction: column;
     justify-content: flex-start;
-    overflow-y: auto; /* Enable vertical scroll */
-    overflow-x: hidden; /* Disable horizontal scroll */
-    padding-top: 100px; /* Space for header */
+    overflow: visible !important; /* Let the main container handle scroll */
+    padding-top: 140px; /* Increased space for header */
   }
 
   .timeline-header-wrapper {
@@ -2317,7 +2331,7 @@ body.menu-open {
     flex-direction: column;
     gap: 15px;
     height: auto;
-    background: rgba(5, 5, 5, 0.9); /* Dark background to cover scrolling items */
+    background: rgba(5, 5, 5, 0.95); /* Dark background to cover scrolling items */
     z-index: 50;
     pointer-events: auto;
     border-bottom: 1px solid rgba(255,255,255,0.1);
@@ -2353,7 +2367,7 @@ body.menu-open {
   .timeline-item {
     width: 90%; /* Full width with margins */
     max-width: 400px;
-    margin: 20px 0;
+    margin: 30px 0; /* Increased margin */
     flex-shrink: 0;
   }
   
@@ -2445,20 +2459,22 @@ body.menu-open {
     font-size: 24px;
   }
 
-  /* Current Song Info */
+  /* Current Song Info - Fixed Position & Visibility */
   #currentSong {
     position: relative;
     left: auto;
     top: auto;
     transform: none;
-    margin-top: 20px;
+    margin-top: 30px;
     width: 90%;
     max-width: none;
     flex-direction: column;
     gap: 10px;
-    padding: 15px;
+    padding: 20px;
     order: 4;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(20, 20, 20, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    z-index: 40;
   }
 
   #progress-info {
@@ -2536,9 +2552,13 @@ body.menu-open {
     width: 100%;
   }
 
+  /* Fix Artist Name Overflow */
   .artiste-info h3 {
     text-align: center;
-    font-size: 2.5rem;
+    font-size: clamp(2rem, 10vw, 3rem); /* Reduced max size */
+    word-break: break-word; /* Break long words like SHOREBREAK */
+    hyphens: auto;
+    line-height: 1.1;
   }
   
   .artiste-info .localisation {
