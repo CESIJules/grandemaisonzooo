@@ -19,8 +19,8 @@ if (file_exists($file_path)) {
     // Si le filtre 'artist' est défini et n'est pas 'Tous', on filtre les posts.
     if ($artist_filter !== 'Tous') {
         $filtered_posts = array_filter($posts, function ($post) use ($artist_filter) {
-            // Vérifie si la clé 'artist' existe et si sa valeur correspond au filtre.
-            return isset($post['artist']) && $post['artist'] == $artist_filter;
+            // Vérifie si la clé 'artist' existe et si sa valeur correspond au filtre (insensible à la casse).
+            return isset($post['artist']) && strcasecmp($post['artist'], $artist_filter) === 0;
         });
         // Ré-indexe le tableau pour s'assurer qu'il est bien un tableau JSON et non un objet.
         echo json_encode(array_values($filtered_posts));
