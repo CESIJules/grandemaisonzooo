@@ -600,11 +600,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const post = allPosts.find(p => p.id === postId);
         if (!post) return;
 
-        document.getElementById('postSubtitle').value = post.subtitle;
+        document.getElementById('postTitle').value = post.title;
+        document.getElementById('postSubtitle').value = post.subtitle || '';
         document.getElementById('postArtist').value = post.artist;
         document.getElementById('postDate').value = post.date;
         document.getElementById('postLink').value = post.link;
-        document.getElementById('postType').value = post.type;
         
         // Handle hidden ID field
         let editingIdField = adminTimelineForm.querySelector('input[name="editingPostId"]');

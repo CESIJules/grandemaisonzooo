@@ -1,6 +1,13 @@
 <?php
 header('Content-Type: application/json');
 
+// Check for post_max_size violation
+if (empty($_POST) && empty($_FILES) && $_SERVER['CONTENT_LENGTH'] > 0) {
+    $displayMaxSize = ini_get('post_max_size');
+    echo json_encode(['status' => 'error', 'message' => "La requête est trop volumineuse. Elle dépasse la limite post_max_size du serveur ($displayMaxSize)."]);
+    exit;
+}
+
 if (!isset($_FILES['image'])) {
     echo json_encode(['status' => 'error', 'message' => 'No image uploaded']);
     exit;

@@ -15,6 +15,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     send_json_error('Méthode de requête non autorisée.');
 }
 
+// Check for post_max_size violation
+if (empty($_POST) && empty($_FILES) && $_SERVER['CONTENT_LENGTH'] > 0) {
+    $displayMaxSize = ini_get('post_max_size');
+    send_json_error("La requête est trop volumineuse. Elle dépasse la limite post_max_size du serveur ($displayMaxSize).");
+}
+
 $postId = $_POST['id'] ?? null;
 
 if (!$postId) {

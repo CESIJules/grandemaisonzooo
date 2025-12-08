@@ -11,6 +11,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 try {
+    // Check for post_max_size violation
+    if (empty($_POST) && empty($_FILES) && $_SERVER['CONTENT_LENGTH'] > 0) {
+        $displayMaxSize = ini_get('post_max_size');
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => "La requête est trop volumineuse. Elle dépasse la limite post_max_size du serveur ($displayMaxSize)."]);
+        exit;
+    }
+
     // Basic validation
     if (empty($_POST['title']) || empty($_POST['date']) || empty($_POST['artist'])) {
         http_response_code(400);
