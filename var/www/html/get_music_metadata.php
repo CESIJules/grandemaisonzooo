@@ -159,7 +159,7 @@ $result = [
 
 // 5. SAVE TO CACHE
 $metadata[$filename] = $result;
-file_put_contents($metadataFile, json_encode($metadata, JSON_PRETTY_PRINT));
+file_put_contents($metadataFile, json_encode($metadata, JSON_PRETTY_PRINT), LOCK_EX);
 
 echo json_encode(['status' => 'success', 'data' => $result]);
 ?>
