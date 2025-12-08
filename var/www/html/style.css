@@ -2297,9 +2297,12 @@ body.menu-open {
   h2 { font-size: clamp(1.8em, 8vw, 3em) !important; }
   
   /* Allow main container to scroll naturally on mobile */
-  body {
+  html, body {
     overflow-y: auto !important;
     overflow-x: hidden;
+    height: auto !important;
+    min-height: 100%;
+    position: static !important;
   }
   
   main {
@@ -2320,7 +2323,9 @@ body.menu-open {
   /* Fix Accueil Centering */
   #accueil {
     justify-content: center !important; /* Force centering for the landing section */
-    height: 100dvh !important; /* Ensure full height */
+    min-height: 100dvh !important; /* Ensure full height */
+    padding-top: 0 !important; /* Remove padding to center correctly */
+    padding-bottom: 0 !important;
   }
 
   /* --- Timeline Section (Vertical Mode) --- */
