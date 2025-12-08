@@ -8,7 +8,7 @@ if (!isset($_FILES['image'])) {
 
 if ($_FILES['image']['error'] !== UPLOAD_ERR_OK) {
     $uploadErrorMessages = [
-        UPLOAD_ERR_INI_SIZE => 'Le fichier dépasse la taille upload_max_filesize dans php.ini',
+        UPLOAD_ERR_INI_SIZE => 'Le fichier dépasse la taille upload_max_filesize dans php.ini (' . ini_get('upload_max_filesize') . ')',
         UPLOAD_ERR_FORM_SIZE => 'Le fichier dépasse la taille MAX_FILE_SIZE spécifiée dans le formulaire HTML',
         UPLOAD_ERR_PARTIAL => 'Le fichier n\'a été que partiellement téléchargé',
         UPLOAD_ERR_NO_FILE => 'Aucun fichier n\'a été téléchargé',
