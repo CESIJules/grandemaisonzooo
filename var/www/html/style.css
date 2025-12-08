@@ -179,6 +179,8 @@ a:-webkit-any-link {
   align-items: center;
   mix-blend-mode: difference;
   line-height: 0.9;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .line-grande {
