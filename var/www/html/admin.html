@@ -56,51 +56,6 @@
             letter-spacing: 0.5px;
         }
 
-        /* --- Responsive Layout --- */
-        @media (max-width: 768px) {
-            body {
-                flex-direction: column;
-            }
-            .admin-sidebar {
-                width: 100%;
-                height: auto;
-                border-right: none;
-                border-bottom: 1px solid var(--surface-border);
-                padding: 10px;
-            }
-            .sidebar-header {
-                margin-bottom: 10px;
-                font-size: 1.2rem;
-            }
-            .sidebar-nav ul {
-                display: flex;
-                overflow-x: auto;
-                gap: 10px;
-                padding-bottom: 5px;
-            }
-            .sidebar-nav li {
-                margin-bottom: 0;
-                flex-shrink: 0;
-            }
-            .sidebar-nav a {
-                padding: 8px 12px;
-                font-size: 0.9rem;
-            }
-            .sidebar-nav a.active::before {
-                display: none;
-            }
-            .sidebar-nav a.active {
-                background-color: var(--accent-primary);
-                color: white;
-            }
-            .sidebar-footer {
-                display: none;
-            }
-            .admin-main-content {
-                padding: 20px;
-            }
-        }
-
         /* --- Main Layout --- */
         .admin-sidebar {
             width: 240px;
