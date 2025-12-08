@@ -2532,6 +2532,27 @@ document.addEventListener('DOMContentLoaded', () => {
       }
   }, { passive: false });
   
+  // --- Mobile Scroll Observer (Update Active Section) ---
+  if (mainContainer) {
+      mainContainer.addEventListener('scroll', () => {
+          if (window.innerWidth >= 900) return; // Only for mobile native scroll
+
+          const scrollPosition = mainContainer.scrollTop + (window.innerHeight / 2);
+          
+          sections.forEach((section, index) => {
+              const sectionTop = section.offsetTop;
+              const sectionBottom = sectionTop + section.offsetHeight;
+              
+              if (scrollPosition >= sectionTop && scrollPosition < sectionBottom) {
+                  if (currentSectionIndex !== index) {
+                      currentSectionIndex = index;
+                      // Optional: Update menu active state here if needed
+                  }
+              }
+          });
+      }, { passive: true });
+  }
+
   // MINDSET Hover Effect (JS Animation)
   // Generic Glitch Function
   function setupGlitchEffect(elementId, targetText, originalTextOverride = null) {
