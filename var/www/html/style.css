@@ -2339,22 +2339,24 @@ body.menu-open {
     flex-direction: column;
     justify-content: flex-start;
     overflow: visible !important; /* Let the main container handle scroll */
-    padding-top: 140px; /* Increased space for header */
+    padding-top: 0; /* Remove fixed padding, use sticky header */
   }
 
   .timeline-header-wrapper {
-    position: absolute; /* Keep header fixed at top of section */
+    position: sticky; /* Sticky header */
     top: 0;
     left: 0;
     right: 0;
-    padding: 20px;
+    padding: 15px 10px;
     flex-direction: column;
-    gap: 15px;
+    gap: 10px;
     height: auto;
-    background: rgba(5, 5, 5, 0.95); /* Dark background to cover scrolling items */
-    z-index: 50;
+    background: rgba(5, 5, 5, 0.98); /* Almost opaque background */
+    z-index: 100;
     pointer-events: auto;
     border-bottom: 1px solid rgba(255,255,255,0.1);
+    margin-bottom: 10px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.5);
   }
 
   #timeline h2 {
@@ -2363,19 +2365,29 @@ body.menu-open {
     top: 0;
     transform: none;
     text-align: center;
-    font-size: 2.5em;
+    font-size: 2em; /* Smaller title */
     width: 100%;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
   }
 
   .timeline-filters {
     width: 100%;
     flex-wrap: wrap;
     justify-content: center;
+    gap: 8px;
+  }
+  
+  /* Smaller Filter Buttons */
+  .timeline-filters .btn, 
+  .timeline-filters button {
+    font-size: 0.75rem !important;
+    padding: 6px 12px !important;
+    height: auto !important;
+    min-width: auto !important;
   }
 
   .timeline-container {
-    margin-top: 20px;
+    margin-top: 0;
     flex-direction: column; /* Stack items vertically */
     align-items: center;
     width: 100%;
@@ -2385,9 +2397,9 @@ body.menu-open {
   }
 
   .timeline-item {
-    width: 90%; /* Full width with margins */
-    max-width: 400px;
-    margin: 30px 0; /* Increased margin */
+    width: 85%; /* Slightly narrower */
+    max-width: 350px;
+    margin: 15px 0; /* Reduced margin */
     flex-shrink: 0;
   }
   
@@ -2395,7 +2407,7 @@ body.menu-open {
   .timeline-container::before {
     content: '';
     position: absolute;
-    top: 180px; /* Start below header */
+    top: 0; 
     bottom: 0;
     left: 50%;
     width: 2px;
@@ -2424,6 +2436,28 @@ body.menu-open {
     text-align: center;
     z-index: 2;
     background-color: rgba(20, 20, 20, 0.9); /* Darker background */
+    padding: 15px; /* Reduced padding */
+    border-radius: 12px;
+  }
+  
+  .timeline-item h3 {
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+  }
+  
+  .timeline-item h4 {
+    font-size: 0.75rem;
+    margin-bottom: 8px;
+  }
+  
+  .timeline-item p {
+    font-size: 0.85rem;
+    line-height: 1.4;
+  }
+  
+  .timeline-image {
+    height: 180px; /* Smaller images */
+    margin-top: 8px;
   }
   
   /* --- Radio Section --- */
