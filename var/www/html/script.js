@@ -2403,6 +2403,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Global Wheel Handler
   window.addEventListener('wheel', (e) => {
+    // --- MOBILE FIX: Disable scroll hijacking on small screens ---
+    if (window.innerWidth < 900) return; 
+
     e.preventDefault();
     
     if (document.body.classList.contains('menu-open')) return;
@@ -2486,6 +2489,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }, { passive: false });
   
   window.addEventListener('touchmove', (e) => {
+      // --- MOBILE FIX: Disable scroll hijacking on small screens ---
+      if (window.innerWidth < 900) return;
+
       const touchY = e.touches[0].clientY;
       const touchX = e.touches[0].clientX;
       const deltaY = touchStartY - touchY;
