@@ -2087,8 +2087,12 @@ document.addEventListener('DOMContentLoaded', () => {
         contentDiv.classList.add('timeline-content');
         contentDiv.classList.add(index % 2 === 0 ? 'timeline-content-left' : 'timeline-content-right');
 
-        let displayTitle = post.title;
-        let displaySubtitle = post.subtitle;
+        let displayTitle = post.artist ? post.artist : post.title;
+        let displaySubtitle = post.artist ? post.title : post.subtitle;
+
+        if (post.artist && post.subtitle) {
+            displaySubtitle += ` - ${post.subtitle}`;
+        }
 
         if (allArtists.length > 0) {
             for (const artistName of allArtists) {
@@ -2103,7 +2107,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Check if the title is an artist name (case-insensitive comparison)
-        const isArtistTitle = allArtists.some(artist => artist.toLowerCase() === post.title.toLowerCase());
+        const isArtistTitle = post.artist ? true : allArtists.some(artist => artist.toLowerCase() === post.title.toLowerCase());
 
         const titleElement = `<h3 class="${isArtistTitle ? 'artist-title' : ''}">${displayTitle}</h3>`;
 
