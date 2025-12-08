@@ -17,6 +17,7 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
     />
+    <script src="script.js" defer></script>
   </head>
   <body>
     <!-- Loading Screen -->
@@ -30,7 +31,7 @@
 
     <!-- Video Landing Overlay -->
     <div id="videoOverlay" class="video-overlay">
-      <video id="landingVideo" playsinline preload="auto" webkit-playsinline>
+      <video id="landingVideo" playsinline preload="metadata" webkit-playsinline>
         <source src="vid/landing.mp4" type="video/mp4" />
       </video>
     </div>
@@ -292,7 +293,5 @@
         </form>
       </section>
     </main>
-
-    <script src="script.js"></script>
   </body>
 </html>

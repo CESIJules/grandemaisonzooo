@@ -21,7 +21,7 @@ if (!is_writable($file_path)) {
     }
 }
 
-if (file_put_contents($file_path, json_encode($data, JSON_PRETTY_PRINT))) {
+if (file_put_contents($file_path, json_encode($data, JSON_PRETTY_PRINT), LOCK_EX)) {
     echo json_encode(['status' => 'success']);
 } else {
     $error = error_get_last();
