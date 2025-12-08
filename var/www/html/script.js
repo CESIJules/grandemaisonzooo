@@ -2087,11 +2087,16 @@ document.addEventListener('DOMContentLoaded', () => {
         contentDiv.classList.add('timeline-content');
         contentDiv.classList.add(index % 2 === 0 ? 'timeline-content-left' : 'timeline-content-right');
 
-        let displayTitle = post.artist ? post.artist : post.title;
-        let displaySubtitle = post.artist ? post.title : post.subtitle;
+        let displayTitle = post.title;
+        let displaySubtitle = post.subtitle;
 
-        if (post.artist && post.subtitle) {
-            displaySubtitle += ` - ${post.subtitle}`;
+        // If we have an explicit artist field, use it as the main title
+        if (post.artist) {
+            displayTitle = post.artist;
+            displaySubtitle = post.title;
+            if (post.subtitle) {
+                displaySubtitle += ` - ${post.subtitle}`;
+            }
         }
 
         if (allArtists.length > 0) {
