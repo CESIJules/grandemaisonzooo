@@ -68,9 +68,9 @@ if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
     $target_file = $upload_dir . $new_image_name;
 
     // Basic validation
-    $allowed_types = ['jpg', 'jpeg', 'png', 'gif'];
+    $allowed_types = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
     if (!in_array($image_ext, $allowed_types)) {
-        send_json_error('Type de fichier image non valide.');
+        send_json_error('Type de fichier image non valide. Extensions acceptées : jpg, jpeg, png, gif, webp.');
     }
 
     if (move_uploaded_file($_FILES['image']['tmp_name'], $target_file)) {

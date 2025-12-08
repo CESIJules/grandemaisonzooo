@@ -979,6 +979,10 @@ document.addEventListener('DOMContentLoaded', () => {
         let imagePath = formData.get('currentImage');
 
         if (imageFile && imageFile.size > 0) {
+            if (imageFile.size > MAX_FILE_SIZE) {
+                throw new Error(`L'image est trop volumineuse (Max: ${MAX_FILE_SIZE / 1024 / 1024}MB).`);
+            }
+
             const uploadData = new FormData();
             uploadData.append('image', imageFile);
             try {
@@ -1109,6 +1113,15 @@ document.addEventListener('DOMContentLoaded', () => {
         adminTimelineForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const formData = new FormData(adminTimelineForm);
+            
+            // Check file size
+            const imageFile = formData.get('image');
+            if (imageFile && imageFile.size > MAX_FILE_SIZE) {
+                adminFormMessage.textContent = `L'image est trop volumineuse (Max: ${MAX_FILE_SIZE / 1024 / 1024}MB).`;
+                adminFormMessage.style.color = 'var(--accent-danger)';
+                return;
+            }
+
             const editingId = formData.get('editingPostId');
             if (editingId) {
                 formData.append('id', editingId);
@@ -1220,10 +1233,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function openPlaylistEditor(playlistName) {
         const playlist = allPlaylists.find(p => p.name === playlistName);
-        if (playlist) {
-            editPlaylist(playlist);
-        } else {
-            alert('Playlist introuvable.');
-        }
-    }
-});
+        if
