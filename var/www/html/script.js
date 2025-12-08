@@ -82,6 +82,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- START: Fullscreen height fix for mobile browsers ---
   function setMainHeight() {
+    // Disable this logic for screens < 900px where we want native scrolling
+    if (window.innerWidth < 900) {
+        document.documentElement.style.height = '';
+        document.body.style.height = '';
+        if (mainContainer) {
+            mainContainer.style.height = '';
+        }
+        return;
+    }
+
     const vh = window.innerHeight;
     // Force html, body, and main to take the full visible height.
     document.documentElement.style.height = `${vh}px`;
