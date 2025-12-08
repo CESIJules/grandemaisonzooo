@@ -583,6 +583,227 @@ body.menu-open {
   }
 }
 
+/* =========================================
+   MOBILE & RESPONSIVE OPTIMIZATIONS
+   ========================================= */
+
+@media (max-width: 900px) {
+  /* --- Global Typography & Layout --- */
+  h1 { font-size: clamp(2em, 10vw, 4em) !important; }
+  h2 { font-size: clamp(1.8em, 8vw, 3em) !important; }
+  
+  .screen {
+    padding: 80px 16px 100px;
+    min-height: 100dvh; /* Use dynamic viewport height */
+    height: auto; /* Allow content to grow */
+  }
+
+  /* --- Timeline Section --- */
+  #timeline {
+    height: 100dvh;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+
+  .timeline-header-wrapper {
+    position: relative;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 20px;
+    flex-direction: column;
+    gap: 15px;
+    height: auto;
+    background: transparent;
+    pointer-events: auto;
+  }
+
+  #timeline h2 {
+    position: relative;
+    left: 0;
+    top: 0;
+    transform: none;
+    text-align: center;
+    font-size: 3em;
+    width: 100%;
+  }
+
+  .timeline-filters {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .timeline-container {
+    margin-top: 10px;
+    align-items: center; /* Center items vertically in the scroll track */
+  }
+
+  .timeline-item {
+    width: 80vw; /* Wider items on mobile */
+    margin: 0 15px;
+  }
+  
+  /* Adjust vertical connector for mobile */
+  .timeline-item::before {
+    height: 100%; /* Full height connector */
+    top: 0;
+    bottom: 0;
+  }
+  
+  .timeline-item:nth-child(odd) .timeline-content,
+  .timeline-item:nth-child(even) .timeline-content {
+    position: relative;
+    top: auto;
+    bottom: auto;
+    margin: 0;
+    transform: none !important; /* Disable 3D tilt on mobile for performance */
+  }
+  
+  .timeline-item:nth-child(odd)::before,
+  .timeline-item:nth-child(even)::before {
+    display: none; /* Hide complex connectors on mobile */
+  }
+
+  /* --- Radio Section --- */
+  #radio {
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Center vertically */
+    align-items: center;
+    padding-top: 60px; /* Space for header if needed */
+    overflow: hidden;
+  }
+
+  #radio h2 {
+    position: relative;
+    font-size: 3em;
+    margin-bottom: 20px;
+    text-align: center;
+    z-index: 30;
+  }
+
+  /* Stack elements vertically */
+  #visualizer {
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+    width: 100%;
+    height: 60px;
+    margin-bottom: 20px;
+  }
+
+  .player {
+    position: relative;
+    width: 100%;
+    height: auto;
+    margin: 20px 0;
+    display: flex;
+    justify-content: center;
+  }
+
+  #vinyl-disc-container {
+    width: 280px; /* Smaller disc */
+    height: 280px;
+  }
+
+  #playRadio {
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+  }
+
+  /* Move Current Song Info below player */
+  #currentSong {
+    position: relative;
+    left: auto;
+    top: auto;
+    transform: none;
+    margin-top: 20px;
+    width: 90%;
+    max-width: none;
+    flex-direction: column;
+    gap: 10px;
+    padding: 15px;
+  }
+
+  #progress-info {
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  /* Hide or reposition volume/pip on mobile main view */
+  .volume-container {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    transform: scale(0.8);
+  }
+  
+  #mainPipBtn {
+    display: none; /* Hide PIP on mobile main view to save space */
+  }
+
+  /* --- Artists Section --- */
+  .artiste {
+    height: auto;
+    min-height: 100dvh;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    padding: 0;
+    gap: 0;
+  }
+
+  .artiste-image {
+    height: 50vh;
+    order: 1; /* Image first */
+  }
+
+  .artiste-info {
+    padding: 40px 20px;
+    order: 2; /* Info second */
+    text-align: center;
+    align-items: center;
+  }
+
+  .artiste-info h3 {
+    text-align: center;
+  }
+  
+  .artiste-info .localisation {
+    text-align: center;
+    padding-left: 0;
+  }
+  
+  .artiste-actions, .artiste-socials {
+    justify-content: center;
+    padding-left: 0;
+  }
+
+  /* --- Contact Section --- */
+  #contact form {
+    width: 90%;
+    max-width: none;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Small mobile tweaks */
+  #radio h2 { font-size: 2.5em; }
+  #vinyl-disc-container { width: 240px; height: 240px; }
+  
+  .menu-link { font-size: 2rem; }
+  
+  /* Ensure inputs are large enough to not zoom */
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}
+
 /* Boutons */
 .btn {
   font-family: 'Lexend', sans-serif;
@@ -942,7 +1163,6 @@ body.menu-open {
   transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
   z-index: 100;
   color: #fff;
-  font-size: 18px;
 }
 
 .btn-pip-main:hover {
@@ -2056,5 +2276,26 @@ body.menu-open {
   }
   60% {
     transform: translateX(-50%) translateY(-5px);
+  }
+}
+
+/* Mobile Optimizations */
+@media (max-width: 600px) {
+  /* Adjust Radio Controller for small screens */
+  .rc-container {
+    min-width: unset; /* Remove the 350px limit */
+    width: calc(100vw - 20px); /* Full width minus small margin */
+    right: 10px; /* Center horizontally */
+    bottom: 20px; /* Lower it a bit */
+  }
+  
+  /* Adjust padding for main sections */
+  .screen {
+    padding: 60px 16px 100px; /* Less padding */
+  }
+  
+  /* Adjust typography */
+  p {
+    font-size: 0.95rem;
   }
 }
