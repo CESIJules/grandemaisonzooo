@@ -2094,19 +2094,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (post.artist) {
             displayTitle = post.artist;
             displaySubtitle = post.title;
-            if (post.subtitle) {
-                displaySubtitle += ` - ${post.subtitle}`;
-            }
-        }
-
-        if (allArtists.length > 0) {
-            for (const artistName of allArtists) {
-                const artistRegex = new RegExp(artistName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi');
-                if (displayTitle) {
-                    displayTitle = displayTitle.replace(artistRegex, artistName.toUpperCase());
-                }
-                if (displaySubtitle) {
-                    displaySubtitle = displaySubtitle.replace(artistRegex, artistName.toUpperCase());
+        } else {
+            // Legacy: Check if title contains artist name
+            if (allArtists.length > 0) {
+                for (const artistName of allArtists) {
+                    const artistRegex = new RegExp(artistName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi');
+                    if (displayTitle) {
+                        displayTitle = displayTitle.replace(artistRegex, artistName.toUpperCase());
+                    }
+                    if (displaySubtitle) {
+                        displaySubtitle = displaySubtitle.replace(artistRegex, artistName.toUpperCase());
+                    }
                 }
             }
         }
