@@ -7,9 +7,10 @@ if ($data === null) {
     exit;
 }
 
-if (file_put_contents('artists_profiles.json', json_encode($data, JSON_PRETTY_PRINT))) {
+if (file_put_contents(__DIR__ . '/artists_profiles.json', json_encode($data, JSON_PRETTY_PRINT))) {
     echo json_encode(['status' => 'success']);
 } else {
-    echo json_encode(['status' => 'error', 'message' => 'Failed to save file']);
+    $error = error_get_last();
+    echo json_encode(['status' => 'error', 'message' => 'Failed to save file: ' . ($error['message'] ?? 'Unknown error')]);
 }
 ?>
