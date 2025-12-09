@@ -2737,28 +2737,24 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderAsciiFrame() {
         if (!asciiElement) return;
         
-        const width = 60;
-        const height = 60;
+        const width = 80;  // Increased width
+        const height = 40; // Reduced height to account for char aspect ratio
         const buffer = new Array(width * height).fill(' ');
         const zBuffer = new Array(width * height).fill(0);
         
         // S-Shape Parameters
-        // We render two partial tori
-        // R1 = 1 (Major radius), r1 = 0.4 (Tube radius)
-        
         const R = 1;
         const r = 0.4;
         const K2 = 5;
-        const K1 = width * K2 * 3 / (8 * (R + r));
+        // Reduced scale factor (was 3, now 1.5) to make S smaller
+        const K1 = width * K2 * 1.5 / (8 * (R + r));
 
         // Rotation
         const cosA = Math.cos(A), sinA = Math.sin(A);
         const cosB = Math.cos(B), sinB = Math.sin(B);
 
         // Function to render a partial torus
-        // thetaStart, thetaEnd: range for the major circle
-        // centerX, centerY: offset for the torus center
-        function renderPart(thetaStart, thetaEnd, centerX, centerY, reverseNormal = false) {
+        function renderPart(thetaStart, thetaEnd, centerX, centerY) {
             for (let theta = thetaStart; theta < thetaEnd; theta += 0.07) {
                 const costheta = Math.cos(theta);
                 const sintheta = Math.sin(theta);
@@ -2767,42 +2763,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     const cosphi = Math.cos(phi);
                     const sinphi = Math.sin(phi);
 
-                    // Torus coordinates (centered at 0,0,0)
-                    // x = (R + r*cos(phi)) * cos(theta)
-                    // y = (R + r*cos(phi)) * sin(theta)
-                    // z = r * sin(phi)
-                    
-                    // We shift the center of the torus
                     const circlex = R + r * cosphi;
                     const circley = r * sinphi;
 
-                    // Apply torus revolution + offset
-                    // Standard torus is in XY plane.
-                    // We want the S to be flat in XY plane initially.
-                    
-                    // Point on the tube surface before rotation
-                    // For top arc (centered at 0, 1):
-                    // x = circlex * cos(theta) + centerX
-                    // y = circlex * sin(theta) + centerY
-                    // z = circley
-                    
                     const ox = circlex * costheta + centerX;
                     const oy = circlex * sintheta + centerY;
                     const oz = circley;
 
-                    // 3D Rotation
-                    const x = ox * cosB - oz * sinB; // Rotate around Y (or Z depending on axis def)
-                    // Let's stick to donut code axes:
-                    // x = ox (rotated)
-                    // y = oy (rotated)
-                    // z = oz (rotated)
-                    
-                    // Donut code rotation:
-                    // x = circlex*(costheta*cosB*cosA - sinB*sinA) - circley*cosB*sinA
-                    // y = circlex*(costheta*sinB*cosA + cosB*sinA) - circley*sinB*sinA
-                    // z = circlex*costheta*sinA + circley*cosA
-                    // But we have offsets. Let's do manual rotation matrix multiplication.
-                    
                     // Rotate around X axis (A)
                     const y1 = oy * cosA - oz * sinA;
                     const z1 = oy * sinA + oz * cosA;
@@ -2818,12 +2785,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     // Screen coordinates
                     const xp = Math.floor(width / 2 + K1 * ooz * x2);
-                    const yp = Math.floor(height / 2 - K1 * ooz * y2);
+                    const yp = Math.floor(height / 2 - K1 * ooz * y2); // Note: Y is inverted on screen
 
                     // Luminance
-                    // Normal vector
-                    // N = (cos(theta)cos(phi), sin(theta)cos(phi), sin(phi))
-                    // We need to rotate the normal too
                     const nx = costheta * cosphi;
                     const ny = sintheta * cosphi;
                     const nz = sinphi;
@@ -2838,7 +2802,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const nz2 = nz1;
 
                     // Light vector (0, 1, -1) normalized roughly
-                    const L = ny2 - nz2; // Simplified lighting
+                    const L = ny2 - nz2; 
 
                     if (L > 0) {
                         if (xp >= 0 && xp < width && yp >= 0 && yp < height) {
@@ -2855,20 +2819,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Top Arc: Center (0, 0.8), Angle PI/4 to 7PI/4 (roughly C shape facing left)
-        // Actually, S top part: starts top right, goes left, down.
-        // Center (0, 0.9). Radius 0.9.
-        // Angle: from roughly 0.2*PI to 1.3*PI?
-        // Let's try: Center (0, 0.9). Theta: 0.5 to 3.8
-        renderPart(0.5, 3.8, 0, 0.9);
+        // Adjusted arcs to close the gap and form a better S
+        // Top Arc: Center (0, 0.85), Wider angle range
+        renderPart(0.3, 3.9, 0, 0.85);
 
-        // Bottom Arc: Center (0, -0.9). Theta: 3.6 to 6.8 (flipped C)
-        // We need to rotate the bottom arc by PI to flip it?
-        // Or just change ranges.
-        // Bottom part of S: starts center, goes right, down, left.
-        // Center (0, -0.9).
-        // Theta: 3.6 (approx PI+0.5) to 6.8 (approx 2PI+0.5)
-        renderPart(3.6, 6.8, 0, -0.9);
+        // Bottom Arc: Center (0, -0.85), Wider angle range
+        renderPart(3.4, 7.0, 0, -0.85);
 
         // Render buffer to string
         let output = "";
