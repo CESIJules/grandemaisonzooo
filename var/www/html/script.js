@@ -2738,7 +2738,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderAsciiFrame() {
         if (!asciiElement) return;
         
-        const width = 110;  // Increased width
+        const width = 100;  // Increased width
         const height = 80; // Reduced height to account for char aspect ratio
         const buffer = new Array(width * height).fill(' ');
         const zBuffer = new Array(width * height).fill(0);
@@ -2748,7 +2748,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const r = 0.4;
         const K2 = 5;
         // Reduced scale factor to prevent clipping (was 1.5, now 1.0)
-        const K1 = width * K2 * 1.3 / (8 * (R + r));
+        const K1 = width * K2 * 1.2 / (8 * (R + r));
 
         // Rotation
         const cosA = Math.cos(A), sinA = Math.sin(A);
@@ -2889,10 +2889,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Function to render a sphere (joints)
+        // Function to render a sphere (joints/caps)
         function renderSphere(cx, cy, cz, radius) {
-            for (let theta = 0; theta < 3.14; theta += 0.1) {
-                for (let phi = 0; phi < 6.28; phi += 0.1) {
+            for (let theta = 0; theta < 3.14; theta += 0.05) {
+                for (let phi = 0; phi < 6.28; phi += 0.05) {
                     const costheta = Math.cos(theta);
                     const sintheta = Math.sin(theta);
                     const cosphi = Math.cos(phi);
@@ -2957,6 +2957,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Joints (Spheres) to hide gaps
         renderSphere(-0.9, 0.6, 0, r);
         renderSphere(0.9, -0.6, 0, r);
+
+        // Caps (Spheres) to close the tube ends
+        // Top Tip: theta=0.5 -> (0.877, 1.479)
+        renderSphere(0.88, 1.48, 0, r);
+        
+        // Bottom Tip: theta=3.5 -> (-0.936, -1.35)
+        renderSphere(-0.94, -1.35, 0, r);
 
         // Render buffer to string
         let output = "";
