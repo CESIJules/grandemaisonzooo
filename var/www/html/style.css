@@ -2289,9 +2289,9 @@ body.menu-open {
 /* =========================================
    LAPTOP RESPONSIVE OPTIMIZATIONS
    ========================================= */
-/* Target laptops and smaller desktops (up to 1750px width or short screens) */
-@media (min-width: 901px) and (max-width: 1750px), 
-       (min-width: 901px) and (max-height: 850px) {
+/* Target laptops and standard desktops (up to 1920px width or short screens) */
+@media (min-width: 901px) and (max-width: 1925px), 
+       (min-width: 901px) and (max-height: 950px) {
   
   /* Reduce Timeline Title Size & Position */
   #timeline h2 {
