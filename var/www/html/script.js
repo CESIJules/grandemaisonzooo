@@ -2702,9 +2702,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const secretS = document.getElementById('secretS');
     const terminalOverlay = document.getElementById('terminalOverlay');
     const terminalInput = document.getElementById('terminalInput');
-    const terminalOutput = document.getElementById('terminalOutput');
+    // terminalOutput removed, using terminalHistory dynamically or we can check for it
+    const terminalHistory = document.getElementById('terminalHistory');
     
-    if (!secretS || !terminalOverlay || !terminalInput || !terminalOutput) return;
+    if (!secretS || !terminalOverlay || !terminalInput) return;
 
     let clickCount = 0;
     let lastClickTime = 0;
