@@ -5,7 +5,7 @@
     <title>GRANDE MAISON</title>
     <meta name="theme-color" content="#000000" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -32,7 +32,12 @@
 
     <!-- Video Landing Overlay -->
     <div id="videoOverlay" class="video-overlay">
-      <video id="landingVideo" playsinline preload="metadata" webkit-playsinline>
+      <video
+        id="landingVideo"
+        playsinline
+        preload="metadata"
+        webkit-playsinline
+      >
         <source src="vid/landing.mp4" type="video/mp4" />
       </video>
     </div>
@@ -178,13 +183,12 @@
         </video>
         <h1 id="titleAccueil" style="opacity: 0">
           <span class="line-grande">GRANDE</span>
-          <span class="line-maison">MAISON</span>
+          <span class="line-maison">MAI<span id="secretS">S</span>ON</span>
         </h1>
       </section>
 
       <!-- Dynamic Artists Container -->
       <div id="artists-container"></div>
-
 
       <!-- Timeline -->
       <section id="timeline" class="screen">
@@ -294,5 +298,23 @@
         </form>
       </section>
     </main>
+    <!-- Terminal Overlay -->
+    <div id="terminalOverlay" class="hidden">
+      <div class="terminal-container">
+        <div id="terminalOutput">
+          <p>Grandemaison OS v1.0.0</p>
+          <p>Type '/help' for a list of commands.</p>
+        </div>
+        <div class="terminal-input-line">
+          <span class="prompt">></span>
+          <input
+            type="text"
+            id="terminalInput"
+            autocomplete="off"
+            spellcheck="false"
+          />
+        </div>
+      </div>
+    </div>
   </body>
 </html>

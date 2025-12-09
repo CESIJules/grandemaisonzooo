@@ -2696,3 +2696,99 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 })();
+
+// --- Secret Terminal Logic ---
+(function() {
+    const secretS = document.getElementById('secretS');
+    const terminalOverlay = document.getElementById('terminalOverlay');
+    const terminalInput = document.getElementById('terminalInput');
+    const terminalOutput = document.getElementById('terminalOutput');
+    
+    if (!secretS || !terminalOverlay || !terminalInput || !terminalOutput) return;
+
+    let clickCount = 0;
+    let lastClickTime = 0;
+    const CLICK_TIMEOUT = 1000; // 1 second
+    const REQUIRED_CLICKS = 5;
+
+    secretS.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent other click handlers
+        const currentTime = new Date().getTime();
+
+        if (currentTime - lastClickTime > CLICK_TIMEOUT) {
+            clickCount = 1;
+        } else {
+            clickCount++;
+        }
+
+        lastClickTime = currentTime;
+
+        if (clickCount >= REQUIRED_CLICKS) {
+            activateTerminal();
+            clickCount = 0;
+        }
+    });
+
+    function activateTerminal() {
+        terminalOverlay.classList.remove('hidden'); // Ensure it's not hidden by display:none if used
+        // Force reflow
+        void terminalOverlay.offsetWidth;
+        terminalOverlay.classList.add('active');
+        terminalInput.focus();
+        document.body.style.overflow = 'hidden'; // Prevent scrolling
+    }
+
+    function deactivateTerminal() {
+        terminalOverlay.classList.remove('active');
+        document.body.style.overflow = ''; // Restore scrolling
+        // Wait for transition to finish before hiding completely if needed
+    }
+
+    function printOutput(text) {
+        const p = document.createElement('p');
+        p.textContent = text;
+        terminalOutput.appendChild(p);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+
+    terminalInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const command = terminalInput.value.trim();
+            printOutput('> ' + command);
+            terminalInput.value = '';
+            processCommand(command);
+        }
+    });
+
+    function processCommand(cmd) {
+        const parts = cmd.split(' ');
+        const command = parts[0].toLowerCase();
+
+        switch (command) {
+            case '/help':
+                printOutput('Available commands:');
+                printOutput('  /credits - Show credits');
+                printOutput('  /exit    - Exit terminal');
+                break;
+            case '/credits':
+                printOutput('--- CREDITS ---');
+                printOutput('Developed by: CESIJules');
+                printOutput('Design: GrandeMaison Team');
+                printOutput('---------------');
+                break;
+            case '/exit':
+                printOutput('Exiting...');
+                setTimeout(deactivateTerminal, 500);
+                break;
+            default:
+                printOutput('Unknown command: ' + command);
+                printOutput('Type \'/help\' for a list of commands.');
+        }
+    }
+    
+    // Keep focus on input
+    terminalOverlay.addEventListener('click', () => {
+        terminalInput.focus();
+    });
+
+})();
