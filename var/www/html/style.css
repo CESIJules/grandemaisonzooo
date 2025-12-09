@@ -2702,7 +2702,7 @@ body.no-scroll, body.no-scroll main {
     background-color: #000;
     z-index: 10001; /* Above everything */
     font-family: 'SyneGMZBold', sans-serif;
-    color: #0f0;
+    color: #eee;
     padding: 0;
     display: flex;
     align-items: center;
@@ -2720,7 +2720,7 @@ body.no-scroll, body.no-scroll main {
 /* Loading Dots */
 #terminalLoading {
     font-size: 4rem;
-    color: #0f0;
+    color: #eee;
     display: flex;
     gap: 10px;
 }
@@ -2757,10 +2757,10 @@ body.no-scroll, body.no-scroll main {
 .terminal-left {
     width: 50%;
     height: 100%;
-    padding: 40px;
+    padding: 20px; /* Reduced padding */
     display: flex;
     flex-direction: column;
-    border-right: 1px solid #333;
+    /* border-right removed */
 }
 
 .terminal-right {
@@ -2780,6 +2780,7 @@ body.no-scroll, body.no-scroll main {
     white-space: pre-wrap;
     text-align: left;
     font-size: 1.2rem;
+    color: #eee;
 }
 
 #terminalOutput p {
@@ -2795,31 +2796,32 @@ body.no-scroll, body.no-scroll main {
 
 .prompt {
     margin-right: 10px;
-    color: #0f0;
+    color: #eee;
     font-size: 1.2rem;
 }
 
 #terminalInput {
     background: transparent;
     border: none;
-    color: #0f0;
+    color: #eee;
     font-family: 'SyneGMZBold', sans-serif;
     font-size: 1.2rem;
     flex-grow: 1;
     outline: none;
 }
 
-/* ASCII Art S */
-#asciiArt {
-    font-family: 'Courier New', monospace;
-    font-size: 10px;
-    line-height: 10px;
-    color: #0f0;
+/* ASCII S Animation */
+#asciiS {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px; /* Larger characters */
+    line-height: 14px;
     white-space: pre;
-    overflow: hidden;
-    transform: scale(1.2); /* Adjust size */
+    color: #eee; /* White/Gray */
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+    transform-origin: center;
+    display: inline-block;
+    /* transform: scale(0.8);  Handled in JS by K1/K2 or here if needed, but let's rely on JS for the shape size first */
 }
-
 
 /* Terminal Suggestions */
 .terminal-input-line {
@@ -2830,15 +2832,15 @@ body.no-scroll, body.no-scroll main {
     position: absolute;
     bottom: 100%;
     left: 30px; /* Align with input text */
-    background: rgba(0, 20, 0, 0.95);
-    border: 1px solid #0f0;
-    color: #0f0;
+    background: rgba(20, 20, 20, 0.95);
+    border: 1px solid #eee;
+    color: #eee;
     font-family: 'SyneGMZBold', sans-serif;
     z-index: 10002;
     display: none;
     flex-direction: column;
     min-width: 200px;
-    box-shadow: 0 -5px 15px rgba(0, 255, 0, 0.2);
+    box-shadow: 0 -5px 15px rgba(255, 255, 255, 0.1);
 }
 
 #terminalSuggestions.active {
@@ -2852,20 +2854,7 @@ body.no-scroll, body.no-scroll main {
 }
 
 .suggestion-item.selected, .suggestion-item:hover {
-    background: #0f0;
+    background: #eee;
     color: #000;
-}
-
-
-/* ASCII S Container */
-#asciiS {
-    font-family: monospace;
-    font-size: 10px;
-    line-height: 10px;
-    white-space: pre;
-    color: #0f0;
-    text-align: center;
-    overflow: hidden;
-    transform: scale(1.2); /* Adjust size */
 }
 
