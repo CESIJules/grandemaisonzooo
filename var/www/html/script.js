@@ -2738,8 +2738,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderAsciiFrame() {
         if (!asciiElement) return;
         
-        const width = 100;  // Increased width
-        const height = 60; // Reduced height to account for char aspect ratio
+        const width = 110;  // Increased width
+        const height = 80; // Reduced height to account for char aspect ratio
         const buffer = new Array(width * height).fill(' ');
         const zBuffer = new Array(width * height).fill(0);
         
@@ -2748,7 +2748,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const r = 0.4;
         const K2 = 5;
         // Reduced scale factor to prevent clipping (was 1.5, now 1.0)
-        const K1 = width * K2 * 1.0 / (8 * (R + r));
+        const K1 = width * K2 * 1.3 / (8 * (R + r));
 
         // Rotation
         const cosA = Math.cos(A), sinA = Math.sin(A);
