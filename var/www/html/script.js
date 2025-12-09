@@ -43,9 +43,20 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         `;
         
+        let nameHtml = `<h3 class="nom-scene" id="${artist.id}Title">${artist.name.toUpperCase()}</h3>`;
+
+        if (artist.name.toUpperCase() === 'GUKEY') {
+            nameHtml = `
+            <div class="gukey-wrapper">
+                <h3 class="nom-scene" id="${artist.id}Title">${artist.name.toUpperCase()}</h3>
+                <img src="assets/gukersecretqualite.svg" class="gukey-secret-svg" alt="Secret">
+            </div>
+            `;
+        }
+        
         const infoHtml = `
           <div class="artiste-info">
-            <h3 class="nom-scene" id="${artist.id}Title">${artist.name.toUpperCase()}</h3>
+            ${nameHtml}
             <p class="localisation">${artist.location}</p>
             <div class="artiste-actions">
               <a href="${artist.listenLink}" target="_blank" class="btn">Écouter</a>
