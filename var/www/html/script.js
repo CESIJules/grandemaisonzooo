@@ -3094,23 +3094,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 printOutput('  credits [-D|--details]');
                 printOutput('  clear   - Clear terminal');
                 printOutput('  exit    - Exit terminal');
+                printOutput('');
                 break;
             case 'credits':
                 if (parts[1] === '-D' || parts[1] === '--details') {
-                    printOutput('--- DETAILED CREDITS ---');
-                    printOutput('Lead Developer: CESIJules');
-                    printOutput('UI/UX Design: GrandeMaison Team');
-                    printOutput('3D Engine: Custom Raymarching (JS)');
-                    printOutput('Audio Stack: Icecast + Web Audio API');
-                    printOutput('Backend: PHP + JSON');
-                    printOutput('Special Thanks: You, for visiting.');
-                    printOutput('------------------------');
+                    printOutput('DETAILED CREDITS');
+                    printOutput('CREDIT A DETAILLEE');
+                    printOutput('');
                 } else {
-                    printOutput('--- CREDITS ---');
-                    printOutput('Developed by: CESIJules');
+                    printOutput('CREDITS');
+                    printOutput('Developed by: S&S');
                     printOutput('Design: GrandeMaison Team');
-                    printOutput('---------------');
-                    printOutput('Tip: Try "credits --details"');
+                    printOutput('');
                 }
                 break;
             case 'clear':
@@ -3123,6 +3118,7 @@ document.addEventListener('DOMContentLoaded', () => {
             default:
                 printOutput('Unknown command: ' + command);
                 printOutput('Type \'help\' for a list of commands.');
+                printOutput('');
         }
     }
     
