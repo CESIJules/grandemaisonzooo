@@ -2741,6 +2741,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const width = 120;  // Increased width
         const height = 80; // Reduced height to account for char aspect ratio
         const buffer = new Array(width * height).fill(' ');
+        const colorBuffer = new Array(width * height).fill(null);
         const zBuffer = new Array(width * height).fill(0);
         
         // S-Shape Parameters
@@ -2748,15 +2749,72 @@ document.addEventListener('DOMContentLoaded', () => {
         const r = 0.4;
         const K2 = 5;
         // Reduced scale factor to prevent clipping (was 1.5, now 1.0)
-        const K1 = width * K2 * 1.2 / (8 * (R + r));
+        const K1 = width * K2 * 1.1 / (8 * (R + r));
 
         // Rotation
         const cosA = Math.cos(A), sinA = Math.sin(A);
         const cosB = Math.cos(B), sinB = Math.sin(B);
 
-        // Function to render a partial torus
+        // Color Helper: Violet Gradient based on Luminance
+        function getLuminanceColor(L) {
+            // L is roughly 0 to 1.5
+            // Map to 0..1
+            const norm = Math.min(1, Math.max(0, L / 1.2));
+            
+            // Gradient from Light Violet (Shadow) to White (Highlight)
+            // Shadow: rgb(160, 160, 240)
+            // Highlight: rgb(255, 255, 255)
+            
+            const r = Math.floor(160 + (255 - 160) * norm);
+            const g = Math.floor(160 + (255 - 160) * norm);
+            const b = Math.floor(240 + (255 - 240) * norm);
+            
+            return `rgb(${r},${g},${b})`;
+        }
+
+        function renderPoint(x, y, z, nx, ny, nz) {
+            // Rotate position
+            const y1 = y * cosA - z * sinA;
+            const z1 = y * sinA + z * cosA;
+            const x1 = x;
+
+            const x2 = x1 * cosB - y1 * sinB;
+            const y2 = x1 * sinB + y1 * cosB;
+            const z2 = z1;
+
+            // Rotate normal
+            const ny1 = ny * cosA - nz * sinA;
+            const nz1 = ny * sinA + nz * cosA;
+            const nx1 = nx;
+
+            const nx2 = nx1 * cosB - ny1 * sinB;
+            const ny2 = nx1 * sinB + ny1 * cosB;
+            const nz2 = nz1;
+
+            // Lighting
+            const L = (ny2 - nz2) + 0.4;
+
+            if (L > 0) {
+                const ooz = 1 / (z2 + K2);
+                const xp = Math.floor(width / 2 + K1 * ooz * x2);
+                const yp = Math.floor(height / 2 - K1 * ooz * y2);
+
+                if (xp >= 0 && xp < width && yp >= 0 && yp < height) {
+                    const idx = xp + yp * width;
+                    if (ooz > zBuffer[idx]) {
+                        zBuffer[idx] = ooz;
+                        const luminanceChars = ".,-~:;=!*#$@";
+                        const charIdx = Math.floor(L * 8);
+                        buffer[idx] = luminanceChars[Math.max(0, Math.min(charIdx, luminanceChars.length - 1))];
+                        colorBuffer[idx] = getLuminanceColor(L);
+                    }
+                }
+            }
+        }
+
+        // Render Part (Torus Segment)
         function renderPart(thetaStart, thetaEnd, centerX, centerY) {
-            for (let theta = thetaStart; theta < thetaEnd; theta += 0.05) {
+            for (let theta = thetaStart; theta < thetaEnd; theta += 0.04) {
                 const costheta = Math.cos(theta);
                 const sintheta = Math.sin(theta);
 
@@ -2771,63 +2829,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     const oy = circlex * sintheta + centerY;
                     const oz = circley;
 
-                    // Rotate around X axis (A)
-                    const y1 = oy * cosA - oz * sinA;
-                    const z1 = oy * sinA + oz * cosA;
-                    const x1 = ox;
-
-                    // Rotate around Z axis (B)
-                    const x2 = x1 * cosB - y1 * sinB;
-                    const y2 = x1 * sinB + y1 * cosB;
-                    const z2 = z1;
-
-                    // Perspective projection
-                    const ooz = 1 / (z2 + K2); // One over Z
-                    
-                    // Screen coordinates
-                    const xp = Math.floor(width / 2 + K1 * ooz * x2);
-                    const yp = Math.floor(height / 2 - K1 * ooz * y2); // Note: Y is inverted on screen
-
-                    // Luminance
                     const nx = costheta * cosphi;
                     const ny = sintheta * cosphi;
                     const nz = sinphi;
-                    
-                    // Rotate normal
-                    const ny1 = ny * cosA - nz * sinA;
-                    const nz1 = ny * sinA + nz * cosA;
-                    const nx1 = nx;
 
-                    const nx2 = nx1 * cosB - ny1 * sinB;
-                    const ny2 = nx1 * sinB + ny1 * cosB;
-                    const nz2 = nz1;
-
-                    // Light vector (0, 1, -1) normalized roughly
-                    const L = ny2 - nz2; 
-
-                    if (L > 0) {
-                        if (xp >= 0 && xp < width && yp >= 0 && yp < height) {
-                            const idx = xp + yp * width;
-                            if (ooz > zBuffer[idx]) {
-                                zBuffer[idx] = ooz;
-                                const luminanceChars = ".,-~:;=!*#$@";
-                                const charIdx = Math.floor(L * 8);
-                                buffer[idx] = luminanceChars[Math.max(0, Math.min(charIdx, luminanceChars.length - 1))];
-                            }
-                        }
-                    }
+                    renderPoint(ox, oy, oz, nx, ny, nz);
                 }
             }
         }
 
-        // Function to render a cylinder (diagonal bar)
+        // Render Line (Cylinder)
         function renderLine(x1, y1, x2, y2) {
             const dx = x2 - x1;
             const dy = y2 - y1;
             const len = Math.sqrt(dx*dx + dy*dy);
-            const steps = Math.floor(len * 40); // Increased density
+            const steps = Math.floor(len * 50); 
             
-            // Angle of the cylinder axis in XY plane
             const alpha = Math.atan2(dy, dx);
             const cosAlpha = Math.cos(alpha);
             const sinAlpha = Math.sin(alpha);
@@ -2845,51 +2862,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     const oy = cy + r * cosAlpha * sinphi;
                     const oz = r * cosphi;
 
-                    // Rotate around X axis (A)
-                    const y1 = oy * cosA - oz * sinA;
-                    const z1 = oy * sinA + oz * cosA;
-                    const x1 = ox;
-
-                    // Rotate around Z axis (B)
-                    const x2 = x1 * cosB - y1 * sinB;
-                    const y2 = x1 * sinB + y1 * cosB;
-                    const z2 = z1;
-
-                    const ooz = 1 / (z2 + K2);
-                    const xp = Math.floor(width / 2 + K1 * ooz * x2);
-                    const yp = Math.floor(height / 2 - K1 * ooz * y2);
-
-                    // Normal vector
                     const nx = -sinAlpha * sinphi;
                     const ny = cosAlpha * sinphi;
                     const nz = cosphi;
 
-                    const ny1 = ny * cosA - nz * sinA;
-                    const nz1 = ny * sinA + nz * cosA;
-                    const nx1 = nx;
-
-                    const nx2 = nx1 * cosB - ny1 * sinB;
-                    const ny2 = nx1 * sinB + ny1 * cosB;
-                    const nz2 = nz1;
-
-                    const L = ny2 - nz2;
-
-                    if (L > 0) {
-                        if (xp >= 0 && xp < width && yp >= 0 && yp < height) {
-                            const idx = xp + yp * width;
-                            if (ooz > zBuffer[idx]) {
-                                zBuffer[idx] = ooz;
-                                const luminanceChars = ".,-~:;=!*#$@";
-                                const charIdx = Math.floor(L * 8);
-                                buffer[idx] = luminanceChars[Math.max(0, Math.min(charIdx, luminanceChars.length - 1))];
-                            }
-                        }
-                    }
+                    renderPoint(ox, oy, oz, nx, ny, nz);
                 }
             }
         }
 
-        // Function to render a sphere (joints/caps)
+        // Render Sphere
         function renderSphere(cx, cy, cz, radius) {
             for (let theta = 0; theta < 3.14; theta += 0.05) {
                 for (let phi = 0; phi < 6.28; phi += 0.05) {
@@ -2902,75 +2884,35 @@ document.addEventListener('DOMContentLoaded', () => {
                     const oy = cy + radius * sintheta * sinphi;
                     const oz = cz + radius * costheta;
 
-                    // Rotation
-                    const y1 = oy * cosA - oz * sinA;
-                    const z1 = oy * sinA + oz * cosA;
-                    const x1 = ox;
-
-                    const x2 = x1 * cosB - y1 * sinB;
-                    const y2 = x1 * sinB + y1 * cosB;
-                    const z2 = z1;
-
-                    const ooz = 1 / (z2 + K2);
-                    const xp = Math.floor(width / 2 + K1 * ooz * x2);
-                    const yp = Math.floor(height / 2 - K1 * ooz * y2);
-
-                    // Normal
                     const nx = sintheta * cosphi;
                     const ny = sintheta * sinphi;
                     const nz = costheta;
 
-                    const ny1 = ny * cosA - nz * sinA;
-                    const nz1 = ny * sinA + nz * cosA;
-                    const nx1 = nx;
-
-                    const nx2 = nx1 * cosB - ny1 * sinB;
-                    const ny2 = nx1 * sinB + ny1 * cosB;
-                    const nz2 = nz1;
-
-                    const L = ny2 - nz2;
-
-                    if (L > 0) {
-                        if (xp >= 0 && xp < width && yp >= 0 && yp < height) {
-                            const idx = xp + yp * width;
-                            if (ooz > zBuffer[idx]) {
-                                zBuffer[idx] = ooz;
-                                const luminanceChars = ".,-~:;=!*#$@";
-                                const charIdx = Math.floor(L * 8);
-                                buffer[idx] = luminanceChars[Math.max(0, Math.min(charIdx, luminanceChars.length - 1))];
-                            }
-                        }
-                    }
+                    renderPoint(ox, oy, oz, nx, ny, nz);
                 }
             }
         }
 
-        // Top Arc: Center (0, 1.0). Range 0.5 to 3.6
-        renderPart(0.5, 3.6, 0, 1.0);
-
-        // Bottom Arc: Center (0, -1.0). Range 3.5 to 6.7
-        renderPart(3.5, 6.7, 0, -1.0);
-
-        // Diagonal Bar: Connects (-0.9, 0.6) to (0.9, -0.6)
+        // --- Geometry ---
+        renderPart(0.5, 3.57, 0, 1.0);
+        renderPart(3.5, 6.71, 0, -1.0);
         renderLine(-0.9, 0.6, 0.9, -0.6);
-
-        // Joints (Spheres) to hide gaps
         renderSphere(-0.9, 0.6, 0, r);
         renderSphere(0.9, -0.6, 0, r);
-
-        // Caps (Spheres) to close the tube ends
-        // Top Tip: theta=0.5 -> (0.877, 1.479)
         renderSphere(0.88, 1.48, 0, r);
-        
-        // Bottom Tip: theta=3.5 -> (-0.936, -1.35)
         renderSphere(-0.94, -1.35, 0, r);
 
-        // Render buffer to string
+        // Output
         let output = "";
         for (let k = 0; k < width * height; k++) {
-            output += (k % width === 0 && k !== 0) ? "\n" : buffer[k];
+            if (k % width === 0 && k !== 0) output += "\n";
+            if (buffer[k] !== ' ') {
+                output += `<span style="color:${colorBuffer[k]}">${buffer[k]}</span>`;
+            } else {
+                output += buffer[k];
+            }
         }
-        asciiElement.textContent = output;
+        asciiElement.innerHTML = output;
 
         A += 0.04;
         B += 0.02;
