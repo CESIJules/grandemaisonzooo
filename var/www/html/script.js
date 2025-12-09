@@ -3148,7 +3148,7 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'help':
             case '?':
                 printOutput('Available commands:');
-                printOutput('  radio [options] - Control radio');
+                printOutput('  radio | r [options] - Control radio');
                 printOutput('  credits [-D|--details]');
                 printOutput('  clear   - Clear terminal');
                 printOutput('  exit    - Exit terminal');
