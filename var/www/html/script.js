@@ -2747,12 +2747,14 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // High DPI Scaling
             const dpr = window.devicePixelRatio || 1;
-            const fontSize = 12; // Reverted to standard size for sharpness
+            // Restored to 14px (original CSS size)
+            const fontSize = 14; 
             const font = `${fontSize}px "Courier New", monospace`;
             
             asciiCtx.font = font;
             const metrics = asciiCtx.measureText('M');
-            const charWidth = metrics.width;
+            // Force integer width for sharp grid alignment
+            const charWidth = Math.ceil(metrics.width); 
             const charHeight = fontSize + 2; 
             
             const cols = 120;
@@ -2766,8 +2768,8 @@ document.addEventListener('DOMContentLoaded', () => {
             asciiCanvas.style.height = `${cssHeight}px`;
             
             // Actual Size (Scaled)
-            asciiCanvas.width = cssWidth * dpr;
-            asciiCanvas.height = cssHeight * dpr;
+            asciiCanvas.width = Math.floor(cssWidth * dpr);
+            asciiCanvas.height = Math.floor(cssHeight * dpr);
             
             // Scale Context
             asciiCtx.scale(dpr, dpr);
@@ -2787,6 +2789,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const width = 120;
         const height = 80;
         const zBuffer = new Array(width * height).fill(0);
+        const charBuffer = new Array(width * height).fill(null);
+        const colorBuffer = new Array(width * height).fill(null);
         
         // Clear Canvas (using logical coords)
         asciiCtx.clearRect(0, 0, asciiCanvas.cssWidth, asciiCanvas.cssHeight);
@@ -2810,13 +2814,13 @@ document.addEventListener('DOMContentLoaded', () => {
             norm = Math.max(0, Math.min(1, norm));
             norm = Math.pow(norm, 0.8); 
 
-            // Gradient: Vibrant Violet to Soft White
-            // Start: rgb(100, 50, 255)
-            // End:   rgb(230, 230, 255)
+            // Gradient: Classic Violet to Soft White (Restored & Smoothed)
+            // Start: rgb(140, 120, 220) - Lighter violet shadow
+            // End:   rgb(240, 240, 255) - Soft white (not blinding)
             
-            const r = Math.floor(100 + (230 - 100) * norm);
-            const g = Math.floor(50 + (230 - 50) * norm);
-            const b = 255; // Always max blue for vibrancy
+            const r = Math.floor(140 + (240 - 140) * norm);
+            const g = Math.floor(120 + (240 - 120) * norm);
+            const b = Math.floor(220 + (255 - 220) * norm);
             
             return `rgb(${r},${g},${b})`;
         }
@@ -2855,11 +2859,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         const char = luminanceChars[Math.max(0, Math.min(charIdx, luminanceChars.length - 1))];
                         const color = getLuminanceColor(L);
                         
-                        const px = xp * asciiCanvas.charWidth;
-                        const py = yp * asciiCanvas.charHeight;
-                        
-                        asciiCtx.fillStyle = color;
-                        asciiCtx.fillText(char, px, py);
+                        // Store in buffer instead of drawing immediately
+                        charBuffer[idx] = char;
+                        colorBuffer[idx] = color;
                     }
                 }
             }
@@ -2954,6 +2956,17 @@ document.addEventListener('DOMContentLoaded', () => {
         renderSphere(0.9, -0.6, 0, r);
         renderSphere(0.88, 1.48, 0, r);
         renderSphere(-0.94, -1.35, 0, r);
+
+        // Draw from buffer
+        for (let i = 0; i < width * height; i++) {
+            if (charBuffer[i]) {
+                const x = (i % width) * asciiCanvas.charWidth;
+                const y = Math.floor(i / width) * asciiCanvas.charHeight;
+                
+                asciiCtx.fillStyle = colorBuffer[i];
+                asciiCtx.fillText(charBuffer[i], x, y);
+            }
+        }
 
         A += 0.04;
         B += 0.02;
