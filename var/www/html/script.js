@@ -3058,6 +3058,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Autocomplete Logic ---
     const commands = ['help', 'credits', 'clear', 'exit', 'radio', 'r'];
     const ghostText = document.getElementById('ghostText');
+    
+    // Command History
+    const commandHistory = [];
+    let historyIndex = 0;
+    const MAX_HISTORY = 25;
 
     function updateGhostText(value) {
         if (!value) {
@@ -3089,12 +3094,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Move cursor to end
                 // terminalInput.setSelectionRange(terminalInput.value.length, terminalInput.value.length);
             }
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (historyIndex > 0) {
+                historyIndex--;
+                terminalInput.value = commandHistory[historyIndex];
+                // Move cursor to end
+                setTimeout(() => terminalInput.setSelectionRange(terminalInput.value.length, terminalInput.value.length), 0);
+            }
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < commandHistory.length) {
+                historyIndex++;
+                if (historyIndex === commandHistory.length) {
+                    terminalInput.value = '';
+                } else {
+                    terminalInput.value = commandHistory[historyIndex];
+                }
+            }
         } else if (e.key === 'Enter') {
             e.preventDefault();
             const command = terminalInput.value.trim();
             
             if (command) {
                 printCommand(command);
+                
+                // Add to history (prevent duplicates if same as last)
+                if (commandHistory.length === 0 || commandHistory[commandHistory.length - 1] !== command) {
+                    commandHistory.push(command);
+                    if (commandHistory.length > MAX_HISTORY) {
+                        commandHistory.shift();
+                    }
+                }
+                historyIndex = commandHistory.length;
+
                 processCommand(command);
             }
             
