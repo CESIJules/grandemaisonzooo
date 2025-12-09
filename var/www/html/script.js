@@ -3090,22 +3090,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         switch (command) {
             case 'help':
+            case '?':
                 printOutput('Available commands:');
                 printOutput('  credits [-D|--details]');
                 printOutput('  clear   - Clear terminal');
                 printOutput('  exit    - Exit terminal');
-                printOutput('');
                 break;
             case 'credits':
                 if (parts[1] === '-D' || parts[1] === '--details') {
                     printOutput('DETAILED CREDITS');
                     printOutput('CREDIT A DETAILLEE');
-                    printOutput('');
                 } else {
                     printOutput('CREDITS');
                     printOutput('Developed by: S&S');
                     printOutput('Design: GrandeMaison Team');
-                    printOutput('');
                 }
                 break;
             case 'clear':
@@ -3118,7 +3116,6 @@ document.addEventListener('DOMContentLoaded', () => {
             default:
                 printOutput('Unknown command: ' + command);
                 printOutput('Type \'help\' for a list of commands.');
-                printOutput('');
         }
     }
     
