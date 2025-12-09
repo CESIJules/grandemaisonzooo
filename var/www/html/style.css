@@ -2691,3 +2691,70 @@ body.no-scroll, body.no-scroll main {
     overflow: hidden !important;
     touch-action: none; /* Disable touch actions */
 }
+
+/* Terminal Overlay */
+#terminalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+    z-index: 10001; /* Above everything */
+    font-family: 'Courier New', monospace;
+    color: #0f0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 1s ease, visibility 1s ease;
+}
+
+#terminalOverlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.terminal-container {
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+#terminalOutput {
+    flex-grow: 1;
+    overflow-y: auto;
+    margin-bottom: 10px;
+    white-space: pre-wrap;
+}
+
+#terminalOutput p {
+    margin: 5px 0;
+}
+
+.terminal-input-line {
+    display: flex;
+    align-items: center;
+    border-top: 1px solid #333;
+    padding-top: 10px;
+}
+
+.prompt {
+    margin-right: 10px;
+    color: #0f0;
+}
+
+#terminalInput {
+    background: transparent;
+    border: none;
+    color: #0f0;
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+    flex-grow: 1;
+    outline: none;
+}
+
