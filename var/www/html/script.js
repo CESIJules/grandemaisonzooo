@@ -3091,15 +3091,27 @@ document.addEventListener('DOMContentLoaded', () => {
         switch (command) {
             case 'help':
                 printOutput('Available commands:');
-                printOutput('  credits - Show credits');
+                printOutput('  credits [-D|--details]');
                 printOutput('  clear   - Clear terminal');
                 printOutput('  exit    - Exit terminal');
                 break;
             case 'credits':
-                printOutput('--- CREDITS ---');
-                printOutput('Developed by: CESIJules');
-                printOutput('Design: GrandeMaison Team');
-                printOutput('---------------');
+                if (parts[1] === '-D' || parts[1] === '--details') {
+                    printOutput('--- DETAILED CREDITS ---');
+                    printOutput('Lead Developer: CESIJules');
+                    printOutput('UI/UX Design: GrandeMaison Team');
+                    printOutput('3D Engine: Custom Raymarching (JS)');
+                    printOutput('Audio Stack: Icecast + Web Audio API');
+                    printOutput('Backend: PHP + JSON');
+                    printOutput('Special Thanks: You, for visiting.');
+                    printOutput('------------------------');
+                } else {
+                    printOutput('--- CREDITS ---');
+                    printOutput('Developed by: CESIJules');
+                    printOutput('Design: GrandeMaison Team');
+                    printOutput('---------------');
+                    printOutput('Tip: Try "credits --details"');
+                }
                 break;
             case 'clear':
                 document.getElementById('terminalHistory').innerHTML = '';
