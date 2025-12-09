@@ -2748,8 +2748,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const metrics = asciiCtx.measureText('M');
             asciiCanvas.charWidth = metrics.width;
             asciiCanvas.charHeight = 14;
-            asciiCanvas.width = 80 * asciiCanvas.charWidth;
-            asciiCanvas.height = 50 * asciiCanvas.charHeight;
+            asciiCanvas.width = 120 * asciiCanvas.charWidth;
+            asciiCanvas.height = 80 * asciiCanvas.charHeight;
         }
     }
 
@@ -2757,8 +2757,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!asciiElement) return;
         if (!asciiCanvas) initAsciiCanvas();
         
-        const width = 80;
-        const height = 50;
+        const width = 120;
+        const height = 80;
         const zBuffer = new Array(width * height).fill(0);
         
         // Clear Canvas
