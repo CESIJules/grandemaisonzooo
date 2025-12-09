@@ -535,6 +535,29 @@ document.addEventListener('DOMContentLoaded', () => {
   let trackStartTime = 0;
   let radarStartTime = 0;
 
+  // --- Expose Radio Control for Terminal ---
+  window.RadioControl = {
+      togglePlay: () => {
+          if (playBtn) playBtn.click();
+      },
+      getInfo: () => {
+          const titleEl = currentSong ? currentSong.querySelector('.title') : null;
+          const title = titleEl ? titleEl.textContent : 'Unknown';
+          
+          let elapsed = 0;
+          if (trackStartTime > 0) {
+              elapsed = (Date.now() / 1000) - trackStartTime;
+          }
+          
+          return {
+              title: title,
+              elapsed: elapsed,
+              duration: trackDuration,
+              isPlaying: audio ? !audio.paused : false
+          };
+      }
+  };
+
   function setupVisualizer() {
     if (visualizerInitialized) return;
     
@@ -3033,7 +3056,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Autocomplete Logic ---
-    const commands = ['help', 'credits', 'clear', 'exit'];
+    const commands = ['help', 'credits', 'clear', 'exit', 'radio', 'r'];
     const ghostText = document.getElementById('ghostText');
 
     function updateGhostText(value) {
@@ -3092,9 +3115,49 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'help':
             case '?':
                 printOutput('Available commands:');
+                printOutput('  radio [options] - Control radio');
                 printOutput('  credits [-D|--details]');
                 printOutput('  clear   - Clear terminal');
                 printOutput('  exit    - Exit terminal');
+                break;
+            case 'radio':
+            case 'r':
+                if (!window.RadioControl) {
+                    printOutput('Error: Radio control not available.');
+                    break;
+                }
+                
+                const subCmd = parts[1] ? parts[1].toLowerCase() : '';
+                
+                if (subCmd === '--play' || subCmd === '-p' || subCmd === '--pause') {
+                    window.RadioControl.togglePlay();
+                    const info = window.RadioControl.getInfo();
+                    // Small delay to allow state update
+                    setTimeout(() => {
+                        const newInfo = window.RadioControl.getInfo();
+                        printOutput(newInfo.isPlaying ? 'Radio: Playing...' : 'Radio: Paused.');
+                    }, 100);
+                } else if (subCmd === '--info' || subCmd === '-i') {
+                    const info = window.RadioControl.getInfo();
+                    printOutput(`Now Playing: ${info.title}`);
+                    
+                    const formatTime = (s) => {
+                        if (s < 0) s = 0;
+                        const m = Math.floor(s / 60);
+                        const sec = Math.floor(s % 60);
+                        return `${m}:${sec.toString().padStart(2, '0')}`;
+                    };
+                    
+                    if (info.duration > 0) {
+                        printOutput(`Time: ${formatTime(info.elapsed)} / ${formatTime(info.duration)}`);
+                    } else {
+                        printOutput(`Time: ${formatTime(info.elapsed)}`);
+                    }
+                } else {
+                    printOutput('Usage: radio [options]');
+                    printOutput('  -P, --play    Toggle play/pause');
+                    printOutput('  -I, --info    Show current track info');
+                }
                 break;
             case 'credits':
                 if (parts[1] === '-D' || parts[1] === '--details') {
