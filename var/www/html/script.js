@@ -2734,15 +2734,37 @@ document.addEventListener('DOMContentLoaded', () => {
     let asciiInterval;
     let A = 0, B = 0;
     const asciiElement = document.getElementById('asciiS');
+    let asciiCanvas = null;
+    let asciiCtx = null;
+
+    function initAsciiCanvas() {
+        if (!asciiElement) return;
+        if (!asciiCanvas) {
+            asciiCanvas = document.createElement('canvas');
+            asciiElement.innerHTML = '';
+            asciiElement.appendChild(asciiCanvas);
+            asciiCtx = asciiCanvas.getContext('2d', { alpha: true });
+            asciiCtx.font = '12px "Courier New", monospace';
+            const metrics = asciiCtx.measureText('M');
+            asciiCanvas.charWidth = metrics.width;
+            asciiCanvas.charHeight = 14;
+            asciiCanvas.width = 80 * asciiCanvas.charWidth;
+            asciiCanvas.height = 50 * asciiCanvas.charHeight;
+        }
+    }
 
     function renderAsciiFrame() {
         if (!asciiElement) return;
+        if (!asciiCanvas) initAsciiCanvas();
         
-        const width = 120;  // Increased width
-        const height = 80; // Reduced height to account for char aspect ratio
-        const buffer = new Array(width * height).fill(' ');
-        const colorBuffer = new Array(width * height).fill(null);
+        const width = 80;
+        const height = 50;
         const zBuffer = new Array(width * height).fill(0);
+        
+        // Clear Canvas
+        asciiCtx.clearRect(0, 0, asciiCanvas.width, asciiCanvas.height);
+        asciiCtx.font = '12px "Courier New", monospace';
+        asciiCtx.textBaseline = 'top';
         
         // S-Shape Parameters
         const R = 1;
@@ -2755,25 +2777,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const cosA = Math.cos(A), sinA = Math.sin(A);
         const cosB = Math.cos(B), sinB = Math.sin(B);
 
-        // Color Helper: Violet Gradient based on Luminance
+        // Color Helper: Smoother Violet Gradient
         function getLuminanceColor(L) {
-            // L is roughly 0 to 1.5
-            // Map to 0..1
-            const norm = Math.min(1, Math.max(0, L / 1.2));
-            
-            // Gradient from Light Violet (Shadow) to White (Highlight)
-            // Shadow: rgb(160, 160, 240)
-            // Highlight: rgb(255, 255, 255)
-            
-            const r = Math.floor(160 + (255 - 160) * norm);
-            const g = Math.floor(160 + (255 - 160) * norm);
-            const b = Math.floor(240 + (255 - 240) * norm);
+            let norm = (L + 0.2) / 1.6;
+            norm = Math.max(0, Math.min(1, norm));
+            norm = Math.pow(norm, 0.8); 
+
+            const r = Math.floor(100 + (255 - 100) * norm);
+            const g = Math.floor(80 + (255 - 80) * norm);
+            const b = Math.floor(200 + (255 - 200) * norm);
             
             return `rgb(${r},${g},${b})`;
         }
 
         function renderPoint(x, y, z, nx, ny, nz) {
-            // Rotate position
             const y1 = y * cosA - z * sinA;
             const z1 = y * sinA + z * cosA;
             const x1 = x;
@@ -2782,7 +2799,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const y2 = x1 * sinB + y1 * cosB;
             const z2 = z1;
 
-            // Rotate normal
             const ny1 = ny * cosA - nz * sinA;
             const nz1 = ny * sinA + nz * cosA;
             const nx1 = nx;
@@ -2791,7 +2807,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const ny2 = nx1 * sinB + ny1 * cosB;
             const nz2 = nz1;
 
-            // Lighting
             const L = (ny2 - nz2) + 0.4;
 
             if (L > 0) {
@@ -2803,10 +2818,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     const idx = xp + yp * width;
                     if (ooz > zBuffer[idx]) {
                         zBuffer[idx] = ooz;
+                        
                         const luminanceChars = ".,-~:;=!*#$@";
                         const charIdx = Math.floor(L * 8);
-                        buffer[idx] = luminanceChars[Math.max(0, Math.min(charIdx, luminanceChars.length - 1))];
-                        colorBuffer[idx] = getLuminanceColor(L);
+                        const char = luminanceChars[Math.max(0, Math.min(charIdx, luminanceChars.length - 1))];
+                        const color = getLuminanceColor(L);
+                        
+                        const px = xp * asciiCanvas.charWidth;
+                        const py = yp * asciiCanvas.charHeight;
+                        
+                        asciiCtx.fillStyle = color;
+                        asciiCtx.fillText(char, px, py);
                     }
                 }
             }
@@ -2902,18 +2924,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderSphere(0.88, 1.48, 0, r);
         renderSphere(-0.94, -1.35, 0, r);
 
-        // Output
-        let output = "";
-        for (let k = 0; k < width * height; k++) {
-            if (k % width === 0 && k !== 0) output += "\n";
-            if (buffer[k] !== ' ') {
-                output += `<span style="color:${colorBuffer[k]}">${buffer[k]}</span>`;
-            } else {
-                output += buffer[k];
-            }
-        }
-        asciiElement.innerHTML = output;
-
         A += 0.04;
         B += 0.02;
     }
@@ -2992,7 +3002,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Autocomplete Logic ---
-    const commands = ['help', 'credits', 'exit'];
+    const commands = ['help', 'credits', 'clear', 'exit'];
     const ghostText = document.getElementById('ghostText');
 
     function updateGhostText(value) {
@@ -3051,6 +3061,7 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'help':
                 printOutput('Available commands:');
                 printOutput('  credits - Show credits');
+                printOutput('  clear   - Clear terminal');
                 printOutput('  exit    - Exit terminal');
                 break;
             case 'credits':
@@ -3058,6 +3069,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 printOutput('Developed by: CESIJules');
                 printOutput('Design: GrandeMaison Team');
                 printOutput('---------------');
+                break;
+            case 'clear':
+                document.getElementById('terminalHistory').innerHTML = '';
                 break;
             case 'exit':
                 printOutput('Exiting...');
