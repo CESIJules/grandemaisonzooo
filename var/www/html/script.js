@@ -3054,12 +3054,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const match = commands.find(cmd => cmd.startsWith(value.toLowerCase()));
         if (match) {
-            // We want to display the full match, but the part user typed is "invisible" (covered by input)
-            // However, since input is transparent, we need to make sure the ghost text aligns perfectly.
-            // The ghost text will contain the FULL command.
-            // The input text will cover the beginning.
-            // Since they have same font/size/position, it should look like one string.
-            ghostText.textContent = match;
+            // Construct ghost text using the user's typed case for the matching part
+            // This ensures perfect alignment even with non-monospace fonts
+            const typedPart = value;
+            const remainingPart = match.slice(value.length);
+            ghostText.textContent = typedPart + remainingPart;
         } else {
             ghostText.textContent = '';
         }
