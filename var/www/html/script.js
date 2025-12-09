@@ -2747,8 +2747,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const R = 1;
         const r = 0.4;
         const K2 = 5;
-        // Reduced scale factor (was 3, now 1.5) to make S smaller
-        const K1 = width * K2 * 1.5 / (8 * (R + r));
+        // Reduced scale factor to prevent clipping (was 1.5, now 1.0)
+        const K1 = width * K2 * 1.0 / (8 * (R + r));
 
         // Rotation
         const cosA = Math.cos(A), sinA = Math.sin(A);
@@ -2756,11 +2756,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Function to render a partial torus
         function renderPart(thetaStart, thetaEnd, centerX, centerY) {
-            for (let theta = thetaStart; theta < thetaEnd; theta += 0.07) {
+            for (let theta = thetaStart; theta < thetaEnd; theta += 0.05) {
                 const costheta = Math.cos(theta);
                 const sintheta = Math.sin(theta);
 
-                for (let phi = 0; phi < 6.28; phi += 0.02) {
+                for (let phi = 0; phi < 6.28; phi += 0.05) {
                     const cosphi = Math.cos(phi);
                     const sinphi = Math.sin(phi);
 
@@ -2825,7 +2825,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const dx = x2 - x1;
             const dy = y2 - y1;
             const len = Math.sqrt(dx*dx + dy*dy);
-            const steps = Math.floor(len * 20); // Density along length
+            const steps = Math.floor(len * 40); // Increased density
             
             // Angle of the cylinder axis in XY plane
             const alpha = Math.atan2(dy, dx);
@@ -2837,21 +2837,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const cx = x1 + dx * t;
                 const cy = y1 + dy * t;
 
-                for (let phi = 0; phi < 6.28; phi += 0.1) {
+                for (let phi = 0; phi < 6.28; phi += 0.05) {
                     const cosphi = Math.cos(phi);
                     const sinphi = Math.sin(phi);
-
-                    // Cylinder surface point relative to center (cx, cy, 0)
-                    // We orient the circle perpendicular to the axis.
-                    // Axis is in XY plane. Z is perpendicular to axis.
-                    // Cross product of Axis and Z gives the other basis vector in XY plane.
-                    // Basis 1: (0, 0, 1) -> Z axis
-                    // Basis 2: (-sinAlpha, cosAlpha, 0) -> Perpendicular in XY plane
-                    
-                    // Point = Center + r * (Basis1 * cosphi + Basis2 * sinphi)
-                    // x = cx + r * (-sinAlpha * sinphi)
-                    // y = cy + r * (cosAlpha * sinphi)
-                    // z = r * cosphi
 
                     const ox = cx - r * sinAlpha * sinphi;
                     const oy = cy + r * cosAlpha * sinphi;
@@ -2872,8 +2860,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const yp = Math.floor(height / 2 - K1 * ooz * y2);
 
                     // Normal vector
-                    // Normal is radial from axis.
-                    // N = Basis1 * cosphi + Basis2 * sinphi
                     const nx = -sinAlpha * sinphi;
                     const ny = cosAlpha * sinphi;
                     const nz = cosphi;
@@ -2903,18 +2889,74 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Top Arc: Center (0, 0.9). Range 0.2 to 3.2 (Right -> Top -> Left)
-        renderPart(0.2, 3.2, 0, 0.9);
+        // Function to render a sphere (joints)
+        function renderSphere(cx, cy, cz, radius) {
+            for (let theta = 0; theta < 3.14; theta += 0.1) {
+                for (let phi = 0; phi < 6.28; phi += 0.1) {
+                    const costheta = Math.cos(theta);
+                    const sintheta = Math.sin(theta);
+                    const cosphi = Math.cos(phi);
+                    const sinphi = Math.sin(phi);
 
-        // Bottom Arc: Center (0, -0.9). Range 3.3 to 6.3 (Left -> Bottom -> Right)
-        renderPart(3.3, 6.3, 0, -0.9);
+                    const ox = cx + radius * sintheta * cosphi;
+                    const oy = cy + radius * sintheta * sinphi;
+                    const oz = cz + radius * costheta;
 
-        // Diagonal Bar: Connects end of Top Arc to start of Bottom Arc
-        // Top Arc ends roughly at (-1.0, 0.9)
-        // Bottom Arc starts roughly at (1.0, -0.9)
-        // But we want the diagonal to go from Top-Left to Bottom-Right
-        // Let's connect (-0.8, 0.6) to (0.8, -0.6) to bridge the gap
-        renderLine(-0.9, 0.7, 0.9, -0.7);
+                    // Rotation
+                    const y1 = oy * cosA - oz * sinA;
+                    const z1 = oy * sinA + oz * cosA;
+                    const x1 = ox;
+
+                    const x2 = x1 * cosB - y1 * sinB;
+                    const y2 = x1 * sinB + y1 * cosB;
+                    const z2 = z1;
+
+                    const ooz = 1 / (z2 + K2);
+                    const xp = Math.floor(width / 2 + K1 * ooz * x2);
+                    const yp = Math.floor(height / 2 - K1 * ooz * y2);
+
+                    // Normal
+                    const nx = sintheta * cosphi;
+                    const ny = sintheta * sinphi;
+                    const nz = costheta;
+
+                    const ny1 = ny * cosA - nz * sinA;
+                    const nz1 = ny * sinA + nz * cosA;
+                    const nx1 = nx;
+
+                    const nx2 = nx1 * cosB - ny1 * sinB;
+                    const ny2 = nx1 * sinB + ny1 * cosB;
+                    const nz2 = nz1;
+
+                    const L = ny2 - nz2;
+
+                    if (L > 0) {
+                        if (xp >= 0 && xp < width && yp >= 0 && yp < height) {
+                            const idx = xp + yp * width;
+                            if (ooz > zBuffer[idx]) {
+                                zBuffer[idx] = ooz;
+                                const luminanceChars = ".,-~:;=!*#$@";
+                                const charIdx = Math.floor(L * 8);
+                                buffer[idx] = luminanceChars[Math.max(0, Math.min(charIdx, luminanceChars.length - 1))];
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Top Arc: Center (0, 1.0). Range 0.5 to 3.6
+        renderPart(0.5, 3.6, 0, 1.0);
+
+        // Bottom Arc: Center (0, -1.0). Range 3.5 to 6.7
+        renderPart(3.5, 6.7, 0, -1.0);
+
+        // Diagonal Bar: Connects (-0.9, 0.6) to (0.9, -0.6)
+        renderLine(-0.9, 0.6, 0.9, -0.6);
+
+        // Joints (Spheres) to hide gaps
+        renderSphere(-0.9, 0.6, 0, r);
+        renderSphere(0.9, -0.6, 0, r);
 
         // Render buffer to string
         let output = "";
