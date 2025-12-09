@@ -2442,6 +2442,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // Update the global index
     currentSectionIndex = closestSectionIndex;
+    if (typeof updateScrollArrowVisibility === 'function') updateScrollArrowVisibility();
   }
 
   window.addEventListener('resize', () => {
@@ -2605,7 +2606,8 @@ document.addEventListener('DOMContentLoaded', () => {
               if (scrollPosition >= sectionTop && scrollPosition < sectionBottom) {
                   if (currentSectionIndex !== index) {
                       currentSectionIndex = index;
-                      // Optional: Update menu active state here if needed
+                      if (typeof updateScrollArrowVisibility === 'function') updateScrollArrowVisibility();
+                      if (typeof updateVolumeButtonPosition === 'function') updateVolumeButtonPosition();
                   }
               }
           });
