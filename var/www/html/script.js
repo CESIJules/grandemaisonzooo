@@ -2729,19 +2729,197 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // --- ASCII S Animation Logic ---
+    let asciiInterval;
+    let A = 0, B = 0;
+    const asciiElement = document.getElementById('asciiS');
+
+    function renderAsciiFrame() {
+        if (!asciiElement) return;
+        
+        const width = 60;
+        const height = 60;
+        const buffer = new Array(width * height).fill(' ');
+        const zBuffer = new Array(width * height).fill(0);
+        
+        // S-Shape Parameters
+        // We render two partial tori
+        // R1 = 1 (Major radius), r1 = 0.4 (Tube radius)
+        
+        const R = 1;
+        const r = 0.4;
+        const K2 = 5;
+        const K1 = width * K2 * 3 / (8 * (R + r));
+
+        // Rotation
+        const cosA = Math.cos(A), sinA = Math.sin(A);
+        const cosB = Math.cos(B), sinB = Math.sin(B);
+
+        // Function to render a partial torus
+        // thetaStart, thetaEnd: range for the major circle
+        // centerX, centerY: offset for the torus center
+        function renderPart(thetaStart, thetaEnd, centerX, centerY, reverseNormal = false) {
+            for (let theta = thetaStart; theta < thetaEnd; theta += 0.07) {
+                const costheta = Math.cos(theta);
+                const sintheta = Math.sin(theta);
+
+                for (let phi = 0; phi < 6.28; phi += 0.02) {
+                    const cosphi = Math.cos(phi);
+                    const sinphi = Math.sin(phi);
+
+                    // Torus coordinates (centered at 0,0,0)
+                    // x = (R + r*cos(phi)) * cos(theta)
+                    // y = (R + r*cos(phi)) * sin(theta)
+                    // z = r * sin(phi)
+                    
+                    // We shift the center of the torus
+                    const circlex = R + r * cosphi;
+                    const circley = r * sinphi;
+
+                    // Apply torus revolution + offset
+                    // Standard torus is in XY plane.
+                    // We want the S to be flat in XY plane initially.
+                    
+                    // Point on the tube surface before rotation
+                    // For top arc (centered at 0, 1):
+                    // x = circlex * cos(theta) + centerX
+                    // y = circlex * sin(theta) + centerY
+                    // z = circley
+                    
+                    const ox = circlex * costheta + centerX;
+                    const oy = circlex * sintheta + centerY;
+                    const oz = circley;
+
+                    // 3D Rotation
+                    const x = ox * cosB - oz * sinB; // Rotate around Y (or Z depending on axis def)
+                    // Let's stick to donut code axes:
+                    // x = ox (rotated)
+                    // y = oy (rotated)
+                    // z = oz (rotated)
+                    
+                    // Donut code rotation:
+                    // x = circlex*(costheta*cosB*cosA - sinB*sinA) - circley*cosB*sinA
+                    // y = circlex*(costheta*sinB*cosA + cosB*sinA) - circley*sinB*sinA
+                    // z = circlex*costheta*sinA + circley*cosA
+                    // But we have offsets. Let's do manual rotation matrix multiplication.
+                    
+                    // Rotate around X axis (A)
+                    const y1 = oy * cosA - oz * sinA;
+                    const z1 = oy * sinA + oz * cosA;
+                    const x1 = ox;
+
+                    // Rotate around Z axis (B)
+                    const x2 = x1 * cosB - y1 * sinB;
+                    const y2 = x1 * sinB + y1 * cosB;
+                    const z2 = z1;
+
+                    // Perspective projection
+                    const ooz = 1 / (z2 + K2); // One over Z
+                    
+                    // Screen coordinates
+                    const xp = Math.floor(width / 2 + K1 * ooz * x2);
+                    const yp = Math.floor(height / 2 - K1 * ooz * y2);
+
+                    // Luminance
+                    // Normal vector
+                    // N = (cos(theta)cos(phi), sin(theta)cos(phi), sin(phi))
+                    // We need to rotate the normal too
+                    const nx = costheta * cosphi;
+                    const ny = sintheta * cosphi;
+                    const nz = sinphi;
+                    
+                    // Rotate normal
+                    const ny1 = ny * cosA - nz * sinA;
+                    const nz1 = ny * sinA + nz * cosA;
+                    const nx1 = nx;
+
+                    const nx2 = nx1 * cosB - ny1 * sinB;
+                    const ny2 = nx1 * sinB + ny1 * cosB;
+                    const nz2 = nz1;
+
+                    // Light vector (0, 1, -1) normalized roughly
+                    const L = ny2 - nz2; // Simplified lighting
+
+                    if (L > 0) {
+                        if (xp >= 0 && xp < width && yp >= 0 && yp < height) {
+                            const idx = xp + yp * width;
+                            if (ooz > zBuffer[idx]) {
+                                zBuffer[idx] = ooz;
+                                const luminanceChars = ".,-~:;=!*#$@";
+                                const charIdx = Math.floor(L * 8);
+                                buffer[idx] = luminanceChars[Math.max(0, Math.min(charIdx, luminanceChars.length - 1))];
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Top Arc: Center (0, 0.8), Angle PI/4 to 7PI/4 (roughly C shape facing left)
+        // Actually, S top part: starts top right, goes left, down.
+        // Center (0, 0.9). Radius 0.9.
+        // Angle: from roughly 0.2*PI to 1.3*PI?
+        // Let's try: Center (0, 0.9). Theta: 0.5 to 3.8
+        renderPart(0.5, 3.8, 0, 0.9);
+
+        // Bottom Arc: Center (0, -0.9). Theta: 3.6 to 6.8 (flipped C)
+        // We need to rotate the bottom arc by PI to flip it?
+        // Or just change ranges.
+        // Bottom part of S: starts center, goes right, down, left.
+        // Center (0, -0.9).
+        // Theta: 3.6 (approx PI+0.5) to 6.8 (approx 2PI+0.5)
+        renderPart(3.6, 6.8, 0, -0.9);
+
+        // Render buffer to string
+        let output = "";
+        for (let k = 0; k < width * height; k++) {
+            output += (k % width === 0 && k !== 0) ? "\n" : buffer[k];
+        }
+        asciiElement.textContent = output;
+
+        A += 0.04;
+        B += 0.02;
+    }
+
+    function startAsciiAnimation() {
+        if (asciiInterval) clearInterval(asciiInterval);
+        asciiInterval = setInterval(renderAsciiFrame, 50);
+    }
+
+    function stopAsciiAnimation() {
+        if (asciiInterval) clearInterval(asciiInterval);
+    }
+
     function activateTerminal() {
-        terminalOverlay.classList.remove('hidden'); // Ensure it's not hidden by display:none if used
-        // Force reflow
+        terminalOverlay.classList.remove('hidden');
         void terminalOverlay.offsetWidth;
         terminalOverlay.classList.add('active');
-        terminalInput.focus();
-        document.body.style.overflow = 'hidden'; // Prevent scrolling
+        document.body.style.overflow = 'hidden';
+
+        // Reset State
+        const terminalLoading = document.getElementById('terminalLoading');
+        const terminalContent = document.getElementById('terminalContent');
+        
+        terminalLoading.classList.remove('hidden');
+        terminalContent.classList.add('hidden');
+        terminalOutput.innerHTML = ''; // Clear previous output
+
+        // Loading Sequence
+        setTimeout(() => {
+            terminalLoading.classList.add('hidden');
+            terminalContent.classList.remove('hidden');
+            terminalInput.focus();
+            startAsciiAnimation(); // Start ASCII
+        }, 2000); // 2 seconds loading
     }
 
     function deactivateTerminal() {
         terminalOverlay.classList.remove('active');
-        document.body.style.overflow = ''; // Restore scrolling
-        // Wait for transition to finish before hiding completely if needed
+        document.body.style.overflow = ''; 
+        stopAsciiAnimation(); // Stop ASCII
+        setTimeout(() => {
+             terminalOverlay.classList.add('hidden');
+        }, 1000);
     }
 
     function printOutput(text) {
@@ -2751,12 +2929,94 @@ document.addEventListener('DOMContentLoaded', () => {
         terminalOutput.scrollTop = terminalOutput.scrollHeight;
     }
 
+    // --- Autocomplete Logic ---
+    const terminalSuggestions = document.getElementById('terminalSuggestions');
+    const commands = ['/help', '/credits', '/exit'];
+    let selectedSuggestionIndex = -1;
+
+    function updateSuggestions(value) {
+        if (!terminalSuggestions) return;
+        terminalSuggestions.innerHTML = '';
+        selectedSuggestionIndex = -1;
+
+        if (!value.startsWith('/')) {
+             terminalSuggestions.classList.remove('active');
+             return;
+        }
+
+        const matches = commands.filter(cmd => cmd.startsWith(value));
+        
+        if (matches.length > 0) {
+            matches.forEach((match, index) => {
+                const div = document.createElement('div');
+                div.classList.add('suggestion-item');
+                div.textContent = match;
+                div.addEventListener('click', () => {
+                    terminalInput.value = match;
+                    terminalSuggestions.classList.remove('active');
+                    terminalInput.focus();
+                });
+                terminalSuggestions.appendChild(div);
+            });
+            terminalSuggestions.classList.add('active');
+        } else {
+            terminalSuggestions.classList.remove('active');
+        }
+    }
+
+    function updateSelection() {
+        const items = terminalSuggestions.querySelectorAll('.suggestion-item');
+        items.forEach((item, index) => {
+            if (index === selectedSuggestionIndex) {
+                item.classList.add('selected');
+                item.scrollIntoView({ block: 'nearest' });
+            } else {
+                item.classList.remove('selected');
+            }
+        });
+    }
+
+    terminalInput.addEventListener('input', () => {
+        updateSuggestions(terminalInput.value.toLowerCase());
+    });
+
     terminalInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            const command = terminalInput.value.trim();
-            printOutput('> ' + command);
-            terminalInput.value = '';
-            processCommand(command);
+        const suggestionsActive = terminalSuggestions && terminalSuggestions.classList.contains('active');
+        const items = terminalSuggestions ? terminalSuggestions.querySelectorAll('.suggestion-item') : [];
+
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            if (suggestionsActive && items.length > 0) {
+                const index = selectedSuggestionIndex >= 0 ? selectedSuggestionIndex : 0;
+                terminalInput.value = items[index].textContent;
+                terminalSuggestions.classList.remove('active');
+            }
+        } else if (e.key === 'ArrowUp') {
+            if (suggestionsActive) {
+                e.preventDefault();
+                selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, 0);
+                updateSelection();
+            }
+        } else if (e.key === 'ArrowDown') {
+            if (suggestionsActive) {
+                e.preventDefault();
+                selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, items.length - 1);
+                updateSelection();
+            }
+        } else if (e.key === 'Enter') {
+            if (suggestionsActive && selectedSuggestionIndex >= 0) {
+                e.preventDefault();
+                terminalInput.value = items[selectedSuggestionIndex].textContent;
+                terminalSuggestions.classList.remove('active');
+            } else {
+                if (terminalSuggestions) terminalSuggestions.classList.remove('active');
+                const command = terminalInput.value.trim();
+                printOutput('> ' + command);
+                terminalInput.value = '';
+                processCommand(command);
+            }
+        } else if (e.key === 'Escape') {
+            if (terminalSuggestions) terminalSuggestions.classList.remove('active');
         }
     });
 

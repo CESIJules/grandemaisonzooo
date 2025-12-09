@@ -300,19 +300,26 @@
     </main>
     <!-- Terminal Overlay -->
     <div id="terminalOverlay" class="hidden">
-      <div class="terminal-container">
-        <div id="terminalOutput">
-          <p>Grandemaison OS v1.0.0</p>
-          <p>Type '/help' for a list of commands.</p>
+      <div id="terminalLoading" class="hidden">
+        <span class="dot">.</span><span class="dot">.</span
+        ><span class="dot">.</span>
+      </div>
+      <div class="terminal-content hidden" id="terminalContent">
+        <div class="terminal-left">
+          <div id="terminalOutput"></div>
+          <div class="terminal-input-line">
+            <span class="prompt">></span>
+            <input
+              type="text"
+              id="terminalInput"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <div id="terminalSuggestions"></div>
+          </div>
         </div>
-        <div class="terminal-input-line">
-          <span class="prompt">></span>
-          <input
-            type="text"
-            id="terminalInput"
-            autocomplete="off"
-            spellcheck="false"
-          />
+        <div class="terminal-right">
+          <pre id="asciiS"></pre>
         </div>
       </div>
     </div>
