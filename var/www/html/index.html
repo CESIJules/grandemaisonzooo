@@ -305,17 +305,19 @@
         ><span class="dot">.</span>
       </div>
       <div class="terminal-content hidden" id="terminalContent">
-        <div class="terminal-left">
-          <div id="terminalOutput"></div>
-          <div class="terminal-input-line">
-            <span class="prompt">></span>
-            <input
-              type="text"
-              id="terminalInput"
-              autocomplete="off"
-              spellcheck="false"
-            />
-            <div id="terminalSuggestions"></div>
+        <div class="terminal-left" id="terminalLeft">
+          <div id="terminalHistory"></div>
+          <div class="terminal-input-line" id="inputLine">
+            <span class="prompt">&gt;</span>
+            <div class="input-wrapper">
+              <input
+                type="text"
+                id="terminalInput"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <div id="ghostText"></div>
+            </div>
           </div>
         </div>
         <div class="terminal-right">
