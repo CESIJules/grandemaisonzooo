@@ -2744,10 +2744,11 @@ document.addEventListener('DOMContentLoaded', () => {
             asciiElement.innerHTML = '';
             asciiElement.appendChild(asciiCanvas);
             asciiCtx = asciiCanvas.getContext('2d', { alpha: true });
-            asciiCtx.font = '12px "Courier New", monospace';
+            // Increased font size and weight for better visibility
+            asciiCtx.font = 'bold 16px "Courier New", monospace';
             const metrics = asciiCtx.measureText('M');
             asciiCanvas.charWidth = metrics.width;
-            asciiCanvas.charHeight = 14;
+            asciiCanvas.charHeight = 16; // Matching line height
             asciiCanvas.width = 120 * asciiCanvas.charWidth;
             asciiCanvas.height = 80 * asciiCanvas.charHeight;
         }
@@ -2763,7 +2764,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Clear Canvas
         asciiCtx.clearRect(0, 0, asciiCanvas.width, asciiCanvas.height);
-        asciiCtx.font = '12px "Courier New", monospace';
+        asciiCtx.font = 'bold 16px "Courier New", monospace';
         asciiCtx.textBaseline = 'top';
         
         // S-Shape Parameters
@@ -2783,9 +2784,13 @@ document.addEventListener('DOMContentLoaded', () => {
             norm = Math.max(0, Math.min(1, norm));
             norm = Math.pow(norm, 0.8); 
 
-            const r = Math.floor(100 + (255 - 100) * norm);
-            const g = Math.floor(80 + (255 - 80) * norm);
-            const b = Math.floor(200 + (255 - 200) * norm);
+            // Gradient: Deep Violet to Soft Lavender (No harsh white)
+            // Start: rgb(90, 60, 180)
+            // End:   rgb(210, 200, 255)
+            
+            const r = Math.floor(90 + (210 - 90) * norm);
+            const g = Math.floor(60 + (200 - 60) * norm);
+            const b = Math.floor(180 + (255 - 180) * norm);
             
             return `rgb(${r},${g},${b})`;
         }
