@@ -2744,13 +2744,39 @@ document.addEventListener('DOMContentLoaded', () => {
             asciiElement.innerHTML = '';
             asciiElement.appendChild(asciiCanvas);
             asciiCtx = asciiCanvas.getContext('2d', { alpha: true });
-            // Increased font size and weight for better visibility
-            asciiCtx.font = 'bold 16px "Courier New", monospace';
+            
+            // High DPI Scaling
+            const dpr = window.devicePixelRatio || 1;
+            const fontSize = 12; // Reverted to standard size for sharpness
+            const font = `${fontSize}px "Courier New", monospace`;
+            
+            asciiCtx.font = font;
             const metrics = asciiCtx.measureText('M');
-            asciiCanvas.charWidth = metrics.width;
-            asciiCanvas.charHeight = 16; // Matching line height
-            asciiCanvas.width = 120 * asciiCanvas.charWidth;
-            asciiCanvas.height = 80 * asciiCanvas.charHeight;
+            const charWidth = metrics.width;
+            const charHeight = fontSize + 2; 
+            
+            const cols = 120;
+            const rows = 80;
+            
+            // CSS Size
+            const cssWidth = cols * charWidth;
+            const cssHeight = rows * charHeight;
+            
+            asciiCanvas.style.width = `${cssWidth}px`;
+            asciiCanvas.style.height = `${cssHeight}px`;
+            
+            // Actual Size (Scaled)
+            asciiCanvas.width = cssWidth * dpr;
+            asciiCanvas.height = cssHeight * dpr;
+            
+            // Scale Context
+            asciiCtx.scale(dpr, dpr);
+            
+            asciiCanvas.charWidth = charWidth;
+            asciiCanvas.charHeight = charHeight;
+            asciiCanvas.fontStr = font;
+            asciiCanvas.cssWidth = cssWidth;
+            asciiCanvas.cssHeight = cssHeight;
         }
     }
 
@@ -2762,9 +2788,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const height = 80;
         const zBuffer = new Array(width * height).fill(0);
         
-        // Clear Canvas
-        asciiCtx.clearRect(0, 0, asciiCanvas.width, asciiCanvas.height);
-        asciiCtx.font = 'bold 16px "Courier New", monospace';
+        // Clear Canvas (using logical coords)
+        asciiCtx.clearRect(0, 0, asciiCanvas.cssWidth, asciiCanvas.cssHeight);
+        asciiCtx.font = asciiCanvas.fontStr;
         asciiCtx.textBaseline = 'top';
         
         // S-Shape Parameters
@@ -2784,13 +2810,13 @@ document.addEventListener('DOMContentLoaded', () => {
             norm = Math.max(0, Math.min(1, norm));
             norm = Math.pow(norm, 0.8); 
 
-            // Gradient: Deep Violet to Soft Lavender (No harsh white)
-            // Start: rgb(90, 60, 180)
-            // End:   rgb(210, 200, 255)
+            // Gradient: Vibrant Violet to Soft White
+            // Start: rgb(100, 50, 255)
+            // End:   rgb(230, 230, 255)
             
-            const r = Math.floor(90 + (210 - 90) * norm);
-            const g = Math.floor(60 + (200 - 60) * norm);
-            const b = Math.floor(180 + (255 - 180) * norm);
+            const r = Math.floor(100 + (230 - 100) * norm);
+            const g = Math.floor(50 + (230 - 50) * norm);
+            const b = 255; // Always max blue for vibrancy
             
             return `rgb(${r},${g},${b})`;
         }
