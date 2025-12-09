@@ -68,6 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Update sections list
       sections = document.querySelectorAll('section');
+      if (typeof updateScrollArrowVisibility === 'function') updateScrollArrowVisibility();
       
       // Re-attach timeline link listeners
       if (typeof handleArtistTimelineLinks === 'function') {
@@ -2593,26 +2594,24 @@ document.addEventListener('DOMContentLoaded', () => {
   }, { passive: false });
   
   // --- Mobile Scroll Observer (Update Active Section) ---
-  if (mainContainer) {
-      mainContainer.addEventListener('scroll', () => {
-          if (window.innerWidth >= 900) return; // Only for mobile native scroll
+  window.addEventListener('scroll', () => {
+      if (window.innerWidth >= 900) return; // Only for mobile native scroll
 
-          const scrollPosition = mainContainer.scrollTop + (window.innerHeight / 2);
+      const scrollPosition = (window.scrollY || document.documentElement.scrollTop) + (window.innerHeight / 2);
+      
+      sections.forEach((section, index) => {
+          const sectionTop = section.offsetTop;
+          const sectionBottom = sectionTop + section.offsetHeight;
           
-          sections.forEach((section, index) => {
-              const sectionTop = section.offsetTop;
-              const sectionBottom = sectionTop + section.offsetHeight;
-              
-              if (scrollPosition >= sectionTop && scrollPosition < sectionBottom) {
-                  if (currentSectionIndex !== index) {
-                      currentSectionIndex = index;
-                      if (typeof updateScrollArrowVisibility === 'function') updateScrollArrowVisibility();
-                      if (typeof updateVolumeButtonPosition === 'function') updateVolumeButtonPosition();
-                  }
+          if (scrollPosition >= sectionTop && scrollPosition < sectionBottom) {
+              if (currentSectionIndex !== index) {
+                  currentSectionIndex = index;
+                  if (typeof updateScrollArrowVisibility === 'function') updateScrollArrowVisibility();
+                  if (typeof updateVolumeButtonPosition === 'function') updateVolumeButtonPosition();
               }
-          });
-      }, { passive: true });
-  }
+          }
+      });
+  }, { passive: true });
 
   // MINDSET Hover Effect (JS Animation)
   // Generic Glitch Function
@@ -3197,11 +3196,11 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'credits':
                 if (parts[1] === '-D' || parts[1] === '--details') {
                     printOutput('DETAILED CREDITS');
-                    printOutput('CREDIT A DETAILLEE');
+                    printOutput('CREDITS A FAIRE');
                 } else {
                     printOutput('CREDITS');
                     printOutput('Developed by: S&S');
-                    printOutput('Design: GrandeMaison Team');
+                    printOutput('Design by: S&S');
                 }
                 break;
             case 'clear':
