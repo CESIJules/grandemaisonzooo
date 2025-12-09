@@ -2738,7 +2738,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderAsciiFrame() {
         if (!asciiElement) return;
         
-        const width = 100;  // Increased width
+        const width = 120;  // Increased width
         const height = 80; // Reduced height to account for char aspect ratio
         const buffer = new Array(width * height).fill(' ');
         const zBuffer = new Array(width * height).fill(0);
