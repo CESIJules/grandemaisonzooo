@@ -2261,7 +2261,7 @@ body.menu-open {
   font-size: 24px;
   cursor: pointer;
   opacity: 0.8;
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition: opacity 0.8s ease, transform 0.3s ease;
   animation: bounce 2s infinite;
 }
 
@@ -2272,7 +2272,6 @@ body.menu-open {
 .scroll-arrow.hidden {
   opacity: 0;
   pointer-events: none;
-  visibility: hidden;
 }
 
 @keyframes bounce {
