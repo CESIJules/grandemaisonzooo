@@ -2757,10 +2757,16 @@ body.no-scroll, body.no-scroll main {
 .terminal-left {
     width: 50%;
     height: 100%;
-    padding: 20px; /* Reduced padding */
+    padding: 20px;
     display: flex;
     flex-direction: column;
-    /* border-right removed */
+    overflow-y: auto;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* IE 10+ */
+}
+
+.terminal-left::-webkit-scrollbar { 
+    display: none; /* Chrome/Safari */
 }
 
 .terminal-right {
@@ -2773,31 +2779,49 @@ body.no-scroll, body.no-scroll main {
     overflow: hidden;
 }
 
-#terminalOutput {
-    flex-grow: 1;
-    overflow-y: auto;
-    margin-bottom: 10px;
-    white-space: pre-wrap;
+#terminalHistory {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.history-line {
+    width: 100%;
     text-align: left;
     font-size: 1.2rem;
     color: #eee;
+    margin-bottom: 5px;
+    white-space: pre-wrap;
+    display: flex;
 }
 
-#terminalOutput p {
-    margin: 5px 0;
+.history-prompt {
+    margin-right: 10px;
+    color: #eee;
+    flex-shrink: 0;
 }
 
 .terminal-input-line {
     display: flex;
     align-items: center;
-    border-top: 1px solid #333;
-    padding-top: 20px;
+    width: 100%;
+    margin-top: 5px;
 }
 
 .prompt {
     margin-right: 10px;
     color: #eee;
     font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.input-wrapper {
+    position: relative;
+    flex-grow: 1;
+    height: 1.5rem; /* Adjust based on font size */
+    display: flex;
+    align-items: center;
 }
 
 #terminalInput {
@@ -2806,8 +2830,26 @@ body.no-scroll, body.no-scroll main {
     color: #eee;
     font-family: 'SyneGMZBold', sans-serif;
     font-size: 1.2rem;
-    flex-grow: 1;
+    width: 100%;
     outline: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    padding: 0;
+    margin: 0;
+}
+
+#ghostText {
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-family: 'SyneGMZBold', sans-serif;
+    font-size: 1.2rem;
+    color: rgba(238, 238, 238, 0.4); /* 40% opacity white/gray */
+    z-index: 1;
+    pointer-events: none;
+    white-space: pre;
 }
 
 /* ASCII S Animation */
@@ -2820,41 +2862,5 @@ body.no-scroll, body.no-scroll main {
     text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
     transform-origin: center;
     display: inline-block;
-    /* transform: scale(0.8);  Handled in JS by K1/K2 or here if needed, but let's rely on JS for the shape size first */
-}
-
-/* Terminal Suggestions */
-.terminal-input-line {
-    position: relative;
-}
-
-#terminalSuggestions {
-    position: absolute;
-    bottom: 100%;
-    left: 30px; /* Align with input text */
-    background: rgba(20, 20, 20, 0.95);
-    border: 1px solid #eee;
-    color: #eee;
-    font-family: 'SyneGMZBold', sans-serif;
-    z-index: 10002;
-    display: none;
-    flex-direction: column;
-    min-width: 200px;
-    box-shadow: 0 -5px 15px rgba(255, 255, 255, 0.1);
-}
-
-#terminalSuggestions.active {
-    display: flex;
-}
-
-.suggestion-item {
-    padding: 8px 12px;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.suggestion-item.selected, .suggestion-item:hover {
-    background: #eee;
-    color: #000;
 }
 

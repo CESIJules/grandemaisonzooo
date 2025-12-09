@@ -2737,8 +2737,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderAsciiFrame() {
         if (!asciiElement) return;
         
-        const width = 80;  // Increased width
-        const height = 40; // Reduced height to account for char aspect ratio
+        const width = 100;  // Increased width
+        const height = 60; // Reduced height to account for char aspect ratio
         const buffer = new Array(width * height).fill(' ');
         const zBuffer = new Array(width * height).fill(0);
         
@@ -2855,10 +2855,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset State
         const terminalLoading = document.getElementById('terminalLoading');
         const terminalContent = document.getElementById('terminalContent');
+        const terminalHistory = document.getElementById('terminalHistory');
         
         terminalLoading.classList.remove('hidden');
         terminalContent.classList.add('hidden');
-        terminalOutput.innerHTML = ''; // Clear previous output
+        terminalHistory.innerHTML = ''; // Clear previous output
+        terminalInput.value = '';
+        document.getElementById('ghostText').textContent = '';
 
         // Loading Sequence
         setTimeout(() => {
@@ -2879,100 +2882,84 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function printOutput(text) {
-        const p = document.createElement('p');
-        p.textContent = text;
-        terminalOutput.appendChild(p);
-        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        const terminalHistory = document.getElementById('terminalHistory');
+        const div = document.createElement('div');
+        div.className = 'history-line';
+        div.textContent = text;
+        terminalHistory.appendChild(div);
+        
+        // Scroll to bottom
+        const terminalLeft = document.getElementById('terminalLeft');
+        terminalLeft.scrollTop = terminalLeft.scrollHeight;
+    }
+
+    function printCommand(cmd) {
+        const terminalHistory = document.getElementById('terminalHistory');
+        const div = document.createElement('div');
+        div.className = 'history-line';
+        
+        const promptSpan = document.createElement('span');
+        promptSpan.className = 'history-prompt';
+        promptSpan.textContent = '> ';
+        
+        const cmdSpan = document.createElement('span');
+        cmdSpan.textContent = cmd;
+        
+        div.appendChild(promptSpan);
+        div.appendChild(cmdSpan);
+        terminalHistory.appendChild(div);
     }
 
     // --- Autocomplete Logic ---
-    const terminalSuggestions = document.getElementById('terminalSuggestions');
-    const commands = ['/help', '/credits', '/exit'];
-    let selectedSuggestionIndex = -1;
+    const commands = ['help', 'credits', 'exit'];
+    const ghostText = document.getElementById('ghostText');
 
-    function updateSuggestions(value) {
-        if (!terminalSuggestions) return;
-        terminalSuggestions.innerHTML = '';
-        selectedSuggestionIndex = -1;
-
-        if (!value.startsWith('/')) {
-             terminalSuggestions.classList.remove('active');
-             return;
+    function updateGhostText(value) {
+        if (!value) {
+            ghostText.textContent = '';
+            return;
         }
-
-        const matches = commands.filter(cmd => cmd.startsWith(value));
         
-        if (matches.length > 0) {
-            matches.forEach((match, index) => {
-                const div = document.createElement('div');
-                div.classList.add('suggestion-item');
-                div.textContent = match;
-                div.addEventListener('click', () => {
-                    terminalInput.value = match;
-                    terminalSuggestions.classList.remove('active');
-                    terminalInput.focus();
-                });
-                terminalSuggestions.appendChild(div);
-            });
-            terminalSuggestions.classList.add('active');
+        const match = commands.find(cmd => cmd.startsWith(value.toLowerCase()));
+        if (match) {
+            // We want to display the full match, but the part user typed is "invisible" (covered by input)
+            // However, since input is transparent, we need to make sure the ghost text aligns perfectly.
+            // The ghost text will contain the FULL command.
+            // The input text will cover the beginning.
+            // Since they have same font/size/position, it should look like one string.
+            ghostText.textContent = match;
         } else {
-            terminalSuggestions.classList.remove('active');
+            ghostText.textContent = '';
         }
-    }
-
-    function updateSelection() {
-        const items = terminalSuggestions.querySelectorAll('.suggestion-item');
-        items.forEach((item, index) => {
-            if (index === selectedSuggestionIndex) {
-                item.classList.add('selected');
-                item.scrollIntoView({ block: 'nearest' });
-            } else {
-                item.classList.remove('selected');
-            }
-        });
     }
 
     terminalInput.addEventListener('input', () => {
-        updateSuggestions(terminalInput.value.toLowerCase());
+        updateGhostText(terminalInput.value);
     });
 
     terminalInput.addEventListener('keydown', (e) => {
-        const suggestionsActive = terminalSuggestions && terminalSuggestions.classList.contains('active');
-        const items = terminalSuggestions ? terminalSuggestions.querySelectorAll('.suggestion-item') : [];
-
         if (e.key === 'Tab') {
             e.preventDefault();
-            if (suggestionsActive && items.length > 0) {
-                const index = selectedSuggestionIndex >= 0 ? selectedSuggestionIndex : 0;
-                terminalInput.value = items[index].textContent;
-                terminalSuggestions.classList.remove('active');
-            }
-        } else if (e.key === 'ArrowUp') {
-            if (suggestionsActive) {
-                e.preventDefault();
-                selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, 0);
-                updateSelection();
-            }
-        } else if (e.key === 'ArrowDown') {
-            if (suggestionsActive) {
-                e.preventDefault();
-                selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, items.length - 1);
-                updateSelection();
+            if (ghostText.textContent) {
+                terminalInput.value = ghostText.textContent;
+                // Move cursor to end
+                // terminalInput.setSelectionRange(terminalInput.value.length, terminalInput.value.length);
             }
         } else if (e.key === 'Enter') {
-            if (suggestionsActive && selectedSuggestionIndex >= 0) {
-                e.preventDefault();
-                terminalInput.value = items[selectedSuggestionIndex].textContent;
-                terminalSuggestions.classList.remove('active');
-            } else {
-                if (terminalSuggestions) terminalSuggestions.classList.remove('active');
-                const command = terminalInput.value.trim();
-                printOutput('> ' + command);
-                terminalInput.value = '';
+            e.preventDefault();
+            const command = terminalInput.value.trim();
+            
+            if (command) {
+                printCommand(command);
                 processCommand(command);
             }
-        } else if (e.key === 'Escape') {
-            if (terminalSuggestions) terminalSuggestions.classList.remove('active');
+            
+            terminalInput.value = '';
+            ghostText.textContent = '';
+            
+            // Scroll to bottom
+            const terminalLeft = document.getElementById('terminalLeft');
+            terminalLeft.scrollTop = terminalLeft.scrollHeight;
         }
     });
 
@@ -2981,24 +2968,24 @@ document.addEventListener('DOMContentLoaded', () => {
         const command = parts[0].toLowerCase();
 
         switch (command) {
-            case '/help':
+            case 'help':
                 printOutput('Available commands:');
-                printOutput('  /credits - Show credits');
-                printOutput('  /exit    - Exit terminal');
+                printOutput('  credits - Show credits');
+                printOutput('  exit    - Exit terminal');
                 break;
-            case '/credits':
+            case 'credits':
                 printOutput('--- CREDITS ---');
                 printOutput('Developed by: CESIJules');
                 printOutput('Design: GrandeMaison Team');
                 printOutput('---------------');
                 break;
-            case '/exit':
+            case 'exit':
                 printOutput('Exiting...');
                 setTimeout(deactivateTerminal, 500);
                 break;
             default:
                 printOutput('Unknown command: ' + command);
-                printOutput('Type \'/help\' for a list of commands.');
+                printOutput('Type \'help\' for a list of commands.');
         }
     }
     
