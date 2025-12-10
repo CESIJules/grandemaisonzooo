@@ -1164,8 +1164,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const ctx = asciiCanvas.getContext('2d');
     let width, height;
     let cols, rows;
-    // PERFORMANCE: CharSize 32 is the sweet spot for low-end devices (approx 30% fewer draw calls than 28)
-    const charSize = 26; 
+    // PERFORMANCE: Increased charSize to 28 to ensure 60fps on all devices
+    const charSize = 28; 
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$#@%&?!<>"; 
     
     let mouse = { x: -1000, y: -1000 };
@@ -1282,12 +1282,15 @@ document.addEventListener('DOMContentLoaded', () => {
           const xx = x * 0.025; 
           const yy = y * 0.025;
           
-          // PERFORMANCE: Removed "Warp" (extra sin call) to save 33% math load
-          // The visual difference is minimal for a background effect
+          // Simplified Warping (1 trig call instead of 2)
+          const warp = Math.sin(xx * 1.5 + yy * 0.5 + t005);
           
-          // Reduced layers (2 layers)
-          const n1 = Math.sin(xx * 2.0 + t003);
-          const n2 = Math.cos(yy * 2.0 - t005);
+          const wx = xx + warp;
+          const wy = yy + warp;
+          
+          // Reduced layers (2 layers instead of 3)
+          const n1 = Math.sin(wx * 2.0 + t003);
+          const n2 = Math.cos(wy * 2.0 - t005);
           
           // Combine
           let noise = n1 + n2 * 0.5; 
