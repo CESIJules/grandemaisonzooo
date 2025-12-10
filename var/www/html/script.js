@@ -1165,7 +1165,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let width, height;
     let cols, rows;
     // PERFORMANCE: Increased charSize to 28 to ensure 60fps on all devices
-    const charSize = 28; 
+    const charSize = 26; 
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$#@%&?!<>"; 
     
     let mouse = { x: -1000, y: -1000 };
