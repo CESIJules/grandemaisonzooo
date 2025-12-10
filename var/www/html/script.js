@@ -1231,8 +1231,20 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', resize);
     resize();
 
-    function draw() {
+    // PERFORMANCE: Limit to 30 FPS
+    let lastFrameTime = 0;
+    const fpsInterval = 1000 / 30;
+
+    function draw(currentTime) {
       requestAnimationFrame(draw);
+      
+      if (!currentTime) currentTime = performance.now();
+      const elapsed = currentTime - lastFrameTime;
+      
+      if (elapsed < fpsInterval) return;
+      
+      // Adjust for next frame to avoid drift
+      lastFrameTime = currentTime - (elapsed % fpsInterval);
       
       const time = Date.now() * 0.001;
       const t005 = time * 0.05;
