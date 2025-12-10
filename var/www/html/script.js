@@ -872,7 +872,8 @@ document.addEventListener('DOMContentLoaded', () => {
                       // Use 'lighter' composite operation for intense glow effect
                       radarCtx.globalCompositeOperation = 'lighter';
                       
-                      radarCtx.shadowBlur = (timeSincePass < transitionPoint) ? 80 : (40 + 50 * p.smoothedLevel);
+                      // PERFORMANCE: Reduced shadowBlur significantly (was 80 / 40+50)
+                      radarCtx.shadowBlur = (timeSincePass < transitionPoint) ? 20 : (10 + 15 * p.smoothedLevel);
                       radarCtx.shadowColor = `rgba(${glowR}, ${glowG}, ${glowB}, ${alpha})`;
                       
                       radarCtx.fill();
@@ -1200,13 +1201,13 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', resize);
     resize();
 
-    // let frameCount = 0;
+    let frameCount = 0;
     function draw() {
       requestAnimationFrame(draw);
       
       // PERFORMANCE: Skip frames (30fps)
-      // frameCount++;
-      // if (frameCount % 2 !== 0) return;
+      frameCount++;
+      if (frameCount % 2 !== 0) return;
 
       const time = Date.now() * 0.001;
       
