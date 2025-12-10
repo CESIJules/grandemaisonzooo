@@ -3081,11 +3081,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1000);
     }
 
-    function printOutput(text) {
+    function printOutput(text, isHtml = false) {
         const terminalHistory = document.getElementById('terminalHistory');
         const div = document.createElement('div');
         div.className = 'history-line';
-        div.textContent = text;
+        if (isHtml) {
+            div.innerHTML = text;
+        } else {
+            div.textContent = text;
+        }
         terminalHistory.appendChild(div);
         
         // Scroll to bottom
@@ -3255,7 +3259,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     })
                     .then(text => {
                         // Use a smaller font size for the large ASCII art
-                        printOutput(`<pre style="font-family: 'Courier New', monospace; font-size: 10px; line-height: 12px; white-space: pre; color: #ccc; margin: 0;">${text}</pre>`);
+                        // Create a pre element to safely handle the text content
+                        const pre = document.createElement('pre');
+                        pre.style.cssText = "font-family: 'Courier New', monospace; font-size: 10px; line-height: 12px; white-space: pre; color: #ccc; margin: 0;";
+                        pre.textContent = text;
+                        printOutput(pre.outerHTML, true);
                     })
                     .catch(error => {
                         console.error('Error loading credits:', error);
