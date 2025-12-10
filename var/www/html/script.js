@@ -1182,6 +1182,29 @@ document.addEventListener('DOMContentLoaded', () => {
         grayLevels[i] = `rgb(${i},${i},${i})`;
     }
 
+    // --- CACHE OPTIMIZATION START ---
+    const charCache = {};
+    const cachedColors = ['#111', '#222'];
+    
+    function createCharCache() {
+        chars.split('').forEach(char => {
+            charCache[char] = {};
+            cachedColors.forEach(color => {
+                const c = document.createElement('canvas');
+                c.width = charSize;
+                c.height = charSize;
+                const ctxC = c.getContext('2d');
+                ctxC.font = `${charSize}px 'Courier New', monospace`;
+                ctxC.fillStyle = color;
+                ctxC.textBaseline = 'top';
+                ctxC.fillText(char, 0, 0);
+                charCache[char][color] = c;
+            });
+        });
+    }
+    createCharCache();
+    // --- CACHE OPTIMIZATION END ---
+
     // PERFORMANCE: Throttle mousemove to avoid excessive updates
     let lastMouseUpdate = 0;
     window.addEventListener('mousemove', (e) => {
@@ -1426,16 +1449,22 @@ document.addEventListener('DOMContentLoaded', () => {
              // ctx.font = `${charSize}px 'Courier New', monospace`;
 
           } else {
-             // Background Rain
-             // PERFORMANCE: Reset font only if needed
-             if (currentFontScale !== 1.0) {
-                 ctx.font = defaultFont;
-                 currentFontScale = 1.0;
+             // Background Rain - Optimized with Offscreen Canvas
+             const useDarker = Math.random() < 0.001;
+             const colorKey = useDarker ? '#222' : '#111';
+             const cachedCanvas = charCache[grid[x][y]] ? charCache[grid[x][y]][colorKey] : null;
+             
+             if (cachedCanvas) {
+                 ctx.drawImage(cachedCanvas, px, py);
+             } else {
+                 // Fallback if char not in cache
+                 if (currentFontScale !== 1.0) {
+                     ctx.font = defaultFont;
+                     currentFontScale = 1.0;
+                 }
+                 ctx.fillStyle = colorKey;
+                 ctx.fillText(grid[x][y], px, py);
              }
-
-             ctx.fillStyle = '#111'; 
-             if (Math.random() < 0.001) ctx.fillStyle = '#222';
-             ctx.fillText(grid[x][y], px, py);
           }
         }
       }
