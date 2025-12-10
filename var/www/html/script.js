@@ -1176,6 +1176,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let speeds = []; 
     let rowNoise = []; // Pre-calculated noise for rows
 
+    // PERFORMANCE: Pre-calculate gray levels to avoid string creation
+    const grayLevels = [];
+    for(let i=0; i<256; i++) {
+        grayLevels[i] = `rgb(${i},${i},${i})`;
+    }
+
     // PERFORMANCE: Throttle mousemove to avoid excessive updates
     let lastMouseUpdate = 0;
     window.addEventListener('mousemove', (e) => {
@@ -1273,32 +1279,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
           const centerY = py + charSize/2;
           
-          // --- 1. Gas/Cloud Calculation (Deep Chaos & Turbulence) ---
-          // Coordinate distortion (Double Domain Warping)
-          // Reverting scale to 0.025 for finer details (less "zoomed in")
+          // --- 1. Gas/Cloud Calculation (Optimized) ---
+          // Coordinate distortion
           const xx = x * 0.025; 
           const yy = y * 0.025;
           
-          // Warp 1: Large slow swirl (The "Wind") - SLOWED DOWN
-          const warp1 = Math.sin(xx * 1.2 + yy * 0.8 + time * 0.05);
-          const warp2 = Math.cos(xx * 0.9 - yy * 1.3 - time * 0.04);
+          // Simplified Warping (1 trig call instead of 2)
+          const warp = Math.sin(xx * 1.5 + yy * 0.5 + time * 0.05);
           
-          // Warp 2: Apply warp1/2 to coordinates for the next layer (The "Turbulence")
-          const wx = xx + warp1 * 1.5;
-          const wy = yy + warp2 * 1.5;
+          const wx = xx + warp;
+          const wy = yy + warp;
           
-          // Layer 1: Distorted base - SLOWED DOWN
+          // Reduced layers (2 layers instead of 3)
           const n1 = Math.sin(wx * 2.0 + time * 0.03);
-          // Layer 2: Cross-interference with different rotation - SLOWED DOWN
-          const n2 = Math.cos(wy * 2.5 - time * 0.06 + wx);
-          // Layer 3: High frequency detail to break smoothness - SLOWED DOWN
-          const n3 = Math.sin(wx * 4.0 + wy * 3.0 + time * 0.1);
+          const n2 = Math.cos(wy * 2.0 - time * 0.05);
           
-          // Combine with non-linear mixing
-          let noise = n1 + n2 * 0.6 + n3 * 0.3; 
+          // Combine
+          let noise = n1 + n2 * 0.5; 
           
-          // Normalize (Range is approx -1.9 to 1.9)
-          let gasIntensity = (noise + 1.9) / 3.8;
+          // Normalize (Range is approx -1.5 to 1.5)
+          let gasIntensity = (noise + 1.5) / 3.0;
           
           // "Tu n'arrives pas à faire le dégradé... délimitation"
           // Solution: Soft subtraction. Instead of hard clamping, we use a smoothstep-like approach.
@@ -1360,7 +1360,8 @@ document.addEventListener('DOMContentLoaded', () => {
              // This ensures that when intensity is low, the character is barely visible against the dark background.
              // No more "jump" from black to gray.
              const val = Math.floor(10 + combinedIntensity * (255 - 10));
-             const mainColor = `rgb(${val}, ${val}, ${val})`;
+             // PERFORMANCE: Use pre-calculated color string
+             const mainColor = grayLevels[val] || `rgb(${val}, ${val}, ${val})`;
              
              // PERFORMANCE: Only set font if scale changed significantly
              if (Math.abs(scale - currentFontScale) > 0.01) {
