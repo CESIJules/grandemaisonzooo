@@ -872,8 +872,8 @@ document.addEventListener('DOMContentLoaded', () => {
                       // Use 'lighter' composite operation for intense glow effect
                       radarCtx.globalCompositeOperation = 'lighter';
                       
-                      // PERFORMANCE: Reduced shadowBlur significantly (was 80 / 40+50)
-                      radarCtx.shadowBlur = (timeSincePass < transitionPoint) ? 20 : (10 + 15 * p.smoothedLevel);
+                      // PERFORMANCE: Reduced shadowBlur (was 80) to improve rendering speed
+                      radarCtx.shadowBlur = (timeSincePass < transitionPoint) ? 30 : (15 + 20 * p.smoothedLevel);
                       radarCtx.shadowColor = `rgba(${glowR}, ${glowG}, ${glowB}, ${alpha})`;
                       
                       radarCtx.fill();
@@ -1147,7 +1147,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const ctx = asciiCanvas.getContext('2d');
     let width, height;
     let cols, rows;
-    const charSize = 18; 
+    // PERFORMANCE: Increased charSize from 18 to 24 to reduce draw calls by ~45%
+    const charSize = 24; 
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$#@%&?!<>"; 
     
     let mouse = { x: -1000, y: -1000 };
@@ -1158,9 +1159,15 @@ document.addEventListener('DOMContentLoaded', () => {
     let speeds = []; 
     let rowNoise = []; // Pre-calculated noise for rows
 
+    // PERFORMANCE: Throttle mousemove to avoid excessive updates
+    let lastMouseUpdate = 0;
     window.addEventListener('mousemove', (e) => {
-      mouse.x = e.clientX;
-      mouse.y = e.clientY;
+      const now = Date.now();
+      if (now - lastMouseUpdate > 16) { // ~60fps cap for mouse updates
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+        lastMouseUpdate = now;
+      }
     });
 
     function initGrid() {
@@ -1201,13 +1208,13 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', resize);
     resize();
 
-    let frameCount = 0;
+    // let frameCount = 0;
     function draw() {
       requestAnimationFrame(draw);
       
       // PERFORMANCE: Skip frames (30fps)
-      frameCount++;
-      if (frameCount % 2 !== 0) return;
+      // frameCount++;
+      // if (frameCount % 2 !== 0) return;
 
       const time = Date.now() * 0.001;
       
