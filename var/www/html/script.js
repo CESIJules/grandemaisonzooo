@@ -1240,6 +1240,8 @@ document.addEventListener('DOMContentLoaded', () => {
       // if (frameCount % 2 !== 0) return;
 
       const time = Date.now() * 0.001;
+      const t005 = time * 0.05;
+      const t003 = time * 0.03;
       
       // Clear with transparency for trails
       ctx.fillStyle = 'rgba(5, 5, 5, 0.25)'; 
@@ -1250,6 +1252,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const defaultFont = `${charSize}px 'Courier New', monospace`;
       ctx.font = defaultFont;
       let currentFontScale = 1.0;
+      let lastColor = null; // PERFORMANCE: Track color state
       
       const maxRadius = 100; 
 
@@ -1285,14 +1288,14 @@ document.addEventListener('DOMContentLoaded', () => {
           const yy = y * 0.025;
           
           // Simplified Warping (1 trig call instead of 2)
-          const warp = Math.sin(xx * 1.5 + yy * 0.5 + time * 0.05);
+          const warp = Math.sin(xx * 1.5 + yy * 0.5 + t005);
           
           const wx = xx + warp;
           const wy = yy + warp;
           
           // Reduced layers (2 layers instead of 3)
-          const n1 = Math.sin(wx * 2.0 + time * 0.03);
-          const n2 = Math.cos(wy * 2.0 - time * 0.05);
+          const n1 = Math.sin(wx * 2.0 + t003);
+          const n2 = Math.cos(wy * 2.0 - t005);
           
           // Combine
           let noise = n1 + n2 * 0.5; 
@@ -1351,7 +1354,7 @@ document.addEventListener('DOMContentLoaded', () => {
           // "Délimitation" fix:
           // 1. Lower threshold to almost zero
           // 2. Start color from background level (approx 5-10) instead of 40
-          if (combinedIntensity > 0.001) {
+          if (combinedIntensity > 0.02) { // PERFORMANCE: Increased threshold
              
              // Scale: Only mouse affects scale
              const scale = 1 + mouseIntensity * 0.2; 
@@ -1415,8 +1418,13 @@ document.addEventListener('DOMContentLoaded', () => {
              const offset = (charSize * scale - charSize) / 2;
              
              // Draw Main Character
-             ctx.fillStyle = mainColor;
-             ctx.fillText(displayChar, px - offset, py - offset);
+             // PERFORMANCE: Only set fillStyle if changed
+             if (mainColor !== lastColor) {
+                 ctx.fillStyle = mainColor;
+                 lastColor = mainColor;
+             }
+             // PERFORMANCE: Integer coordinates
+             ctx.fillText(displayChar, (px - offset) | 0, (py - offset) | 0);
              
              // Reset context - REMOVED for performance, handled by state check
              // ctx.font = `${charSize}px 'Courier New', monospace`;
