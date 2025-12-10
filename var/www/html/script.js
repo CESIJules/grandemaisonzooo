@@ -644,9 +644,26 @@ document.addEventListener('DOMContentLoaded', () => {
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
+    // PERFORMANCE: Intersection Observer to pause visualizer when not visible
+    let isRadioVisible = true;
+    const radioSection = document.getElementById('radio');
+    if (radioSection) {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                isRadioVisible = entry.isIntersecting;
+            });
+        }, { threshold: 0 });
+        observer.observe(radioSection);
+    }
 
     function draw() {
       requestAnimationFrame(draw);
+      
+      // PERFORMANCE: Skip drawing if radio section is not visible
+      if (!isRadioVisible && !audio.paused) {
+          lastFrameTime = Date.now();
+          return;
+      }
       
       const now = Date.now();
       const deltaTime = (now - lastFrameTime) / 1000; // Seconds
@@ -1224,7 +1241,9 @@ document.addEventListener('DOMContentLoaded', () => {
       
       ctx.textBaseline = 'top';
       // Default font
-      ctx.font = `${charSize}px 'Courier New', monospace`;
+      const defaultFont = `${charSize}px 'Courier New', monospace`;
+      ctx.font = defaultFont;
+      let currentFontScale = 1.0;
       
       const maxRadius = 100; 
 
@@ -1343,7 +1362,11 @@ document.addEventListener('DOMContentLoaded', () => {
              const val = Math.floor(10 + combinedIntensity * (255 - 10));
              const mainColor = `rgb(${val}, ${val}, ${val})`;
              
-             ctx.font = `${charSize * scale}px 'Courier New', monospace`;
+             // PERFORMANCE: Only set font if scale changed significantly
+             if (Math.abs(scale - currentFontScale) > 0.01) {
+                 ctx.font = `${charSize * scale}px 'Courier New', monospace`;
+                 currentFontScale = scale;
+             }
              
              // --- Glitch & Words Logic (Mouse Only) ---
              let displayChar = grid[x][y];
@@ -1394,11 +1417,17 @@ document.addEventListener('DOMContentLoaded', () => {
              ctx.fillStyle = mainColor;
              ctx.fillText(displayChar, px - offset, py - offset);
              
-             // Reset context
-             ctx.font = `${charSize}px 'Courier New', monospace`;
+             // Reset context - REMOVED for performance, handled by state check
+             // ctx.font = `${charSize}px 'Courier New', monospace`;
 
           } else {
              // Background Rain
+             // PERFORMANCE: Reset font only if needed
+             if (currentFontScale !== 1.0) {
+                 ctx.font = defaultFont;
+                 currentFontScale = 1.0;
+             }
+
              ctx.fillStyle = '#111'; 
              if (Math.random() < 0.001) ctx.fillStyle = '#222';
              ctx.fillText(grid[x][y], px, py);
