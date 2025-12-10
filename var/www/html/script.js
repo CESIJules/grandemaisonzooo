@@ -3248,14 +3248,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 break;
             case 'credits':
-                if (parts[1] === '-D' || parts[1] === '--details') {
-                    printOutput('DETAILED CREDITS');
-                    printOutput('CREDITS A FAIRE');
-                } else {
-                    printOutput('CREDITS');
-                    printOutput('Developed by: S&S');
-                    printOutput('Design by: S&S');
-                }
+                fetch('ascii/credits.txt')
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        return response.text();
+                    })
+                    .then(text => {
+                        // Use a smaller font size for the large ASCII art
+                        printOutput(`<pre style="font-family: 'Courier New', monospace; font-size: 10px; line-height: 12px; white-space: pre; color: #ccc; margin: 0;">${text}</pre>`);
+                    })
+                    .catch(error => {
+                        console.error('Error loading credits:', error);
+                        printOutput('Error loading credits.');
+                    });
                 break;
             case 'clear':
                 document.getElementById('terminalHistory').innerHTML = '';
