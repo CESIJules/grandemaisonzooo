@@ -1365,7 +1365,7 @@ document.addEventListener('DOMContentLoaded', () => {
           
           // Blending: Avoid dark ring by taking max of mouse and gas
           // Gas is capped at ~50% brightness (Lowered further)
-          const combinedIntensity = Math.max(mouseIntensity, gasIntensity * 0.5);
+          const combinedIntensity = Math.max(mouseIntensity, gasIntensity * 0.8); // Increased from 0.5 to 0.8 for visibility
 
           // Determine char to display
           let displayChar = grid[x][y];
@@ -1421,8 +1421,9 @@ document.addEventListener('DOMContentLoaded', () => {
              // Scale: Only mouse affects scale
              const scale = 1 + mouseIntensity * 0.2; 
              
-             // Color: Range 10 -> 255.
-             const val = Math.floor(10 + combinedIntensity * (255 - 10));
+             // Color: Range 40 -> 255.
+             // Increased base from 10 to 40 to ensure it pops against background
+             const val = Math.floor(40 + combinedIntensity * (255 - 40));
              const alpha = val / 255;
              
              ctx.globalAlpha = alpha;
@@ -1447,9 +1448,10 @@ document.addEventListener('DOMContentLoaded', () => {
           } else {
              // Background Rain - Optimized with Offscreen Canvas
              const useDarker = Math.random() < 0.001;
-             // #111 is 17/255 ~ 0.067
-             // #222 is 34/255 ~ 0.133
-             ctx.globalAlpha = useDarker ? 0.13 : 0.07;
+             // Reduced alpha significantly to avoid "white background" look
+             // 0.03 ~ rgb(8,8,8)
+             // 0.1 ~ rgb(25,25,25)
+             ctx.globalAlpha = useDarker ? 0.1 : 0.03;
              
              if (cachedCanvas) {
                  ctx.drawImage(cachedCanvas, px, py);
