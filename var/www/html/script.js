@@ -1177,29 +1177,26 @@ document.addEventListener('DOMContentLoaded', () => {
     let rowNoise = []; // Pre-calculated noise for rows
 
     // PERFORMANCE: Pre-calculate gray levels to avoid string creation
-    const grayLevels = [];
-    for(let i=0; i<256; i++) {
-        grayLevels[i] = `rgb(${i},${i},${i})`;
-    }
+    // const grayLevels = []; // REMOVED: Using globalAlpha instead
+    // for(let i=0; i<256; i++) {
+    //    grayLevels[i] = `rgb(${i},${i},${i})`;
+    // }
 
     // --- CACHE OPTIMIZATION START ---
     const charCache = {};
-    const cachedColors = ['#111', '#222'];
+    // Cache only White for alpha blending
     
     function createCharCache() {
         chars.split('').forEach(char => {
-            charCache[char] = {};
-            cachedColors.forEach(color => {
-                const c = document.createElement('canvas');
-                c.width = charSize;
-                c.height = charSize;
-                const ctxC = c.getContext('2d');
-                ctxC.font = `${charSize}px 'Courier New', monospace`;
-                ctxC.fillStyle = color;
-                ctxC.textBaseline = 'top';
-                ctxC.fillText(char, 0, 0);
-                charCache[char][color] = c;
-            });
+            const c = document.createElement('canvas');
+            c.width = charSize;
+            c.height = charSize;
+            const ctxC = c.getContext('2d');
+            ctxC.font = `${charSize}px 'Courier New', monospace`;
+            ctxC.fillStyle = '#FFFFFF'; // White
+            ctxC.textBaseline = 'top';
+            ctxC.fillText(char, 0, 0);
+            charCache[char] = c;
         });
     }
     createCharCache();
@@ -1370,6 +1367,52 @@ document.addEventListener('DOMContentLoaded', () => {
           // Gas is capped at ~50% brightness (Lowered further)
           const combinedIntensity = Math.max(mouseIntensity, gasIntensity * 0.5);
 
+          // Determine char to display
+          let displayChar = grid[x][y];
+          
+          // --- Glitch & Words Logic (Mouse Only) ---
+          if (mouseIntensity > 0.01) {
+             // 1. Random Glitch (High intensity = more glitch)
+             if (mouseIntensity > 0.3 && Math.random() < 0.15) {
+                 displayChar = chars[Math.floor(Math.random() * chars.length)];
+             }
+             
+             // 2. Words "GM" and "S&S"
+             if (mouseIntensity > 0.6) {
+                 const mouseCol = Math.floor(mouse.x / charSize);
+                 const mouseRow = Math.floor(mouse.y / charSize);
+                 const relX = x - mouseCol;
+                 const relY = y - mouseRow;
+                 
+                 // Longer cycle (8s) for longer display times
+                 const cycle = time % 8; 
+                 
+                 // Show GM (2.5 seconds duration)
+                 if (cycle > 1.0 && cycle < 3.5) {
+                     if (relY === 0) {
+                         if (relX === -1) displayChar = 'G';
+                         if (relX === 0) displayChar = 'M';
+                     }
+                 }
+                 // Show S&S (2.5 seconds duration)
+                 else if (cycle > 5.0 && cycle < 7.5) {
+                     if (relY === 0) {
+                         if (relX === -1) displayChar = 'S';
+                         if (relX === 0) displayChar = '&';
+                         if (relX === 1) displayChar = 'S';
+                     }
+                 }
+                 
+                 // Very subtle glitch on words (reduced from 0.1 to 0.02)
+                 // Makes them much more readable/stable
+                 if (['G','M','S','&'].includes(displayChar) && Math.random() < 0.02) {
+                     displayChar = chars[Math.floor(Math.random() * chars.length)];
+                 }
+             }
+          }
+
+          const cachedCanvas = charCache[displayChar];
+          
           // "Délimitation" fix:
           // 1. Lower threshold to almost zero
           // 2. Start color from background level (approx 5-10) instead of 40
@@ -1379,92 +1422,44 @@ document.addEventListener('DOMContentLoaded', () => {
              const scale = 1 + mouseIntensity * 0.2; 
              
              // Color: Range 10 -> 255.
-             // This ensures that when intensity is low, the character is barely visible against the dark background.
-             // No more "jump" from black to gray.
              const val = Math.floor(10 + combinedIntensity * (255 - 10));
-             // PERFORMANCE: Use pre-calculated color string
-             const mainColor = grayLevels[val] || `rgb(${val}, ${val}, ${val})`;
+             const alpha = val / 255;
              
-             // PERFORMANCE: Only set font if scale changed significantly
-             if (Math.abs(scale - currentFontScale) > 0.01) {
+             ctx.globalAlpha = alpha;
+             
+             if (cachedCanvas) {
+                 if (Math.abs(scale - 1.0) > 0.01) {
+                     const sSize = charSize * scale;
+                     const offset = (sSize - charSize) / 2;
+                     ctx.drawImage(cachedCanvas, (px - offset) | 0, (py - offset) | 0, sSize, sSize);
+                 } else {
+                     ctx.drawImage(cachedCanvas, px, py);
+                 }
+             } else {
+                 // Fallback (should rarely happen)
+                 ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
                  ctx.font = `${charSize * scale}px 'Courier New', monospace`;
-                 currentFontScale = scale;
+                 ctx.fillText(displayChar, (px - (charSize * scale - charSize) / 2) | 0, (py - (charSize * scale - charSize) / 2) | 0);
              }
              
-             // --- Glitch & Words Logic (Mouse Only) ---
-             let displayChar = grid[x][y];
-             
-             if (mouseIntensity > 0.01) {
-                 // 1. Random Glitch (High intensity = more glitch)
-                 if (mouseIntensity > 0.3 && Math.random() < 0.15) {
-                     displayChar = chars[Math.floor(Math.random() * chars.length)];
-                 }
-                 
-                 // 2. Words "GM" and "S&S"
-                 if (mouseIntensity > 0.6) {
-                     const mouseCol = Math.floor(mouse.x / charSize);
-                     const mouseRow = Math.floor(mouse.y / charSize);
-                     const relX = x - mouseCol;
-                     const relY = y - mouseRow;
-                     
-                     // Longer cycle (8s) for longer display times
-                     const cycle = time % 8; 
-                     
-                     // Show GM (2.5 seconds duration)
-                     if (cycle > 1.0 && cycle < 3.5) {
-                         if (relY === 0) {
-                             if (relX === -1) displayChar = 'G';
-                             if (relX === 0) displayChar = 'M';
-                         }
-                     }
-                     // Show S&S (2.5 seconds duration)
-                     else if (cycle > 5.0 && cycle < 7.5) {
-                         if (relY === 0) {
-                             if (relX === -1) displayChar = 'S';
-                             if (relX === 0) displayChar = '&';
-                             if (relX === 1) displayChar = 'S';
-                         }
-                     }
-                     
-                     // Very subtle glitch on words (reduced from 0.1 to 0.02)
-                     // Makes them much more readable/stable
-                     if (['G','M','S','&'].includes(displayChar) && Math.random() < 0.02) {
-                         displayChar = chars[Math.floor(Math.random() * chars.length)];
-                     }
-                 }
-             }
-             
-             const offset = (charSize * scale - charSize) / 2;
-             
-             // Draw Main Character
-             // PERFORMANCE: Only set fillStyle if changed
-             if (mainColor !== lastColor) {
-                 ctx.fillStyle = mainColor;
-                 lastColor = mainColor;
-             }
-             // PERFORMANCE: Integer coordinates
-             ctx.fillText(displayChar, (px - offset) | 0, (py - offset) | 0);
-             
-             // Reset context - REMOVED for performance, handled by state check
-             // ctx.font = `${charSize}px 'Courier New', monospace`;
+             ctx.globalAlpha = 1.0; // Reset
 
           } else {
              // Background Rain - Optimized with Offscreen Canvas
              const useDarker = Math.random() < 0.001;
-             const colorKey = useDarker ? '#222' : '#111';
-             const cachedCanvas = charCache[grid[x][y]] ? charCache[grid[x][y]][colorKey] : null;
+             // #111 is 17/255 ~ 0.067
+             // #222 is 34/255 ~ 0.133
+             ctx.globalAlpha = useDarker ? 0.13 : 0.07;
              
              if (cachedCanvas) {
                  ctx.drawImage(cachedCanvas, px, py);
              } else {
                  // Fallback if char not in cache
-                 if (currentFontScale !== 1.0) {
-                     ctx.font = defaultFont;
-                     currentFontScale = 1.0;
-                 }
-                 ctx.fillStyle = colorKey;
-                 ctx.fillText(grid[x][y], px, py);
+                 ctx.fillStyle = useDarker ? '#222' : '#111';
+                 ctx.font = defaultFont;
+                 ctx.fillText(displayChar, px, py);
              }
+             ctx.globalAlpha = 1.0; // Reset
           }
         }
       }
