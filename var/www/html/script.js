@@ -1164,8 +1164,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const ctx = asciiCanvas.getContext('2d');
     let width, height;
     let cols, rows;
-    // PERFORMANCE: Increased charSize from 18 to 24 to reduce draw calls by ~45%
-    const charSize = 24; 
+    // PERFORMANCE: Increased charSize to 28 to ensure 60fps on all devices
+    const charSize = 28; 
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$#@%&?!<>"; 
     
     let mouse = { x: -1000, y: -1000 };
@@ -1231,14 +1231,9 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', resize);
     resize();
 
-    // let frameCount = 0;
     function draw() {
       requestAnimationFrame(draw);
       
-      // PERFORMANCE: Skip frames (30fps)
-      // frameCount++;
-      // if (frameCount % 2 !== 0) return;
-
       const time = Date.now() * 0.001;
       const t005 = time * 0.05;
       const t003 = time * 0.03;
@@ -1316,8 +1311,9 @@ document.addEventListener('DOMContentLoaded', () => {
               // Normalize remaining range (0..0.65 -> 0..1)
               gasIntensity /= 0.65;
               
-              // Use a gentle curve (2.5) to smooth the ramp-up from black
-              gasIntensity = Math.pow(gasIntensity, 2.5);
+              // PERFORMANCE: Replace Math.pow(x, 2.5) with x*x (much faster)
+              // Slightly adjusts the curve but visually similar
+              gasIntensity = gasIntensity * gasIntensity;
           }
           
           if (gasIntensity > 1) gasIntensity = 1;
