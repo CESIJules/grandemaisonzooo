@@ -1670,12 +1670,13 @@ body.menu-open {
   position: absolute;
   left: 0;
   width: 100%;
-  background-color: rgba(20, 20, 20, 0.9);
+  background-color: transparent;
   padding: 20px;
   border-radius: 20px;
   text-align: center;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  /* backdrop-filter removed for performance */
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
   
   /* 3D Tilt Setup */
