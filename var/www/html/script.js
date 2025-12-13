@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const imageHtml = `
           <div class="artiste-image">
-            <img src="${escapeHtml(artist.image)}" alt="${escapeHtml(artist.name)}" />
+            <img src="${artist.image}" alt="${artist.name}" />
           </div>
         `;
         
@@ -184,7 +184,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Interactive Title Shadow (Accueil) ---
   if (titleAccueil) {
+    let lastTitleUpdate = 0;
     document.addEventListener('mousemove', (e) => {
+      const now = Date.now();
+      if (now - lastTitleUpdate < 30) return; // Limit to ~30ms
+      lastTitleUpdate = now;
+
       // Only calculate if we are on the accueil section to save performance
       if (currentSectionIndex !== 0) return;
 
@@ -669,8 +674,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function draw() {
       requestAnimationFrame(draw);
       
-      // PERFORMANCE: Skip drawing if radio section is not visible
-      if (!isRadioVisible && !audio.paused) {
+      // PERFORMANCE: Skip drawing if radio section is not visible OR if paused and animation finished
+      if ((!isRadioVisible && !audio.paused) || (audio.paused && radarActiveIntensity <= 0.01)) {
           lastFrameTime = Date.now();
           return;
       }
@@ -1144,6 +1149,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateProgressBar() {
+    // PERFORMANCE: Skip if hidden
+    if (document.hidden) return;
+
     if (!trackDuration || !trackStartTime) return;
 
     const now = Date.now() / 1000;
@@ -1234,8 +1242,8 @@ document.addEventListener('DOMContentLoaded', () => {
       asciiCanvas.width = width;
       asciiCanvas.height = height;
       cols = Math.ceil(width / charSize);
-      rows = Math.ceil(height / charSize);
-      ctx.font = `${charSize}px 'Courier New', monospace`;
+      rows = Math.ceil(height / charSize) + 2;
+      ctx.font = `bold ${charSize}px 'Courier New', monospace`;
       initGrid();
     }
     window.addEventListener('resize', resize);
@@ -1245,8 +1253,35 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastFrameTime = 0;
     const fpsInterval = 1000 / 30;
 
+    // Word State for "GM" and "S&S"
+    let wordState = {
+        current: null,
+        endTime: 0,
+        nextSpawnTime: 0
+    };
+
     function draw(currentTime) {
+      // PERFORMANCE: Stop animation if tab is hidden
+      if (document.hidden) {
+          requestAnimationFrame(draw);
+          return;
+      }
+
       requestAnimationFrame(draw);
+      
+      // --- Word State Update ---
+      const now = Date.now();
+      if (wordState.current && now > wordState.endTime) {
+          wordState.current = null;
+          wordState.nextSpawnTime = now + Math.random() * 2000 + 500; // Random delay
+      }
+      
+      if (!wordState.current && now > wordState.nextSpawnTime) {
+          wordState.current = Math.random() < 0.5 ? 'GM' : 'S&S';
+          // Duration: 1s to 2.5s
+          wordState.endTime = now + 1000 + Math.random() * 1500; 
+      }
+      // -------------------------
       
       if (!currentTime) currentTime = performance.now();
       const elapsed = currentTime - lastFrameTime;
@@ -1261,12 +1296,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const t003 = time * 0.03;
       
       // Clear with transparency for trails
-      ctx.fillStyle = 'rgba(5, 5, 5, 0.25)'; 
+      ctx.fillStyle = 'rgba(5, 5, 5, 0.95)'; 
       ctx.fillRect(0, 0, width, height);
       
       ctx.textBaseline = 'top';
       // Default font
-      const defaultFont = `${charSize}px 'Courier New', monospace`;
+      const defaultFont = `bold ${charSize}px 'Courier New', monospace`;
       ctx.font = defaultFont;
       let currentFontScale = 1.0;
       let lastColor = null; // PERFORMANCE: Track color state
@@ -1292,30 +1327,25 @@ document.addEventListener('DOMContentLoaded', () => {
         // Cloud Noise Calculation (Horizontal Movement)
         // Removed pre-calculation to allow for more chaotic 2D noise in the loop
         
+        // PERFORMANCE: Pre-calculate X terms
+        const xTerm1 = x * 0.05 + t005;
+        const xTerm2 = x * 0.01;
+
         for (let y = 0; y < rows; y++) {
           const py = y * charSize + offsets[x] - charSize; 
           
-          if (py > height) break;
+          if (py > height + 50) break;
 
           const centerY = py + charSize/2;
           
-          // --- 1. Gas/Cloud Calculation (Optimized) ---
-          // Coordinate distortion
-          const xx = x * 0.025; 
-          const yy = y * 0.025;
-          
-          // Simplified Warping (1 trig call instead of 2)
-          const warp = Math.sin(xx * 1.5 + yy * 0.5 + t005);
-          
-          const wx = xx + warp;
-          const wy = yy + warp;
-          
-          // Reduced layers (2 layers instead of 3)
-          const n1 = Math.sin(wx * 2.0 + t003);
-          const n2 = Math.cos(wy * 2.0 - t005);
+          // --- 1. Gas/Cloud Calculation (Optimized Prop B) ---
+          // Simplified noise calculation to reduce CPU usage
+          // Replaced complex warped noise with simpler interference pattern
+          const n1 = Math.sin(xTerm1 + y * 0.01);
+          const n2 = Math.cos(y * 0.05 - t003 + xTerm2);
           
           // Combine
-          let noise = n1 + n2 * 0.5; 
+          let noise = n1 + n2;  
           
           // Normalize (Range is approx -1.5 to 1.5)
           let gasIntensity = (noise + 1.5) / 3.0;
@@ -1359,7 +1389,8 @@ document.addEventListener('DOMContentLoaded', () => {
               if (dist < maxRadius) {
                  mouseIntensity = 1 - (dist / maxRadius);
                  // Softer falloff for mouse too
-                 mouseIntensity = Math.pow(mouseIntensity, 1.5); 
+                 // PERFORMANCE: Use multiplication instead of pow
+                 mouseIntensity = mouseIntensity * mouseIntensity; 
               }
           }
           
@@ -1367,7 +1398,7 @@ document.addEventListener('DOMContentLoaded', () => {
           
           // Blending: Avoid dark ring by taking max of mouse and gas
           // Gas is capped at ~50% brightness (Lowered further)
-          const combinedIntensity = Math.max(mouseIntensity, gasIntensity * 0.5);
+          const combinedIntensity = Math.max(mouseIntensity, gasIntensity * 0.3);
 
           // "Délimitation" fix:
           // 1. Lower threshold to almost zero
@@ -1377,16 +1408,16 @@ document.addEventListener('DOMContentLoaded', () => {
              // Scale: Only mouse affects scale
              const scale = 1 + mouseIntensity * 0.2; 
              
-             // Color: Range 10 -> 255.
+             // Color: Range 10 -> 120.
              // This ensures that when intensity is low, the character is barely visible against the dark background.
              // No more "jump" from black to gray.
-             const val = Math.floor(10 + combinedIntensity * (255 - 10));
+             const val = (10 + combinedIntensity * 110) | 0;
              // PERFORMANCE: Use pre-calculated color string
-             const mainColor = grayLevels[val] || `rgb(${val}, ${val}, ${val})`;
+             const mainColor = grayLevels[val];
              
              // PERFORMANCE: Only set font if scale changed significantly
              if (Math.abs(scale - currentFontScale) > 0.01) {
-                 ctx.font = `${charSize * scale}px 'Courier New', monospace`;
+                 ctx.font = `bold ${charSize * scale}px 'Courier New', monospace`;
                  currentFontScale = scale;
              }
              
@@ -1400,24 +1431,18 @@ document.addEventListener('DOMContentLoaded', () => {
                  }
                  
                  // 2. Words "GM" and "S&S"
-                 if (mouseIntensity > 0.6) {
+                 if (mouseIntensity > 0.2 && wordState.current) {
                      const mouseCol = Math.floor(mouse.x / charSize);
                      const mouseRow = Math.floor(mouse.y / charSize);
                      const relX = x - mouseCol;
                      const relY = y - mouseRow;
                      
-                     // Longer cycle (8s) for longer display times
-                     const cycle = time % 8; 
-                     
-                     // Show GM (2.5 seconds duration)
-                     if (cycle > 1.0 && cycle < 3.5) {
+                     if (wordState.current === 'GM') {
                          if (relY === 0) {
                              if (relX === -1) displayChar = 'G';
                              if (relX === 0) displayChar = 'M';
                          }
-                     }
-                     // Show S&S (2.5 seconds duration)
-                     else if (cycle > 5.0 && cycle < 7.5) {
+                     } else { // S&S
                          if (relY === 0) {
                              if (relX === -1) displayChar = 'S';
                              if (relX === 0) displayChar = '&';
@@ -1425,9 +1450,8 @@ document.addEventListener('DOMContentLoaded', () => {
                          }
                      }
                      
-                     // Very subtle glitch on words (reduced from 0.1 to 0.02)
-                     // Makes them much more readable/stable
-                     if (['G','M','S','&'].includes(displayChar) && Math.random() < 0.02) {
+                     // Very subtle glitch on words
+                     if (['G','M','S','&'].includes(displayChar) && Math.random() < 0.05) {
                          displayChar = chars[Math.floor(Math.random() * chars.length)];
                      }
                  }
@@ -2023,6 +2047,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function fetchCurrentSong() {
+    // PERFORMANCE: Skip if hidden
+    if (document.hidden) return;
+
     if (!currentSong) return;
     try {
       const response = await fetch(`https://grandemaisonzoo.com/status-json.xsl?nocache=${new Date().getTime()}`);
@@ -2135,8 +2162,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Timeline Management ---
   const timelineContainer = document.querySelector('.timeline-container');
   const timelineFilters = document.querySelector('.timeline-filters');
-
-
 
   async function renderTimelinePosts(artist = 'Tous') {
     if (!timelineContainer) return;
@@ -2419,7 +2444,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const diff = timelineTargetScroll - currentScrollLeft;
     
     if (Math.abs(diff) > 0.5) {
-      timelineContainer.scrollLeft = currentScrollLeft + diff * 0.08;
+      // Reverted to 0.06 for momentum feel
+      timelineContainer.scrollLeft = currentScrollLeft + diff * 0.06;
       requestAnimationFrame(animateTimeline);
       isAnimatingTimeline = true;
     } else {
@@ -2573,7 +2599,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Otherwise, scroll timeline
         // Invert direction: Subtract deltaY
-        timelineTargetScroll -= e.deltaY * 2.5; 
+        timelineTargetScroll -= e.deltaY * 3.5; 
         timelineTargetScroll = Math.max(0, Math.min(timelineTargetScroll, maxScroll));
         
         if (!isAnimatingTimeline) {
@@ -2869,6 +2895,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderAsciiFrame() {
+        // PERFORMANCE: Skip if hidden
+        if (document.hidden) return;
+
         if (!asciiElement) return;
         if (!asciiCanvas) initAsciiCanvas();
         
