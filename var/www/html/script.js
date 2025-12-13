@@ -1232,7 +1232,7 @@ document.addEventListener('DOMContentLoaded', () => {
       asciiCanvas.width = width;
       asciiCanvas.height = height;
       cols = Math.ceil(width / charSize);
-      rows = Math.ceil(height / charSize);
+      rows = Math.ceil(height / charSize) + 2;
       ctx.font = `bold ${charSize}px 'Courier New', monospace`;
       initGrid();
     }
@@ -1324,7 +1324,7 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let y = 0; y < rows; y++) {
           const py = y * charSize + offsets[x] - charSize; 
           
-          if (py > height) break;
+          if (py > height + 50) break;
 
           const centerY = py + charSize/2;
           
@@ -1388,7 +1388,7 @@ document.addEventListener('DOMContentLoaded', () => {
           
           // Blending: Avoid dark ring by taking max of mouse and gas
           // Gas is capped at ~50% brightness (Lowered further)
-          const combinedIntensity = Math.max(mouseIntensity, gasIntensity * 0.5);
+          const combinedIntensity = Math.max(mouseIntensity, gasIntensity * 0.3);
 
           // "Délimitation" fix:
           // 1. Lower threshold to almost zero
@@ -1398,10 +1398,10 @@ document.addEventListener('DOMContentLoaded', () => {
              // Scale: Only mouse affects scale
              const scale = 1 + mouseIntensity * 0.2; 
              
-             // Color: Range 10 -> 255.
+             // Color: Range 10 -> 120.
              // This ensures that when intensity is low, the character is barely visible against the dark background.
              // No more "jump" from black to gray.
-             const val = Math.floor(10 + combinedIntensity * (255 - 10));
+             const val = Math.floor(10 + combinedIntensity * (120 - 10));
              // PERFORMANCE: Use pre-calculated color string
              const mainColor = grayLevels[val] || `rgb(${val}, ${val}, ${val})`;
              
@@ -1453,6 +1453,8 @@ document.addEventListener('DOMContentLoaded', () => {
              // PERFORMANCE: Only set fillStyle if changed
              if (mainColor !== lastColor) {
                  ctx.fillStyle = mainColor;
+                 ctx.shadowColor = mainColor;
+                 ctx.shadowBlur = 4;
                  lastColor = mainColor;
              }
              // PERFORMANCE: Integer coordinates
