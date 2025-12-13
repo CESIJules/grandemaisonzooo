@@ -6,6 +6,16 @@ document.addEventListener('DOMContentLoaded', () => {
   let isNavigating = false;
   let isIntroActive = false;
 
+  // Cache section bounds for mobile native scroll (avoids layout reads on every scroll)
+  let sectionBounds = [];
+  function recomputeSectionBounds() {
+    sectionBounds = Array.from(sections).map((section) => {
+      const top = section.offsetTop;
+      return { top, bottom: top + section.offsetHeight };
+    });
+  }
+  recomputeSectionBounds();
+
   // --- Dynamic Artists Loading ---
   function escapeHtml(text) {
     if (!text) return text;
@@ -49,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const imageHtml = `
           <div class="artiste-image">
-            <img src="${escapeHtml(artist.image)}" alt="${escapeHtml(artist.name)}" />
+            <img src="${escapeHtml(artist.image)}" alt="${escapeHtml(artist.name)}" loading="lazy" decoding="async" />
           </div>
         `;
         
@@ -78,6 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Update sections list
       sections = document.querySelectorAll('section');
+      recomputeSectionBounds();
       if (typeof updateScrollArrowVisibility === 'function') updateScrollArrowVisibility();
       
       // Re-attach timeline link listeners
@@ -121,8 +132,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   // Set height on initial load and on resize/orientation change.
   setMainHeight();
-  window.addEventListener('resize', setMainHeight);
-  window.addEventListener('orientationchange', setMainHeight);
+  let setMainHeightRafId = 0;
+  function scheduleSetMainHeight() {
+    if (setMainHeightRafId) return;
+    setMainHeightRafId = requestAnimationFrame(() => {
+      setMainHeightRafId = 0;
+      setMainHeight();
+    });
+  }
+  window.addEventListener('resize', scheduleSetMainHeight);
+  window.addEventListener('orientationchange', scheduleSetMainHeight);
   // --- END: Fullscreen height fix for mobile browsers ---
   
   // Timeline State
@@ -1246,7 +1265,15 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.font = `bold ${charSize}px 'Courier New', monospace`;
       initGrid();
     }
-    window.addEventListener('resize', resize);
+    let asciiResizeRafId = 0;
+    function scheduleAsciiResize() {
+      if (asciiResizeRafId) return;
+      asciiResizeRafId = requestAnimationFrame(() => {
+        asciiResizeRafId = 0;
+        resize();
+      });
+    }
+    window.addEventListener('resize', scheduleAsciiResize);
     resize();
 
     // PERFORMANCE: Limit to 30 FPS
@@ -2533,6 +2560,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // Update the global index
     currentSectionIndex = closestSectionIndex;
+    recomputeSectionBounds();
     if (typeof updateScrollArrowVisibility === 'function') updateScrollArrowVisibility();
   }
 
@@ -2684,22 +2712,27 @@ document.addEventListener('DOMContentLoaded', () => {
   }, { passive: false });
   
   // --- Mobile Scroll Observer (Update Active Section) ---
+  let mobileScrollRafId = 0;
   window.addEventListener('scroll', () => {
       if (window.innerWidth >= 900) return; // Only for mobile native scroll
+      if (mobileScrollRafId) return;
 
-      const scrollPosition = (window.scrollY || document.documentElement.scrollTop) + (window.innerHeight / 2);
-      
-      sections.forEach((section, index) => {
-          const sectionTop = section.offsetTop;
-          const sectionBottom = sectionTop + section.offsetHeight;
-          
-          if (scrollPosition >= sectionTop && scrollPosition < sectionBottom) {
-              if (currentSectionIndex !== index) {
-                  currentSectionIndex = index;
-                  if (typeof updateScrollArrowVisibility === 'function') updateScrollArrowVisibility();
-                  if (typeof updateVolumeButtonPosition === 'function') updateVolumeButtonPosition();
-              }
+      mobileScrollRafId = requestAnimationFrame(() => {
+        mobileScrollRafId = 0;
+
+        const scrollPosition = (window.scrollY || document.documentElement.scrollTop) + (window.innerHeight / 2);
+
+        for (let i = 0; i < sectionBounds.length; i++) {
+          const b = sectionBounds[i];
+          if (scrollPosition >= b.top && scrollPosition < b.bottom) {
+            if (currentSectionIndex !== i) {
+              currentSectionIndex = i;
+              if (typeof updateScrollArrowVisibility === 'function') updateScrollArrowVisibility();
+              if (typeof updateVolumeButtonPosition === 'function') updateVolumeButtonPosition();
+            }
+            break;
           }
+        }
       });
   }, { passive: true });
 
@@ -2851,6 +2884,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let asciiCanvas = null;
     let asciiCtx = null;
 
+    const ASCII_S_COLS = 120;
+    const ASCII_S_ROWS = 80;
+    let zBuffer = null;
+
     function initAsciiCanvas() {
         if (!asciiElement) return;
         if (!asciiCanvas) {
@@ -2869,8 +2906,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const charWidth = metrics.width;
             const charHeight = fontSize + 2; 
             
-            const cols = 120;
-            const rows = 80;
+            const cols = ASCII_S_COLS;
+            const rows = ASCII_S_ROWS;
             
             // CSS Size
             const cssWidth = cols * charWidth;
@@ -2891,6 +2928,9 @@ document.addEventListener('DOMContentLoaded', () => {
             asciiCanvas.fontStr = font;
             asciiCanvas.cssWidth = cssWidth;
             asciiCanvas.cssHeight = cssHeight;
+
+            // Reusable depth buffer to avoid per-frame allocations
+            zBuffer = new Float32Array(ASCII_S_COLS * ASCII_S_ROWS);
         }
     }
 
@@ -2901,9 +2941,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!asciiElement) return;
         if (!asciiCanvas) initAsciiCanvas();
         
-        const width = 120;
-        const height = 80;
-        const zBuffer = new Array(width * height).fill(0);
+        const width = ASCII_S_COLS;
+        const height = ASCII_S_ROWS;
+        if (!zBuffer || zBuffer.length !== width * height) {
+          zBuffer = new Float32Array(width * height);
+        } else {
+          zBuffer.fill(0);
+        }
         
         // Clear Canvas (using logical coords)
         asciiCtx.clearRect(0, 0, asciiCanvas.cssWidth, asciiCanvas.cssHeight);
@@ -3077,13 +3121,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function startAsciiAnimation() {
-        if (asciiInterval) clearInterval(asciiInterval);
+      if (asciiInterval) clearInterval(asciiInterval);
         asciiInterval = setInterval(renderAsciiFrame, 50);
     }
 
     function stopAsciiAnimation() {
-        if (asciiInterval) clearInterval(asciiInterval);
+      if (asciiInterval) {
+        clearInterval(asciiInterval);
+        asciiInterval = null;
+      }
     }
+
+    // Pause the animation when the tab is hidden
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        stopAsciiAnimation();
+        return;
+      }
+      if (terminalOverlay && terminalOverlay.classList.contains('active')) {
+        startAsciiAnimation();
+      }
+    });
 
     function activateTerminal() {
         terminalOverlay.classList.remove('hidden');

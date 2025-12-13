@@ -33,6 +33,13 @@ server {
 		try_files $uri $uri/ =404;
 	}
 
+	# Cache static assets aggressively (HTML/PHP still uncached)
+	location ~* \.(?:css|js|mjs|png|jpe?g|gif|ico|svg|webp|woff2?|ttf|otf|eot|mp4)$ {
+		expires 30d;
+		add_header Cache-Control "public, no-transform";
+		try_files $uri =404;
+	}
+
 	# MODIFICATION 2: Bloc décommenté pour activer PHP.
 	location ~ \.php$ {
     	include fastcgi_params;
