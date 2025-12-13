@@ -532,9 +532,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             table.innerHTML = `<thead><tr><th>Titre</th><th>Artiste</th><th>Date</th><th class="actions">Actions</th></tr></thead>`;
             const tbody = document.createElement('tbody');
             posts.forEach(post => {
+                let displayTitle = post.title;
+                // Fix: Si le titre est identique à l'artiste et qu'il y a un sous-titre, afficher le sous-titre
+                if (post.artist && post.title && post.title.trim().toLowerCase() === post.artist.trim().toLowerCase() && post.subtitle) {
+                    displayTitle = post.subtitle;
+                }
+
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${escapeHtml(post.title)}</td>
+                    <td>${escapeHtml(displayTitle)}</td>
                     <td>${escapeHtml(post.artist)}</td>
                     <td>${new Date(post.date).toLocaleDateString('fr-FR')}</td>
                     <td class="actions">
