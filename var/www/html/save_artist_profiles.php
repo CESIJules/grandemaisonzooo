@@ -14,12 +14,12 @@ if (!file_exists($file_path)) {
     @chmod($file_path, 0666);
 }
 
+// Force permissions to be writable by everyone (needed if owner differs from web server user)
+@chmod($file_path, 0666);
+
 if (!is_writable($file_path)) {
-    @chmod($file_path, 0666);
-    if (!is_writable($file_path)) {
-        echo json_encode(['status' => 'error', 'message' => 'JSON file is not writable. Check permissions for: ' . $file_path]);
-        exit;
-    }
+    echo json_encode(['status' => 'error', 'message' => 'JSON file is not writable. Check permissions for: ' . $file_path]);
+    exit;
 }
 
 if (file_put_contents($file_path, json_encode($data, JSON_PRETTY_PRINT), LOCK_EX)) {
