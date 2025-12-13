@@ -1256,7 +1256,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const t003 = time * 0.03;
       
       // Clear with transparency for trails
-      ctx.fillStyle = 'rgba(5, 5, 5, 0.25)'; 
+      ctx.fillStyle = 'rgba(5, 5, 5, 0.15)'; 
       ctx.fillRect(0, 0, width, height);
       
       ctx.textBaseline = 'top';
