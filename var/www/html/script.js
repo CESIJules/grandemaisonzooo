@@ -1233,7 +1233,7 @@ document.addEventListener('DOMContentLoaded', () => {
       asciiCanvas.height = height;
       cols = Math.ceil(width / charSize);
       rows = Math.ceil(height / charSize);
-      ctx.font = `${charSize}px 'Courier New', monospace`;
+      ctx.font = `bold ${charSize}px 'Courier New', monospace`;
       initGrid();
     }
     window.addEventListener('resize', resize);
@@ -1270,7 +1270,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       ctx.textBaseline = 'top';
       // Default font
-      const defaultFont = `${charSize}px 'Courier New', monospace`;
+      const defaultFont = `bold ${charSize}px 'Courier New', monospace`;
       ctx.font = defaultFont;
       let currentFontScale = 1.0;
       let lastColor = null; // PERFORMANCE: Track color state
