@@ -1,5 +1,7 @@
 <?php
 header('Content-Type: application/json');
+// Cache for 1 hour
+header('Cache-Control: public, max-age=3600');
 $file = 'artists_profiles.json';
 if (file_exists($file)) {
     $fp = fopen($file, 'rb');
