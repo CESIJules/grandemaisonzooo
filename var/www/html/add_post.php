@@ -48,7 +48,7 @@ try {
         }
 
         if (!file_exists($upload_dir)) {
-            mkdir($upload_dir, 0755, true);
+            mkdir($upload_dir, 0777, true);
         }
 
         $tmp_name = $_FILES['image']['tmp_name'];
