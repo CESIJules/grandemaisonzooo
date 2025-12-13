@@ -50,7 +50,7 @@ class PlaylistManager {
 
     public function syncFallbackDirectory() {
         if (!is_dir($this->fallbackDir)) {
-            mkdir($this->fallbackDir, 0775, true);
+            mkdir($this->fallbackDir, 0755, true);
         }
 
         // Get all music files (excluding . and ..)
@@ -95,7 +95,7 @@ class PlaylistManager {
         $dirName = $this->sanitizeDirName($name);
         $playlistPath = $this->playlistsDir . '/' . $dirName;
         if (!is_dir($playlistPath)) {
-            mkdir($playlistPath, 0775, true);
+            mkdir($playlistPath, 0755, true);
         }
 
         $newPlaylist = ['name' => $name, 'songs' => $songs, 'dir' => $dirName];

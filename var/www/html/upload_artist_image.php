@@ -31,7 +31,7 @@ if ($_FILES['image']['error'] !== UPLOAD_ERR_OK) {
 
 $target_dir = __DIR__ . "/images/";
 if (!file_exists($target_dir)) {
-    if (!mkdir($target_dir, 0777, true)) {
+    if (!mkdir($target_dir, 0755, true)) {
         echo json_encode(['status' => 'error', 'message' => 'Failed to create images directory']);
         exit;
     }
@@ -39,7 +39,7 @@ if (!file_exists($target_dir)) {
 
 // Ensure writable
 if (!is_writable($target_dir)) {
-    @chmod($target_dir, 0777);
+    @chmod($target_dir, 0755);
     if (!is_writable($target_dir)) {
         echo json_encode(['status' => 'error', 'message' => 'Images directory is not writable. Check permissions for: ' . $target_dir]);
         exit;

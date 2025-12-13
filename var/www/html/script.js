@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const imageHtml = `
           <div class="artiste-image">
-            <img src="${artist.image}" alt="${artist.name}" />
+            <img src="${escapeHtml(artist.image)}" alt="${escapeHtml(artist.name)}" />
           </div>
         `;
         
@@ -1937,8 +1937,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (parts.length >= 2) {
           artist = parts[0];
           title = parts.slice(1).join(' - ');
-          rcArtist.textContent = artist;
-          rcTitle.textContent = title;
+          rcArtist.textContent = title; // Use textContent for safety
+          rcTitle.textContent = artist; // Use textContent for safety
       } else {
           rcTitle.textContent = fullTitle;
           rcArtist.textContent = ''; 
@@ -1972,7 +1972,7 @@ document.addEventListener('DOMContentLoaded', () => {
           
           setTimeout(() => {
               // 2. Changer le contenu
-              currentSong.querySelector('.title').textContent = title;
+              currentSong.querySelector('.title').textContent = title; // Use textContent for safety
               
               // 3. Calculer la nouvelle taille naturelle
               currentSong.style.width = 'auto';
@@ -2238,18 +2238,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // Check if the title is an artist name (case-insensitive comparison)
         const isArtistTitle = post.artist ? true : allArtists.some(artist => artist.toLowerCase() === post.title.toLowerCase());
 
-        const titleElement = `<h3 class="${isArtistTitle ? 'artist-title' : ''}">${displayTitle}</h3>`;
+        const titleElement = `<h3 class="${isArtistTitle ? 'artist-title' : ''}">${escapeHtml(displayTitle)}</h3>`;
 
         const subtitleElement = post.link && displaySubtitle
-          ? `<h4><a href="${post.link}" target="_blank" rel="noopener noreferrer" class="timeline-subtitle-link">${displaySubtitle}</a></h4>`
+          ? `<h4><a href="${escapeHtml(post.link)}" target="_blank" rel="noopener noreferrer" class="timeline-subtitle-link">${escapeHtml(displaySubtitle)}</a></h4>`
           : displaySubtitle
-            ? `<h4>${displaySubtitle}</h4>`
+            ? `<h4>${escapeHtml(displaySubtitle)}</h4>`
             : '';
 
         const imageElement = post.image
           ? (post.link 
-              ? `<a href="${post.link}" target="_blank" rel="noopener noreferrer" class="timeline-image-link"><img src="${post.image}" alt="${post.title}" class="timeline-image"></a>`
-              : `<img src="${post.image}" alt="${post.title}" class="timeline-image">`)
+              ? `<a href="${escapeHtml(post.link)}" target="_blank" rel="noopener noreferrer" class="timeline-image-link"><img src="${escapeHtml(post.image)}" alt="${escapeHtml(post.title)}" class="timeline-image"></a>`
+              : `<img src="${escapeHtml(post.image)}" alt="${escapeHtml(post.title)}" class="timeline-image">`)
           : '';
 
         contentDiv.innerHTML = `
@@ -2338,7 +2338,7 @@ document.addEventListener('DOMContentLoaded', () => {
       artists.forEach(artist => {
         const button = document.createElement('button');
         button.className = 'btn filter-btn';
-        button.dataset.artist = artist;
+        button.dataset.artist = escapeHtml(artist);
         button.textContent = artist;
         timelineFilters.appendChild(button);
       });
