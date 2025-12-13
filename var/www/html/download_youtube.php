@@ -1,4 +1,5 @@
 <?php
+require_once 'auth_check.php';
 header('Content-Type: application/json');
 
 // NOTE: The current login system is client-side only (sessionStorage).

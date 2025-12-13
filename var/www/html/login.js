@@ -3,23 +3,33 @@ document.addEventListener('DOMContentLoaded', () => {
   const passwordInput = document.getElementById('password');
   const loginMessage = document.getElementById('loginMessage');
   
-  // Replace 'your_password' with a real password.
-  // For this case, I'll use 'grandemaison' as requested.
-  const PASSWORD = 'gtR0u5DBtZMuLNyAiaHMo';
-
-  loginForm.addEventListener('submit', (e) => {
+  loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const password = passwordInput.value;
 
-    if (password === PASSWORD) {
-      // Use sessionStorage to store the login state for the current session.
-      // This is simple, but not highly secure.
-      sessionStorage.setItem('loggedIn', 'true');
-      window.location.href = 'admin.html';
-    } else {
-      loginMessage.textContent = 'Mot de passe incorrect.';
+    try {
+      const response = await fetch('auth.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ password: password })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.status === 'success') {
+        // Redirection vers la page d'administration
+        window.location.href = 'admin.html';
+      } else {
+        loginMessage.textContent = 'Mot de passe incorrect.';
+        loginMessage.style.color = 'red';
+        passwordInput.value = '';
+      }
+    } catch (error) {
+      console.error('Erreur:', error);
+      loginMessage.textContent = 'Une erreur est survenue.';
       loginMessage.style.color = 'red';
-      passwordInput.value = '';
     }
   });
 });

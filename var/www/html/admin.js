@@ -1,4 +1,18 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // --- Auth Check ---
+    try {
+        const response = await fetch('check_auth.php');
+        const data = await response.json();
+        if (!data.logged_in) {
+            window.location.href = 'login.html';
+            return;
+        }
+    } catch (e) {
+        console.error('Auth check failed', e);
+        window.location.href = 'login.html';
+        return;
+    }
+
     // --- New Sidebar Navigation ---
     const navLinks = document.querySelectorAll('.nav-link');
     const adminSections = document.querySelectorAll('.admin-section');

@@ -1,4 +1,5 @@
 <?php
+require_once 'auth_check.php';
 header('Content-Type: application/json');
 
 $file_path = 'timeline.json';

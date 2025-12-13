@@ -7,6 +7,16 @@ document.addEventListener('DOMContentLoaded', () => {
   let isIntroActive = false;
 
   // --- Dynamic Artists Loading ---
+  function escapeHtml(text) {
+    if (!text) return text;
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
   async function loadArtists() {
     const container = document.getElementById('artists-container');
     if (!container) return;
@@ -39,28 +49,28 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const imageHtml = `
           <div class="artiste-image">
-            <img src="${artist.image}" alt="${artist.name}" />
+            <img src="${escapeHtml(artist.image)}" alt="${escapeHtml(artist.name)}" />
           </div>
         `;
         
         const infoHtml = `
           <div class="artiste-info">
-            <h3 class="nom-scene" id="${artist.id}Title">${artist.name.toUpperCase()}</h3>
-            <p class="localisation">${artist.location}</p>
+            <h3 class="nom-scene" id="${escapeHtml(artist.id)}Title">${escapeHtml(artist.name).toUpperCase()}</h3>
+            <p class="localisation">${escapeHtml(artist.location)}</p>
             <div class="artiste-actions">
-              <a href="${artist.listenLink}" target="_blank" class="btn">Écouter</a>
-              <a href="${artist.watchLink}" target="_blank" class="btn">Regarder</a>
-              <a href="#timeline" data-artist="${artist.name}" class="btn">Timeline</a>
+              <a href="${escapeHtml(artist.listenLink)}" target="_blank" class="btn">Écouter</a>
+              <a href="${escapeHtml(artist.watchLink)}" target="_blank" class="btn">Regarder</a>
+              <a href="#timeline" data-artist="${escapeHtml(artist.name)}" class="btn">Timeline</a>
             </div>
             <div class="artiste-socials">
-              <a href="${artist.instagramLink}" target="_blank"><i class="fab fa-instagram"></i></a>
+              <a href="${escapeHtml(artist.instagramLink)}" target="_blank"><i class="fab fa-instagram"></i></a>
               <a href="#contact"><i class="fas fa-envelope"></i></a>
             </div>
           </div>
         `;
 
         return `
-          <section id="${artist.id}" class="screen artiste">
+          <section id="${escapeHtml(artist.id)}" class="screen artiste">
             ${isImageLeft ? imageHtml + infoHtml : infoHtml + imageHtml}
           </section>
         `;

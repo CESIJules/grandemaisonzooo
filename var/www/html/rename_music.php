@@ -1,4 +1,5 @@
 <?php
+require_once 'auth_check.php';
 header('Content-Type: application/json');
 
 // 1. Check for POST request
