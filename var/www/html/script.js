@@ -1139,6 +1139,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateProgressBar() {
+    // PERFORMANCE: Skip if hidden
+    if (document.hidden) return;
+
     if (!trackDuration || !trackStartTime) return;
 
     const now = Date.now() / 1000;
@@ -1241,6 +1244,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const fpsInterval = 1000 / 30;
 
     function draw(currentTime) {
+      // PERFORMANCE: Stop animation if tab is hidden
+      if (document.hidden) {
+          requestAnimationFrame(draw);
+          return;
+      }
+
       requestAnimationFrame(draw);
       
       if (!currentTime) currentTime = performance.now();
@@ -1287,6 +1296,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Cloud Noise Calculation (Horizontal Movement)
         // Removed pre-calculation to allow for more chaotic 2D noise in the loop
         
+        // PERFORMANCE: Pre-calculate X terms
+        const xTerm1 = x * 0.05 + t005;
+        const xTerm2 = x * 0.01;
+
         for (let y = 0; y < rows; y++) {
           const py = y * charSize + offsets[x] - charSize; 
           
@@ -1297,8 +1310,8 @@ document.addEventListener('DOMContentLoaded', () => {
           // --- 1. Gas/Cloud Calculation (Optimized Prop B) ---
           // Simplified noise calculation to reduce CPU usage
           // Replaced complex warped noise with simpler interference pattern
-          const n1 = Math.sin(x * 0.05 + t005 + y * 0.01);
-          const n2 = Math.cos(y * 0.05 - t003 + x * 0.01);
+          const n1 = Math.sin(xTerm1 + y * 0.01);
+          const n2 = Math.cos(y * 0.05 - t003 + xTerm2);
           
           // Combine
           let noise = n1 + n2;  
@@ -1345,7 +1358,8 @@ document.addEventListener('DOMContentLoaded', () => {
               if (dist < maxRadius) {
                  mouseIntensity = 1 - (dist / maxRadius);
                  // Softer falloff for mouse too
-                 mouseIntensity = Math.pow(mouseIntensity, 1.5); 
+                 // PERFORMANCE: Use multiplication instead of pow
+                 mouseIntensity = mouseIntensity * mouseIntensity; 
               }
           }
           
@@ -2009,6 +2023,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function fetchCurrentSong() {
+    // PERFORMANCE: Skip if hidden
+    if (document.hidden) return;
+
     if (!currentSong) return;
     try {
       const response = await fetch(`https://grandemaisonzoo.com/status-json.xsl?nocache=${new Date().getTime()}`);
@@ -2854,6 +2871,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderAsciiFrame() {
+        // PERFORMANCE: Skip if hidden
+        if (document.hidden) return;
+
         if (!asciiElement) return;
         if (!asciiCanvas) initAsciiCanvas();
         
