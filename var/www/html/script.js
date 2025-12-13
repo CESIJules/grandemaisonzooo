@@ -1216,11 +1216,15 @@ document.addEventListener('DOMContentLoaded', () => {
   
   function initAsciiBackground() {
     if (!asciiCanvas) return;
-    const ctx = asciiCanvas.getContext('2d');
+    
+    // PERFORMANCE: Detect device capability for ASCII background
+    const isAsciiLowPerf = isMobile || isSlowConnection || window.innerWidth < 900;
+    // Larger chars = less to render (more aggressive on mobile)
+    const charSize = isAsciiLowPerf ? 28 : 20;
+    const asciiFPS = isAsciiLowPerf ? 15 : 24; // Reduce FPS significantly on weak devices
+    const ctx = asciiCanvas.getContext('2d', { alpha: false }); // PERFORMANCE: Disable alpha
     let width, height;
-    let cols, rows;
-    // PERFORMANCE: Increased charSize to 28 to ensure 60fps on all devices
-    const charSize = 28; 
+    let cols, rows; 
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$#@%&?!<>"; 
     
     let mouse = { x: -1000, y: -1000 };
@@ -1273,6 +1277,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    // PERFORMANCE: Intersection Observer to pause when not visible
+    let isAsciiVisible = true;
+    const asciiObserver = new IntersectionObserver((entries) => {
+        isAsciiVisible = entries[0].isIntersecting;
+    }, { threshold: 0.1 });
+    asciiObserver.observe(asciiCanvas);
+    
     function resize() {
       width = window.innerWidth;
       height = window.innerHeight;
@@ -1294,9 +1305,9 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', scheduleAsciiResize);
     resize();
 
-    // PERFORMANCE: Limit to 30 FPS
+    // PERFORMANCE: Limit FPS based on device capability
     let lastFrameTime = 0;
-    const fpsInterval = 1000 / 30;
+    const fpsInterval = 1000 / asciiFPS;
 
     // Word State for "GM" and "S&S"
     let wordState = {
@@ -1306,13 +1317,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     function draw(currentTime) {
-      // PERFORMANCE: Stop animation if tab is hidden
-      if (document.hidden) {
-          requestAnimationFrame(draw);
+      requestAnimationFrame(draw);
+      
+      // PERFORMANCE: Skip if tab hidden OR ASCII not visible
+      if (document.hidden || !isAsciiVisible) {
+          lastFrameTime = currentTime || performance.now();
           return;
       }
-
-      requestAnimationFrame(draw);
       
       // --- Word State Update ---
       const now = Date.now();
@@ -1351,7 +1362,8 @@ document.addEventListener('DOMContentLoaded', () => {
       let currentFontScale = 1.0;
       let lastColor = null; // PERFORMANCE: Track color state
       
-      const maxRadius = 100; 
+      const maxRadius = isAsciiLowPerf ? 80 : 100; // Smaller radius on weak devices
+      const maxRadiusSq = maxRadius * maxRadius; // PERFORMANCE: Pre-calculate for distance checks 
 
       for (let x = 0; x < cols; x++) {
         offsets[x] += speeds[x];
@@ -1365,9 +1377,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const px = x * charSize;
         const centerX = px + charSize/2;
         
-        // Mouse calc (Pre-check x distance)
+        // PERFORMANCE: Skip entire column if far from mouse
         const dxMouse = mouse.x - centerX;
         const absDxMouse = Math.abs(dxMouse);
+        const columnFarFromMouse = absDxMouse > maxRadius + 50;
 
         // Cloud Noise Calculation (Horizontal Movement)
         // Removed pre-calculation to allow for more chaotic 2D noise in the loop
@@ -1379,63 +1392,69 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let y = 0; y < rows; y++) {
           const py = y * charSize + offsets[x] - charSize; 
           
-          if (py > height + 50) break;
+          // PERFORMANCE: Early exit if outside viewport
+          if (py < -charSize || py > height + 50) continue;
 
           const centerY = py + charSize/2;
           
+          // PERFORMANCE: Skip complex calculations if column far from mouse and low perf
+          const skipComplexCalc = isAsciiLowPerf && columnFarFromMouse;
+          
           // --- 1. Gas/Cloud Calculation (Optimized Prop B) ---
-          // Simplified noise calculation to reduce CPU usage
-          // Replaced complex warped noise with simpler interference pattern
-          const n1 = Math.sin(xTerm1 + y * 0.01);
-          const n2 = Math.cos(y * 0.05 - t003 + xTerm2);
+          let gasIntensity = 0;
+          if (!skipComplexCalc) {
+              // Simplified noise calculation to reduce CPU usage
+              const n1 = Math.sin(xTerm1 + y * 0.01);
+              const n2 = Math.cos(y * 0.05 - t003 + xTerm2);
           
-          // Combine
-          let noise = n1 + n2;  
-          
-          // Normalize (Range is approx -1.5 to 1.5)
-          let gasIntensity = (noise + 1.5) / 3.0;
-          
-          // "Tu n'arrives pas à faire le dégradé... délimitation"
-          // Solution: Soft subtraction. Instead of hard clamping, we use a smoothstep-like approach.
-          // We want a lot of black, but a VERY smooth transition out of it.
-          
-          // Shift down to create black space
-          gasIntensity -= 0.35; 
-          
-          if (gasIntensity < 0) {
-              gasIntensity = 0;
-          } else {
-              // Normalize remaining range (0..0.65 -> 0..1)
-              gasIntensity /= 0.65;
+              // Combine
+              let noise = n1 + n2;  
               
-              // PERFORMANCE: Replace Math.pow(x, 2.5) with x*x (much faster)
-              // Slightly adjusts the curve but visually similar
-              gasIntensity = gasIntensity * gasIntensity;
+              // Normalize (Range is approx -1.5 to 1.5)
+              gasIntensity = (noise + 1.5) / 3.0;
+              
+              // Shift down to create black space
+              gasIntensity -= 0.35; 
+              
+              if (gasIntensity < 0) {
+                  gasIntensity = 0;
+              } else {
+                  // Normalize remaining range (0..0.65 -> 0..1)
+                  gasIntensity /= 0.65;
+                  // PERFORMANCE: Use multiplication instead of pow
+                  gasIntensity = gasIntensity * gasIntensity;
+              }
+              
+              if (gasIntensity > 1) gasIntensity = 1;
           }
-          
-          if (gasIntensity > 1) gasIntensity = 1;
 
-          // --- 2. Mouse Calculation (Restored "Animation d'avant") ---
-
-          // --- 2. Mouse Calculation (Restored "Animation d'avant") ---
+          // --- 2. Mouse Calculation ---
           let mouseIntensity = 0;
           const dyMouse = mouse.y - centerY;
           const absDyMouse = Math.abs(dyMouse);
 
+          // PERFORMANCE: Use squared distance to avoid sqrt
           if (absDxMouse < maxRadius && absDyMouse < maxRadius) {
-              // Organic Distortion Logic
-              const angle = Math.atan2(dyMouse, dxMouse);
-              const distortion = Math.sin(angle * 3 + time * 2) * 20 
-                               + Math.cos(angle * 5 - time * 1.5) * 10
-                               + Math.sin(angle * 7 + time * 4) * 5;
+              const distSq = dxMouse*dxMouse + dyMouse*dyMouse;
               
-              const dist = Math.sqrt(dxMouse*dxMouse + dyMouse*dyMouse) + distortion;
-              
-              if (dist < maxRadius) {
-                 mouseIntensity = 1 - (dist / maxRadius);
-                 // Softer falloff for mouse too
-                 // PERFORMANCE: Use multiplication instead of pow
-                 mouseIntensity = mouseIntensity * mouseIntensity; 
+              if (distSq < maxRadiusSq) {
+                  // PERFORMANCE: Only calculate distortion if really needed
+                  if (!isAsciiLowPerf) {
+                      const angle = Math.atan2(dyMouse, dxMouse);
+                      const distortion = Math.sin(angle * 3 + time * 2) * 20 
+                                       + Math.cos(angle * 5 - time * 1.5) * 10
+                                       + Math.sin(angle * 7 + time * 4) * 5;
+                      const dist = Math.sqrt(distSq) + distortion;
+                      
+                      if (dist < maxRadius) {
+                         mouseIntensity = 1 - (dist / maxRadius);
+                         mouseIntensity = mouseIntensity * mouseIntensity; 
+                      }
+                  } else {
+                      // Simplified calculation for low performance
+                      mouseIntensity = 1 - (Math.sqrt(distSq) / maxRadius);
+                      mouseIntensity = mouseIntensity * mouseIntensity;
+                  }
               }
           }
           
@@ -1469,7 +1488,8 @@ document.addEventListener('DOMContentLoaded', () => {
              // --- Glitch & Words Logic (Mouse Only) ---
              let displayChar = grid[x][y];
              
-             if (mouseIntensity > 0.01) {
+             // PERFORMANCE: Reduce glitch/words frequency on low perf devices
+             if (mouseIntensity > 0.01 && !isAsciiLowPerf) {
                  // 1. Random Glitch (High intensity = more glitch)
                  if (mouseIntensity > 0.3 && Math.random() < 0.15) {
                      displayChar = chars[Math.floor(Math.random() * chars.length)];
@@ -1512,11 +1532,9 @@ document.addEventListener('DOMContentLoaded', () => {
              }
              // PERFORMANCE: Integer coordinates
              ctx.fillText(displayChar, (px - offset) | 0, (py - offset) | 0);
-             
-             // Reset context - REMOVED for performance, handled by state check
-             // ctx.font = `${charSize}px 'Courier New', monospace`;
 
-          } else {
+          } else if (!isAsciiLowPerf || Math.random() < 0.3) {
+             // PERFORMANCE: On low perf, only draw 30% of background chars to reduce calls
              // Background Rain
              // PERFORMANCE: Reset font only if needed
              if (currentFontScale !== 1.0) {
@@ -1524,8 +1542,12 @@ document.addEventListener('DOMContentLoaded', () => {
                  currentFontScale = 1.0;
              }
 
-             ctx.fillStyle = '#111'; 
-             if (Math.random() < 0.001) ctx.fillStyle = '#222';
+             // PERFORMANCE: Use lastColor logic here too
+             const bgColor = Math.random() < 0.001 ? '#222' : '#111';
+             if (bgColor !== lastColor) {
+                 ctx.fillStyle = bgColor;
+                 lastColor = bgColor;
+             }
              ctx.fillText(grid[x][y], px, py);
           }
         }
