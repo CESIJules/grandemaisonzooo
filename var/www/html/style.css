@@ -1614,6 +1614,11 @@ body.menu-open {
   scrollbar-width: none;
   /* Infinite line */
   background: linear-gradient(#555, #555) repeat-x left 50% / 1px 2px local;
+  will-change: scroll-position;
+}
+
+.timeline-container.is-scrolling .timeline-content {
+  pointer-events: none;
 }
 
 .timeline-container::-webkit-scrollbar { display: none; }
@@ -1684,6 +1689,7 @@ body.menu-open {
   --rotate-y: 0deg;
   --shine-x: 50%;
   --shine-y: 50%;
+  will-change: transform;
 
   transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1), 
               box-shadow 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),

@@ -2447,11 +2447,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (Math.abs(diff) > 0.5) {
       // Reverted to 0.06 for momentum feel
       timelineContainer.scrollLeft = currentScrollLeft + diff * 0.06;
+      
+      if (!timelineContainer.classList.contains('is-scrolling')) {
+          timelineContainer.classList.add('is-scrolling');
+      }
+      
       requestAnimationFrame(animateTimeline);
       isAnimatingTimeline = true;
     } else {
       timelineContainer.scrollLeft = timelineTargetScroll;
       isAnimatingTimeline = false;
+      timelineContainer.classList.remove('is-scrolling');
     }
   };
 
