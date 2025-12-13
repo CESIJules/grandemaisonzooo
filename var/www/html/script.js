@@ -1386,7 +1386,7 @@ document.addEventListener('DOMContentLoaded', () => {
              
              // PERFORMANCE: Only set font if scale changed significantly
              if (Math.abs(scale - currentFontScale) > 0.01) {
-                 ctx.font = `${charSize * scale}px 'Courier New', monospace`;
+                 ctx.font = `bold ${charSize * scale}px 'Courier New', monospace`;
                  currentFontScale = scale;
              }
              
