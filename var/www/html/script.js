@@ -2445,8 +2445,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const diff = timelineTargetScroll - currentScrollLeft;
     
     if (Math.abs(diff) > 0.5) {
-      // Increased lerp factor from 0.08 to 0.15 for snappier/more fluid feel
-      timelineContainer.scrollLeft = currentScrollLeft + diff * 0.15;
+      // Reverted to 0.06 for momentum feel
+      timelineContainer.scrollLeft = currentScrollLeft + diff * 0.06;
       requestAnimationFrame(animateTimeline);
       isAnimatingTimeline = true;
     } else {
@@ -2600,7 +2600,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Otherwise, scroll timeline
         // Invert direction: Subtract deltaY
-        timelineTargetScroll -= e.deltaY * 2.5; 
+        timelineTargetScroll -= e.deltaY * 3.5; 
         timelineTargetScroll = Math.max(0, Math.min(timelineTargetScroll, maxScroll));
         
         if (!isAnimatingTimeline) {
