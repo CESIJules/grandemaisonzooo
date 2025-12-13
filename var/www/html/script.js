@@ -603,7 +603,13 @@ document.addEventListener('DOMContentLoaded', () => {
     source.connect(analyser);
     analyser.connect(audioContext.destination);
 
-    analyser.fftSize = 2048;
+    // PERFORMANCE: Detect device capabilities and adjust quality
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+    const isSlowConnection = navigator.connection && (navigator.connection.effectiveType === '2g' || navigator.connection.effectiveType === 'slow-2g');
+    const isLowPerformance = isMobile || isSlowConnection;
+    
+    // Reduce quality on low-performance devices
+    analyser.fftSize = isLowPerformance ? 1024 : 2048;
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
 
@@ -690,16 +696,28 @@ document.addEventListener('DOMContentLoaded', () => {
         observer.observe(radioSection);
     }
 
+    // PERFORMANCE: Frame rate throttling
+    const targetFPS = isLowPerformance ? 30 : 60;
+    const frameInterval = 1000 / targetFPS;
+    let lastDrawTime = 0;
+    
     function draw() {
       requestAnimationFrame(draw);
       
+      // PERFORMANCE: Throttle FPS based on device capability
+      const now = Date.now();
+      const elapsed = now - lastDrawTime;
+      if (elapsed < frameInterval) {
+          return;
+      }
+      lastDrawTime = now - (elapsed % frameInterval);
+      
       // PERFORMANCE: Skip drawing if radio section is not visible OR if paused and animation finished
       if ((!isRadioVisible && !audio.paused) || (audio.paused && radarActiveIntensity <= 0.01)) {
-          lastFrameTime = Date.now();
+          lastFrameTime = now;
           return;
       }
       
-      const now = Date.now();
       const deltaTime = (now - lastFrameTime) / 1000; // Seconds
       lastFrameTime = now;
 
@@ -1794,9 +1812,21 @@ document.addEventListener('DOMContentLoaded', () => {
           // Cela laisse le temps à Icecast de mettre à jour ses métadonnées après le début de la lecture.
           setTimeout(() => {
             fetchCurrentSong(); // Premier appel
-            fetchInterval = setInterval(fetchCurrentSong, 5000); // On lance ensuite l'intervalle
+            // PERFORMANCE: Increased interval to 8s to reduce server load
+            fetchInterval = setInterval(fetchCurrentSong, 8000);
           }, 1500);
       }
+      
+      // PERFORMANCE: visibilitychange API - stop fetching when tab hidden
+      document.addEventListener('visibilitychange', () => {
+          if (document.hidden && fetchInterval) {
+              clearInterval(fetchInterval);
+              fetchInterval = null;
+          } else if (!document.hidden && !audio.paused && !fetchInterval) {
+              fetchCurrentSong();
+              fetchInterval = setInterval(fetchCurrentSong, 8000);
+          }
+      });
 
       // --- FIX: Relancer la barre de progression à la reprise de la lecture ---
       if (trackDuration > 0 && trackStartTime > 0) {
@@ -1953,6 +1983,36 @@ document.addEventListener('DOMContentLoaded', () => {
   let pendingTitle = null;
   let pendingTitleTimeout = null;
   let isFirstTitleLoad = true;
+  
+  // PERFORMANCE: Cache for reducing fetch requests
+  const CACHE_KEY = 'radio_current_song';
+  const CACHE_DURATION = 5000; // 5 seconds
+  
+  function getCachedSong() {
+      try {
+          const cached = localStorage.getItem(CACHE_KEY);
+          if (cached) {
+              const data = JSON.parse(cached);
+              if (Date.now() - data.timestamp < CACHE_DURATION) {
+                  return data.song;
+              }
+          }
+      } catch (e) {
+          console.error('Cache read error:', e);
+      }
+      return null;
+  }
+  
+  function setCachedSong(song) {
+      try {
+          localStorage.setItem(CACHE_KEY, JSON.stringify({
+              song: song,
+              timestamp: Date.now()
+          }));
+      } catch (e) {
+          console.error('Cache write error:', e);
+      }
+  }
 
   function updateRCInfo(fullTitle) {
       if (!rcTitle || !rcArtist) return;

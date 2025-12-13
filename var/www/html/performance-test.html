@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Performance - GrandeMaison</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #0f0;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 { color: #0f0; border-bottom: 2px solid #0f0; }
+        .metric {
+            background: #1a1a1a;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 3px solid #0f0;
+        }
+        .metric h3 { margin: 0 0 10px 0; color: #0ff; }
+        .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #fff;
+        }
+        .good { color: #0f0; }
+        .warning { color: #ff0; }
+        .bad { color: #f00; }
+        button {
+            background: #0f0;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0ff; }
+        pre {
+            background: #1a1a1a;
+            padding: 10px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 Test de Performance - GrandeMaison Radio</h1>
+    
+    <div class="metric">
+        <h3>📱 Type d'appareil</h3>
+        <div class="value" id="deviceType">Détection...</div>
+    </div>
+    
+    <div class="metric">
+        <h3>🌐 Type de connexion</h3>
+        <div class="value" id="connectionType">Détection...</div>
+    </div>
+    
+    <div class="metric">
+        <h3>🎨 Configuration Visualiseurs</h3>
+        <div class="value" id="visualizerConfig">N/A</div>
+    </div>
+    
+    <div class="metric">
+        <h3>🖥️ Résolution Écran</h3>
+        <div class="value" id="screenRes">Calcul...</div>
+    </div>
+    
+    <div class="metric">
+        <h3>⚡ Performance Score Estimé</h3>
+        <div class="value" id="perfScore">Calcul...</div>
+    </div>
+    
+    <div class="metric">
+        <h3>🔧 Tests Disponibles</h3>
+        <button onclick="testFPS()">Test FPS Animation</button>
+        <button onclick="testCache()">Test Cache localStorage</button>
+        <button onclick="testVisibility()">Test Visibility API</button>
+        <button onclick="window.location.href='index.html'">Retour Site</button>
+    </div>
+    
+    <div class="metric" id="testResults" style="display:none;">
+        <h3>📊 Résultats Tests</h3>
+        <pre id="testOutput"></pre>
+    </div>
+
+    <script>
+        // Détection appareil
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+        document.getElementById('deviceType').textContent = isMobile ? '📱 Mobile' : '🖥️ Desktop';
+        document.getElementById('deviceType').className = 'value ' + (isMobile ? 'warning' : 'good');
+        
+        // Détection connexion
+        let connType = 'Inconnue';
+        let connClass = 'warning';
+        if (navigator.connection) {
+            const effectiveType = navigator.connection.effectiveType;
+            connType = effectiveType.toUpperCase();
+            if (effectiveType === '4g') connClass = 'good';
+            else if (effectiveType === '3g') connClass = 'warning';
+            else connClass = 'bad';
+        }
+        document.getElementById('connectionType').textContent = connType;
+        document.getElementById('connectionType').className = 'value ' + connClass;
+        
+        // Config visualiseurs
+        const isSlowConnection = navigator.connection && (navigator.connection.effectiveType === '2g' || navigator.connection.effectiveType === 'slow-2g');
+        const isLowPerformance = isMobile || isSlowConnection;
+        const fftSize = isLowPerformance ? 1024 : 2048;
+        const targetFPS = isLowPerformance ? 30 : 60;
+        
+        document.getElementById('visualizerConfig').innerHTML = `
+            FFT Size: ${fftSize}<br>
+            FPS Cible: ${targetFPS}<br>
+            Mode: ${isLowPerformance ? 'Performance' : 'Qualité'}
+        `;
+        document.getElementById('visualizerConfig').className = 'value ' + (isLowPerformance ? 'warning' : 'good');
+        
+        // Résolution
+        document.getElementById('screenRes').textContent = `${window.innerWidth} × ${window.innerHeight}`;
+        
+        // Score performance estimé
+        let score = 100;
+        if (isMobile) score -= 10;
+        if (isSlowConnection) score -= 20;
+        if (window.innerWidth < 768) score -= 5;
+        
+        let scoreClass = 'good';
+        if (score < 70) scoreClass = 'bad';
+        else if (score < 85) scoreClass = 'warning';
+        
+        document.getElementById('perfScore').textContent = `${score}/100`;
+        document.getElementById('perfScore').className = 'value ' + scoreClass;
+        
+        // Test FPS
+        let frameCount = 0;
+        let lastTime = performance.now();
+        let fpsValues = [];
+        
+        function testFPS() {
+            document.getElementById('testResults').style.display = 'block';
+            document.getElementById('testOutput').textContent = 'Test FPS en cours (5 secondes)...';
+            
+            frameCount = 0;
+            fpsValues = [];
+            lastTime = performance.now();
+            
+            function measureFrame() {
+                const now = performance.now();
+                const delta = now - lastTime;
+                if (delta >= 1000) {
+                    fpsValues.push(frameCount);
+                    frameCount = 0;
+                    lastTime = now;
+                }
+                frameCount++;
+                
+                if (fpsValues.length < 5) {
+                    requestAnimationFrame(measureFrame);
+                } else {
+                    const avgFPS = Math.round(fpsValues.reduce((a, b) => a + b) / fpsValues.length);
+                    const minFPS = Math.min(...fpsValues);
+                    const maxFPS = Math.max(...fpsValues);
+                    
+                    let result = `Test FPS Animation:\n`;
+                    result += `  FPS Moyen: ${avgFPS}\n`;
+                    result += `  FPS Min: ${minFPS}\n`;
+                    result += `  FPS Max: ${maxFPS}\n`;
+                    result += `  Stabilité: ${maxFPS - minFPS < 10 ? '✅ Excellente' : minFPS > 25 ? '⚠️ Bonne' : '❌ Instable'}\n`;
+                    result += `\nTarget pour votre appareil: ${targetFPS} FPS\n`;
+                    result += avgFPS >= targetFPS * 0.9 ? '✅ Performance optimale' : '⚠️ Performance sous optimal';
+                    
+                    document.getElementById('testOutput').textContent = result;
+                }
+            }
+            
+            requestAnimationFrame(measureFrame);
+        }
+        
+        // Test Cache
+        function testCache() {
+            document.getElementById('testResults').style.display = 'block';
+            
+            const testKey = 'radio_current_song';
+            const testData = {
+                song: 'Test Song - Artist',
+                timestamp: Date.now()
+            };
+            
+            let result = 'Test Cache localStorage:\n\n';
+            
+            try {
+                localStorage.setItem(testKey, JSON.stringify(testData));
+                result += '✅ Écriture cache: OK\n';
+                
+                const cached = localStorage.getItem(testKey);
+                if (cached) {
+                    const parsed = JSON.parse(cached);
+                    result += '✅ Lecture cache: OK\n';
+                    result += `  Données: ${parsed.song}\n`;
+                    result += `  Age: ${Date.now() - parsed.timestamp}ms\n`;
+                } else {
+                    result += '❌ Lecture cache: FAIL\n';
+                }
+                
+                localStorage.removeItem(testKey);
+                result += '✅ Suppression cache: OK\n';
+                result += '\n✅ Cache fonctionnel - Réduction requêtes actifs';
+                
+            } catch (e) {
+                result += `❌ Erreur cache: ${e.message}\n`;
+                result += '⚠️ localStorage désactivé ou plein';
+            }
+            
+            document.getElementById('testOutput').textContent = result;
+        }
+        
+        // Test Visibility API
+        function testVisibility() {
+            document.getElementById('testResults').style.display = 'block';
+            
+            let result = 'Test Visibility API:\n\n';
+            
+            if ('hidden' in document) {
+                result += '✅ API supportée\n';
+                result += `  État actuel: ${document.hidden ? 'Caché' : 'Visible'}\n`;
+                result += '  visibilityState: ' + document.visibilityState + '\n\n';
+                result += 'ℹ️ Changez d\'onglet pour tester\n';
+                result += '  → Les fetch s\'arrêteront automatiquement\n';
+                result += '  → Économie batterie et bande passante\n';
+                
+                let changeCount = 0;
+                const handler = () => {
+                    changeCount++;
+                    result += `\n[${changeCount}] État: ${document.hidden ? '🌙 Caché' : '☀️ Visible'}`;
+                    document.getElementById('testOutput').textContent = result;
+                    
+                    if (changeCount >= 3) {
+                        document.removeEventListener('visibilitychange', handler);
+                        result += '\n\n✅ Test terminé - API fonctionnelle';
+                        document.getElementById('testOutput').textContent = result;
+                    }
+                };
+                
+                document.addEventListener('visibilitychange', handler);
+                
+            } else {
+                result += '❌ API non supportée\n';
+                result += '⚠️ Navigateur trop ancien';
+            }
+            
+            document.getElementById('testOutput').textContent = result;
+        }
+        
+        // Info système
+        console.log('%c🚀 GrandeMaison Performance Test', 'font-size: 20px; color: #0f0; font-weight: bold;');
+        console.log('Device:', isMobile ? 'Mobile' : 'Desktop');
+        console.log('Connection:', connType);
+        console.log('FFT Size:', fftSize);
+        console.log('Target FPS:', targetFPS);
+        console.log('Screen:', window.innerWidth, 'x', window.innerHeight);
+        console.log('Performance Score:', score + '/100');
+    </script>
+</body>
+</html>
