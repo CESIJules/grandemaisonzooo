@@ -35,6 +35,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- General Element Selectors ---
     const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.location.href = 'logout.php';
+        });
+    }
 
     // --- Timeline Section ---
     const adminTimelineForm = document.getElementById('adminTimelineForm');
@@ -87,10 +93,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     let suggestionSortMode = 'bpm'; // Default sort mode
 
     // --- Utility Functions ---
+    function escapeHtml(text) {
+        if (!text) return text;
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
     function formatSongPathToTitle(songPath) {
         if (!songPath) return '';
         const filename = songPath.split('/').pop();
-        return filename.replace(/\.[^/.]+$/, "").replace(/_/g, ' ').replace(/\s*-\s*/g, ' - ').toUpperCase();
+        return escapeHtml(filename.replace(/\.[^/.]+$/, "").replace(/_/g, ' ').replace(/\s*-\s*/g, ' - ').toUpperCase());
     }
 
     // --- Harmonic Mixing Logic ---
@@ -382,8 +398,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <strong>${formatSongPathToTitle(cand.path)}</strong>
                     </div>
                     <div class="suggestion-badges">
-                        <span class="suggestion-badge badge-bpm">${cand.meta.bpm} BPM</span>
-                        <span class="suggestion-badge badge-key">${cand.meta.camelot}</span>
+                        <span class="suggestion-badge badge-bpm">${escapeHtml(String(cand.meta.bpm))} BPM</span>
+                        <span class="suggestion-badge badge-key">${escapeHtml(String(cand.meta.camelot))}</span>
                     </div>
                     <div class="suggestion-stats" style="margin-top: 8px; display: flex; gap: 10px;">
                         <div class="stat-item" style="flex: 1;">
@@ -518,12 +534,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             posts.forEach(post => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${post.title}</td>
-                    <td>${post.artist}</td>
+                    <td>${escapeHtml(post.title)}</td>
+                    <td>${escapeHtml(post.artist)}</td>
                     <td>${new Date(post.date).toLocaleDateString('fr-FR')}</td>
                     <td class="actions">
-                        <button class="btn edit-post-btn" data-id="${post.id}"><i class="fas fa-pencil-alt"></i></button>
-                        <button class="btn btn-danger delete-post-btn" data-id="${post.id}"><i class="fas fa-trash"></i></button>
+                        <button class="btn edit-post-btn" data-id="${escapeHtml(String(post.id))}"><i class="fas fa-pencil-alt"></i></button>
+                        <button class="btn btn-danger delete-post-btn" data-id="${escapeHtml(String(post.id))}"><i class="fas fa-trash"></i></button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -691,8 +707,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 tr.innerHTML = `
                     <td>${formatSongPathToTitle(file)}</td>
                     <td class="actions">
-                        <button class="btn rename-music-btn" data-filename="${file}"><i class="fas fa-pencil-alt"></i></button>
-                        <button class="btn btn-danger delete-music-btn" data-filename="${file}"><i class="fas fa-trash"></i></button>
+                        <button class="btn rename-music-btn" data-filename="${escapeHtml(file)}"><i class="fas fa-pencil-alt"></i></button>
+                        <button class="btn btn-danger delete-music-btn" data-filename="${escapeHtml(file)}"><i class="fas fa-trash"></i></button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -783,14 +799,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     tr.classList.add('playing');
                 }
                 tr.innerHTML = `
-                    <td>${playlist.name}</td>
+                    <td>${escapeHtml(playlist.name)}</td>
                     <td>${playlist.songs.length}</td>
                     <td class="actions">
                         <div class="action-buttons-container">
-                            <button class="btn activate-playlist-btn" title="Activer" data-playlist-name="${playlist.name}" ${playlist.name === currentActivePlaylist ? 'disabled' : ''}><i class="fas fa-play-circle"></i></button>
-                            <button class="btn deactivate-playlist-btn" title="Désactiver" data-playlist-name="${playlist.name}" ${playlist.name !== currentActivePlaylist ? 'disabled' : ''}><i class="fas fa-stop-circle"></i></button>
-                            <button class="btn edit-playlist-btn" title="Modifier" data-playlist-name="${playlist.name}"><i class="fas fa-edit"></i></button>
-                            <button class="btn btn-danger delete-playlist-btn" title="Supprimer" data-playlist-name="${playlist.name}"><i class="fas fa-trash"></i></button>
+                            <button class="btn activate-playlist-btn" title="Activer" data-playlist-name="${escapeHtml(playlist.name)}" ${playlist.name === currentActivePlaylist ? 'disabled' : ''}><i class="fas fa-play-circle"></i></button>
+                            <button class="btn deactivate-playlist-btn" title="Désactiver" data-playlist-name="${escapeHtml(playlist.name)}" ${playlist.name !== currentActivePlaylist ? 'disabled' : ''}><i class="fas fa-stop-circle"></i></button>
+                            <button class="btn edit-playlist-btn" title="Modifier" data-playlist-name="${escapeHtml(playlist.name)}"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-danger delete-playlist-btn" title="Supprimer" data-playlist-name="${escapeHtml(playlist.name)}"><i class="fas fa-trash"></i></button>
                         </div>
                     </td>
                 `;
@@ -986,12 +1002,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         artistProfiles.forEach(artist => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td><img src="${artist.image}" alt="${artist.name}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;"></td>
-                <td>${artist.name}</td>
-                <td>${artist.location}</td>
+                <td><img src="${escapeHtml(artist.image)}" alt="${escapeHtml(artist.name)}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;"></td>
+                <td>${escapeHtml(artist.name)}</td>
+                <td>${escapeHtml(artist.location)}</td>
                 <td class="actions">
-                    <button class="btn edit-artist-btn" data-id="${artist.id}"><i class="fas fa-pencil-alt"></i></button>
-                    <button class="btn btn-danger delete-artist-btn" data-id="${artist.id}"><i class="fas fa-trash"></i></button>
+                    <button class="btn edit-artist-btn" data-id="${escapeHtml(artist.id)}"><i class="fas fa-pencil-alt"></i></button>
+                    <button class="btn btn-danger delete-artist-btn" data-id="${escapeHtml(artist.id)}"><i class="fas fa-trash"></i></button>
                 </td>
             `;
             tbody.appendChild(tr);
