@@ -35,9 +35,12 @@
       <video
         id="landingVideo"
         playsinline
-        preload="metadata"
+        preload="none"
         webkit-playsinline
+        poster="vid/landing-poster.jpg"
       >
+        <!-- PERFORMANCE: Use different qualities based on screen size -->
+        <source src="vid/landing-720p.mp4?v=2" type="video/mp4" media="(max-width: 768px)" />
         <source src="vid/landing.mp4?v=2" type="video/mp4" />
       </video>
     </div>
