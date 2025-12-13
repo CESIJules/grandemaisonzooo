@@ -1243,6 +1243,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastFrameTime = 0;
     const fpsInterval = 1000 / 30;
 
+    // Word State for "GM" and "S&S"
+    let wordState = {
+        current: null,
+        endTime: 0,
+        nextSpawnTime: 0
+    };
+
     function draw(currentTime) {
       // PERFORMANCE: Stop animation if tab is hidden
       if (document.hidden) {
@@ -1251,6 +1258,20 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       requestAnimationFrame(draw);
+      
+      // --- Word State Update ---
+      const now = Date.now();
+      if (wordState.current && now > wordState.endTime) {
+          wordState.current = null;
+          wordState.nextSpawnTime = now + Math.random() * 2000 + 500; // Random delay
+      }
+      
+      if (!wordState.current && now > wordState.nextSpawnTime) {
+          wordState.current = Math.random() < 0.5 ? 'GM' : 'S&S';
+          // Duration: 1s to 2.5s
+          wordState.endTime = now + 1000 + Math.random() * 1500; 
+      }
+      // -------------------------
       
       if (!currentTime) currentTime = performance.now();
       const elapsed = currentTime - lastFrameTime;
@@ -1400,24 +1421,18 @@ document.addEventListener('DOMContentLoaded', () => {
                  }
                  
                  // 2. Words "GM" and "S&S"
-                 if (mouseIntensity > 0.6) {
+                 if (mouseIntensity > 0.2 && wordState.current) {
                      const mouseCol = Math.floor(mouse.x / charSize);
                      const mouseRow = Math.floor(mouse.y / charSize);
                      const relX = x - mouseCol;
                      const relY = y - mouseRow;
                      
-                     // Longer cycle (8s) for longer display times
-                     const cycle = time % 8; 
-                     
-                     // Show GM (2.5 seconds duration)
-                     if (cycle > 1.0 && cycle < 3.5) {
+                     if (wordState.current === 'GM') {
                          if (relY === 0) {
                              if (relX === -1) displayChar = 'G';
                              if (relX === 0) displayChar = 'M';
                          }
-                     }
-                     // Show S&S (2.5 seconds duration)
-                     else if (cycle > 5.0 && cycle < 7.5) {
+                     } else { // S&S
                          if (relY === 0) {
                              if (relX === -1) displayChar = 'S';
                              if (relX === 0) displayChar = '&';
@@ -1425,9 +1440,8 @@ document.addEventListener('DOMContentLoaded', () => {
                          }
                      }
                      
-                     // Very subtle glitch on words (reduced from 0.1 to 0.02)
-                     // Makes them much more readable/stable
-                     if (['G','M','S','&'].includes(displayChar) && Math.random() < 0.02) {
+                     // Very subtle glitch on words
+                     if (['G','M','S','&'].includes(displayChar) && Math.random() < 0.05) {
                          displayChar = chars[Math.floor(Math.random() * chars.length)];
                      }
                  }
