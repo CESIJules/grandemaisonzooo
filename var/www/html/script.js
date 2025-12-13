@@ -1401,9 +1401,9 @@ document.addEventListener('DOMContentLoaded', () => {
              // Color: Range 10 -> 120.
              // This ensures that when intensity is low, the character is barely visible against the dark background.
              // No more "jump" from black to gray.
-             const val = Math.floor(10 + combinedIntensity * (120 - 10));
+             const val = (10 + combinedIntensity * 110) | 0;
              // PERFORMANCE: Use pre-calculated color string
-             const mainColor = grayLevels[val] || `rgb(${val}, ${val}, ${val})`;
+             const mainColor = grayLevels[val];
              
              // PERFORMANCE: Only set font if scale changed significantly
              if (Math.abs(scale - currentFontScale) > 0.01) {
@@ -1453,8 +1453,6 @@ document.addEventListener('DOMContentLoaded', () => {
              // PERFORMANCE: Only set fillStyle if changed
              if (mainColor !== lastColor) {
                  ctx.fillStyle = mainColor;
-                 ctx.shadowColor = mainColor;
-                 ctx.shadowBlur = 4;
                  lastColor = mainColor;
              }
              // PERFORMANCE: Integer coordinates
