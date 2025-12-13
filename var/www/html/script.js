@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const imageHtml = `
           <div class="artiste-image">
-            <img src="${artist.image}" alt="${artist.name}" />
+            <img src="${artist.image}" alt="${artist.name}" loading="lazy" />
           </div>
         `;
         
@@ -174,7 +174,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Interactive Title Shadow (Accueil) ---
   if (titleAccueil) {
+    let lastTitleUpdate = 0;
     document.addEventListener('mousemove', (e) => {
+      const now = Date.now();
+      if (now - lastTitleUpdate < 30) return; // Limit to ~30ms
+      lastTitleUpdate = now;
+
       // Only calculate if we are on the accueil section to save performance
       if (currentSectionIndex !== 0) return;
 
@@ -659,8 +664,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function draw() {
       requestAnimationFrame(draw);
       
-      // PERFORMANCE: Skip drawing if radio section is not visible
-      if (!isRadioVisible && !audio.paused) {
+      // PERFORMANCE: Skip drawing if radio section is not visible OR if paused and animation finished
+      if ((!isRadioVisible && !audio.paused) || (audio.paused && radarActiveIntensity <= 0.01)) {
           lastFrameTime = Date.now();
           return;
       }
@@ -1289,23 +1294,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
           const centerY = py + charSize/2;
           
-          // --- 1. Gas/Cloud Calculation (Optimized) ---
-          // Coordinate distortion
-          const xx = x * 0.025; 
-          const yy = y * 0.025;
-          
-          // Simplified Warping (1 trig call instead of 2)
-          const warp = Math.sin(xx * 1.5 + yy * 0.5 + t005);
-          
-          const wx = xx + warp;
-          const wy = yy + warp;
-          
-          // Reduced layers (2 layers instead of 3)
-          const n1 = Math.sin(wx * 2.0 + t003);
-          const n2 = Math.cos(wy * 2.0 - t005);
+          // --- 1. Gas/Cloud Calculation (Optimized Prop B) ---
+          // Simplified noise calculation to reduce CPU usage
+          // Replaced complex warped noise with simpler interference pattern
+          const n1 = Math.sin(x * 0.05 + t005 + y * 0.01);
+          const n2 = Math.cos(y * 0.05 - t003 + x * 0.01);
           
           // Combine
-          let noise = n1 + n2 * 0.5; 
+          let noise = n1 + n2;  
           
           // Normalize (Range is approx -1.5 to 1.5)
           let gasIntensity = (noise + 1.5) / 3.0;
