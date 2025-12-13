@@ -2449,7 +2449,7 @@ body.menu-open {
 
   .timeline-container {
     margin-top: 0;
-    flex-direction: column; /* Stack items vertically */
+    flex-direction: column-reverse; /* Stack items vertically reversedrtically reversed */
     align-items: center;
     width: 100%;
     overflow: visible; /* Let the section handle scroll */
