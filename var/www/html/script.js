@@ -2126,44 +2126,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const timelineContainer = document.querySelector('.timeline-container');
   const timelineFilters = document.querySelector('.timeline-filters');
 
-  // --- Drag to Scroll Logic ---
-  let isDown = false;
-  let startX;
-  let scrollLeft;
-
-  if (timelineContainer) {
-      timelineContainer.addEventListener('mousedown', (e) => {
-          isDown = true;
-          timelineContainer.classList.add('active');
-          startX = e.pageX - timelineContainer.offsetLeft;
-          scrollLeft = timelineContainer.scrollLeft;
-          // Stop any ongoing momentum/animation
-          isAnimatingTimeline = false;
-          timelineTargetScroll = scrollLeft; 
-          // Prevent text selection
-          e.preventDefault();
-      });
-
-      timelineContainer.addEventListener('mouseleave', () => {
-          isDown = false;
-          timelineContainer.classList.remove('active');
-      });
-
-      timelineContainer.addEventListener('mouseup', () => {
-          isDown = false;
-          timelineContainer.classList.remove('active');
-      });
-
-      timelineContainer.addEventListener('mousemove', (e) => {
-          if (!isDown) return;
-          e.preventDefault();
-          const x = e.pageX - timelineContainer.offsetLeft;
-          const walk = (x - startX) * 1.5; // Scroll speed multiplier
-          timelineContainer.scrollLeft = scrollLeft - walk;
-          timelineTargetScroll = timelineContainer.scrollLeft; // Sync target
-      });
-  }
-
   async function renderTimelinePosts(artist = 'Tous') {
     if (!timelineContainer) return;
 
@@ -2447,17 +2409,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (Math.abs(diff) > 0.5) {
       // Reverted to 0.06 for momentum feel
       timelineContainer.scrollLeft = currentScrollLeft + diff * 0.06;
-      
-      if (!timelineContainer.classList.contains('is-scrolling')) {
-          timelineContainer.classList.add('is-scrolling');
-      }
-      
       requestAnimationFrame(animateTimeline);
       isAnimatingTimeline = true;
     } else {
       timelineContainer.scrollLeft = timelineTargetScroll;
       isAnimatingTimeline = false;
-      timelineContainer.classList.remove('is-scrolling');
     }
   };
 
