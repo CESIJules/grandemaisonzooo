@@ -2507,6 +2507,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Global Wheel Handler
+  let lastWheelTime = 0;
+  let wheelSessionStartedAtEdge = false;
+
   window.addEventListener('wheel', (e) => {
     if (isIntroActive) {
         e.preventDefault();
@@ -2535,28 +2538,53 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isAnimatingTimeline) {
             timelineTargetScroll = timelineContainer.scrollLeft;
         }
+
+        // --- NEW LOGIC: Session-based Edge Detection ---
+        const now = Date.now();
+        if (now - lastWheelTime > 200) {
+            // New scroll session
+            const currentScroll = timelineContainer.scrollLeft;
+            const isAtStart = currentScroll <= 5;
+            const isAtEnd = currentScroll >= maxScroll - 5;
+            
+            // Check if we are starting at the edge AND pushing against it
+            // Direction 1 (Down) -> Goes Left (towards Start/0)
+            // Direction -1 (Up) -> Goes Right (towards End/Max)
+            wheelSessionStartedAtEdge = (isAtStart && direction === 1) || (isAtEnd && direction === -1);
+        }
+        lastWheelTime = now;
         
         // Check if we are effectively at the boundaries based on TARGET
         // This allows "scroll to end" then "next scroll exits" behavior
         // Use a small epsilon for float comparison safety
-        const isAtEnd = timelineTargetScroll >= maxScroll - 1;
-        const isAtStart = timelineTargetScroll <= 1;
+        const isAtEndTarget = timelineTargetScroll >= maxScroll - 1;
+        const isAtStartTarget = timelineTargetScroll <= 1;
         
         // Logic: If we are pushing against the wall (target is at wall AND direction pushes further)
         // INVERTED LOGIC: Scroll Down (1) moves Left (towards Start). Scroll Up (-1) moves Right (towards End).
         
-        if (direction === 1 && isAtStart) {
-             // Go to next section (Radio)
-             if (currentSectionIndex < sections.length - 1) {
-                 scrollToSection(currentSectionIndex + 1);
+        if (direction === 1 && isAtStartTarget) {
+             if (wheelSessionStartedAtEdge) {
+                 // Go to next section (Radio)
+                 if (currentSectionIndex < sections.length - 1) {
+                     scrollToSection(currentSectionIndex + 1);
+                 }
+             } else {
+                 // Block at edge
+                 timelineTargetScroll = 0;
              }
              return;
         }
         
-        if (direction === -1 && isAtEnd) {
-             // Go to prev section (Artists)
-             if (currentSectionIndex > 0) {
-                 scrollToSection(currentSectionIndex - 1);
+        if (direction === -1 && isAtEndTarget) {
+             if (wheelSessionStartedAtEdge) {
+                 // Go to prev section (Artists)
+                 if (currentSectionIndex > 0) {
+                     scrollToSection(currentSectionIndex - 1);
+                 }
+             } else {
+                 // Block at edge
+                 timelineTargetScroll = maxScroll;
              }
              return;
         }
@@ -2587,6 +2615,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let touchStartX = 0;
   let isTouchTriggered = false;
   let touchDidStartOnTimeline = false; // Flag for timeline scrolling
+  let touchStartedAtEdge = false; // New flag
   
   window.addEventListener('touchstart', (e) => {
       touchStartY = e.touches[0].clientY;
@@ -2595,6 +2624,15 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // Check if the touch starts inside the timeline container
       touchDidStartOnTimeline = !!e.target.closest('.timeline-container');
+
+      if (touchDidStartOnTimeline && timelineContainer) {
+          const maxScroll = timelineContainer.scrollWidth - timelineContainer.clientWidth;
+          const currentScroll = timelineContainer.scrollLeft;
+          // Check if at edge (tolerance 5px)
+          touchStartedAtEdge = (currentScroll <= 5) || (currentScroll >= maxScroll - 5);
+      } else {
+          touchStartedAtEdge = false;
+      }
 
   }, { passive: false });
   
@@ -2627,6 +2665,30 @@ document.addEventListener('DOMContentLoaded', () => {
           // Horizontal Swipe
           const currentSection = sections[currentSectionIndex];
           if (currentSection && currentSection.id === 'timeline' && timelineContainer) {
+               
+               // Check for exit condition
+               const maxScroll = timelineContainer.scrollWidth - timelineContainer.clientWidth;
+               const currentScroll = timelineContainer.scrollLeft;
+               
+               if (touchStartedAtEdge && !isTouchTriggered) {
+                   // Swipe Right (deltaX < 0) -> Goes Left (towards 0/Start) -> Exit to Next (Radio)
+                   if (currentScroll <= 5 && deltaX < 0) { 
+                       if (currentSectionIndex < sections.length - 1) {
+                           scrollToSection(currentSectionIndex + 1);
+                           isTouchTriggered = true;
+                           return;
+                       }
+                   }
+                   // Swipe Left (deltaX > 0) -> Goes Right (towards Max/End) -> Exit to Prev (Artists)
+                   if (currentScroll >= maxScroll - 5 && deltaX > 0) { 
+                       if (currentSectionIndex > 0) {
+                           scrollToSection(currentSectionIndex - 1);
+                           isTouchTriggered = true;
+                           return;
+                       }
+                   }
+               }
+
                // Scroll timeline directly
                timelineContainer.scrollLeft += deltaX;
                timelineTargetScroll = timelineContainer.scrollLeft;
