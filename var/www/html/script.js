@@ -2507,9 +2507,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Global Wheel Handler
-  let lastWheelTime = 0;
-  let wheelSessionStartedAtEdge = false;
-
   window.addEventListener('wheel', (e) => {
     if (isIntroActive) {
         e.preventDefault();
@@ -2525,80 +2522,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (isNavigating) return;
 
+    // Determine direction
+    const direction = e.deltaY > 0 ? 1 : -1;
+    
     // Check if we are in Timeline
     const currentSection = sections[currentSectionIndex];
     
     if (currentSection && currentSection.id === 'timeline' && timelineContainer) {
         const maxScroll = timelineContainer.scrollWidth - timelineContainer.clientWidth;
         
-        // Calculate effective move
-        // Priority to deltaX if it's dominant (Trackpad horizontal)
-        // Otherwise use deltaY (Mouse wheel / Trackpad vertical) with inverted logic
-        let moveAmount = 0;
-        if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
-            moveAmount = e.deltaX; // Standard: Right scroll -> Positive -> Move Right
-        } else {
-            // Existing Inverted Logic: Down scroll (Positive Y) -> Negative -> Move Left
-            moveAmount = -e.deltaY * 2.5; 
-        }
-
-        // Determine intended direction relative to timeline
-        // 1 = Moving Right (towards End/Max)
-        // -1 = Moving Left (towards Start/0)
-        const moveDirection = moveAmount > 0 ? 1 : -1;
-        
         // Sync target if not animating to ensure we start from current position
         if (!isAnimatingTimeline) {
             timelineTargetScroll = timelineContainer.scrollLeft;
         }
-
-        // --- NEW LOGIC: Session-based Edge Detection ---
-        const now = Date.now();
-        if (now - lastWheelTime > 200) {
-            // New scroll session
-            const currentScroll = timelineContainer.scrollLeft;
-            const isAtStart = currentScroll <= 5;
-            const isAtEnd = currentScroll >= maxScroll - 5;
-            
-            // Check if we are starting at the edge AND pushing OUT
-            // At Start (0) + Moving Left (-1) -> Exit
-            // At End (Max) + Moving Right (1) -> Exit
-            wheelSessionStartedAtEdge = (isAtStart && moveDirection === -1) || (isAtEnd && moveDirection === 1);
-        }
-        lastWheelTime = now;
         
         // Check if we are effectively at the boundaries based on TARGET
-        const isAtStartTarget = timelineTargetScroll <= 1;
-        const isAtEndTarget = timelineTargetScroll >= maxScroll - 1;
+        // This allows "scroll to end" then "next scroll exits" behavior
+        // Use a small epsilon for float comparison safety
+        const isAtEnd = timelineTargetScroll >= maxScroll - 1;
+        const isAtStart = timelineTargetScroll <= 1;
         
         // Logic: If we are pushing against the wall (target is at wall AND direction pushes further)
+        // INVERTED LOGIC: Scroll Down (1) moves Left (towards Start). Scroll Up (-1) moves Right (towards End).
         
-        // Moving Left (-1) at Start -> Exit Next (Radio)
-        if (moveDirection === -1 && isAtStartTarget) {
-             if (wheelSessionStartedAtEdge) {
-                 if (currentSectionIndex < sections.length - 1) {
-                     scrollToSection(currentSectionIndex + 1);
-                 }
-             } else {
-                 timelineTargetScroll = 0; // Block
+        if (direction === 1 && isAtStart) {
+             // Go to next section (Radio)
+             if (currentSectionIndex < sections.length - 1) {
+                 scrollToSection(currentSectionIndex + 1);
              }
              return;
         }
         
-        // Moving Right (1) at End -> Exit Prev (Artists)
-        if (moveDirection === 1 && isAtEndTarget) {
-             if (wheelSessionStartedAtEdge) {
-                 if (currentSectionIndex > 0) {
-                     scrollToSection(currentSectionIndex - 1);
-                 }
-             } else {
-                 timelineTargetScroll = maxScroll; // Block
+        if (direction === -1 && isAtEnd) {
+             // Go to prev section (Artists)
+             if (currentSectionIndex > 0) {
+                 scrollToSection(currentSectionIndex - 1);
              }
              return;
         }
         
         // Otherwise, scroll timeline
-        timelineTargetScroll += moveAmount; 
+        // Invert direction: Subtract deltaY
+        timelineTargetScroll -= e.deltaY * 2.5; 
         timelineTargetScroll = Math.max(0, Math.min(timelineTargetScroll, maxScroll));
         
         if (!isAnimatingTimeline) {
@@ -2609,7 +2574,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Normal Section Navigation
         // Use a threshold to avoid accidental triggers
         if (Math.abs(e.deltaY) > 10) {
-            const direction = e.deltaY > 0 ? 1 : -1;
             const nextIndex = currentSectionIndex + direction;
             if (nextIndex >= 0 && nextIndex < sections.length) {
                 scrollToSection(nextIndex);
@@ -2623,7 +2587,6 @@ document.addEventListener('DOMContentLoaded', () => {
   let touchStartX = 0;
   let isTouchTriggered = false;
   let touchDidStartOnTimeline = false; // Flag for timeline scrolling
-  let touchStartedAtEdge = false; // New flag
   
   window.addEventListener('touchstart', (e) => {
       touchStartY = e.touches[0].clientY;
@@ -2632,15 +2595,6 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // Check if the touch starts inside the timeline container
       touchDidStartOnTimeline = !!e.target.closest('.timeline-container');
-
-      if (touchDidStartOnTimeline && timelineContainer) {
-          const maxScroll = timelineContainer.scrollWidth - timelineContainer.clientWidth;
-          const currentScroll = timelineContainer.scrollLeft;
-          // Check if at edge (tolerance 10px)
-          touchStartedAtEdge = (currentScroll <= 10) || (currentScroll >= maxScroll - 10);
-      } else {
-          touchStartedAtEdge = false;
-      }
 
   }, { passive: false });
   
@@ -2673,30 +2627,6 @@ document.addEventListener('DOMContentLoaded', () => {
           // Horizontal Swipe
           const currentSection = sections[currentSectionIndex];
           if (currentSection && currentSection.id === 'timeline' && timelineContainer) {
-               
-               // Check for exit condition
-               const maxScroll = timelineContainer.scrollWidth - timelineContainer.clientWidth;
-               const currentScroll = timelineContainer.scrollLeft;
-               
-               if (touchStartedAtEdge && !isTouchTriggered) {
-                   // Swipe Right (deltaX < 0) -> Goes Left (towards 0/Start) -> Exit to Next (Radio)
-                   if (currentScroll <= 10 && deltaX < 0) { 
-                       if (currentSectionIndex < sections.length - 1) {
-                           scrollToSection(currentSectionIndex + 1);
-                           isTouchTriggered = true;
-                           return;
-                       }
-                   }
-                   // Swipe Left (deltaX > 0) -> Goes Right (towards Max/End) -> Exit to Prev (Artists)
-                   if (currentScroll >= maxScroll - 10 && deltaX > 0) { 
-                       if (currentSectionIndex > 0) {
-                           scrollToSection(currentSectionIndex - 1);
-                           isTouchTriggered = true;
-                           return;
-                       }
-                   }
-               }
-
                // Scroll timeline directly
                timelineContainer.scrollLeft += deltaX;
                timelineTargetScroll = timelineContainer.scrollLeft;
