@@ -1617,10 +1617,6 @@ body.menu-open {
   will-change: scroll-position;
 }
 
-.timeline-container.is-scrolling .timeline-content {
-  pointer-events: none;
-}
-
 .timeline-container::-webkit-scrollbar { display: none; }
 
 .timeline-item { 
