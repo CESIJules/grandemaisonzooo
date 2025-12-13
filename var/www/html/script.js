@@ -1219,8 +1219,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const ctx = asciiCanvas.getContext('2d');
     let width, height;
     let cols, rows;
-    // PERFORMANCE: Increased charSize to 28 to ensure 60fps on all devices
-    const charSize = 28; 
+    // PERFORMANCE: Dynamic charSize. Larger on mobile to reduce draw calls.
+    let charSize = 28; 
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$#@%&?!<>"; 
     
     let mouse = { x: -1000, y: -1000 };
@@ -1276,6 +1276,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function resize() {
       width = window.innerWidth;
       height = window.innerHeight;
+      
+      // PERFORMANCE: Increase charSize on smaller screens to maintain FPS
+      charSize = width < 768 ? 34 : 28;
+
       asciiCanvas.width = width;
       asciiCanvas.height = height;
       cols = Math.ceil(width / charSize);
@@ -1424,10 +1428,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
           if (absDxMouse < maxRadius && absDyMouse < maxRadius) {
               // Organic Distortion Logic
+              // PERFORMANCE: Simplified distortion (removed 3rd term)
               const angle = Math.atan2(dyMouse, dxMouse);
               const distortion = Math.sin(angle * 3 + time * 2) * 20 
-                               + Math.cos(angle * 5 - time * 1.5) * 10
-                               + Math.sin(angle * 7 + time * 4) * 5;
+                               + Math.cos(angle * 5 - time * 1.5) * 10;
               
               const dist = Math.sqrt(dxMouse*dxMouse + dyMouse*dyMouse) + distortion;
               
