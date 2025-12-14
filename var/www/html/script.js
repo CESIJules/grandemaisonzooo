@@ -1237,305 +1237,298 @@ document.addEventListener('DOMContentLoaded', () => {
         grayLevels[i] = `rgb(${i},${i},${i})`;
     }
 
-    // PERFORMANCE: Throttle mousemove to avoid excessive updates
-    let lastMouseUpdate = 0;
-    window.addEventListener('mousemove', (e) => {
-      const now = Date.now();
-      if (now - lastMouseUpdate > 16) { // ~60fps cap for mouse updates
-        mouse.x = e.clientX;
-        mouse.y = e.clientY;
-        lastMouseUpdate = now;
+    const ctx = asciiCanvas.getContext('2d', { alpha: true, desynchronized: true });
+    if (!ctx) return;
+
+    const prefersReducedMotion =
+      window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const pointer = {
+      x: -1e9,
+      y: -1e9,
+      active: false,
+    };
+
+    let width = 0;
+    let height = 0;
+    let dpr = 1;
+
+    let particleCount = 0;
+    let restX;
+    let restY;
+    let posX;
+    let posY;
+    let velX;
+    let velY;
+    let baseAlpha;
+    let twinkleMask;
+    let isGreen;
+
+    let dotSize = 2;
+    let dotStep = 8;
+    let vignetteGradient = null;
+    let running = true;
+
+    const seed = (Date.now() ^ ((Math.random() * 2 ** 31) | 0)) | 0;
+
+    const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const smoothstep = (a, b, x) => {
+      const t = clamp((x - a) / (b - a), 0, 1);
+      return t * t * (3 - 2 * t);
+    };
+
+    function hash2i(xi, yi, salt = 0) {
+      let h = seed ^ salt;
+      h ^= Math.imul(xi, 374761393);
+      h ^= Math.imul(yi, 668265263);
+      h = (h ^ (h >>> 13)) | 0;
+      h = Math.imul(h, 1274126177);
+      h ^= h >>> 16;
+      return (h >>> 0) / 4294967296;
+    }
+
+    function noise2(x, y) {
+      const xi = Math.floor(x);
+      const yi = Math.floor(y);
+      const xf = x - xi;
+      const yf = y - yi;
+      const u = xf * xf * (3 - 2 * xf);
+      const v = yf * yf * (3 - 2 * yf);
+      const n00 = hash2i(xi, yi, 11);
+      const n10 = hash2i(xi + 1, yi, 11);
+      const n01 = hash2i(xi, yi + 1, 11);
+      const n11 = hash2i(xi + 1, yi + 1, 11);
+      return lerp(lerp(n00, n10, u), lerp(n01, n11, u), v);
+    }
+
+    function fbm(x, y) {
+      let value = 0;
+      let amp = 0.55;
+      let freq = 1;
+      for (let i = 0; i < 3; i++) {
+        value += noise2(x * freq, y * freq) * amp;
+        freq *= 2;
+        amp *= 0.5;
       }
+      return value;
+    }
+
+    let lastPointerUpdate = 0;
+    const updatePointer = (e) => {
+      const now = performance.now();
+      if (now - lastPointerUpdate < 16) return;
+      lastPointerUpdate = now;
+      pointer.x = e.clientX;
+      pointer.y = e.clientY;
+      pointer.active = true;
+    };
+
+    window.addEventListener('pointermove', updatePointer, { passive: true });
+    window.addEventListener('pointerdown', updatePointer, { passive: true });
+    window.addEventListener('pointerup', () => {
+      pointer.active = false;
+    }, { passive: true });
+    window.addEventListener('blur', () => {
+      pointer.active = false;
+      pointer.x = -1e9;
+      pointer.y = -1e9;
+    });
+    document.addEventListener('mouseleave', () => {
+      pointer.active = false;
+      pointer.x = -1e9;
+      pointer.y = -1e9;
     });
 
-    function initGrid() {
-      grid = [];
-      offsets = [];
-      speeds = [];
-      for (let x = 0; x < cols; x++) {
-        let col = [];
-        for (let y = 0; y < rows + 2; y++) { 
-          col.push(chars[Math.floor(Math.random() * chars.length)]);
+    function buildVignette() {
+      vignetteGradient = ctx.createRadialGradient(
+        width * 0.5,
+        height * 0.5,
+        0,
+        width * 0.5,
+        height * 0.5,
+        Math.max(width, height) * 0.75
+      );
+      vignetteGradient.addColorStop(0.0, 'rgba(0,0,0,0.85)');
+      vignetteGradient.addColorStop(0.45, 'rgba(0,0,0,0.28)');
+      vignetteGradient.addColorStop(1.0, 'rgba(0,0,0,0.65)');
+    }
+
+    function rebuildParticles() {
+      dotStep = window.innerWidth < 700 ? 11 : window.innerWidth < 1100 ? 9 : 8;
+      dotSize = Math.max(1, Math.floor(dotStep * 0.35));
+
+      const cols = Math.ceil(width / dotStep);
+      const rows = Math.ceil(height / dotStep);
+      const cx = width * 0.5;
+      const cy = height * 0.5;
+      const maxR = Math.hypot(cx, cy);
+
+      const rx = [];
+      const ry = [];
+      const px = [];
+      const py = [];
+      const vx = [];
+      const vy = [];
+      const a0 = [];
+      const tw = [];
+      const g = [];
+
+      for (let gy = 0; gy < rows; gy++) {
+        const py0 = gy * dotStep + dotStep * 0.5;
+        for (let gx = 0; gx < cols; gx++) {
+          const px0 = gx * dotStep + dotStep * 0.5;
+
+          const rr = Math.hypot(px0 - cx, py0 - cy) / maxR;
+          const edgeMask = smoothstep(0.18, 0.92, rr);
+
+          const n = fbm(px0 * 0.010, py0 * 0.010);
+          const density = edgeMask * (0.12 + n * 0.88);
+
+          if (hash2i(gx, gy, 97) > density * 0.75) continue;
+
+          const alpha = clamp(density * (0.55 + hash2i(gx, gy, 33) * 0.6), 0.05, 0.95);
+
+          const tintNoise = fbm(px0 * 0.015 + 100, py0 * 0.015 + 100);
+          const green = tintNoise > 0.64 && edgeMask > 0.25;
+
+          rx.push(px0);
+          ry.push(py0);
+          px.push(px0);
+          py.push(py0);
+          vx.push(0);
+          vy.push(0);
+          a0.push(alpha);
+          tw.push(hash2i(gx, gy, 123));
+          g.push(green ? 1 : 0);
         }
-        grid.push(col);
-        offsets.push(Math.random() * charSize);
-        speeds.push(Math.random() * 0.8 + 0.2); 
       }
-      
-      // Pre-calculate row noise
-      rowNoise = [];
-      for (let y = 0; y < rows; y++) {
-          const noiseY = y * 0.04; // Increased frequency for more islands
-          // Combine the two static Y-dependent cosine terms
-          // term1: Math.cos(noiseY * 0.8)
-          // term2: Math.cos(noiseY * 1.7) * 0.5
-          rowNoise.push(Math.cos(noiseY * 0.8) + Math.cos(noiseY * 1.7) * 0.5);
-      }
+
+      particleCount = rx.length;
+      restX = Float32Array.from(rx);
+      restY = Float32Array.from(ry);
+      posX = Float32Array.from(px);
+      posY = Float32Array.from(py);
+      velX = Float32Array.from(vx);
+      velY = Float32Array.from(vy);
+      baseAlpha = Float32Array.from(a0);
+      twinkleMask = Float32Array.from(tw);
+      isGreen = Uint8Array.from(g);
     }
 
     function resize() {
       width = window.innerWidth;
       height = window.innerHeight;
-      
-      // PERFORMANCE: Increase charSize on smaller screens to maintain FPS
-      charSize = width < 768 ? 34 : 28;
+      dpr = Math.min(window.devicePixelRatio || 1, 1.5);
 
-      asciiCanvas.width = width;
-      asciiCanvas.height = height;
-      cols = Math.ceil(width / charSize);
-      rows = Math.ceil(height / charSize) + 2;
-      ctx.font = `bold ${charSize}px 'Courier New', monospace`;
-      initGrid();
+      asciiCanvas.width = Math.floor(width * dpr);
+      asciiCanvas.height = Math.floor(height * dpr);
+      asciiCanvas.style.width = `${width}px`;
+      asciiCanvas.style.height = `${height}px`;
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      buildVignette();
+      rebuildParticles();
     }
-    let asciiResizeRafId = 0;
-    function scheduleAsciiResize() {
-      if (asciiResizeRafId) return;
-      asciiResizeRafId = requestAnimationFrame(() => {
-        asciiResizeRafId = 0;
-        resize();
-      });
-    }
-    window.addEventListener('resize', scheduleAsciiResize);
+
+    window.addEventListener('resize', resize, { passive: true });
     resize();
 
-    // PERFORMANCE: Limit to 30 FPS
-    let lastFrameTime = 0;
-    const fpsInterval = 1000 / 30;
+    let lastT = 0;
+    function frame(t) {
+      if (!running) return;
+      requestAnimationFrame(frame);
+      if (document.hidden) return;
 
-    // Word State for "GM" and "S&S"
-    let wordState = {
-        current: null,
-        endTime: 0,
-        nextSpawnTime: 0
-    };
+      const dt = clamp(((t - lastT) || 16.7) / 1000, 0.001, 0.033);
+      lastT = t;
 
-    function draw(currentTime) {
-      // PERFORMANCE: Stop animation if tab is hidden
-      if (document.hidden) {
-          requestAnimationFrame(draw);
-          return;
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = 1;
+      ctx.clearRect(0, 0, width, height);
+
+      const time = t * 0.001;
+      const twinkleGlobal = 0.85 + 0.15 * ((Math.sin(time * 0.6) + 1) * 0.5);
+
+      const radius = window.innerWidth < 700 ? 120 : 170;
+      const radius2 = radius * radius;
+      const strength = 1800;
+      const spring = 22;
+      const damping = 0.88;
+
+      if (!prefersReducedMotion) {
+        const mx = pointer.x;
+        const my = pointer.y;
+        for (let i = 0; i < particleCount; i++) {
+          const rx = restX[i];
+          const ry = restY[i];
+          let x = posX[i];
+          let y = posY[i];
+          let vx = velX[i];
+          let vy = velY[i];
+
+          vx += (rx - x) * spring * dt;
+          vy += (ry - y) * spring * dt;
+
+          if (pointer.active) {
+            const dx = x - mx;
+            const dy = y - my;
+            const d2 = dx * dx + dy * dy;
+            if (d2 < radius2) {
+              const d = Math.sqrt(d2) + 0.0001;
+              const f = 1 - d / radius;
+              const push = f * f * strength * dt;
+              vx += (dx / d) * push;
+              vy += (dy / d) * push;
+            }
+          }
+
+          vx *= damping;
+          vy *= damping;
+          x += vx * dt;
+          y += vy * dt;
+
+          posX[i] = x;
+          posY[i] = y;
+          velX[i] = vx;
+          velY[i] = vy;
+        }
       }
 
-      requestAnimationFrame(draw);
-      
-      // --- Word State Update ---
-      const now = Date.now();
-      if (wordState.current && now > wordState.endTime) {
-          wordState.current = null;
-          wordState.nextSpawnTime = now + Math.random() * 2000 + 500; // Random delay
+      ctx.fillStyle = 'rgb(175,175,175)';
+      for (let i = 0; i < particleCount; i++) {
+        if (isGreen[i]) continue;
+        ctx.globalAlpha = baseAlpha[i] * (0.78 + 0.22 * twinkleGlobal * twinkleMask[i]);
+        ctx.fillRect(
+          (posX[i] - dotSize * 0.5) | 0,
+          (posY[i] - dotSize * 0.5) | 0,
+          dotSize,
+          dotSize
+        );
       }
-      
-      if (!wordState.current && now > wordState.nextSpawnTime) {
-          wordState.current = Math.random() < 0.5 ? 'GM' : 'S&S';
-          // Duration: 1s to 2.5s
-          wordState.endTime = now + 1000 + Math.random() * 1500; 
+
+      ctx.fillStyle = 'rgb(0,160,120)';
+      for (let i = 0; i < particleCount; i++) {
+        if (!isGreen[i]) continue;
+        ctx.globalAlpha = baseAlpha[i] * (0.75 + 0.25 * twinkleGlobal * twinkleMask[i]);
+        ctx.fillRect(
+          (posX[i] - dotSize * 0.5) | 0,
+          (posY[i] - dotSize * 0.5) | 0,
+          dotSize,
+          dotSize
+        );
       }
-      // -------------------------
-      
-      if (!currentTime) currentTime = performance.now();
-      const elapsed = currentTime - lastFrameTime;
-      
-      if (elapsed < fpsInterval) return;
-      
-      // Adjust for next frame to avoid drift
-      lastFrameTime = currentTime - (elapsed % fpsInterval);
-      
-      const time = Date.now() * 0.001;
-      const t005 = time * 0.05;
-      const t003 = time * 0.03;
-      
-      // Clear with transparency for trails
-      ctx.fillStyle = 'rgba(5, 5, 5, 0.95)'; 
+
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = vignetteGradient;
       ctx.fillRect(0, 0, width, height);
-      
-      ctx.textBaseline = 'top';
-      // Default font
-      const defaultFont = `bold ${charSize}px 'Courier New', monospace`;
-      ctx.font = defaultFont;
-      let currentFontScale = 1.0;
-      let lastColor = null; // PERFORMANCE: Track color state
-      
-      const maxRadius = 100; 
-
-      for (let x = 0; x < cols; x++) {
-        offsets[x] += speeds[x];
-        
-        if (offsets[x] >= charSize) {
-           offsets[x] -= charSize;
-           grid[x].pop();
-           grid[x].unshift(chars[Math.floor(Math.random() * chars.length)]);
-        }
-
-        const px = x * charSize;
-        const centerX = px + charSize/2;
-        
-        // Mouse calc (Pre-check x distance)
-        const dxMouse = mouse.x - centerX;
-        const absDxMouse = Math.abs(dxMouse);
-
-        // Cloud Noise Calculation (Horizontal Movement)
-        // Removed pre-calculation to allow for more chaotic 2D noise in the loop
-        
-        // PERFORMANCE: Pre-calculate X terms
-        const xTerm1 = x * 0.05 + t005;
-        const xTerm2 = x * 0.01;
-
-        for (let y = 0; y < rows; y++) {
-          const py = y * charSize + offsets[x] - charSize; 
-          
-          if (py > height + 50) break;
-
-          const centerY = py + charSize/2;
-          
-          // --- 1. Gas/Cloud Calculation (Optimized Prop B) ---
-          // Simplified noise calculation to reduce CPU usage
-          // Replaced complex warped noise with simpler interference pattern
-          const n1 = Math.sin(xTerm1 + y * 0.01);
-          const n2 = Math.cos(y * 0.05 - t003 + xTerm2);
-          
-          // Combine
-          let noise = n1 + n2;  
-          
-          // Normalize (Range is approx -1.5 to 1.5)
-          let gasIntensity = (noise + 1.5) / 3.0;
-          
-          // "Tu n'arrives pas à faire le dégradé... délimitation"
-          // Solution: Soft subtraction. Instead of hard clamping, we use a smoothstep-like approach.
-          // We want a lot of black, but a VERY smooth transition out of it.
-          
-          // Shift down to create black space
-          gasIntensity -= 0.35; 
-          
-          if (gasIntensity < 0) {
-              gasIntensity = 0;
-          } else {
-              // Normalize remaining range (0..0.65 -> 0..1)
-              gasIntensity /= 0.65;
-              
-              // PERFORMANCE: Replace Math.pow(x, 2.5) with x*x (much faster)
-              // Slightly adjusts the curve but visually similar
-              gasIntensity = gasIntensity * gasIntensity;
-          }
-          
-          if (gasIntensity > 1) gasIntensity = 1;
-
-          // --- 2. Mouse Calculation (Restored "Animation d'avant") ---
-
-          // --- 2. Mouse Calculation (Restored "Animation d'avant") ---
-          let mouseIntensity = 0;
-          const dyMouse = mouse.y - centerY;
-          const absDyMouse = Math.abs(dyMouse);
-
-          if (absDxMouse < maxRadius && absDyMouse < maxRadius) {
-              // Organic Distortion Logic
-              // PERFORMANCE: Simplified distortion (removed 3rd term)
-              const angle = Math.atan2(dyMouse, dxMouse);
-              const distortion = Math.sin(angle * 3 + time * 2) * 20 
-                               + Math.cos(angle * 5 - time * 1.5) * 10;
-              
-              const dist = Math.sqrt(dxMouse*dxMouse + dyMouse*dyMouse) + distortion;
-              
-              if (dist < maxRadius) {
-                 mouseIntensity = 1 - (dist / maxRadius);
-                 // Softer falloff for mouse too
-                 // PERFORMANCE: Use multiplication instead of pow
-                 mouseIntensity = mouseIntensity * mouseIntensity; 
-              }
-          }
-          
-          // --- Drawing ---
-          
-          // Blending: Avoid dark ring by taking max of mouse and gas
-          // Gas is capped at ~50% brightness (Lowered further)
-          const combinedIntensity = Math.max(mouseIntensity, gasIntensity * 0.3);
-
-          // "Délimitation" fix:
-          // 1. Lower threshold to almost zero
-          // 2. Start color from background level (approx 5-10) instead of 40
-          if (combinedIntensity > 0.02) { // PERFORMANCE: Increased threshold
-             
-             // Scale: Only mouse affects scale
-             const scale = 1 + mouseIntensity * 0.2; 
-             
-             // Color: Range 10 -> 120.
-             // This ensures that when intensity is low, the character is barely visible against the dark background.
-             // No more "jump" from black to gray.
-             const val = (10 + combinedIntensity * 110) | 0;
-             // PERFORMANCE: Use pre-calculated color string
-             const mainColor = grayLevels[val];
-             
-             // PERFORMANCE: Only set font if scale changed significantly
-             if (Math.abs(scale - currentFontScale) > 0.01) {
-                 ctx.font = `bold ${charSize * scale}px 'Courier New', monospace`;
-                 currentFontScale = scale;
-             }
-             
-             // --- Glitch & Words Logic (Mouse Only) ---
-             let displayChar = grid[x][y];
-             
-             if (mouseIntensity > 0.01) {
-                 // 1. Random Glitch (High intensity = more glitch)
-                 if (mouseIntensity > 0.3 && Math.random() < 0.15) {
-                     displayChar = chars[Math.floor(Math.random() * chars.length)];
-                 }
-                 
-                 // 2. Words "GM" and "S&S"
-                 if (mouseIntensity > 0.2 && wordState.current) {
-                     const mouseCol = Math.floor(mouse.x / charSize);
-                     const mouseRow = Math.floor(mouse.y / charSize);
-                     const relX = x - mouseCol;
-                     const relY = y - mouseRow;
-                     
-                     if (wordState.current === 'GM') {
-                         if (relY === 0) {
-                             if (relX === -1) displayChar = 'G';
-                             if (relX === 0) displayChar = 'M';
-                         }
-                     } else { // S&S
-                         if (relY === 0) {
-                             if (relX === -1) displayChar = 'S';
-                             if (relX === 0) displayChar = '&';
-                             if (relX === 1) displayChar = 'S';
-                         }
-                     }
-                     
-                     // Very subtle glitch on words
-                     if (['G','M','S','&'].includes(displayChar) && Math.random() < 0.05) {
-                         displayChar = chars[Math.floor(Math.random() * chars.length)];
-                     }
-                 }
-             }
-             
-             const offset = (charSize * scale - charSize) / 2;
-             
-             // Draw Main Character
-             // PERFORMANCE: Only set fillStyle if changed
-             if (mainColor !== lastColor) {
-                 ctx.fillStyle = mainColor;
-                 lastColor = mainColor;
-             }
-             // PERFORMANCE: Integer coordinates
-             ctx.fillText(displayChar, (px - offset) | 0, (py - offset) | 0);
-             
-             // Reset context - REMOVED for performance, handled by state check
-             // ctx.font = `${charSize}px 'Courier New', monospace`;
-
-          } else {
-             // Background Rain
-             // PERFORMANCE: Reset font only if needed
-             if (currentFontScale !== 1.0) {
-                 ctx.font = defaultFont;
-                 currentFontScale = 1.0;
-             }
-
-             ctx.fillStyle = '#111'; 
-             if (Math.random() < 0.001) ctx.fillStyle = '#222';
-             ctx.fillText(grid[x][y], px, py);
-          }
-        }
-      }
     }
-    draw();
+
+    requestAnimationFrame(frame);
+
+    window.addEventListener('beforeunload', () => {
+      running = false;
+    });
   }
   
   initAsciiBackground();
