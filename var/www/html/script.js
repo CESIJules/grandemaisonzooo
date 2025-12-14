@@ -1229,6 +1229,10 @@ document.addEventListener('DOMContentLoaded', () => {
       active: false,
     };
 
+    // Smoothed pointer to avoid harsh, jittery interactions.
+    let pointerSx = -1e9;
+    let pointerSy = -1e9;
+
     let width = 0;
     let height = 0;
     let dpr = 1;
@@ -1334,7 +1338,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function rebuildParticles() {
       // Bigger pixels (more visible), and a slightly sparser grid.
       dotStep = window.innerWidth < 700 ? 16 : window.innerWidth < 1100 ? 14 : 13;
-      dotSize = Math.max(4, Math.round(dotStep * 0.70));
+      // Slightly smaller pixels (more refined)
+      dotSize = Math.max(3, Math.round(dotStep * 0.52));
 
       const cols = Math.ceil(width / dotStep);
       const rows = Math.ceil(height / dotStep);
@@ -1427,6 +1432,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const time = t * 0.001;
 
+      // Smooth pointer towards target (frame-rate independent)
+      const pointerFollow = 1 - Math.exp(-dt * 18);
+      if (pointer.active) {
+        pointerSx = lerp(pointerSx, pointer.x, pointerFollow);
+        pointerSy = lerp(pointerSy, pointer.y, pointerFollow);
+      } else {
+        // Ease out when leaving
+        pointerSx = lerp(pointerSx, -1e9, pointerFollow);
+        pointerSy = lerp(pointerSy, -1e9, pointerFollow);
+      }
+
       // Cloud drift (flow field)
       const driftAmp = window.innerWidth < 700 ? 18 : 26;
       const flowScale = 0.004;
@@ -1436,15 +1452,16 @@ document.addEventListener('DOMContentLoaded', () => {
       // Pointer interaction: smooth gaussian falloff (no hard circle “disc”)
       const radius = window.innerWidth < 700 ? 140 : 190;
       const radius2 = radius * radius;
-      const repulse = 9.0;
-      const swirl = 16.0;
+      // Softer forces for a more fluid feel
+      const repulse = 5.0;
+      const swirl = 8.0;
 
       const spring = 18;
       const damping = 0.86;
 
       if (!prefersReducedMotion) {
-        const mx = pointer.x;
-        const my = pointer.y;
+        const mx = pointerSx;
+        const my = pointerSy;
 
         for (let i = 0; i < particleCount; i++) {
           const rx = restX[i];
@@ -1466,7 +1483,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const dx = x - mx;
             const dy = y - my;
             const d2 = dx * dx + dy * dy;
-            if (d2 < radius2 * 2.25) {
+            if (d2 < radius2 * 1.6) {
               const falloff = Math.exp(-d2 / radius2);
               vx += dx * repulse * falloff * dt;
               vy += dy * repulse * falloff * dt;
