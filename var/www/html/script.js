@@ -1459,11 +1459,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // No per-particle “physics” loop: lighter on CPU.
       // Particles are drawn with a coherent, low-cost offset sampled from the same drifting field.
-      const driftAmp = window.innerWidth < 700 ? 6 : 8;
+      // Slightly stronger so the motion is actually perceptible.
+      const driftAmp = window.innerWidth < 700 ? 10 : 12;
 
       // Pointer: keep it subtle + cheap (alpha boost only, no displacement/forces).
-      const radius = window.innerWidth < 700 ? 150 : 210;
+      const radius = window.innerWidth < 700 ? 160 : 230;
       const radius2 = radius * radius;
+      const repelAmp = window.innerWidth < 700 ? 5 : 7;
 
       // Draw gray pixels
       // Brighten points and use additive blending for better contrast.
@@ -1477,8 +1479,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const c2 = fbm2(rx * cloudScale + cloudX + 17.3, ry * cloudScale + cloudY + 9.1);
 
         // Coherent motion offset (no trig)
-        const ox = (c - 0.5) * driftAmp;
-        const oy = (c2 - 0.5) * driftAmp;
+        let ox = (c - 0.5) * driftAmp;
+        let oy = (c2 - 0.5) * driftAmp;
 
         // Cloud visibility mask (keep baseline high so points stay readable)
         let cloud = clamp((c - 0.30) / 0.70, 0, 1);
@@ -1487,12 +1489,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Subtle pointer highlight (cheap)
         if (pointer.active && !prefersReducedMotion) {
-          const dx = (rx + ox) - pointerSx;
-          const dy = (ry + oy) - pointerSy;
+          const dx = rx - pointerSx;
+          const dy = ry - pointerSy;
           const d2 = dx * dx + dy * dy;
           if (d2 < radius2) {
             const fall = 1 - d2 / radius2;
-            vis += fall * 0.12;
+            const f2 = fall * fall;
+            vis += f2 * 0.10;
+
+            // Tiny repulsion offset (cheap): pushes dots away a bit.
+            const inv = 1 / (Math.sqrt(d2) + 1e-3);
+            ox += dx * inv * (repelAmp * f2);
+            oy += dy * inv * (repelAmp * f2);
           }
         }
 
@@ -1514,20 +1522,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const c = fbm2(rx * cloudScale + cloudX + 2.0, ry * cloudScale + cloudY + 2.0);
         const c2 = fbm2(rx * cloudScale + cloudX + 19.3, ry * cloudScale + cloudY + 11.1);
 
-        const ox = (c - 0.5) * driftAmp;
-        const oy = (c2 - 0.5) * driftAmp;
+        let ox = (c - 0.5) * driftAmp;
+        let oy = (c2 - 0.5) * driftAmp;
 
         let cloud = clamp((c - 0.32) / 0.68, 0, 1);
         cloud = cloud * cloud;
         let vis = 0.52 + 0.48 * cloud;
 
         if (pointer.active && !prefersReducedMotion) {
-          const dx = (rx + ox) - pointerSx;
-          const dy = (ry + oy) - pointerSy;
+          const dx = rx - pointerSx;
+          const dy = ry - pointerSy;
           const d2 = dx * dx + dy * dy;
           if (d2 < radius2) {
             const fall = 1 - d2 / radius2;
-            vis += fall * 0.10;
+            const f2 = fall * fall;
+            vis += f2 * 0.08;
+
+            const inv = 1 / (Math.sqrt(d2) + 1e-3);
+            ox += dx * inv * (repelAmp * f2);
+            oy += dy * inv * (repelAmp * f2);
           }
         }
 
@@ -1538,6 +1551,27 @@ document.addEventListener('DOMContentLoaded', () => {
           dotSize,
           dotSize
         );
+      }
+
+      // Mouse “color shift”: add a subtle green overlay near the pointer.
+      // Kept cheap: no extra noise sampling, only a distance check.
+      if (pointer.active && !prefersReducedMotion) {
+        ctx.fillStyle = 'rgb(0,255,104)';
+        for (let i = 0; i < particleCount; i++) {
+          const dx = restX[i] - pointerSx;
+          const dy = restY[i] - pointerSy;
+          const d2 = dx * dx + dy * dy;
+          if (d2 >= radius2) continue;
+          const fall = 1 - d2 / radius2;
+          const f2 = fall * fall;
+          ctx.globalAlpha = baseAlpha[i] * (0.10 * f2);
+          ctx.fillRect(
+            ((restX[i] - dotSize * 0.5) | 0),
+            ((restY[i] - dotSize * 0.5) | 0),
+            dotSize,
+            dotSize
+          );
+        }
       }
 
       // Back to normal blending for overlays/UI.
