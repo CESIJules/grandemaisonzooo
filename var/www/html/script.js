@@ -1389,7 +1389,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (hash2i(gx, gy, 97) > 0.22 + density * 0.78) continue;
 
           const alphaJitter = 0.65 + hash2i(gx, gy, 33) * 0.55;
-          const alpha = clamp((0.10 + density * 0.90) * alphaJitter, 0.10, 0.95);
+          const alpha = clamp((0.14 + density * 0.86) * alphaJitter, 0.10, 0.95);
 
           const tintNoise = fbm(px0 * 0.004 + 200, py0 * 0.004 + 200);
           const green = tintNoise > 0.62 && density > 0.20;
@@ -1528,18 +1528,21 @@ document.addEventListener('DOMContentLoaded', () => {
       // Twinkle and drifting “cloud intensity” (so clusters shift over time)
       const twinkleGlobal = 0.85 + 0.15 * ((Math.sin(time * 0.6) + 1) * 0.5);
       const cloudScale = 0.0035;
-      const cloudX = time * 0.06;
-      const cloudY = time * 0.04;
+      // Move the cloud field across the screen (TRAE-like drift)
+      const cloudX = time * 0.12;
+      const cloudY = time * 0.08;
 
       // Draw gray pixels
       ctx.fillStyle = 'rgb(205,205,205)';
       for (let i = 0; i < particleCount; i++) {
         if (isGreen[i]) continue;
         const c = fbm2(restX[i] * cloudScale + cloudX, restY[i] * cloudScale + cloudY);
-        let cloud = clamp((c - 0.42) / 0.46, 0, 1);
-        cloud = cloud * cloud; // sharper clouds
+        // Softer threshold so points remain visible; still forms cloudy blobs.
+        let cloud = clamp((c - 0.28) / 0.72, 0, 1);
+        cloud = cloud * cloud;
+        const vis = 0.22 + 0.78 * cloud;
         ctx.globalAlpha =
-          baseAlpha[i] * cloud * (0.78 + 0.22 * twinkleGlobal * twinkleMask[i]);
+          baseAlpha[i] * vis * (0.78 + 0.22 * twinkleGlobal * twinkleMask[i]);
         ctx.fillRect(
           (posX[i] - dotSize * 0.5) | 0,
           (posY[i] - dotSize * 0.5) | 0,
@@ -1556,10 +1559,11 @@ document.addEventListener('DOMContentLoaded', () => {
           restX[i] * cloudScale + cloudX + 2.0,
           restY[i] * cloudScale + cloudY + 2.0
         );
-        let cloud = clamp((c - 0.44) / 0.44, 0, 1);
+        let cloud = clamp((c - 0.30) / 0.70, 0, 1);
         cloud = cloud * cloud;
+        const vis = 0.20 + 0.80 * cloud;
         ctx.globalAlpha =
-          baseAlpha[i] * cloud * (0.75 + 0.25 * twinkleGlobal * twinkleMask[i]);
+          baseAlpha[i] * vis * (0.75 + 0.25 * twinkleGlobal * twinkleMask[i]);
         ctx.fillRect(
           (posX[i] - dotSize * 0.5) | 0,
           (posY[i] - dotSize * 0.5) | 0,
