@@ -1443,8 +1443,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const twinkleGlobal = 0.85 + 0.15 * ((Math.sin(time * 0.6) + 1) * 0.5);
       // Lower frequency (bigger blobs) + slower drift => more coherent “clouds”.
       const cloudScale = 0.0024;
-      const cloudX = time * 0.06;
-      const cloudY = time * 0.04;
+      // A bit faster so the motion is clearly visible.
+      const cloudX = time * 0.10;
+      const cloudY = time * 0.07;
 
       // Smooth pointer towards target (frame-rate independent)
       const pointerFollow = 1 - Math.exp(-dt * 18);
@@ -1460,7 +1461,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // No per-particle “physics” loop: lighter on CPU.
       // Particles are drawn with a coherent, low-cost offset sampled from the same drifting field.
       // Slightly stronger so the motion is actually perceptible.
-      const driftAmp = window.innerWidth < 700 ? 10 : 12;
+      const driftAmp = window.innerWidth < 700 ? 14 : 20;
 
       // Pointer: keep it subtle + cheap (alpha boost only, no displacement/forces).
       const radius = window.innerWidth < 700 ? 160 : 230;
@@ -1487,6 +1488,9 @@ document.addEventListener('DOMContentLoaded', () => {
         cloud = cloud * cloud;
         let vis = 0.55 + 0.45 * cloud;
 
+        // Hover color shift intensity (computed from same cheap distance check)
+        let hover = 0;
+
         // Subtle pointer highlight (cheap)
         if (pointer.active && !prefersReducedMotion) {
           const dx = rx - pointerSx;
@@ -1496,6 +1500,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const fall = 1 - d2 / radius2;
             const f2 = fall * fall;
             vis += f2 * 0.10;
+            hover = f2;
 
             // Tiny repulsion offset (cheap): pushes dots away a bit.
             const inv = 1 / (Math.sqrt(d2) + 1e-3);
@@ -1504,13 +1509,25 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
 
-        ctx.globalAlpha = baseAlpha[i] * vis * (0.82 + 0.18 * twinkleGlobal * twinkleMask[i]);
+        const drawX = (rx + ox - dotSize * 0.5) | 0;
+        const drawY = (ry + oy - dotSize * 0.5) | 0;
+
+        const aWhite = baseAlpha[i] * vis * (0.82 + 0.18 * twinkleGlobal * twinkleMask[i]);
+        ctx.globalAlpha = aWhite;
         ctx.fillRect(
-          (rx + ox - dotSize * 0.5) | 0,
-          (ry + oy - dotSize * 0.5) | 0,
+          drawX,
+          drawY,
           dotSize,
           dotSize
         );
+
+        // Visible but still subtle color shift near the pointer.
+        if (hover > 0) {
+          ctx.fillStyle = 'rgb(0,255,104)';
+          ctx.globalAlpha = baseAlpha[i] * (0.22 * hover);
+          ctx.fillRect(drawX, drawY, dotSize, dotSize);
+          ctx.fillStyle = 'rgb(248,248,248)';
+        }
       }
 
       // Draw green pixels (site neon green)
@@ -1529,6 +1546,8 @@ document.addEventListener('DOMContentLoaded', () => {
         cloud = cloud * cloud;
         let vis = 0.52 + 0.48 * cloud;
 
+        let hover = 0;
+
         if (pointer.active && !prefersReducedMotion) {
           const dx = rx - pointerSx;
           const dy = ry - pointerSy;
@@ -1537,6 +1556,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const fall = 1 - d2 / radius2;
             const f2 = fall * fall;
             vis += f2 * 0.08;
+            hover = f2;
 
             const inv = 1 / (Math.sqrt(d2) + 1e-3);
             ox += dx * inv * (repelAmp * f2);
@@ -1544,33 +1564,21 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
 
+        const drawX = (rx + ox - dotSize * 0.5) | 0;
+        const drawY = (ry + oy - dotSize * 0.5) | 0;
+
         ctx.globalAlpha = baseAlpha[i] * vis * (0.80 + 0.20 * twinkleGlobal * twinkleMask[i]);
         ctx.fillRect(
-          (rx + ox - dotSize * 0.5) | 0,
-          (ry + oy - dotSize * 0.5) | 0,
+          drawX,
+          drawY,
           dotSize,
           dotSize
         );
-      }
 
-      // Mouse “color shift”: add a subtle green overlay near the pointer.
-      // Kept cheap: no extra noise sampling, only a distance check.
-      if (pointer.active && !prefersReducedMotion) {
-        ctx.fillStyle = 'rgb(0,255,104)';
-        for (let i = 0; i < particleCount; i++) {
-          const dx = restX[i] - pointerSx;
-          const dy = restY[i] - pointerSy;
-          const d2 = dx * dx + dy * dy;
-          if (d2 >= radius2) continue;
-          const fall = 1 - d2 / radius2;
-          const f2 = fall * fall;
-          ctx.globalAlpha = baseAlpha[i] * (0.10 * f2);
-          ctx.fillRect(
-            ((restX[i] - dotSize * 0.5) | 0),
-            ((restY[i] - dotSize * 0.5) | 0),
-            dotSize,
-            dotSize
-          );
+        // Slight extra glow on hovered greens (kept subtle)
+        if (hover > 0) {
+          ctx.globalAlpha = baseAlpha[i] * (0.10 * hover);
+          ctx.fillRect(drawX, drawY, dotSize, dotSize);
         }
       }
 
