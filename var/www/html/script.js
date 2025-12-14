@@ -1294,6 +1294,19 @@ document.addEventListener('DOMContentLoaded', () => {
       return value;
     }
 
+    // Cheaper FBM for per-frame use (keeps performance when particle count goes up).
+    function fbm2(x, y) {
+      let value = 0;
+      let amp = 0.65;
+      let freq = 1;
+      for (let i = 0; i < 2; i++) {
+        value += noise2(x * freq, y * freq) * amp;
+        freq *= 2;
+        amp *= 0.5;
+      }
+      return value;
+    }
+
     let lastPointerUpdate = 0;
     const updatePointer = (e) => {
       const now = performance.now();
@@ -1337,9 +1350,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function rebuildParticles() {
       // Bigger pixels (more visible), and a slightly sparser grid.
-      dotStep = window.innerWidth < 700 ? 16 : window.innerWidth < 1100 ? 14 : 13;
-      // Slightly smaller pixels (more refined)
-      dotSize = Math.max(3, Math.round(dotStep * 0.52));
+      // Smaller, more numerous squares (closer to the reference)
+      dotStep = window.innerWidth < 700 ? 11 : window.innerWidth < 1100 ? 10 : 9;
+      dotSize = Math.max(2, Math.round(dotStep * 0.30));
 
       const cols = Math.ceil(width / dotStep);
       const rows = Math.ceil(height / dotStep);
@@ -1354,7 +1367,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const tw = [];
       const g = [];
 
-      const baseScale = 0.0065;
+      // Two-scale noise helps form blob-like clouds with internal texture.
+      const baseScale1 = 0.0042;
+      const baseScale2 = 0.0105;
 
       for (let gy = 0; gy < rows; gy++) {
         const py0 = gy * dotStep + dotStep * 0.5;
@@ -1362,12 +1377,16 @@ document.addEventListener('DOMContentLoaded', () => {
           const px0 = gx * dotStep + dotStep * 0.5;
 
           // Density field without radial masks (prevents circle/disc artifacts)
-          const n = fbm(px0 * baseScale, py0 * baseScale);
-          const d = clamp((n - 0.38) / 0.62, 0, 1);
-          const density = d * d; // emphasize cloudy “islands”
+          const n1 = fbm(px0 * baseScale1, py0 * baseScale1);
+          const n2 = fbm(px0 * baseScale2 + 10.0, py0 * baseScale2 + 10.0);
+          const n = n1 * 0.82 + n2 * 0.18;
+
+          // Push towards clearer “cloud shapes”: more empty space + denser blobs.
+          const d = clamp((n - 0.48) / 0.52, 0, 1);
+          const density = d * d * d;
 
           // Dropout probability: dense areas keep more particles
-          if (hash2i(gx, gy, 97) > 0.10 + density * 0.85) continue;
+          if (hash2i(gx, gy, 97) > 0.22 + density * 0.78) continue;
 
           const alphaJitter = 0.65 + hash2i(gx, gy, 33) * 0.55;
           const alpha = clamp((0.10 + density * 0.90) * alphaJitter, 0.10, 0.95);
@@ -1471,7 +1490,7 @@ document.addEventListener('DOMContentLoaded', () => {
           let vx = velX[i];
           let vy = velY[i];
 
-          const n = fbm(rx * flowScale + flowTimeX, ry * flowScale + flowTimeY);
+          const n = fbm2(rx * flowScale + flowTimeX, ry * flowScale + flowTimeY);
           const a = n * Math.PI * 2.8;
           const tx = rx + Math.cos(a) * driftAmp;
           const ty = ry + Math.sin(a) * driftAmp;
@@ -1516,8 +1535,9 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.fillStyle = 'rgb(205,205,205)';
       for (let i = 0; i < particleCount; i++) {
         if (isGreen[i]) continue;
-        const c = fbm(restX[i] * cloudScale + cloudX, restY[i] * cloudScale + cloudY);
-        const cloud = clamp((c - 0.30) / 0.70, 0, 1);
+        const c = fbm2(restX[i] * cloudScale + cloudX, restY[i] * cloudScale + cloudY);
+        let cloud = clamp((c - 0.42) / 0.46, 0, 1);
+        cloud = cloud * cloud; // sharper clouds
         ctx.globalAlpha =
           baseAlpha[i] * cloud * (0.78 + 0.22 * twinkleGlobal * twinkleMask[i]);
         ctx.fillRect(
@@ -1532,8 +1552,12 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.fillStyle = 'rgb(0,255,104)';
       for (let i = 0; i < particleCount; i++) {
         if (!isGreen[i]) continue;
-        const c = fbm(restX[i] * cloudScale + cloudX + 2.0, restY[i] * cloudScale + cloudY + 2.0);
-        const cloud = clamp((c - 0.34) / 0.66, 0, 1);
+        const c = fbm2(
+          restX[i] * cloudScale + cloudX + 2.0,
+          restY[i] * cloudScale + cloudY + 2.0
+        );
+        let cloud = clamp((c - 0.44) / 0.44, 0, 1);
+        cloud = cloud * cloud;
         ctx.globalAlpha =
           baseAlpha[i] * cloud * (0.75 + 0.25 * twinkleGlobal * twinkleMask[i]);
         ctx.fillRect(
