@@ -1344,8 +1344,8 @@ document.addEventListener('DOMContentLoaded', () => {
         Math.max(width, height) * 0.85
       );
       vignetteGradient.addColorStop(0.0, 'rgba(0,0,0,0.00)');
-      vignetteGradient.addColorStop(0.70, 'rgba(0,0,0,0.18)');
-      vignetteGradient.addColorStop(1.0, 'rgba(0,0,0,0.62)');
+      vignetteGradient.addColorStop(0.70, 'rgba(0,0,0,0.12)');
+      vignetteGradient.addColorStop(1.0, 'rgba(0,0,0,0.48)');
     }
 
     function rebuildParticles() {
@@ -1389,7 +1389,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (hash2i(gx, gy, 97) > 0.22 + density * 0.78) continue;
 
           const alphaJitter = 0.65 + hash2i(gx, gy, 33) * 0.55;
-          const alpha = clamp((0.14 + density * 0.86) * alphaJitter, 0.10, 0.95);
+          const alpha = clamp((0.20 + density * 0.80) * alphaJitter, 0.16, 0.98);
 
           const tintNoise = fbm(px0 * 0.004 + 200, py0 * 0.004 + 200);
           const green = tintNoise > 0.62 && density > 0.20;
@@ -1533,14 +1533,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const cloudY = time * 0.08;
 
       // Draw gray pixels
-      ctx.fillStyle = 'rgb(205,205,205)';
+      // Brighten points and use additive blending for better contrast.
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.fillStyle = 'rgb(235,235,235)';
       for (let i = 0; i < particleCount; i++) {
         if (isGreen[i]) continue;
         const c = fbm2(restX[i] * cloudScale + cloudX, restY[i] * cloudScale + cloudY);
         // Softer threshold so points remain visible; still forms cloudy blobs.
         let cloud = clamp((c - 0.28) / 0.72, 0, 1);
         cloud = cloud * cloud;
-        const vis = 0.22 + 0.78 * cloud;
+        const vis = 0.45 + 0.55 * cloud;
         ctx.globalAlpha =
           baseAlpha[i] * vis * (0.78 + 0.22 * twinkleGlobal * twinkleMask[i]);
         ctx.fillRect(
@@ -1561,7 +1563,7 @@ document.addEventListener('DOMContentLoaded', () => {
         );
         let cloud = clamp((c - 0.30) / 0.70, 0, 1);
         cloud = cloud * cloud;
-        const vis = 0.20 + 0.80 * cloud;
+        const vis = 0.40 + 0.60 * cloud;
         ctx.globalAlpha =
           baseAlpha[i] * vis * (0.75 + 0.25 * twinkleGlobal * twinkleMask[i]);
         ctx.fillRect(
@@ -1571,6 +1573,9 @@ document.addEventListener('DOMContentLoaded', () => {
           dotSize
         );
       }
+
+      // Back to normal blending for overlays/UI.
+      ctx.globalCompositeOperation = 'source-over';
 
       // Vignette overlay
       ctx.globalAlpha = 1;
