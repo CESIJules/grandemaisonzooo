@@ -1241,10 +1241,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let particleCount = 0;
     let restX;
     let restY;
-    let posX;
-    let posY;
-    let velX;
-    let velY;
     let baseAlpha;
     let twinkleMask;
     let isGreen;
@@ -1310,7 +1306,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastPointerUpdate = 0;
     const updatePointer = (e) => {
       const now = performance.now();
-      if (now - lastPointerUpdate < 16) return;
+      // Throttle pointer events (helps on low-end machines)
+      if (now - lastPointerUpdate < 32) return;
       lastPointerUpdate = now;
       pointer.x = e.clientX;
       pointer.y = e.clientY;
@@ -1360,10 +1357,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const rx = [];
       const ry = [];
-      const px = [];
-      const py = [];
-      const vx = [];
-      const vy = [];
       const a0 = [];
       const tw = [];
       const g = [];
@@ -1384,24 +1377,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
           // Push towards clearer “cloud shapes”: more empty space + denser blobs.
           const d = clamp((n - 0.48) / 0.52, 0, 1);
-          // Stronger clustering -> more obvious cloud blobs
-          const density = d * d * d * d;
+          // Cloud-like clustering
+          const density = d * d * d;
 
           // Dropout probability: dense areas keep more particles
-          if (hash2i(gx, gy, 97) > 0.16 + density * 0.82) continue;
+          // Keep a bit more points overall (better readability/contrast)
+          if (hash2i(gx, gy, 97) > 0.24 + density * 0.76) continue;
 
           const alphaJitter = 0.65 + hash2i(gx, gy, 33) * 0.55;
-          const alpha = clamp((0.20 + density * 0.80) * alphaJitter, 0.16, 0.98);
+          const alpha = clamp((0.22 + density * 0.78) * alphaJitter, 0.20, 1.0);
 
           const tintNoise = fbm(px0 * 0.004 + 200, py0 * 0.004 + 200);
           const green = tintNoise > 0.62 && density > 0.20;
 
           rx.push(px0);
           ry.push(py0);
-          px.push(px0);
-          py.push(py0);
-          vx.push(0);
-          vy.push(0);
           a0.push(alpha);
           tw.push(hash2i(gx, gy, 123));
           g.push(green ? 1 : 0);
@@ -1411,10 +1401,6 @@ document.addEventListener('DOMContentLoaded', () => {
       particleCount = rx.length;
       restX = Float32Array.from(rx);
       restY = Float32Array.from(ry);
-      posX = Float32Array.from(px);
-      posY = Float32Array.from(py);
-      velX = Float32Array.from(vx);
-      velY = Float32Array.from(vy);
       baseAlpha = Float32Array.from(a0);
       twinkleMask = Float32Array.from(tw);
       isGreen = Uint8Array.from(g);
@@ -1455,10 +1441,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Twinkle and drifting “cloud intensity” (so clusters shift over time)
       const twinkleGlobal = 0.85 + 0.15 * ((Math.sin(time * 0.6) + 1) * 0.5);
-      const cloudScale = 0.0035;
-      // Move the cloud field across the screen (TRAE-like drift)
-      const cloudX = time * 0.12;
-      const cloudY = time * 0.08;
+      // Lower frequency (bigger blobs) + slower drift => more coherent “clouds”.
+      const cloudScale = 0.0024;
+      const cloudX = time * 0.06;
+      const cloudY = time * 0.04;
 
       // Smooth pointer towards target (frame-rate independent)
       const pointerFollow = 1 - Math.exp(-dt * 18);
@@ -1471,87 +1457,49 @@ document.addEventListener('DOMContentLoaded', () => {
         pointerSy = lerp(pointerSy, -1e9, pointerFollow);
       }
 
-      // Cloud drift (flow field)
-      // Tie the motion field to the SAME drifting cloud field for coherent blob movement.
-      const driftAmp = window.innerWidth < 700 ? 16 : 22;
-      const flowScale = cloudScale;
-      const flowTimeX = cloudX;
-      const flowTimeY = cloudY;
+      // No per-particle “physics” loop: lighter on CPU.
+      // Particles are drawn with a coherent, low-cost offset sampled from the same drifting field.
+      const driftAmp = window.innerWidth < 700 ? 6 : 8;
 
-      // Pointer interaction: smooth gaussian falloff (no hard circle “disc”)
-      const radius = window.innerWidth < 700 ? 140 : 190;
+      // Pointer: keep it subtle + cheap (alpha boost only, no displacement/forces).
+      const radius = window.innerWidth < 700 ? 150 : 210;
       const radius2 = radius * radius;
-      // Softer forces for a more fluid feel
-      const repulse = 5.0;
-      const swirl = 8.0;
-
-      const spring = 18;
-      const damping = 0.86;
-
-      if (!prefersReducedMotion) {
-        const mx = pointerSx;
-        const my = pointerSy;
-
-        for (let i = 0; i < particleCount; i++) {
-          const rx = restX[i];
-          const ry = restY[i];
-          let x = posX[i];
-          let y = posY[i];
-          let vx = velX[i];
-          let vy = velY[i];
-
-          const n = fbm2(rx * flowScale + flowTimeX, ry * flowScale + flowTimeY);
-          const a = n * Math.PI * 2;
-          const tx = rx + Math.cos(a) * driftAmp;
-          const ty = ry + Math.sin(a) * driftAmp;
-
-          vx += (tx - x) * spring * dt;
-          vy += (ty - y) * spring * dt;
-
-          if (pointer.active) {
-            const dx = x - mx;
-            const dy = y - my;
-            const d2 = dx * dx + dy * dy;
-            if (d2 < radius2 * 1.6) {
-              const falloff = Math.exp(-d2 / radius2);
-              vx += dx * repulse * falloff * dt;
-              vy += dy * repulse * falloff * dt;
-
-              // Swirl component for a more “fluid” feel
-              vx += -dy * swirl * falloff * dt;
-              vy += dx * swirl * falloff * dt;
-            }
-          }
-
-          vx *= damping;
-          vy *= damping;
-          x += vx * dt;
-          y += vy * dt;
-
-          posX[i] = x;
-          posY[i] = y;
-          velX[i] = vx;
-          velY[i] = vy;
-        }
-      }
 
       // Draw gray pixels
       // Brighten points and use additive blending for better contrast.
       ctx.globalCompositeOperation = 'lighter';
-      ctx.fillStyle = 'rgb(235,235,235)';
+      ctx.fillStyle = 'rgb(248,248,248)';
       for (let i = 0; i < particleCount; i++) {
         if (isGreen[i]) continue;
-        const c = fbm2(restX[i] * cloudScale + cloudX, restY[i] * cloudScale + cloudY);
-        // Softer threshold so points remain visible; still forms cloudy blobs.
-        let cloud = clamp((c - 0.28) / 0.72, 0, 1);
-        // Stronger blob contrast (without fully disappearing outside)
-        cloud = cloud * cloud * cloud;
-        const vis = 0.30 + 0.70 * cloud;
-        ctx.globalAlpha =
-          baseAlpha[i] * vis * (0.78 + 0.22 * twinkleGlobal * twinkleMask[i]);
+        const rx = restX[i];
+        const ry = restY[i];
+        const c = fbm2(rx * cloudScale + cloudX, ry * cloudScale + cloudY);
+        const c2 = fbm2(rx * cloudScale + cloudX + 17.3, ry * cloudScale + cloudY + 9.1);
+
+        // Coherent motion offset (no trig)
+        const ox = (c - 0.5) * driftAmp;
+        const oy = (c2 - 0.5) * driftAmp;
+
+        // Cloud visibility mask (keep baseline high so points stay readable)
+        let cloud = clamp((c - 0.30) / 0.70, 0, 1);
+        cloud = cloud * cloud;
+        let vis = 0.55 + 0.45 * cloud;
+
+        // Subtle pointer highlight (cheap)
+        if (pointer.active && !prefersReducedMotion) {
+          const dx = (rx + ox) - pointerSx;
+          const dy = (ry + oy) - pointerSy;
+          const d2 = dx * dx + dy * dy;
+          if (d2 < radius2) {
+            const fall = 1 - d2 / radius2;
+            vis += fall * 0.12;
+          }
+        }
+
+        ctx.globalAlpha = baseAlpha[i] * vis * (0.82 + 0.18 * twinkleGlobal * twinkleMask[i]);
         ctx.fillRect(
-          (posX[i] - dotSize * 0.5) | 0,
-          (posY[i] - dotSize * 0.5) | 0,
+          (rx + ox - dotSize * 0.5) | 0,
+          (ry + oy - dotSize * 0.5) | 0,
           dotSize,
           dotSize
         );
@@ -1561,18 +1509,32 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.fillStyle = 'rgb(0,255,104)';
       for (let i = 0; i < particleCount; i++) {
         if (!isGreen[i]) continue;
-        const c = fbm2(
-          restX[i] * cloudScale + cloudX + 2.0,
-          restY[i] * cloudScale + cloudY + 2.0
-        );
-        let cloud = clamp((c - 0.30) / 0.70, 0, 1);
-        cloud = cloud * cloud * cloud;
-        const vis = 0.28 + 0.72 * cloud;
-        ctx.globalAlpha =
-          baseAlpha[i] * vis * (0.75 + 0.25 * twinkleGlobal * twinkleMask[i]);
+        const rx = restX[i];
+        const ry = restY[i];
+        const c = fbm2(rx * cloudScale + cloudX + 2.0, ry * cloudScale + cloudY + 2.0);
+        const c2 = fbm2(rx * cloudScale + cloudX + 19.3, ry * cloudScale + cloudY + 11.1);
+
+        const ox = (c - 0.5) * driftAmp;
+        const oy = (c2 - 0.5) * driftAmp;
+
+        let cloud = clamp((c - 0.32) / 0.68, 0, 1);
+        cloud = cloud * cloud;
+        let vis = 0.52 + 0.48 * cloud;
+
+        if (pointer.active && !prefersReducedMotion) {
+          const dx = (rx + ox) - pointerSx;
+          const dy = (ry + oy) - pointerSy;
+          const d2 = dx * dx + dy * dy;
+          if (d2 < radius2) {
+            const fall = 1 - d2 / radius2;
+            vis += fall * 0.10;
+          }
+        }
+
+        ctx.globalAlpha = baseAlpha[i] * vis * (0.80 + 0.20 * twinkleGlobal * twinkleMask[i]);
         ctx.fillRect(
-          (posX[i] - dotSize * 0.5) | 0,
-          (posY[i] - dotSize * 0.5) | 0,
+          (rx + ox - dotSize * 0.5) | 0,
+          (ry + oy - dotSize * 0.5) | 0,
           dotSize,
           dotSize
         );
