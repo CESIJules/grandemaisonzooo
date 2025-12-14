@@ -1352,7 +1352,8 @@ document.addEventListener('DOMContentLoaded', () => {
       // Bigger pixels (more visible), and a slightly sparser grid.
       // Smaller, more numerous squares (closer to the reference)
       dotStep = window.innerWidth < 700 ? 11 : window.innerWidth < 1100 ? 10 : 9;
-      dotSize = Math.max(2, Math.round(dotStep * 0.30));
+      // Slightly bigger than before (tiny bump)
+      dotSize = Math.max(2, Math.round(dotStep * 0.34));
 
       const cols = Math.ceil(width / dotStep);
       const rows = Math.ceil(height / dotStep);
@@ -1383,10 +1384,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
           // Push towards clearer “cloud shapes”: more empty space + denser blobs.
           const d = clamp((n - 0.48) / 0.52, 0, 1);
-          const density = d * d * d;
+          // Stronger clustering -> more obvious cloud blobs
+          const density = d * d * d * d;
 
           // Dropout probability: dense areas keep more particles
-          if (hash2i(gx, gy, 97) > 0.22 + density * 0.78) continue;
+          if (hash2i(gx, gy, 97) > 0.16 + density * 0.82) continue;
 
           const alphaJitter = 0.65 + hash2i(gx, gy, 33) * 0.55;
           const alpha = clamp((0.20 + density * 0.80) * alphaJitter, 0.16, 0.98);
@@ -1451,6 +1453,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const time = t * 0.001;
 
+      // Twinkle and drifting “cloud intensity” (so clusters shift over time)
+      const twinkleGlobal = 0.85 + 0.15 * ((Math.sin(time * 0.6) + 1) * 0.5);
+      const cloudScale = 0.0035;
+      // Move the cloud field across the screen (TRAE-like drift)
+      const cloudX = time * 0.12;
+      const cloudY = time * 0.08;
+
       // Smooth pointer towards target (frame-rate independent)
       const pointerFollow = 1 - Math.exp(-dt * 18);
       if (pointer.active) {
@@ -1463,10 +1472,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // Cloud drift (flow field)
-      const driftAmp = window.innerWidth < 700 ? 18 : 26;
-      const flowScale = 0.004;
-      const flowTimeX = time * 0.07;
-      const flowTimeY = time * -0.05;
+      // Tie the motion field to the SAME drifting cloud field for coherent blob movement.
+      const driftAmp = window.innerWidth < 700 ? 16 : 22;
+      const flowScale = cloudScale;
+      const flowTimeX = cloudX;
+      const flowTimeY = cloudY;
 
       // Pointer interaction: smooth gaussian falloff (no hard circle “disc”)
       const radius = window.innerWidth < 700 ? 140 : 190;
@@ -1491,7 +1501,7 @@ document.addEventListener('DOMContentLoaded', () => {
           let vy = velY[i];
 
           const n = fbm2(rx * flowScale + flowTimeX, ry * flowScale + flowTimeY);
-          const a = n * Math.PI * 2.8;
+          const a = n * Math.PI * 2;
           const tx = rx + Math.cos(a) * driftAmp;
           const ty = ry + Math.sin(a) * driftAmp;
 
@@ -1525,13 +1535,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      // Twinkle and drifting “cloud intensity” (so clusters shift over time)
-      const twinkleGlobal = 0.85 + 0.15 * ((Math.sin(time * 0.6) + 1) * 0.5);
-      const cloudScale = 0.0035;
-      // Move the cloud field across the screen (TRAE-like drift)
-      const cloudX = time * 0.12;
-      const cloudY = time * 0.08;
-
       // Draw gray pixels
       // Brighten points and use additive blending for better contrast.
       ctx.globalCompositeOperation = 'lighter';
@@ -1541,8 +1544,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const c = fbm2(restX[i] * cloudScale + cloudX, restY[i] * cloudScale + cloudY);
         // Softer threshold so points remain visible; still forms cloudy blobs.
         let cloud = clamp((c - 0.28) / 0.72, 0, 1);
-        cloud = cloud * cloud;
-        const vis = 0.45 + 0.55 * cloud;
+        // Stronger blob contrast (without fully disappearing outside)
+        cloud = cloud * cloud * cloud;
+        const vis = 0.30 + 0.70 * cloud;
         ctx.globalAlpha =
           baseAlpha[i] * vis * (0.78 + 0.22 * twinkleGlobal * twinkleMask[i]);
         ctx.fillRect(
@@ -1562,8 +1566,8 @@ document.addEventListener('DOMContentLoaded', () => {
           restY[i] * cloudScale + cloudY + 2.0
         );
         let cloud = clamp((c - 0.30) / 0.70, 0, 1);
-        cloud = cloud * cloud;
-        const vis = 0.40 + 0.60 * cloud;
+        cloud = cloud * cloud * cloud;
+        const vis = 0.28 + 0.72 * cloud;
         ctx.globalAlpha =
           baseAlpha[i] * vis * (0.75 + 0.25 * twinkleGlobal * twinkleMask[i]);
         ctx.fillRect(
