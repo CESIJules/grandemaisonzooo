@@ -267,6 +267,32 @@ document.addEventListener('DOMContentLoaded', () => {
   const loadingScreen = document.getElementById('loadingScreen');
   const marqueeContent = document.getElementById('marqueeContent');
 
+  // Failsafe: never keep the site stuck behind a black loading screen.
+  // If the intro/video pipeline fails for any reason, release the UI.
+  const LOADER_FAILSAFE_MS = 12000;
+  window.setTimeout(() => {
+    if (!loadingScreen) return;
+    const isAlreadyHidden =
+      loadingScreen.classList.contains('hidden') || loadingScreen.style.display === 'none';
+    if (isAlreadyHidden) return;
+
+    try {
+      loadingScreen.classList.add('hidden');
+      window.setTimeout(() => {
+        loadingScreen.style.display = 'none';
+      }, 600);
+
+      if (videoOverlay) videoOverlay.style.display = 'none';
+      showUI();
+      startBackgroundVideo();
+      document.body.classList.remove('no-scroll');
+      isIntroActive = false;
+    } catch (e) {
+      // If even the failsafe fails, at least remove the blocker.
+      loadingScreen.style.display = 'none';
+    }
+  }, LOADER_FAILSAFE_MS);
+
   function updateLoaderText(percent) {
       if (!marqueeContent) return;
       const items = marqueeContent.querySelectorAll('.marquee-item');
@@ -1216,26 +1242,6 @@ document.addEventListener('DOMContentLoaded', () => {
   
   function initAsciiBackground() {
     if (!asciiCanvas) return;
-    const ctx = asciiCanvas.getContext('2d');
-    let width, height;
-    let cols, rows;
-    // PERFORMANCE: Dynamic charSize. Larger on mobile to reduce draw calls.
-    let charSize = 28; 
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$#@%&?!<>"; 
-    
-    let mouse = { x: -1000, y: -1000 };
-    
-    // Grid state
-    let grid = []; 
-    let offsets = []; 
-    let speeds = []; 
-    let rowNoise = []; // Pre-calculated noise for rows
-
-    // PERFORMANCE: Pre-calculate gray levels to avoid string creation
-    const grayLevels = [];
-    for(let i=0; i<256; i++) {
-        grayLevels[i] = `rgb(${i},${i},${i})`;
-    }
 
     const ctx = asciiCanvas.getContext('2d', { alpha: true, desynchronized: true });
     if (!ctx) return;
@@ -1349,9 +1355,10 @@ document.addEventListener('DOMContentLoaded', () => {
         height * 0.5,
         Math.max(width, height) * 0.75
       );
-      vignetteGradient.addColorStop(0.0, 'rgba(0,0,0,0.85)');
-      vignetteGradient.addColorStop(0.45, 'rgba(0,0,0,0.28)');
-      vignetteGradient.addColorStop(1.0, 'rgba(0,0,0,0.65)');
+      // Keep center readable/visible, darken edges.
+      vignetteGradient.addColorStop(0.0, 'rgba(0,0,0,0.00)');
+      vignetteGradient.addColorStop(0.55, 'rgba(0,0,0,0.22)');
+      vignetteGradient.addColorStop(1.0, 'rgba(0,0,0,0.72)');
     }
 
     function rebuildParticles() {
@@ -1495,7 +1502,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      ctx.fillStyle = 'rgb(175,175,175)';
+      ctx.fillStyle = 'rgb(205,205,205)';
       for (let i = 0; i < particleCount; i++) {
         if (isGreen[i]) continue;
         ctx.globalAlpha = baseAlpha[i] * (0.78 + 0.22 * twinkleGlobal * twinkleMask[i]);
@@ -1507,7 +1514,8 @@ document.addEventListener('DOMContentLoaded', () => {
         );
       }
 
-      ctx.fillStyle = 'rgb(0,160,120)';
+      // Reuse the existing site neon green (also used in radar visuals).
+      ctx.fillStyle = 'rgb(0,255,104)';
       for (let i = 0; i < particleCount; i++) {
         if (!isGreen[i]) continue;
         ctx.globalAlpha = baseAlpha[i] * (0.75 + 0.25 * twinkleGlobal * twinkleMask[i]);
