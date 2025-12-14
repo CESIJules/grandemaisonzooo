@@ -267,32 +267,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const loadingScreen = document.getElementById('loadingScreen');
   const marqueeContent = document.getElementById('marqueeContent');
 
-  // Failsafe: never keep the site stuck behind a black loading screen.
-  // If the intro/video pipeline fails for any reason, release the UI.
-  const LOADER_FAILSAFE_MS = 12000;
-  window.setTimeout(() => {
-    if (!loadingScreen) return;
-    const isAlreadyHidden =
-      loadingScreen.classList.contains('hidden') || loadingScreen.style.display === 'none';
-    if (isAlreadyHidden) return;
-
-    try {
-      loadingScreen.classList.add('hidden');
-      window.setTimeout(() => {
-        loadingScreen.style.display = 'none';
-      }, 600);
-
-      if (videoOverlay) videoOverlay.style.display = 'none';
-      showUI();
-      startBackgroundVideo();
-      document.body.classList.remove('no-scroll');
-      isIntroActive = false;
-    } catch (e) {
-      // If even the failsafe fails, at least remove the blocker.
-      loadingScreen.style.display = 'none';
-    }
-  }, LOADER_FAILSAFE_MS);
-
   function updateLoaderText(percent) {
       if (!marqueeContent) return;
       const items = marqueeContent.querySelectorAll('.marquee-item');
@@ -1258,6 +1232,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let width = 0;
     let height = 0;
     let dpr = 1;
+    let running = true;
 
     let particleCount = 0;
     let restX;
@@ -1270,19 +1245,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let twinkleMask;
     let isGreen;
 
-    let dotSize = 2;
-    let dotStep = 8;
+    let dotStep = 12;
+    let dotSize = 6;
     let vignetteGradient = null;
-    let running = true;
 
     const seed = (Date.now() ^ ((Math.random() * 2 ** 31) | 0)) | 0;
 
     const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
     const lerp = (a, b, t) => a + (b - a) * t;
-    const smoothstep = (a, b, x) => {
-      const t = clamp((x - a) / (b - a), 0, 1);
-      return t * t * (3 - 2 * t);
-    };
 
     function hash2i(xi, yi, salt = 0) {
       let h = seed ^ salt;
@@ -1347,29 +1317,27 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function buildVignette() {
+      // Soft vignette (avoid visible rings / “discs”)
       vignetteGradient = ctx.createRadialGradient(
         width * 0.5,
         height * 0.5,
-        0,
+        Math.min(width, height) * 0.10,
         width * 0.5,
         height * 0.5,
-        Math.max(width, height) * 0.75
+        Math.max(width, height) * 0.85
       );
-      // Keep center readable/visible, darken edges.
       vignetteGradient.addColorStop(0.0, 'rgba(0,0,0,0.00)');
-      vignetteGradient.addColorStop(0.55, 'rgba(0,0,0,0.22)');
-      vignetteGradient.addColorStop(1.0, 'rgba(0,0,0,0.72)');
+      vignetteGradient.addColorStop(0.70, 'rgba(0,0,0,0.18)');
+      vignetteGradient.addColorStop(1.0, 'rgba(0,0,0,0.62)');
     }
 
     function rebuildParticles() {
-      dotStep = window.innerWidth < 700 ? 11 : window.innerWidth < 1100 ? 9 : 8;
-      dotSize = Math.max(1, Math.floor(dotStep * 0.35));
+      // Bigger pixels (more visible), and a slightly sparser grid.
+      dotStep = window.innerWidth < 700 ? 16 : window.innerWidth < 1100 ? 14 : 13;
+      dotSize = Math.max(4, Math.round(dotStep * 0.70));
 
       const cols = Math.ceil(width / dotStep);
       const rows = Math.ceil(height / dotStep);
-      const cx = width * 0.5;
-      const cy = height * 0.5;
-      const maxR = Math.hypot(cx, cy);
 
       const rx = [];
       const ry = [];
@@ -1381,23 +1349,26 @@ document.addEventListener('DOMContentLoaded', () => {
       const tw = [];
       const g = [];
 
+      const baseScale = 0.0065;
+
       for (let gy = 0; gy < rows; gy++) {
         const py0 = gy * dotStep + dotStep * 0.5;
         for (let gx = 0; gx < cols; gx++) {
           const px0 = gx * dotStep + dotStep * 0.5;
 
-          const rr = Math.hypot(px0 - cx, py0 - cy) / maxR;
-          const edgeMask = smoothstep(0.18, 0.92, rr);
+          // Density field without radial masks (prevents circle/disc artifacts)
+          const n = fbm(px0 * baseScale, py0 * baseScale);
+          const d = clamp((n - 0.38) / 0.62, 0, 1);
+          const density = d * d; // emphasize cloudy “islands”
 
-          const n = fbm(px0 * 0.010, py0 * 0.010);
-          const density = edgeMask * (0.12 + n * 0.88);
+          // Dropout probability: dense areas keep more particles
+          if (hash2i(gx, gy, 97) > 0.10 + density * 0.85) continue;
 
-          if (hash2i(gx, gy, 97) > density * 0.75) continue;
+          const alphaJitter = 0.65 + hash2i(gx, gy, 33) * 0.55;
+          const alpha = clamp((0.10 + density * 0.90) * alphaJitter, 0.10, 0.95);
 
-          const alpha = clamp(density * (0.55 + hash2i(gx, gy, 33) * 0.6), 0.05, 0.95);
-
-          const tintNoise = fbm(px0 * 0.015 + 100, py0 * 0.015 + 100);
-          const green = tintNoise > 0.64 && edgeMask > 0.25;
+          const tintNoise = fbm(px0 * 0.004 + 200, py0 * 0.004 + 200);
+          const green = tintNoise > 0.62 && density > 0.20;
 
           rx.push(px0);
           ry.push(py0);
@@ -1432,8 +1403,8 @@ document.addEventListener('DOMContentLoaded', () => {
       asciiCanvas.height = Math.floor(height * dpr);
       asciiCanvas.style.width = `${width}px`;
       asciiCanvas.style.height = `${height}px`;
-
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
       buildVignette();
       rebuildParticles();
     }
@@ -1455,17 +1426,26 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.clearRect(0, 0, width, height);
 
       const time = t * 0.001;
-      const twinkleGlobal = 0.85 + 0.15 * ((Math.sin(time * 0.6) + 1) * 0.5);
 
-      const radius = window.innerWidth < 700 ? 120 : 170;
+      // Cloud drift (flow field)
+      const driftAmp = window.innerWidth < 700 ? 18 : 26;
+      const flowScale = 0.004;
+      const flowTimeX = time * 0.07;
+      const flowTimeY = time * -0.05;
+
+      // Pointer interaction: smooth gaussian falloff (no hard circle “disc”)
+      const radius = window.innerWidth < 700 ? 140 : 190;
       const radius2 = radius * radius;
-      const strength = 1800;
-      const spring = 22;
-      const damping = 0.88;
+      const repulse = 9.0;
+      const swirl = 16.0;
+
+      const spring = 18;
+      const damping = 0.86;
 
       if (!prefersReducedMotion) {
         const mx = pointer.x;
         const my = pointer.y;
+
         for (let i = 0; i < particleCount; i++) {
           const rx = restX[i];
           const ry = restY[i];
@@ -1474,19 +1454,26 @@ document.addEventListener('DOMContentLoaded', () => {
           let vx = velX[i];
           let vy = velY[i];
 
-          vx += (rx - x) * spring * dt;
-          vy += (ry - y) * spring * dt;
+          const n = fbm(rx * flowScale + flowTimeX, ry * flowScale + flowTimeY);
+          const a = n * Math.PI * 2.8;
+          const tx = rx + Math.cos(a) * driftAmp;
+          const ty = ry + Math.sin(a) * driftAmp;
+
+          vx += (tx - x) * spring * dt;
+          vy += (ty - y) * spring * dt;
 
           if (pointer.active) {
             const dx = x - mx;
             const dy = y - my;
             const d2 = dx * dx + dy * dy;
-            if (d2 < radius2) {
-              const d = Math.sqrt(d2) + 0.0001;
-              const f = 1 - d / radius;
-              const push = f * f * strength * dt;
-              vx += (dx / d) * push;
-              vy += (dy / d) * push;
+            if (d2 < radius2 * 2.25) {
+              const falloff = Math.exp(-d2 / radius2);
+              vx += dx * repulse * falloff * dt;
+              vy += dy * repulse * falloff * dt;
+
+              // Swirl component for a more “fluid” feel
+              vx += -dy * swirl * falloff * dt;
+              vy += dx * swirl * falloff * dt;
             }
           }
 
@@ -1502,10 +1489,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
+      // Twinkle and drifting “cloud intensity” (so clusters shift over time)
+      const twinkleGlobal = 0.85 + 0.15 * ((Math.sin(time * 0.6) + 1) * 0.5);
+      const cloudScale = 0.0035;
+      const cloudX = time * 0.06;
+      const cloudY = time * 0.04;
+
+      // Draw gray pixels
       ctx.fillStyle = 'rgb(205,205,205)';
       for (let i = 0; i < particleCount; i++) {
         if (isGreen[i]) continue;
-        ctx.globalAlpha = baseAlpha[i] * (0.78 + 0.22 * twinkleGlobal * twinkleMask[i]);
+        const c = fbm(restX[i] * cloudScale + cloudX, restY[i] * cloudScale + cloudY);
+        const cloud = clamp((c - 0.30) / 0.70, 0, 1);
+        ctx.globalAlpha =
+          baseAlpha[i] * cloud * (0.78 + 0.22 * twinkleGlobal * twinkleMask[i]);
         ctx.fillRect(
           (posX[i] - dotSize * 0.5) | 0,
           (posY[i] - dotSize * 0.5) | 0,
@@ -1514,11 +1511,14 @@ document.addEventListener('DOMContentLoaded', () => {
         );
       }
 
-      // Reuse the existing site neon green (also used in radar visuals).
+      // Draw green pixels (site neon green)
       ctx.fillStyle = 'rgb(0,255,104)';
       for (let i = 0; i < particleCount; i++) {
         if (!isGreen[i]) continue;
-        ctx.globalAlpha = baseAlpha[i] * (0.75 + 0.25 * twinkleGlobal * twinkleMask[i]);
+        const c = fbm(restX[i] * cloudScale + cloudX + 2.0, restY[i] * cloudScale + cloudY + 2.0);
+        const cloud = clamp((c - 0.34) / 0.66, 0, 1);
+        ctx.globalAlpha =
+          baseAlpha[i] * cloud * (0.75 + 0.25 * twinkleGlobal * twinkleMask[i]);
         ctx.fillRect(
           (posX[i] - dotSize * 0.5) | 0,
           (posY[i] - dotSize * 0.5) | 0,
@@ -1527,6 +1527,7 @@ document.addEventListener('DOMContentLoaded', () => {
         );
       }
 
+      // Vignette overlay
       ctx.globalAlpha = 1;
       ctx.fillStyle = vignetteGradient;
       ctx.fillRect(0, 0, width, height);
