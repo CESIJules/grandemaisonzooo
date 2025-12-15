@@ -1672,6 +1672,7 @@ document.addEventListener('DOMContentLoaded', () => {
           ctx.fill();
           ctx.fillStyle = 'rgb(248,248,248)';
         }
+      }
 
       // Draw green pixels (site neon green)
       ctx.fillStyle = 'rgb(0,255,104)';
@@ -1721,6 +1722,7 @@ document.addEventListener('DOMContentLoaded', () => {
           ctx.arc(drawX, drawY, dotSize, 0, Math.PI * 2);
           ctx.fill();
         }
+      }
 
       // Back to normal blending for overlays/UI.
       ctx.globalCompositeOperation = 'source-over';
