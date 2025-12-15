@@ -1211,7 +1211,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (rcRemaining) rcRemaining.textContent = formatTime(remaining);
   }
 
-  // --- ASCII Background Effect ---
+  // --- Dot Cloud Background Effect ---
   const asciiCanvas = document.getElementById('asciiBg');
   
   function initAsciiBackground() {
@@ -1241,6 +1241,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let particleCount = 0;
     let restX;
     let restY;
+    let posX;
+    let posY;
+    let velX;
+    let velY;
     let baseAlpha;
     let twinkleMask;
     let isGreen;
@@ -1248,6 +1252,57 @@ document.addEventListener('DOMContentLoaded', () => {
     let dotStep = 12;
     let dotSize = 6;
     let vignetteGradient = null;
+
+    // Low-res flow field for organic, wave-like motion.
+    let flowCell = 70;
+    let flowCols = 0;
+    let flowRows = 0;
+    let flowX;
+    let flowY;
+    let flowCid;
+
+    // Cluster simulation (groups of dots that can merge).
+    let clusterTarget = 0;
+    let clusterCount = 0;
+    let clusterX;
+    let clusterY;
+    let clusterVX;
+    let clusterVY;
+    let clusterMass;
+    let clusterR;
+
+    // Motion tuning (keep minimal + local)
+    const motion = {
+      // Slow & majestic defaults
+      accelDesktop: 38,
+      accelMobile: 30,
+      // Higher => larger features ("big waves")
+      noiseScale: 0.00115,
+      // Dot cohesion towards cluster center
+      cohesion: 0.085,
+    };
+
+    function rebuildClusters() {
+      // Keep cluster count modest for performance + readability.
+      clusterTarget = window.innerWidth < 700 ? 10 : window.innerWidth < 1100 ? 13 : 16;
+      const max = Math.max(18, clusterTarget + 6);
+      clusterCount = clusterTarget;
+      clusterX = new Float32Array(max);
+      clusterY = new Float32Array(max);
+      clusterVX = new Float32Array(max);
+      clusterVY = new Float32Array(max);
+      clusterMass = new Float32Array(max);
+      clusterR = new Float32Array(max);
+
+      for (let i = 0; i < clusterCount; i++) {
+        clusterX[i] = Math.random() * width;
+        clusterY[i] = Math.random() * height;
+        clusterVX[i] = (Math.random() - 0.5) * 10;
+        clusterVY[i] = (Math.random() - 0.5) * 10;
+        clusterMass[i] = 1;
+        clusterR[i] = (window.innerWidth < 700 ? 150 : 200) + Math.random() * (window.innerWidth < 700 ? 80 : 120);
+      }
+    }
 
     const seed = (Date.now() ^ ((Math.random() * 2 ** 31) | 0)) | 0;
 
@@ -1401,9 +1456,186 @@ document.addEventListener('DOMContentLoaded', () => {
       particleCount = rx.length;
       restX = Float32Array.from(rx);
       restY = Float32Array.from(ry);
+      posX = Float32Array.from(rx);
+      posY = Float32Array.from(ry);
+      velX = new Float32Array(particleCount);
+      velY = new Float32Array(particleCount);
       baseAlpha = Float32Array.from(a0);
       twinkleMask = Float32Array.from(tw);
       isGreen = Uint8Array.from(g);
+    }
+
+    function rebuildFlowField() {
+      flowCell = window.innerWidth < 700 ? 84 : window.innerWidth < 1100 ? 76 : 70;
+      flowCols = Math.ceil(width / flowCell) + 1;
+      flowRows = Math.ceil(height / flowCell) + 1;
+      const n = flowCols * flowRows;
+      flowX = new Float32Array(n);
+      flowY = new Float32Array(n);
+      flowCid = new Uint16Array(n);
+    }
+
+    function wrap01(v, max) {
+      if (v < 0) return v + max;
+      if (v > max) return v - max;
+      return v;
+    }
+
+    function flowIndexFor(x, y) {
+      const cx = clamp((x / flowCell) | 0, 0, flowCols - 1);
+      const cy = clamp((y / flowCell) | 0, 0, flowRows - 1);
+      return cx + cy * flowCols;
+    }
+
+    function ensureClusterCount() {
+      if (!clusterX) return;
+      // Refill clusters if merges reduced the count.
+      while (clusterCount < clusterTarget) {
+        const i = clusterCount++;
+        clusterX[i] = Math.random() * width;
+        clusterY[i] = Math.random() * height;
+        clusterVX[i] = (Math.random() - 0.5) * 8;
+        clusterVY[i] = (Math.random() - 0.5) * 8;
+        clusterMass[i] = 1;
+        clusterR[i] = (window.innerWidth < 700 ? 150 : 200) + Math.random() * (window.innerWidth < 700 ? 80 : 120);
+      }
+    }
+
+    function mergeClusters() {
+      if (clusterCount <= 1) return;
+      const mergeBase = window.innerWidth < 700 ? 120 : 150;
+
+      for (let i = 0; i < clusterCount; i++) {
+        for (let j = i + 1; j < clusterCount; j++) {
+          const dx = clusterX[j] - clusterX[i];
+          const dy = clusterY[j] - clusterY[i];
+          const dist2 = dx * dx + dy * dy;
+          const thresh = mergeBase + 0.22 * (clusterR[i] + clusterR[j]);
+          if (dist2 > thresh * thresh) continue;
+
+          // Merge j into i (weighted by mass), keep it smooth.
+          const mi = clusterMass[i];
+          const mj = clusterMass[j];
+          const m = mi + mj;
+          clusterX[i] = (clusterX[i] * mi + clusterX[j] * mj) / m;
+          clusterY[i] = (clusterY[i] * mi + clusterY[j] * mj) / m;
+          clusterVX[i] = (clusterVX[i] * mi + clusterVX[j] * mj) / m;
+          clusterVY[i] = (clusterVY[i] * mi + clusterVY[j] * mj) / m;
+          clusterMass[i] = m;
+          // Radius grows sublinearly so it stays pleasing.
+          clusterR[i] = Math.sqrt(clusterR[i] * clusterR[i] + clusterR[j] * clusterR[j]) * 0.85;
+
+          // Remove j by swapping in the last cluster.
+          const last = clusterCount - 1;
+          if (j !== last) {
+            clusterX[j] = clusterX[last];
+            clusterY[j] = clusterY[last];
+            clusterVX[j] = clusterVX[last];
+            clusterVY[j] = clusterVY[last];
+            clusterMass[j] = clusterMass[last];
+            clusterR[j] = clusterR[last];
+          }
+          clusterCount--;
+          j--;
+        }
+      }
+
+      // Optional: split very large merged clusters to keep variety.
+      const splitMass = 2.6;
+      for (let i = 0; i < clusterCount; i++) {
+        if (clusterMass[i] < splitMass) continue;
+        if (clusterCount >= clusterX.length) continue;
+
+        const j = clusterCount++;
+        const angle = hash2i(i, (clusterMass[i] * 997) | 0, 707) * Math.PI * 2;
+        const off = (window.innerWidth < 700 ? 70 : 90);
+        const ox = Math.cos(angle) * off;
+        const oy = Math.sin(angle) * off;
+        clusterX[j] = wrap01(clusterX[i] + ox, width);
+        clusterY[j] = wrap01(clusterY[i] + oy, height);
+        clusterVX[j] = clusterVX[i] * 0.7 + (Math.random() - 0.5) * 6;
+        clusterVY[j] = clusterVY[i] * 0.7 + (Math.random() - 0.5) * 6;
+
+        clusterMass[i] *= 0.55;
+        clusterMass[j] = clusterMass[i];
+        clusterR[j] = clusterR[i] * 0.85;
+      }
+    }
+
+    function updateFlowField(time) {
+      if (!flowX || !flowY) return;
+
+      // Noise scale is in "pixel-space" => small values.
+      const s = motion.noiseScale;
+      const e = 0.35;
+      // Slower drift for a more majestic feel.
+      const tx = time * 0.07;
+      const ty = time * 0.05;
+
+      let idx = 0;
+      for (let gy = 0; gy < flowRows; gy++) {
+        const py = gy * flowCell;
+        for (let gx = 0; gx < flowCols; gx++) {
+          const px = gx * flowCell;
+
+          const x = px * s + tx;
+          const y = py * s + ty;
+
+          // Curl noise (approx): v = (dn/dy, -dn/dx)
+          const n1 = noise2(x, y + e);
+          const n2 = noise2(x, y - e);
+          const a = (n1 - n2) / (2 * e);
+          const n3 = noise2(x + e, y);
+          const n4 = noise2(x - e, y);
+          const b = (n3 - n4) / (2 * e);
+
+          let vx = a;
+          let vy = -b;
+          const len = Math.hypot(vx, vy) || 1;
+          vx /= len;
+          vy /= len;
+
+          // Assign this cell to its nearest cluster => groups move in different directions.
+          let cid = 0;
+          let best = 1e30;
+          if (clusterCount > 0) {
+            for (let i = 0; i < clusterCount; i++) {
+              const ddx = clusterX[i] - px;
+              const ddy = clusterY[i] - py;
+              const d2 = ddx * ddx + ddy * ddy;
+              if (d2 < best) {
+                best = d2;
+                cid = i;
+              }
+            }
+          }
+          flowCid[idx] = cid;
+
+          // Blend curl direction with the cluster's own drift direction.
+          // This makes neighbouring groups diverge/converge more organically.
+          if (clusterCount > 0) {
+            const cvx0 = clusterVX[cid];
+            const cvy0 = clusterVY[cid];
+            const clen = Math.hypot(cvx0, cvy0);
+            if (clen > 0.01) {
+              const cxn = cvx0 / clen;
+              const cyn = cvy0 / clen;
+              const wdir = 0.22;
+              vx = vx * (1 - wdir) + cxn * wdir;
+              vy = vy * (1 - wdir) + cyn * wdir;
+              const l2 = Math.hypot(vx, vy) || 1;
+              vx /= l2;
+              vy /= l2;
+            }
+          }
+
+          // Magnitude shaped by noise + cluster mass (subtle).
+          const mag = (0.20 + 0.80 * fbm2(x + 11.7, y + 11.7)) * (1 + 0.06 * (clusterMass ? clusterMass[cid] : 0));
+          flowX[idx] = vx * mag;
+          flowY[idx] = vy * mag;
+          idx++;
+        }
+      }
     }
 
     function resize() {
@@ -1419,6 +1651,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       buildVignette();
       rebuildParticles();
+      rebuildFlowField();
+      rebuildClusters();
     }
 
     window.addEventListener('resize', resize, { passive: true });
@@ -1439,6 +1673,90 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const time = t * 0.001;
 
+      // Update flow field and advect particles.
+      if (!prefersReducedMotion) {
+        updateFlowField(time);
+
+        // Move clusters through the flow field.
+        if (clusterCount > 0) {
+          const clusterDamping = Math.exp(-dt * 1.8);
+          const clusterAccel = 18; // px/s^2
+          const clusterMax = window.innerWidth < 700 ? 18 : 24; // px/s
+          for (let i = 0; i < clusterCount; i++) {
+            const idx = flowIndexFor(clusterX[i], clusterY[i]);
+            const ax = flowX[idx] * clusterAccel;
+            const ay = flowY[idx] * clusterAccel;
+            let vx = (clusterVX[i] + ax * dt) * clusterDamping;
+            let vy = (clusterVY[i] + ay * dt) * clusterDamping;
+            vx = clamp(vx, -clusterMax, clusterMax);
+            vy = clamp(vy, -clusterMax, clusterMax);
+            clusterVX[i] = vx;
+            clusterVY[i] = vy;
+            clusterX[i] = wrap01(clusterX[i] + vx * dt, width);
+            clusterY[i] = wrap01(clusterY[i] + vy * dt, height);
+          }
+
+          mergeClusters();
+          ensureClusterCount();
+        }
+
+        const damping = Math.exp(-dt * 2.8);
+        const flowAccel = window.innerWidth < 700 ? motion.accelMobile : motion.accelDesktop; // px/s^2
+        const maxVel = window.innerWidth < 700 ? 45 : 60; // px/s
+        const margin = dotStep * 3;
+        const cohesion = motion.cohesion;
+
+        for (let i = 0; i < particleCount; i++) {
+          const x = posX[i];
+          const y = posY[i];
+
+          const idx = flowIndexFor(x, y);
+
+          let ax = flowX[idx] * flowAccel;
+          let ay = flowY[idx] * flowAccel;
+
+          // Gentle cohesion towards the cluster assigned to this cell.
+          if (clusterCount > 0) {
+            const cid = flowCid[idx] | 0;
+            const dx = clusterX[cid] - x;
+            const dy = clusterY[cid] - y;
+            // Weight cohesion by distance to avoid collapsing into a single point.
+            const r = clusterR[cid] || 200;
+            const d2 = dx * dx + dy * dy;
+            const w = clamp(1 - d2 / (r * r), 0, 1);
+            ax += dx * (cohesion * w);
+            ay += dy * (cohesion * w);
+          }
+
+          let vx = (velX[i] + ax * dt) * damping;
+          let vy = (velY[i] + ay * dt) * damping;
+          vx = clamp(vx, -maxVel, maxVel);
+          vy = clamp(vy, -maxVel, maxVel);
+          velX[i] = vx;
+          velY[i] = vy;
+
+          let nx = x + vx * dt;
+          let ny = y + vy * dt;
+
+          // Wrap around for continuous motion.
+          if (nx < -margin) nx += width + margin * 2;
+          else if (nx > width + margin) nx -= width + margin * 2;
+          if (ny < -margin) ny += height + margin * 2;
+          else if (ny > height + margin) ny -= height + margin * 2;
+
+          posX[i] = nx;
+          posY[i] = ny;
+        }
+      } else {
+        // Reduced motion: keep static distribution.
+        if (posX && posY && restX && restY) {
+          for (let i = 0; i < particleCount; i++) {
+            posX[i] = restX[i];
+            posY[i] = restY[i];
+          }
+        }
+      }
+
       // Twinkle and drifting “cloud intensity” (so clusters shift over time)
       const twinkleGlobal = 0.85 + 0.15 * ((Math.sin(time * 0.6) + 1) * 0.5);
       // Lower frequency (bigger blobs) + slower drift => more coherent “clouds”.
@@ -1458,11 +1776,6 @@ document.addEventListener('DOMContentLoaded', () => {
         pointerSy = lerp(pointerSy, -1e9, pointerFollow);
       }
 
-      // No per-particle “physics” loop: lighter on CPU.
-      // Particles are drawn with a coherent, low-cost offset sampled from the same drifting field.
-      // Slightly stronger so the motion is actually perceptible.
-      const driftAmp = window.innerWidth < 700 ? 14 : 20;
-
       // Pointer: keep it subtle + cheap (alpha boost only, no displacement/forces).
       const radius = window.innerWidth < 700 ? 160 : 230;
       const radius2 = radius * radius;
@@ -1474,14 +1787,12 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.fillStyle = 'rgb(248,248,248)';
       for (let i = 0; i < particleCount; i++) {
         if (isGreen[i]) continue;
-        const rx = restX[i];
-        const ry = restY[i];
-        const c = fbm2(rx * cloudScale + cloudX, ry * cloudScale + cloudY);
-        const c2 = fbm2(rx * cloudScale + cloudX + 17.3, ry * cloudScale + cloudY + 9.1);
+        const px = posX[i];
+        const py = posY[i];
+        const c = fbm2(px * cloudScale + cloudX, py * cloudScale + cloudY);
 
-        // Coherent motion offset (no trig)
-        let ox = (c - 0.5) * driftAmp;
-        let oy = (c2 - 0.5) * driftAmp;
+        let ox = 0;
+        let oy = 0;
 
         // Cloud visibility mask (keep baseline high so points stay readable)
         let cloud = clamp((c - 0.30) / 0.70, 0, 1);
@@ -1493,8 +1804,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Subtle pointer highlight (cheap)
         if (pointer.active && !prefersReducedMotion) {
-          const dx = rx - pointerSx;
-          const dy = ry - pointerSy;
+          const dx = px - pointerSx;
+          const dy = py - pointerSy;
           const d2 = dx * dx + dy * dy;
           if (d2 < radius2) {
             const fall = 1 - d2 / radius2;
@@ -1502,15 +1813,15 @@ document.addEventListener('DOMContentLoaded', () => {
             vis += f2 * 0.10;
             hover = f2;
 
-            // Tiny repulsion offset (cheap): pushes dots away a bit.
+            // Tiny repulsion draw-offset (cheap): pushes dots away a bit.
             const inv = 1 / (Math.sqrt(d2) + 1e-3);
             ox += dx * inv * (repelAmp * f2);
             oy += dy * inv * (repelAmp * f2);
           }
         }
 
-        const drawX = (rx + ox - dotSize * 0.5) | 0;
-        const drawY = (ry + oy - dotSize * 0.5) | 0;
+        const drawX = (px + ox - dotSize * 0.5) | 0;
+        const drawY = (py + oy - dotSize * 0.5) | 0;
 
         const aWhite = baseAlpha[i] * vis * (0.82 + 0.18 * twinkleGlobal * twinkleMask[i]);
         ctx.globalAlpha = aWhite;
@@ -1534,13 +1845,12 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.fillStyle = 'rgb(0,255,104)';
       for (let i = 0; i < particleCount; i++) {
         if (!isGreen[i]) continue;
-        const rx = restX[i];
-        const ry = restY[i];
-        const c = fbm2(rx * cloudScale + cloudX + 2.0, ry * cloudScale + cloudY + 2.0);
-        const c2 = fbm2(rx * cloudScale + cloudX + 19.3, ry * cloudScale + cloudY + 11.1);
+        const px = posX[i];
+        const py = posY[i];
+        const c = fbm2(px * cloudScale + cloudX + 2.0, py * cloudScale + cloudY + 2.0);
 
-        let ox = (c - 0.5) * driftAmp;
-        let oy = (c2 - 0.5) * driftAmp;
+        let ox = 0;
+        let oy = 0;
 
         let cloud = clamp((c - 0.32) / 0.68, 0, 1);
         cloud = cloud * cloud;
@@ -1549,8 +1859,8 @@ document.addEventListener('DOMContentLoaded', () => {
         let hover = 0;
 
         if (pointer.active && !prefersReducedMotion) {
-          const dx = rx - pointerSx;
-          const dy = ry - pointerSy;
+          const dx = px - pointerSx;
+          const dy = py - pointerSy;
           const d2 = dx * dx + dy * dy;
           if (d2 < radius2) {
             const fall = 1 - d2 / radius2;
@@ -1564,8 +1874,8 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
 
-        const drawX = (rx + ox - dotSize * 0.5) | 0;
-        const drawY = (ry + oy - dotSize * 0.5) | 0;
+        const drawX = (px + ox - dotSize * 0.5) | 0;
+        const drawY = (py + oy - dotSize * 0.5) | 0;
 
         ctx.globalAlpha = baseAlpha[i] * vis * (0.80 + 0.20 * twinkleGlobal * twinkleMask[i]);
         ctx.fillRect(
