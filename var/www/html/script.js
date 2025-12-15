@@ -1368,11 +1368,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function rebuildParticles() {
-      // Bigger pixels (more visible), and a slightly sparser grid.
-      // Smaller, more numerous squares (closer to the reference)
-      dotStep = window.innerWidth < 700 ? 11 : window.innerWidth < 1100 ? 10 : 9;
-      // Slightly bigger than before (tiny bump)
-      dotSize = Math.max(2, Math.round(dotStep * 0.34));
+      // Reduced density: larger steps for fewer, more distinct points
+      dotStep = window.innerWidth < 700 ? 18 : window.innerWidth < 1100 ? 15 : 13;
+      // Radius for circles (small dots)
+      dotSize = Math.max(1.5, Math.round(dotStep * 0.12));
 
       const cols = Math.ceil(width / dotStep);
       const rows = Math.ceil(height / dotStep);
@@ -1393,19 +1392,18 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let gx = 0; gx < cols; gx++) {
           const px0 = gx * dotStep + dotStep * 0.5;
 
-          // Density field without radial masks (prevents circle/disc artifacts)
+          // Density field without radial masks
           const n1 = fbm(px0 * baseScale1, py0 * baseScale1);
           const n2 = fbm(px0 * baseScale2 + 10.0, py0 * baseScale2 + 10.0);
           const n = n1 * 0.82 + n2 * 0.18;
 
-          // Push towards clearer “cloud shapes”: more empty space + denser blobs.
-          const d = clamp((n - 0.52) / 0.48, 0, 1);
-          // Cloud-like clustering (less heavy than cube -> more small groups)
-          const density = d * d;
+          // Stricter threshold for clearer separation between groups (more empty space)
+          const d = clamp((n - 0.55) / 0.45, 0, 1);
+          // Sharper falloff for distinct clusters
+          const density = d * d * d;
 
-          // Dropout probability: dense areas keep more particles,
-          // but sparse areas are much emptier to create gaps between groups.
-          if (hash2i(gx, gy, 97) > 0.16 + density * 0.72) continue;
+          // Higher dropout to reduce stray points and clean up the "network" look
+          if (hash2i(gx, gy, 97) > 0.10 + density * 0.80) continue;
 
           const alphaJitter = 0.65 + hash2i(gx, gy, 33) * 0.55;
           const alpha = clamp((0.22 + density * 0.78) * alphaJitter, 0.20, 1.0);
@@ -1657,25 +1655,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const drawX = (px + ox - dotSize * 0.5) | 0;
-        const drawY = (py + oy - dotSize * 0.5) | 0;
+        const drawX = px + ox;
+        const drawY = py + oy;
 
         const aWhite = baseAlpha[i] * vis * (0.82 + 0.18 * twinkleGlobal * twinkleMask[i]);
         ctx.globalAlpha = aWhite;
-        ctx.fillRect(
-          drawX,
-          drawY,
-          dotSize,
-          dotSize
-        );
+        ctx.beginPath();
+        ctx.arc(drawX, drawY, dotSize, 0, Math.PI * 2);
+        ctx.fill();
 
         // Visible but still subtle color shift near the pointer.
         if (hover > 0) {
           ctx.fillStyle = 'rgb(0,255,104)';
           ctx.globalAlpha = baseAlpha[i] * (0.22 * hover);
-          ctx.fillRect(drawX, drawY, dotSize, dotSize);
+          ctx.beginPath();
+          ctx.arc(drawX, drawY, dotSize, 0, Math.PI * 2);
+          ctx.fill();
           ctx.fillStyle = 'rgb(248,248,248)';
         }
-      }
 
       // Draw green pixels (site neon green)
       ctx.fillStyle = 'rgb(0,255,104)';
@@ -1711,22 +1708,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const drawX = (px + ox - dotSize * 0.5) | 0;
-        const drawY = (py + oy - dotSize * 0.5) | 0;
+        const drawX = px + ox;
+        const drawY = py + oy;
 
         ctx.globalAlpha = baseAlpha[i] * vis * (0.80 + 0.20 * twinkleGlobal * twinkleMask[i]);
-        ctx.fillRect(
-          drawX,
-          drawY,
-          dotSize,
-          dotSize
-        );
+        ctx.beginPath();
+        ctx.arc(drawX, drawY, dotSize, 0, Math.PI * 2);
+        ctx.fill();
 
         // Slight extra glow on hovered greens (kept subtle)
         if (hover > 0) {
           ctx.globalAlpha = baseAlpha[i] * (0.10 * hover);
-          ctx.fillRect(drawX, drawY, dotSize, dotSize);
+          ctx.beginPath();
+          ctx.arc(drawX, drawY, dotSize, 0, Math.PI * 2);
+          ctx.fill();
         }
-      }
 
       // Back to normal blending for overlays/UI.
       ctx.globalCompositeOperation = 'source-over';
