@@ -1654,7 +1654,6 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
 
-        const drawX = (px + ox - dotSize * 0.5) | 0;
         const drawX = px + ox;
         const drawY = py + oy;
 
@@ -1707,7 +1706,6 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
 
-        const drawX = (px + ox - dotSize * 0.5) | 0;
         const drawX = px + ox;
         const drawY = py + oy;
 
@@ -3094,6 +3092,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 }); // End DOMContentLoaded
+
 // Secret Login Combo (Left -> Right -> Right -> Left)
 (function() {
     const secretCode = ['ArrowLeft', 'ArrowRight', 'ArrowRight', 'ArrowLeft'];
