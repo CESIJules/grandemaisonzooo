@@ -1259,50 +1259,17 @@ document.addEventListener('DOMContentLoaded', () => {
     let flowRows = 0;
     let flowX;
     let flowY;
-    let flowCid;
-
-    // Cluster simulation (groups of dots that can merge).
-    let clusterTarget = 0;
-    let clusterCount = 0;
-    let clusterX;
-    let clusterY;
-    let clusterVX;
-    let clusterVY;
-    let clusterMass;
-    let clusterR;
 
     // Motion tuning (keep minimal + local)
     const motion = {
-      // Slow & majestic defaults
-      accelDesktop: 38,
-      accelMobile: 30,
-      // Higher => larger features ("big waves")
-      noiseScale: 0.00115,
-      // Dot cohesion towards cluster center
-      cohesion: 0.085,
+      // Slow & subtle defaults
+      accelDesktop: 22,
+      accelMobile: 18,
+      // Higher => smaller features. Lower => bigger, calmer waves.
+      noiseScale: 0.00095,
+      // Spring back to rest position for an ordered, satisfying motion.
+      spring: 0.030,
     };
-
-    function rebuildClusters() {
-      // Keep cluster count modest for performance + readability.
-      clusterTarget = window.innerWidth < 700 ? 10 : window.innerWidth < 1100 ? 13 : 16;
-      const max = Math.max(18, clusterTarget + 6);
-      clusterCount = clusterTarget;
-      clusterX = new Float32Array(max);
-      clusterY = new Float32Array(max);
-      clusterVX = new Float32Array(max);
-      clusterVY = new Float32Array(max);
-      clusterMass = new Float32Array(max);
-      clusterR = new Float32Array(max);
-
-      for (let i = 0; i < clusterCount; i++) {
-        clusterX[i] = Math.random() * width;
-        clusterY[i] = Math.random() * height;
-        clusterVX[i] = (Math.random() - 0.5) * 10;
-        clusterVY[i] = (Math.random() - 0.5) * 10;
-        clusterMass[i] = 1;
-        clusterR[i] = (window.innerWidth < 700 ? 150 : 200) + Math.random() * (window.innerWidth < 700 ? 80 : 120);
-      }
-    }
 
     const seed = (Date.now() ^ ((Math.random() * 2 ** 31) | 0)) | 0;
 
@@ -1417,8 +1384,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const g = [];
 
       // Two-scale noise helps form blob-like clouds with internal texture.
-      const baseScale1 = 0.0042;
-      const baseScale2 = 0.0105;
+      // Slightly adjusted to create more small groups + more empty space.
+      const baseScale1 = 0.0049;
+      const baseScale2 = 0.0125;
 
       for (let gy = 0; gy < rows; gy++) {
         const py0 = gy * dotStep + dotStep * 0.5;
@@ -1431,13 +1399,13 @@ document.addEventListener('DOMContentLoaded', () => {
           const n = n1 * 0.82 + n2 * 0.18;
 
           // Push towards clearer “cloud shapes”: more empty space + denser blobs.
-          const d = clamp((n - 0.48) / 0.52, 0, 1);
-          // Cloud-like clustering
-          const density = d * d * d;
+          const d = clamp((n - 0.52) / 0.48, 0, 1);
+          // Cloud-like clustering (less heavy than cube -> more small groups)
+          const density = d * d;
 
-          // Dropout probability: dense areas keep more particles
-          // Keep a bit more points overall (better readability/contrast)
-          if (hash2i(gx, gy, 97) > 0.24 + density * 0.76) continue;
+          // Dropout probability: dense areas keep more particles,
+          // but sparse areas are much emptier to create gaps between groups.
+          if (hash2i(gx, gy, 97) > 0.16 + density * 0.72) continue;
 
           const alphaJitter = 0.65 + hash2i(gx, gy, 33) * 0.55;
           const alpha = clamp((0.22 + density * 0.78) * alphaJitter, 0.20, 1.0);
@@ -1472,7 +1440,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const n = flowCols * flowRows;
       flowX = new Float32Array(n);
       flowY = new Float32Array(n);
-      flowCid = new Uint16Array(n);
     }
 
     function wrap01(v, max) {
@@ -1487,81 +1454,6 @@ document.addEventListener('DOMContentLoaded', () => {
       return cx + cy * flowCols;
     }
 
-    function ensureClusterCount() {
-      if (!clusterX) return;
-      // Refill clusters if merges reduced the count.
-      while (clusterCount < clusterTarget) {
-        const i = clusterCount++;
-        clusterX[i] = Math.random() * width;
-        clusterY[i] = Math.random() * height;
-        clusterVX[i] = (Math.random() - 0.5) * 8;
-        clusterVY[i] = (Math.random() - 0.5) * 8;
-        clusterMass[i] = 1;
-        clusterR[i] = (window.innerWidth < 700 ? 150 : 200) + Math.random() * (window.innerWidth < 700 ? 80 : 120);
-      }
-    }
-
-    function mergeClusters() {
-      if (clusterCount <= 1) return;
-      const mergeBase = window.innerWidth < 700 ? 120 : 150;
-
-      for (let i = 0; i < clusterCount; i++) {
-        for (let j = i + 1; j < clusterCount; j++) {
-          const dx = clusterX[j] - clusterX[i];
-          const dy = clusterY[j] - clusterY[i];
-          const dist2 = dx * dx + dy * dy;
-          const thresh = mergeBase + 0.22 * (clusterR[i] + clusterR[j]);
-          if (dist2 > thresh * thresh) continue;
-
-          // Merge j into i (weighted by mass), keep it smooth.
-          const mi = clusterMass[i];
-          const mj = clusterMass[j];
-          const m = mi + mj;
-          clusterX[i] = (clusterX[i] * mi + clusterX[j] * mj) / m;
-          clusterY[i] = (clusterY[i] * mi + clusterY[j] * mj) / m;
-          clusterVX[i] = (clusterVX[i] * mi + clusterVX[j] * mj) / m;
-          clusterVY[i] = (clusterVY[i] * mi + clusterVY[j] * mj) / m;
-          clusterMass[i] = m;
-          // Radius grows sublinearly so it stays pleasing.
-          clusterR[i] = Math.sqrt(clusterR[i] * clusterR[i] + clusterR[j] * clusterR[j]) * 0.85;
-
-          // Remove j by swapping in the last cluster.
-          const last = clusterCount - 1;
-          if (j !== last) {
-            clusterX[j] = clusterX[last];
-            clusterY[j] = clusterY[last];
-            clusterVX[j] = clusterVX[last];
-            clusterVY[j] = clusterVY[last];
-            clusterMass[j] = clusterMass[last];
-            clusterR[j] = clusterR[last];
-          }
-          clusterCount--;
-          j--;
-        }
-      }
-
-      // Optional: split very large merged clusters to keep variety.
-      const splitMass = 2.6;
-      for (let i = 0; i < clusterCount; i++) {
-        if (clusterMass[i] < splitMass) continue;
-        if (clusterCount >= clusterX.length) continue;
-
-        const j = clusterCount++;
-        const angle = hash2i(i, (clusterMass[i] * 997) | 0, 707) * Math.PI * 2;
-        const off = (window.innerWidth < 700 ? 70 : 90);
-        const ox = Math.cos(angle) * off;
-        const oy = Math.sin(angle) * off;
-        clusterX[j] = wrap01(clusterX[i] + ox, width);
-        clusterY[j] = wrap01(clusterY[i] + oy, height);
-        clusterVX[j] = clusterVX[i] * 0.7 + (Math.random() - 0.5) * 6;
-        clusterVY[j] = clusterVY[i] * 0.7 + (Math.random() - 0.5) * 6;
-
-        clusterMass[i] *= 0.55;
-        clusterMass[j] = clusterMass[i];
-        clusterR[j] = clusterR[i] * 0.85;
-      }
-    }
-
     function updateFlowField(time) {
       if (!flowX || !flowY) return;
 
@@ -1569,8 +1461,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const s = motion.noiseScale;
       const e = 0.35;
       // Slower drift for a more majestic feel.
-      const tx = time * 0.07;
-      const ty = time * 0.05;
+      const tx = time * 0.06;
+      const ty = time * 0.04;
 
       let idx = 0;
       for (let gy = 0; gy < flowRows; gy++) {
@@ -1595,42 +1487,8 @@ document.addEventListener('DOMContentLoaded', () => {
           vx /= len;
           vy /= len;
 
-          // Assign this cell to its nearest cluster => groups move in different directions.
-          let cid = 0;
-          let best = 1e30;
-          if (clusterCount > 0) {
-            for (let i = 0; i < clusterCount; i++) {
-              const ddx = clusterX[i] - px;
-              const ddy = clusterY[i] - py;
-              const d2 = ddx * ddx + ddy * ddy;
-              if (d2 < best) {
-                best = d2;
-                cid = i;
-              }
-            }
-          }
-          flowCid[idx] = cid;
-
-          // Blend curl direction with the cluster's own drift direction.
-          // This makes neighbouring groups diverge/converge more organically.
-          if (clusterCount > 0) {
-            const cvx0 = clusterVX[cid];
-            const cvy0 = clusterVY[cid];
-            const clen = Math.hypot(cvx0, cvy0);
-            if (clen > 0.01) {
-              const cxn = cvx0 / clen;
-              const cyn = cvy0 / clen;
-              const wdir = 0.22;
-              vx = vx * (1 - wdir) + cxn * wdir;
-              vy = vy * (1 - wdir) + cyn * wdir;
-              const l2 = Math.hypot(vx, vy) || 1;
-              vx /= l2;
-              vy /= l2;
-            }
-          }
-
-          // Magnitude shaped by noise + cluster mass (subtle).
-          const mag = (0.20 + 0.80 * fbm2(x + 11.7, y + 11.7)) * (1 + 0.06 * (clusterMass ? clusterMass[cid] : 0));
+          // Magnitude shaped by noise.
+          const mag = (0.18 + 0.82 * fbm2(x + 11.7, y + 11.7));
           flowX[idx] = vx * mag;
           flowY[idx] = vy * mag;
           idx++;
@@ -1652,7 +1510,6 @@ document.addEventListener('DOMContentLoaded', () => {
       buildVignette();
       rebuildParticles();
       rebuildFlowField();
-      rebuildClusters();
     }
 
     window.addEventListener('resize', resize, { passive: true });
@@ -1677,56 +1534,34 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!prefersReducedMotion) {
         updateFlowField(time);
 
-        // Move clusters through the flow field.
-        if (clusterCount > 0) {
-          const clusterDamping = Math.exp(-dt * 1.8);
-          const clusterAccel = 18; // px/s^2
-          const clusterMax = window.innerWidth < 700 ? 18 : 24; // px/s
-          for (let i = 0; i < clusterCount; i++) {
-            const idx = flowIndexFor(clusterX[i], clusterY[i]);
-            const ax = flowX[idx] * clusterAccel;
-            const ay = flowY[idx] * clusterAccel;
-            let vx = (clusterVX[i] + ax * dt) * clusterDamping;
-            let vy = (clusterVY[i] + ay * dt) * clusterDamping;
-            vx = clamp(vx, -clusterMax, clusterMax);
-            vy = clamp(vy, -clusterMax, clusterMax);
-            clusterVX[i] = vx;
-            clusterVY[i] = vy;
-            clusterX[i] = wrap01(clusterX[i] + vx * dt, width);
-            clusterY[i] = wrap01(clusterY[i] + vy * dt, height);
-          }
-
-          mergeClusters();
-          ensureClusterCount();
-        }
-
         const damping = Math.exp(-dt * 2.8);
         const flowAccel = window.innerWidth < 700 ? motion.accelMobile : motion.accelDesktop; // px/s^2
-        const maxVel = window.innerWidth < 700 ? 45 : 60; // px/s
+        const maxVel = window.innerWidth < 700 ? 28 : 38; // px/s
         const margin = dotStep * 3;
-        const cohesion = motion.cohesion;
+        const spring = motion.spring;
 
         for (let i = 0; i < particleCount; i++) {
-          const x = posX[i];
-          const y = posY[i];
+          let x = posX[i];
+          let y = posY[i];
+
+          // Safety: if anything goes NaN/Inf, reset the particle.
+          if (!Number.isFinite(x) || !Number.isFinite(y)) {
+            x = restX[i];
+            y = restY[i];
+            posX[i] = x;
+            posY[i] = y;
+            velX[i] = 0;
+            velY[i] = 0;
+          }
 
           const idx = flowIndexFor(x, y);
 
           let ax = flowX[idx] * flowAccel;
           let ay = flowY[idx] * flowAccel;
 
-          // Gentle cohesion towards the cluster assigned to this cell.
-          if (clusterCount > 0) {
-            const cid = flowCid[idx] | 0;
-            const dx = clusterX[cid] - x;
-            const dy = clusterY[cid] - y;
-            // Weight cohesion by distance to avoid collapsing into a single point.
-            const r = clusterR[cid] || 200;
-            const d2 = dx * dx + dy * dy;
-            const w = clamp(1 - d2 / (r * r), 0, 1);
-            ax += dx * (cohesion * w);
-            ay += dy * (cohesion * w);
-          }
+          // Gentle spring to the original layout keeps motion ordered and satisfying.
+          ax += (restX[i] - x) * spring;
+          ay += (restY[i] - y) * spring;
 
           let vx = (velX[i] + ax * dt) * damping;
           let vy = (velY[i] + ay * dt) * damping;
@@ -1779,7 +1614,8 @@ document.addEventListener('DOMContentLoaded', () => {
       // Pointer: keep it subtle + cheap (alpha boost only, no displacement/forces).
       const radius = window.innerWidth < 700 ? 160 : 230;
       const radius2 = radius * radius;
-      const repelAmp = window.innerWidth < 700 ? 5 : 7;
+      // Negative repulsion => attraction (tightening) towards the pointer.
+      const attractAmp = window.innerWidth < 700 ? 3.5 : 5.0;
 
       // Draw gray pixels
       // Brighten points and use additive blending for better contrast.
@@ -1802,7 +1638,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Hover color shift intensity (computed from same cheap distance check)
         let hover = 0;
 
-        // Subtle pointer highlight (cheap)
+        // Subtle pointer highlight + tightening (cheap)
         if (pointer.active && !prefersReducedMotion) {
           const dx = px - pointerSx;
           const dy = py - pointerSy;
@@ -1810,13 +1646,13 @@ document.addEventListener('DOMContentLoaded', () => {
           if (d2 < radius2) {
             const fall = 1 - d2 / radius2;
             const f2 = fall * fall;
-            vis += f2 * 0.10;
+            vis += f2 * 0.14;
             hover = f2;
 
-            // Tiny repulsion draw-offset (cheap): pushes dots away a bit.
+            // Tiny attraction draw-offset (cheap): pulls dots slightly towards the cursor.
             const inv = 1 / (Math.sqrt(d2) + 1e-3);
-            ox += dx * inv * (repelAmp * f2);
-            oy += dy * inv * (repelAmp * f2);
+            ox -= dx * inv * (attractAmp * f2);
+            oy -= dy * inv * (attractAmp * f2);
           }
         }
 
@@ -1869,8 +1705,8 @@ document.addEventListener('DOMContentLoaded', () => {
             hover = f2;
 
             const inv = 1 / (Math.sqrt(d2) + 1e-3);
-            ox += dx * inv * (repelAmp * f2);
-            oy += dy * inv * (repelAmp * f2);
+            ox -= dx * inv * (attractAmp * f2);
+            oy -= dy * inv * (attractAmp * f2);
           }
         }
 
