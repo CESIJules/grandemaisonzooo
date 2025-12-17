@@ -1316,16 +1316,16 @@ document.addEventListener('DOMContentLoaded', () => {
         return (total / maxValue) + 0.5; // Normalize to roughly 0..1
     }
 
-    // Mouse Interaction State
-    let mouseX = -1000;
-    let mouseY = -1000;
-    // Smooth mouse for trailing effect
-    let smX = -1000;
-    let smY = -1000;
+    // Mouse State for Parallax (Depth)
+    let mouseX = 0;
+    let mouseY = 0;
+    let targetMouseX = 0;
+    let targetMouseY = 0;
 
-    window.addEventListener('mousemove', e => {
-        mouseX = e.clientX;
-        mouseY = e.clientY;
+    window.addEventListener('mousemove', (e) => {
+        // Normalized -1 to 1
+        targetMouseX = (e.clientX / window.innerWidth) * 2 - 1;
+        targetMouseY = (e.clientY / window.innerHeight) * 2 - 1;
     }, { passive: true });
 
     function resize() {
@@ -1348,6 +1348,7 @@ document.addEventListener('DOMContentLoaded', () => {
       greenMap = new Uint8Array(count);
       
       for(let i=0; i<count; i++) {
+          // Bias towards center for dither? No, uniform is better for noise field.
           ditherMap[i] = Math.random();
           // 15% chance of being green
           greenMap[i] = Math.random() > 0.85 ? 1 : 0;
@@ -1358,8 +1359,7 @@ document.addEventListener('DOMContentLoaded', () => {
     resize();
 
     let time = 0;
-    let audioDataArray = new Uint8Array(16); // Reusable array for audio data
-
+    
     function frame() {
       if (!running) return;
       requestAnimationFrame(frame);
@@ -1368,123 +1368,83 @@ document.addEventListener('DOMContentLoaded', () => {
       // Clear
       ctx.clearRect(0, 0, width, height);
       
-      // --- 1. Audio Reactivity ---
-      let audioBoost = 0;
-      if (analyser && !audio.paused) {
-          // Check if we need to resize our temp array (rare)
-          if (audioDataArray.length !== analyser.frequencyBinCount) {
-              // Keep it small for performance, just grab what we need if possible, 
-              // but getByteFrequencyData requires matching size usually.
-              // Actually, let's just use a safe fixed size and hope the browser handles it, 
-              // or re-allocate if strictly needed. 
-              // For safety/perf, we'll just use the global buffer if available or allocate once.
-              if (analyser.frequencyBinCount > 0) {
-                  if (audioDataArray.length !== analyser.frequencyBinCount) {
-                       audioDataArray = new Uint8Array(analyser.frequencyBinCount);
-                  }
-                  analyser.getByteFrequencyData(audioDataArray);
-                  
-                  // Calculate Bass Energy (Low Frequencies)
-                  let sum = 0;
-                  // Focus on the first 10% of bins (Deep Bass)
-                  let bassCount = Math.floor(audioDataArray.length * 0.1) || 1;
-                  for(let k=0; k<bassCount; k++) sum += audioDataArray[k];
-                  audioBoost = (sum / bassCount) / 255; // Normalized 0.0 to 1.0
-                  
-                  // Apply a curve to make it punchy
-                  audioBoost = audioBoost * audioBoost; 
-              }
-          }
-      }
+      // Time evolution
+      time += 0.002; // Slow organic movement
 
-      // --- 2. Mouse Smoothing ---
-      // Lerp for smooth trail
-      smX += (mouseX - smX) * 0.1;
-      smY += (mouseY - smY) * 0.1;
-
-      // Time evolution (Speed up with music)
-      time += 0.002 + (audioBoost * 0.015); 
+      // Smooth Mouse for Parallax
+      mouseX += (targetMouseX - mouseX) * 0.05;
+      mouseY += (targetMouseY - mouseY) * 0.05;
 
       // Draw Grid
       let idx = 0;
       
-      // Constants
-      const scale = 0.0015; 
+      // Optimization: Pre-calculate constants
+      const scale = 0.0015; // Scale of the noise features (lower = bigger clouds)
       const warpScale = 0.002;
-      // Warp strength increases with music
-      const warpStrength = 2.0 + (audioBoost * 4.0); 
+      const warpStrength = 2.0;
       
-      // Pre-calculate mouse radius squared for perf
-      const mouseRadius = 250;
-      const mouseRadiusSq = mouseRadius * mouseRadius;
-
       for (let y = 0; y < rows; y++) {
           for (let x = 0; x < cols; x++) {
               const px = x * spacing;
               const py = y * spacing;
               
-              // --- 3. Mouse Interaction (Disturbance) ---
-              let mouseDisturbance = 0;
-              const dxM = px - smX;
-              const dyM = py - smY;
-              const distSq = dxM*dxM + dyM*dyM;
-              
-              if (distSq < mouseRadiusSq) {
-                  // Create a "hole" or "wave" around mouse
-                  const force = (1 - distSq / mouseRadiusSq);
-                  mouseDisturbance = force * 1.5;
-              }
-
-              // Domain Warping
+              // Domain Warping for "Fluid" look
               // 1. Base warp vector
               const qx = fbm(px * warpScale, py * warpScale, time);
               const qy = fbm(px * warpScale + 5.2, py * warpScale + 1.3, time);
               
               // 2. Displaced position
-              // Add mouse disturbance to the coordinate lookup -> creates "refraction" effect
-              const dx = px * scale + qx * warpStrength + mouseDisturbance * 0.2;
-              const dy = py * scale + qy * warpStrength + mouseDisturbance * 0.2;
+              const dx = px * scale + qx * warpStrength;
+              const dy = py * scale + qy * warpStrength;
               
-              // 3. Final noise value
-              // Green dots get a slightly different Z offset for Parallax/Depth effect
+              // 3. Final noise value with DEPTH
+              // We use the greenMap to determine the "layer"
               const isGreen = greenMap[idx];
-              const zOffset = isGreen ? 0.5 : 0.0; 
               
-              let n = fbm(dx, dy, (time * 0.5) + zOffset);
+              // Depth Offset:
+              // Green dots sample noise from a different Z-slice (time offset)
+              // AND we apply a slight parallax shift to the noise coordinates based on mouse
               
-              // Mouse "Flashlight": Increase density near mouse
-              n += mouseDisturbance * 0.3;
+              let depthZ = 0;
+              let parallaxX = 0;
+              let parallaxY = 0;
 
-              // Contrast / Threshold
+              if (isGreen) {
+                  depthZ = 0.8; // Green layer is "farther" in noise space (or just different)
+                  // Green layer moves slightly differently with mouse (Parallax)
+                  parallaxX = mouseX * 0.005; 
+                  parallaxY = mouseY * 0.005;
+              } else {
+                  depthZ = 0.0; // White layer
+                  // White layer is static or moves less
+                  parallaxX = mouseX * 0.001;
+                  parallaxY = mouseY * 0.001;
+              }
+
+              let n = fbm(dx + parallaxX, dy + parallaxY, (time * 0.5) + depthZ);
+              
+              // Contrast curve
               let density = (n - 0.35) * 2.5;
-              
-              // Audio "Flash": On strong beats, slightly lower threshold to reveal more dots
-              density += audioBoost * 0.2;
-
               if (density < 0) density = 0;
               if (density > 1) density = 1;
               
-              // Dithering check
+              // Dithering
               if (density > ditherMap[idx]) {
                   
                   ctx.beginPath();
-                  // Audio Reactivity: Dots get slightly larger on beat
-                  const r = dotRadius * (1 + audioBoost * 0.5);
-                  ctx.arc(px, py, r, 0, Math.PI * 2);
+                  ctx.arc(px, py, dotRadius, 0, Math.PI * 2);
                   
                   if (isGreen) {
-                      // Green dots are brighter and react more
-                      ctx.fillStyle = `rgba(0, 255, 104, ${0.8 + audioBoost * 0.2})`;
-                      
-                      // Glow on beat or high density
-                      if (density > 0.8 || audioBoost > 0.3) {
-                          ctx.shadowBlur = 4 + audioBoost * 10;
-                          ctx.shadowColor = 'rgba(0, 255, 104, 0.6)';
+                      ctx.fillStyle = 'rgba(0, 255, 104, 0.9)';
+                      // Occasional extra glow for green
+                      if (density > 0.8) {
+                          ctx.shadowBlur = 4;
+                          ctx.shadowColor = 'rgba(0, 255, 104, 0.5)';
                       } else {
                           ctx.shadowBlur = 0;
                       }
                   } else {
-                      // White dots
+                      // White/Grey
                       const alpha = Math.min(1, (density - ditherMap[idx]) * 4);
                       ctx.fillStyle = `rgba(248, 248, 248, ${alpha * 0.8})`;
                       ctx.shadowBlur = 0;
