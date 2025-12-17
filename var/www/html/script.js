@@ -1416,8 +1416,8 @@ document.addEventListener('DOMContentLoaded', () => {
               let density = (n - 0.35) * 2.5;
 
               // Add "Grain" (Temporal Noise)
-              // Adds a flickering static effect to the edges, simulating film grain/CCTV noise
-              density += (Math.random() - 0.5) * 0.15;
+              // Reduced significantly to avoid eye strain (0.02 instead of 0.15)
+              density += (Math.random() - 0.5) * 0.02;
 
               if (density < 0) density = 0;
               if (density > 1) density = 1;
@@ -1458,8 +1458,8 @@ document.addEventListener('DOMContentLoaded', () => {
                   } else {
                       // Background Layer (Low Parallax)
                       // Grey, fading out based on density
-                      // Sharper alpha fade (* 8 instead of * 4) for crunchier edges
-                      const alpha = Math.min(1, (density - ditherMap[idx]) * 8);
+                      // Softer alpha fade (* 4.5) for less harshness
+                      const alpha = Math.min(1, (density - ditherMap[idx]) * 4.5);
                       // Use a cool grey
                       ctx.fillStyle = `rgba(180, 184, 190, ${alpha * 0.5})`;
                       ctx.shadowBlur = 0;
