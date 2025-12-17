@@ -1237,6 +1237,17 @@ document.addEventListener('DOMContentLoaded', () => {
     let ditherMap = new Float32Array(0);
     let greenMap = new Uint8Array(0);
 
+    // Mouse tracking
+    let mouseX = 0;
+    let mouseY = 0;
+    let targetMouseX = 0;
+    let targetMouseY = 0;
+
+    window.addEventListener('mousemove', (e) => {
+        targetMouseX = (e.clientX / window.innerWidth) * 2 - 1;
+        targetMouseY = (e.clientY / window.innerHeight) * 2 - 1;
+    });
+
     // --- Simplex Noise 3D Setup ---
     // A fast, compact implementation for organic textures
     const perm = new Uint8Array(512);
@@ -1316,18 +1327,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return (total / maxValue) + 0.5; // Normalize to roughly 0..1
     }
 
-    // Mouse State for Parallax (Depth)
-    let mouseX = 0;
-    let mouseY = 0;
-    let targetMouseX = 0;
-    let targetMouseY = 0;
-
-    window.addEventListener('mousemove', (e) => {
-        // Normalized -1 to 1
-        targetMouseX = (e.clientX / window.innerWidth) * 2 - 1;
-        targetMouseY = (e.clientY / window.innerHeight) * 2 - 1;
-    }, { passive: true });
-
     function resize() {
       width = window.innerWidth;
       height = window.innerHeight;
@@ -1371,24 +1370,35 @@ document.addEventListener('DOMContentLoaded', () => {
       // Time evolution
       time += 0.002; // Slow organic movement
 
-      // Smooth Mouse for Parallax
+      // Smooth mouse
       mouseX += (targetMouseX - mouseX) * 0.05;
       mouseY += (targetMouseY - mouseY) * 0.05;
+
+      // Parallax Offsets
+      const pX = -mouseX * 25; 
+      const pY = -mouseY * 25;
 
       // Draw Grid
       let idx = 0;
       
       // Optimization: Pre-calculate constants
-      const scale = 0.0015; // Scale of the noise features (lower = bigger clouds)
+      const scale = 0.0015; 
       const warpScale = 0.002;
       const warpStrength = 2.0;
       
+      // Mouse Repulsion Center
+      const mx = (targetMouseX + 1) / 2 * width;
+      const my = (targetMouseY + 1) / 2 * height;
+
       for (let y = 0; y < rows; y++) {
           for (let x = 0; x < cols; x++) {
               const px = x * spacing;
               const py = y * spacing;
               
               // Domain Warping for "Fluid" look
+              // q = fbm(p)
+              // r = fbm(p + q)
+              
               // 1. Base warp vector
               const qx = fbm(px * warpScale, py * warpScale, time);
               const qy = fbm(px * warpScale + 5.2, py * warpScale + 1.3, time);
@@ -1397,42 +1407,53 @@ document.addEventListener('DOMContentLoaded', () => {
               const dx = px * scale + qx * warpStrength;
               const dy = py * scale + qy * warpStrength;
               
-              // 3. Final noise value with DEPTH
-              // We use the greenMap to determine the "layer"
-              const isGreen = greenMap[idx];
+              // 3. Final noise value
+              let n = fbm(dx, dy, time * 0.5);
               
-              // Depth Offset:
-              // Green dots sample noise from a different Z-slice (time offset)
-              // AND we apply a slight parallax shift to the noise coordinates based on mouse
+              // Contrast curve to create empty spaces and dense clusters
+              // Map 0..1 to a sharper curve
+              // n < 0.4 -> 0 (Empty space)
+              // n > 0.4 -> Gradient
               
-              let depthZ = 0;
-              let parallaxX = 0;
-              let parallaxY = 0;
-
-              if (isGreen) {
-                  depthZ = 0.8; // Green layer is "farther" in noise space (or just different)
-                  // Green layer moves slightly differently with mouse (Parallax)
-                  parallaxX = mouseX * 0.005; 
-                  parallaxY = mouseY * 0.005;
-              } else {
-                  depthZ = 0.0; // White layer
-                  // White layer is static or moves less
-                  parallaxX = mouseX * 0.001;
-                  parallaxY = mouseY * 0.001;
-              }
-
-              let n = fbm(dx + parallaxX, dy + parallaxY, (time * 0.5) + depthZ);
-              
-              // Contrast curve
+              // Remap: (n - threshold) * gain
               let density = (n - 0.35) * 2.5;
               if (density < 0) density = 0;
               if (density > 1) density = 1;
               
-              // Dithering
+              // Dithering:
+              // If density is 0.5, we want 50% of pixels to show.
+              // We compare density against the stable random value for this pixel.
               if (density > ditherMap[idx]) {
+                  const isGreen = greenMap[idx];
                   
+                  let drawX = px;
+                  let drawY = py;
+
+                  // Apply Parallax
+                  if (isGreen) {
+                      drawX += pX * 1.5;
+                      drawY += pY * 1.5;
+                  } else {
+                      drawX += pX * 0.5;
+                      drawY += pY * 0.5;
+                  }
+
+                  // Mouse Repulsion (Displacement ONLY)
+                  const distX = drawX - mx;
+                  const distY = drawY - my;
+                  const distSq = distX*distX + distY*distY;
+                  
+                  if (distSq < 20000) { 
+                      const dist = Math.sqrt(distSq);
+                      const force = (1 - dist / 140);
+                      const push = force * 30;
+                      const angle = Math.atan2(distY, distX);
+                      drawX += Math.cos(angle) * push;
+                      drawY += Math.sin(angle) * push;
+                  }
+
                   ctx.beginPath();
-                  ctx.arc(px, py, dotRadius, 0, Math.PI * 2);
+                  ctx.arc(drawX, drawY, dotRadius, 0, Math.PI * 2);
                   
                   if (isGreen) {
                       ctx.fillStyle = 'rgba(0, 255, 104, 0.9)';
@@ -1445,6 +1466,9 @@ document.addEventListener('DOMContentLoaded', () => {
                       }
                   } else {
                       // White/Grey
+                      // Alpha based on how much we exceeded the threshold (soft edges)
+                      // or just solid for crisp pixel look.
+                      // Let's do slight alpha for smoother fade-in
                       const alpha = Math.min(1, (density - ditherMap[idx]) * 4);
                       ctx.fillStyle = `rgba(248, 248, 248, ${alpha * 0.8})`;
                       ctx.shadowBlur = 0;
