@@ -1220,194 +1220,100 @@ document.addEventListener('DOMContentLoaded', () => {
     const ctx = asciiCanvas.getContext('2d', { alpha: true, desynchronized: true });
     if (!ctx) return;
 
-    const prefersReducedMotion =
-      window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    const pointer = {
-      x: -1e9,
-      y: -1e9,
-      active: false,
-    };
-
-    // Smoothed pointer
-    let pointerSx = -1e9;
-    let pointerSy = -1e9;
-
     let width = 0;
     let height = 0;
     let dpr = 1;
     let running = true;
 
-    let particleCount = 0;
+    // Grid configuration
+    // Smaller spacing = more points = more "screen" look
+    const spacing = 11; 
+    const dotRadius = 1.5;
     
-    // Particle State
-    let posX, posY;
-    let velX, velY;
-    let targetRelX, targetRelY; // Relative target position in cluster
-    let clusterIdx; // Uint8
-    let baseAlpha;
-    let twinkleMask;
-    let isGreen;
+    let cols = 0;
+    let rows = 0;
+    
+    // Stable random values for dithering (avoids "static noise" flickering)
+    let ditherMap = new Float32Array(0);
+    let greenMap = new Uint8Array(0);
 
-    // Clusters
-    let clusters = [];
-    const numClusters = 15; // More small groups
-
-    let vignetteGradient = null;
-
-    // Motion constants
-    const motion = {
-      friction: 0.94,
-      spring: 0.03,
-      noiseScale: 0.001
-    };
-
-    const seed = (Date.now() ^ ((Math.random() * 2 ** 31) | 0)) | 0;
-
-    const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
-    const lerp = (a, b, t) => a + (b - a) * t;
-
-    function hash2i(xi, yi, salt = 0) {
-      let h = seed ^ salt;
-      h ^= Math.imul(xi, 374761393);
-      h ^= Math.imul(yi, 668265263);
-      h = (h ^ (h >>> 13)) | 0;
-      h = Math.imul(h, 1274126177);
-      h ^= h >>> 16;
-      return (h >>> 0) / 4294967296;
-    }
-
-    // Simple noise for movement
-    function noise2(x, y) {
-      const xi = Math.floor(x);
-      const yi = Math.floor(y);
-      const xf = x - xi;
-      const yf = y - yi;
-      const u = xf * xf * (3 - 2 * xf);
-      const v = yf * yf * (3 - 2 * yf);
-      const n00 = hash2i(xi, yi, 11);
-      const n10 = hash2i(xi + 1, yi, 11);
-      const n01 = hash2i(xi, yi + 1, 11);
-      const n11 = hash2i(xi + 1, yi + 1, 11);
-      return lerp(lerp(n00, n10, u), lerp(n01, n11, u), v);
-    }
-
-    let lastPointerUpdate = 0;
-    const updatePointer = (e) => {
-      const now = performance.now();
-      if (now - lastPointerUpdate < 32) return;
-      lastPointerUpdate = now;
-      pointer.x = e.clientX;
-      pointer.y = e.clientY;
-      pointer.active = true;
-    };
-
-    window.addEventListener('pointermove', updatePointer, { passive: true });
-    window.addEventListener('pointerdown', updatePointer, { passive: true });
-    window.addEventListener('pointerup', () => { pointer.active = false; }, { passive: true });
-    window.addEventListener('blur', () => { pointer.active = false; pointer.x = -1e9; pointer.y = -1e9; });
-    document.addEventListener('mouseleave', () => { pointer.active = false; pointer.x = -1e9; pointer.y = -1e9; });
-
-    function buildVignette() {
-      vignetteGradient = ctx.createRadialGradient(
-        width * 0.5, height * 0.5, Math.min(width, height) * 0.10,
-        width * 0.5, height * 0.5, Math.max(width, height) * 0.85
-      );
-      vignetteGradient.addColorStop(0.0, 'rgba(0,0,0,0.00)');
-      vignetteGradient.addColorStop(0.70, 'rgba(0,0,0,0.12)');
-      vignetteGradient.addColorStop(1.0, 'rgba(0,0,0,0.48)');
-    }
-
-    function initClusters() {
-        clusters = [];
-        for(let i=0; i<numClusters; i++) {
-            clusters.push({
-                x: Math.random() * width,
-                y: Math.random() * height,
-                vx: (Math.random() - 0.5) * 1.5,
-                vy: (Math.random() - 0.5) * 1.5,
-                // Types: 0:Grid, 1:Circle, 2:Cross, 3:Random Cloud, 4:Ring
-                type: Math.floor(Math.random() * 5), 
-                size: 60 + Math.random() * 100,
-                angle: Math.random() * Math.PI * 2,
-                vAngle: (Math.random() - 0.5) * 0.01
-            });
+    // --- Simplex Noise 3D Setup ---
+    // A fast, compact implementation for organic textures
+    const perm = new Uint8Array(512);
+    const grad3 = new Float32Array(512 * 3);
+    
+    function seedNoise() {
+        for(let i=0; i<256; i++) perm[i] = i;
+        for(let i=0; i<256; i++) {
+            const r = (Math.random()*256)|0;
+            const t = perm[i]; perm[i] = perm[r]; perm[r] = t;
+        }
+        for(let i=0; i<256; i++) {
+            perm[i+256] = perm[i];
+            // Random gradients
+            let theta = Math.random() * 2 * Math.PI;
+            let phi = Math.random() * Math.PI;
+            grad3[i*3] = Math.sin(phi) * Math.cos(theta);
+            grad3[i*3+1] = Math.sin(phi) * Math.sin(theta);
+            grad3[i*3+2] = Math.cos(phi);
+        }
+        // Replicate gradients
+        for(let i=256; i<512; i++) {
+            grad3[i*3] = grad3[(i-256)*3];
+            grad3[i*3+1] = grad3[(i-256)*3+1];
+            grad3[i*3+2] = grad3[(i-256)*3+2];
         }
     }
+    seedNoise();
 
-    function rebuildParticles() {
-      // Total particles
-      const particlesPerCluster = window.innerWidth < 700 ? 40 : 80;
-      const total = numClusters * particlesPerCluster;
-      
-      particleCount = total;
-      posX = new Float32Array(total);
-      posY = new Float32Array(total);
-      velX = new Float32Array(total);
-      velY = new Float32Array(total);
-      targetRelX = new Float32Array(total);
-      targetRelY = new Float32Array(total);
-      clusterIdx = new Uint8Array(total);
-      baseAlpha = new Float32Array(total);
-      twinkleMask = new Float32Array(total);
-      isGreen = new Uint8Array(total);
+    // Linear interpolation
+    const lerp = (a, b, t) => a + t * (b - a);
+    // Smoothstep
+    const fade = (t) => t * t * t * (t * (t * 6 - 15) + 10);
 
-      let idx = 0;
-      for(let c=0; c<numClusters; c++) {
-          const cluster = clusters[c];
-          const type = cluster.type;
-          const size = cluster.size;
-          
-          for(let p=0; p<particlesPerCluster; p++) {
-              let rx, ry;
-              
-              // Shape generation logic
-              if (type === 0) { // Grid / Square
-                  rx = (Math.random() - 0.5) * size * 2;
-                  ry = (Math.random() - 0.5) * size * 2;
-                  // Snap to grid
-                  const step = 20;
-                  rx = Math.round(rx / step) * step;
-                  ry = Math.round(ry / step) * step;
-              } else if (type === 1) { // Filled Circle
-                  const r = Math.sqrt(Math.random()) * size;
-                  const theta = Math.random() * Math.PI * 2;
-                  rx = Math.cos(theta) * r;
-                  ry = Math.sin(theta) * r;
-              } else if (type === 2) { // Cross
-                  if (Math.random() > 0.5) {
-                      rx = (Math.random() - 0.5) * size * 2;
-                      ry = (Math.random() - 0.5) * 20; // Thin
-                  } else {
-                      rx = (Math.random() - 0.5) * 20; // Thin
-                      ry = (Math.random() - 0.5) * size * 2;
-                  }
-              } else if (type === 3) { // Random Cloud
-                  rx = (Math.random() - 0.5) * size * 2;
-                  ry = (Math.random() - 0.5) * size * 2;
-              } else { // Ring
-                  const r = size * (0.8 + Math.random() * 0.2);
-                  const theta = Math.random() * Math.PI * 2;
-                  rx = Math.cos(theta) * r;
-                  ry = Math.sin(theta) * r;
-              }
+    // 3D Perlin Noise
+    function noise3(x, y, z) {
+        const X = Math.floor(x) & 255;
+        const Y = Math.floor(y) & 255;
+        const Z = Math.floor(z) & 255;
+        
+        x -= Math.floor(x);
+        y -= Math.floor(y);
+        z -= Math.floor(z);
+        
+        const u = fade(x);
+        const v = fade(y);
+        const w = fade(z);
+        
+        const A = perm[X]+Y, AA = perm[A]+Z, AB = perm[A+1]+Z;
+        const B = perm[X+1]+Y, BA = perm[B]+Z, BB = perm[B+1]+Z;
 
-              // Initial position (explode from center or random)
-              posX[idx] = cluster.x + rx;
-              posY[idx] = cluster.y + ry;
-              
-              targetRelX[idx] = rx;
-              targetRelY[idx] = ry;
-              clusterIdx[idx] = c;
-              
-              baseAlpha[idx] = 0.3 + Math.random() * 0.7;
-              twinkleMask[idx] = Math.random();
-              // 10% chance of being green
-              isGreen[idx] = Math.random() > 0.9 ? 1 : 0;
-              
-              idx++;
-          }
-      }
+        const dot = (idx, x, y, z) => {
+            return grad3[idx*3]*x + grad3[idx*3+1]*y + grad3[idx*3+2]*z;
+        };
+
+        return lerp(
+            lerp(lerp(dot(AA, x, y, z), dot(BA, x-1, y, z), u),
+                 lerp(dot(AB, x, y-1, z), dot(BB, x-1, y-1, z), u), v),
+            lerp(lerp(dot(AA+1, x, y, z-1), dot(BA+1, x-1, y, z-1), u),
+                 lerp(dot(AB+1, x, y-1, z-1), dot(BB+1, x-1, y-1, z-1), u), v),
+            w
+        );
+    }
+
+    // Fractal Brownian Motion (FBM) for cloud details
+    function fbm(x, y, z) {
+        let total = 0;
+        let amplitude = 0.5;
+        let frequency = 1.0;
+        let maxValue = 0;  // Used for normalizing result to 0.0 - 1.0
+        for(let i=0; i<3; i++) {
+            total += noise3(x * frequency, y * frequency, z * frequency) * amplitude;
+            maxValue += amplitude;
+            amplitude *= 0.5;
+            frequency *= 2.0;
+        }
+        return (total / maxValue) + 0.5; // Normalize to roughly 0..1
     }
 
     function resize() {
@@ -1421,136 +1327,114 @@ document.addEventListener('DOMContentLoaded', () => {
       asciiCanvas.style.height = `${height}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      buildVignette();
-      initClusters();
-      rebuildParticles();
+      cols = Math.ceil(width / spacing);
+      rows = Math.ceil(height / spacing);
+      
+      // Re-init dither map
+      const count = cols * rows;
+      ditherMap = new Float32Array(count);
+      greenMap = new Uint8Array(count);
+      
+      for(let i=0; i<count; i++) {
+          // Bias towards center for dither? No, uniform is better for noise field.
+          ditherMap[i] = Math.random();
+          // 15% chance of being green
+          greenMap[i] = Math.random() > 0.85 ? 1 : 0;
+      }
     }
 
     window.addEventListener('resize', resize, { passive: true });
     resize();
 
-    let lastT = 0;
-    function frame(t) {
+    let time = 0;
+    
+    function frame() {
       if (!running) return;
       requestAnimationFrame(frame);
       if (document.hidden) return;
 
-      const dt = clamp(((t - lastT) || 16.7) / 1000, 0.001, 0.033);
-      lastT = t;
-
-      ctx.globalCompositeOperation = 'source-over';
+      // Clear
       ctx.clearRect(0, 0, width, height);
-
-      // Update Clusters
-      if (!prefersReducedMotion) {
-          for(let i=0; i<numClusters; i++) {
-              const c = clusters[i];
-              
-              // Wander
-              c.vx += (Math.random() - 0.5) * 0.5;
-              c.vy += (Math.random() - 0.5) * 0.5;
-              
-              // Dampen
-              c.vx *= 0.98;
-              c.vy *= 0.98;
-              
-              // Move
-              c.x += c.vx;
-              c.y += c.vy;
-              
-              // Rotate
-              c.angle += c.vAngle;
-              
-              // Bounce
-              if (c.x < -100) c.x = width + 100;
-              if (c.x > width + 100) c.x = -100;
-              if (c.y < -100) c.y = height + 100;
-              if (c.y > height + 100) c.y = -100;
-          }
-      }
-
-      // Update Particles
-      const spring = motion.spring;
-      const friction = motion.friction;
       
-      // Pointer interaction
-      if (pointer.active) {
-        pointerSx = lerp(pointerSx, pointer.x, 0.1);
-        pointerSy = lerp(pointerSy, pointer.y, 0.1);
-      }
+      // Time evolution
+      time += 0.002; // Slow organic movement
 
-      ctx.globalCompositeOperation = 'lighter';
+      // Draw Grid
+      let idx = 0;
+      
+      // Optimization: Pre-calculate constants
+      const scale = 0.0015; // Scale of the noise features (lower = bigger clouds)
+      const warpScale = 0.002;
+      const warpStrength = 2.0;
+      
+      // Pointer interaction (subtle repulsion)
+      // We don't have pointer tracking in this scope anymore, but we can add it back if needed.
+      // For now, pure organic flow as requested.
 
-      for (let i = 0; i < particleCount; i++) {
-          const c = clusters[clusterIdx[i]];
-          
-          // Calculate target position based on cluster pos + rotated offset
-          const cosA = Math.cos(c.angle);
-          const sinA = Math.sin(c.angle);
-          
-          const rx = targetRelX[i];
-          const ry = targetRelY[i];
-          
-          // Rotated offset
-          const rotX = rx * cosA - ry * sinA;
-          const rotY = rx * sinA + ry * cosA;
-          
-          const tx = c.x + rotX;
-          const ty = c.y + rotY;
-          
-          // Physics
-          if (!prefersReducedMotion) {
-              const dx = tx - posX[i];
-              const dy = ty - posY[i];
+      for (let y = 0; y < rows; y++) {
+          for (let x = 0; x < cols; x++) {
+              const px = x * spacing;
+              const py = y * spacing;
               
-              velX[i] += dx * spring;
-              velY[i] += dy * spring;
+              // Domain Warping for "Fluid" look
+              // q = fbm(p)
+              // r = fbm(p + q)
               
-              // Noise / Flow
-              const n = noise2(posX[i] * 0.002, posY[i] * 0.002 + t * 0.0001);
-              velX[i] += Math.cos(n * Math.PI * 2) * 0.2;
-              velY[i] += Math.sin(n * Math.PI * 2) * 0.2;
-
-              // Pointer Repulsion/Attraction
-              if (pointer.active) {
-                  const pdx = posX[i] - pointerSx;
-                  const pdy = posY[i] - pointerSy;
-                  const distSq = pdx*pdx + pdy*pdy;
-                  if (distSq < 20000) {
-                      const dist = Math.sqrt(distSq);
-                      const force = (20000 - distSq) / 20000;
-                      // Repel slightly to disrupt shapes
-                      velX[i] += (pdx / dist) * force * 2.0;
-                      velY[i] += (pdy / dist) * force * 2.0;
+              // 1. Base warp vector
+              const qx = fbm(px * warpScale, py * warpScale, time);
+              const qy = fbm(px * warpScale + 5.2, py * warpScale + 1.3, time);
+              
+              // 2. Displaced position
+              const dx = px * scale + qx * warpStrength;
+              const dy = py * scale + qy * warpStrength;
+              
+              // 3. Final noise value
+              let n = fbm(dx, dy, time * 0.5);
+              
+              // Contrast curve to create empty spaces and dense clusters
+              // Map 0..1 to a sharper curve
+              // n < 0.4 -> 0 (Empty space)
+              // n > 0.4 -> Gradient
+              
+              // Remap: (n - threshold) * gain
+              let density = (n - 0.35) * 2.5;
+              if (density < 0) density = 0;
+              if (density > 1) density = 1;
+              
+              // Dithering:
+              // If density is 0.5, we want 50% of pixels to show.
+              // We compare density against the stable random value for this pixel.
+              if (density > ditherMap[idx]) {
+                  const isGreen = greenMap[idx];
+                  
+                  ctx.beginPath();
+                  ctx.arc(px, py, dotRadius, 0, Math.PI * 2);
+                  
+                  if (isGreen) {
+                      ctx.fillStyle = 'rgba(0, 255, 104, 0.9)';
+                      // Occasional extra glow for green
+                      if (density > 0.8) {
+                          ctx.shadowBlur = 4;
+                          ctx.shadowColor = 'rgba(0, 255, 104, 0.5)';
+                      } else {
+                          ctx.shadowBlur = 0;
+                      }
+                  } else {
+                      // White/Grey
+                      // Alpha based on how much we exceeded the threshold (soft edges)
+                      // or just solid for crisp pixel look.
+                      // Let's do slight alpha for smoother fade-in
+                      const alpha = Math.min(1, (density - ditherMap[idx]) * 4);
+                      ctx.fillStyle = `rgba(248, 248, 248, ${alpha * 0.8})`;
+                      ctx.shadowBlur = 0;
                   }
+                  
+                  ctx.fill();
               }
-
-              velX[i] *= friction;
-              velY[i] *= friction;
               
-              posX[i] += velX[i];
-              posY[i] += velY[i];
-          } else {
-              posX[i] = tx;
-              posY[i] = ty;
+              idx++;
           }
-
-          // Draw
-          const alpha = baseAlpha[i] * (0.7 + 0.3 * Math.sin(t * 0.002 + twinkleMask[i] * 10));
-          
-          ctx.fillStyle = isGreen[i] ? 'rgb(0, 255, 104)' : 'rgb(248, 248, 248)';
-          ctx.globalAlpha = alpha;
-          
-          ctx.beginPath();
-          ctx.arc(posX[i], posY[i], isGreen[i] ? 2.5 : 1.5, 0, Math.PI * 2);
-          ctx.fill();
       }
-
-      // Vignette
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = vignetteGradient;
-      ctx.fillRect(0, 0, width, height);
     }
 
     requestAnimationFrame(frame);
