@@ -1229,7 +1229,7 @@ document.addEventListener('DOMContentLoaded', () => {
       active: false,
     };
 
-    // Smoothed pointer to avoid harsh, jittery interactions.
+    // Smoothed pointer
     let pointerSx = -1e9;
     let pointerSy = -1e9;
 
@@ -1239,36 +1239,27 @@ document.addEventListener('DOMContentLoaded', () => {
     let running = true;
 
     let particleCount = 0;
-    let restX;
-    let restY;
-    let posX;
-    let posY;
-    let velX;
-    let velY;
+    
+    // Particle State
+    let posX, posY;
+    let velX, velY;
+    let targetRelX, targetRelY; // Relative target position in cluster
+    let clusterIdx; // Uint8
     let baseAlpha;
     let twinkleMask;
     let isGreen;
 
-    let dotStep = 12;
-    let dotSize = 6;
+    // Clusters
+    let clusters = [];
+    const numClusters = 15; // More small groups
+
     let vignetteGradient = null;
 
-    // Low-res flow field for organic, wave-like motion.
-    let flowCell = 70;
-    let flowCols = 0;
-    let flowRows = 0;
-    let flowX;
-    let flowY;
-
-    // Motion tuning (keep minimal + local)
+    // Motion constants
     const motion = {
-      // Slow & subtle defaults
-      accelDesktop: 22,
-      accelMobile: 18,
-      // Higher => smaller features. Lower => bigger, calmer waves.
-      noiseScale: 0.00095,
-      // Spring back to rest position for an ordered, satisfying motion.
-      spring: 0.030,
+      friction: 0.94,
+      spring: 0.03,
+      noiseScale: 0.001
     };
 
     const seed = (Date.now() ^ ((Math.random() * 2 ** 31) | 0)) | 0;
@@ -1286,6 +1277,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return (h >>> 0) / 4294967296;
     }
 
+    // Simple noise for movement
     function noise2(x, y) {
       const xi = Math.floor(x);
       const yi = Math.floor(y);
@@ -1300,35 +1292,9 @@ document.addEventListener('DOMContentLoaded', () => {
       return lerp(lerp(n00, n10, u), lerp(n01, n11, u), v);
     }
 
-    function fbm(x, y) {
-      let value = 0;
-      let amp = 0.55;
-      let freq = 1;
-      for (let i = 0; i < 3; i++) {
-        value += noise2(x * freq, y * freq) * amp;
-        freq *= 2;
-        amp *= 0.5;
-      }
-      return value;
-    }
-
-    // Cheaper FBM for per-frame use (keeps performance when particle count goes up).
-    function fbm2(x, y) {
-      let value = 0;
-      let amp = 0.65;
-      let freq = 1;
-      for (let i = 0; i < 2; i++) {
-        value += noise2(x * freq, y * freq) * amp;
-        freq *= 2;
-        amp *= 0.5;
-      }
-      return value;
-    }
-
     let lastPointerUpdate = 0;
     const updatePointer = (e) => {
       const now = performance.now();
-      // Throttle pointer events (helps on low-end machines)
       if (now - lastPointerUpdate < 32) return;
       lastPointerUpdate = now;
       pointer.x = e.clientX;
@@ -1338,159 +1304,109 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('pointermove', updatePointer, { passive: true });
     window.addEventListener('pointerdown', updatePointer, { passive: true });
-    window.addEventListener('pointerup', () => {
-      pointer.active = false;
-    }, { passive: true });
-    window.addEventListener('blur', () => {
-      pointer.active = false;
-      pointer.x = -1e9;
-      pointer.y = -1e9;
-    });
-    document.addEventListener('mouseleave', () => {
-      pointer.active = false;
-      pointer.x = -1e9;
-      pointer.y = -1e9;
-    });
+    window.addEventListener('pointerup', () => { pointer.active = false; }, { passive: true });
+    window.addEventListener('blur', () => { pointer.active = false; pointer.x = -1e9; pointer.y = -1e9; });
+    document.addEventListener('mouseleave', () => { pointer.active = false; pointer.x = -1e9; pointer.y = -1e9; });
 
     function buildVignette() {
-      // Soft vignette (avoid visible rings / “discs”)
       vignetteGradient = ctx.createRadialGradient(
-        width * 0.5,
-        height * 0.5,
-        Math.min(width, height) * 0.10,
-        width * 0.5,
-        height * 0.5,
-        Math.max(width, height) * 0.85
+        width * 0.5, height * 0.5, Math.min(width, height) * 0.10,
+        width * 0.5, height * 0.5, Math.max(width, height) * 0.85
       );
       vignetteGradient.addColorStop(0.0, 'rgba(0,0,0,0.00)');
       vignetteGradient.addColorStop(0.70, 'rgba(0,0,0,0.12)');
       vignetteGradient.addColorStop(1.0, 'rgba(0,0,0,0.48)');
     }
 
-    function rebuildParticles() {
-      // Reduced density: larger steps for fewer, more distinct points
-      dotStep = window.innerWidth < 700 ? 18 : window.innerWidth < 1100 ? 15 : 13;
-      // Radius for circles (small dots)
-      dotSize = Math.max(1.5, Math.round(dotStep * 0.12));
-
-      const cols = Math.ceil(width / dotStep);
-      const rows = Math.ceil(height / dotStep);
-
-      const rx = [];
-      const ry = [];
-      const a0 = [];
-      const tw = [];
-      const g = [];
-
-      // Two-scale noise helps form blob-like clouds with internal texture.
-      // Slightly adjusted to create more small groups + more empty space.
-      const baseScale1 = 0.0049;
-      const baseScale2 = 0.0125;
-
-      for (let gy = 0; gy < rows; gy++) {
-        const py0 = gy * dotStep + dotStep * 0.5;
-        for (let gx = 0; gx < cols; gx++) {
-          const px0 = gx * dotStep + dotStep * 0.5;
-
-          // Density field without radial masks
-          const n1 = fbm(px0 * baseScale1, py0 * baseScale1);
-          const n2 = fbm(px0 * baseScale2 + 10.0, py0 * baseScale2 + 10.0);
-          const n = n1 * 0.82 + n2 * 0.18;
-
-          // Stricter threshold for clearer separation between groups (more empty space)
-          const d = clamp((n - 0.55) / 0.45, 0, 1);
-          // Sharper falloff for distinct clusters
-          const density = d * d * d;
-
-          // Higher dropout to reduce stray points and clean up the "network" look
-          if (hash2i(gx, gy, 97) > 0.10 + density * 0.80) continue;
-
-          const alphaJitter = 0.65 + hash2i(gx, gy, 33) * 0.55;
-          const alpha = clamp((0.22 + density * 0.78) * alphaJitter, 0.20, 1.0);
-
-          const tintNoise = fbm(px0 * 0.004 + 200, py0 * 0.004 + 200);
-          const green = tintNoise > 0.62 && density > 0.20;
-
-          rx.push(px0);
-          ry.push(py0);
-          a0.push(alpha);
-          tw.push(hash2i(gx, gy, 123));
-          g.push(green ? 1 : 0);
+    function initClusters() {
+        clusters = [];
+        for(let i=0; i<numClusters; i++) {
+            clusters.push({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                vx: (Math.random() - 0.5) * 1.5,
+                vy: (Math.random() - 0.5) * 1.5,
+                // Types: 0:Grid, 1:Circle, 2:Cross, 3:Random Cloud, 4:Ring
+                type: Math.floor(Math.random() * 5), 
+                size: 60 + Math.random() * 100,
+                angle: Math.random() * Math.PI * 2,
+                vAngle: (Math.random() - 0.5) * 0.01
+            });
         }
-      }
-
-      particleCount = rx.length;
-      restX = Float32Array.from(rx);
-      restY = Float32Array.from(ry);
-      posX = Float32Array.from(rx);
-      posY = Float32Array.from(ry);
-      velX = new Float32Array(particleCount);
-      velY = new Float32Array(particleCount);
-      baseAlpha = Float32Array.from(a0);
-      twinkleMask = Float32Array.from(tw);
-      isGreen = Uint8Array.from(g);
     }
 
-    function rebuildFlowField() {
-      flowCell = window.innerWidth < 700 ? 84 : window.innerWidth < 1100 ? 76 : 70;
-      flowCols = Math.ceil(width / flowCell) + 1;
-      flowRows = Math.ceil(height / flowCell) + 1;
-      const n = flowCols * flowRows;
-      flowX = new Float32Array(n);
-      flowY = new Float32Array(n);
-    }
-
-    function wrap01(v, max) {
-      if (v < 0) return v + max;
-      if (v > max) return v - max;
-      return v;
-    }
-
-    function flowIndexFor(x, y) {
-      const cx = clamp((x / flowCell) | 0, 0, flowCols - 1);
-      const cy = clamp((y / flowCell) | 0, 0, flowRows - 1);
-      return cx + cy * flowCols;
-    }
-
-    function updateFlowField(time) {
-      if (!flowX || !flowY) return;
-
-      // Noise scale is in "pixel-space" => small values.
-      const s = motion.noiseScale;
-      const e = 0.35;
-      // Slower drift for a more majestic feel.
-      const tx = time * 0.06;
-      const ty = time * 0.04;
+    function rebuildParticles() {
+      // Total particles
+      const particlesPerCluster = window.innerWidth < 700 ? 40 : 80;
+      const total = numClusters * particlesPerCluster;
+      
+      particleCount = total;
+      posX = new Float32Array(total);
+      posY = new Float32Array(total);
+      velX = new Float32Array(total);
+      velY = new Float32Array(total);
+      targetRelX = new Float32Array(total);
+      targetRelY = new Float32Array(total);
+      clusterIdx = new Uint8Array(total);
+      baseAlpha = new Float32Array(total);
+      twinkleMask = new Float32Array(total);
+      isGreen = new Uint8Array(total);
 
       let idx = 0;
-      for (let gy = 0; gy < flowRows; gy++) {
-        const py = gy * flowCell;
-        for (let gx = 0; gx < flowCols; gx++) {
-          const px = gx * flowCell;
+      for(let c=0; c<numClusters; c++) {
+          const cluster = clusters[c];
+          const type = cluster.type;
+          const size = cluster.size;
+          
+          for(let p=0; p<particlesPerCluster; p++) {
+              let rx, ry;
+              
+              // Shape generation logic
+              if (type === 0) { // Grid / Square
+                  rx = (Math.random() - 0.5) * size * 2;
+                  ry = (Math.random() - 0.5) * size * 2;
+                  // Snap to grid
+                  const step = 20;
+                  rx = Math.round(rx / step) * step;
+                  ry = Math.round(ry / step) * step;
+              } else if (type === 1) { // Filled Circle
+                  const r = Math.sqrt(Math.random()) * size;
+                  const theta = Math.random() * Math.PI * 2;
+                  rx = Math.cos(theta) * r;
+                  ry = Math.sin(theta) * r;
+              } else if (type === 2) { // Cross
+                  if (Math.random() > 0.5) {
+                      rx = (Math.random() - 0.5) * size * 2;
+                      ry = (Math.random() - 0.5) * 20; // Thin
+                  } else {
+                      rx = (Math.random() - 0.5) * 20; // Thin
+                      ry = (Math.random() - 0.5) * size * 2;
+                  }
+              } else if (type === 3) { // Random Cloud
+                  rx = (Math.random() - 0.5) * size * 2;
+                  ry = (Math.random() - 0.5) * size * 2;
+              } else { // Ring
+                  const r = size * (0.8 + Math.random() * 0.2);
+                  const theta = Math.random() * Math.PI * 2;
+                  rx = Math.cos(theta) * r;
+                  ry = Math.sin(theta) * r;
+              }
 
-          const x = px * s + tx;
-          const y = py * s + ty;
-
-          // Curl noise (approx): v = (dn/dy, -dn/dx)
-          const n1 = noise2(x, y + e);
-          const n2 = noise2(x, y - e);
-          const a = (n1 - n2) / (2 * e);
-          const n3 = noise2(x + e, y);
-          const n4 = noise2(x - e, y);
-          const b = (n3 - n4) / (2 * e);
-
-          let vx = a;
-          let vy = -b;
-          const len = Math.hypot(vx, vy) || 1;
-          vx /= len;
-          vy /= len;
-
-          // Magnitude shaped by noise.
-          const mag = (0.18 + 0.82 * fbm2(x + 11.7, y + 11.7));
-          flowX[idx] = vx * mag;
-          flowY[idx] = vy * mag;
-          idx++;
-        }
+              // Initial position (explode from center or random)
+              posX[idx] = cluster.x + rx;
+              posY[idx] = cluster.y + ry;
+              
+              targetRelX[idx] = rx;
+              targetRelY[idx] = ry;
+              clusterIdx[idx] = c;
+              
+              baseAlpha[idx] = 0.3 + Math.random() * 0.7;
+              twinkleMask[idx] = Math.random();
+              // 10% chance of being green
+              isGreen[idx] = Math.random() > 0.9 ? 1 : 0;
+              
+              idx++;
+          }
       }
     }
 
@@ -1506,8 +1422,8 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       buildVignette();
+      initClusters();
       rebuildParticles();
-      rebuildFlowField();
     }
 
     window.addEventListener('resize', resize, { passive: true });
@@ -1523,211 +1439,115 @@ document.addEventListener('DOMContentLoaded', () => {
       lastT = t;
 
       ctx.globalCompositeOperation = 'source-over';
-      ctx.globalAlpha = 1;
       ctx.clearRect(0, 0, width, height);
 
-      const time = t * 0.001;
-
-      // Update flow field and advect particles.
+      // Update Clusters
       if (!prefersReducedMotion) {
-        updateFlowField(time);
-
-        const damping = Math.exp(-dt * 2.8);
-        const flowAccel = window.innerWidth < 700 ? motion.accelMobile : motion.accelDesktop; // px/s^2
-        const maxVel = window.innerWidth < 700 ? 28 : 38; // px/s
-        const margin = dotStep * 3;
-        const spring = motion.spring;
-
-        for (let i = 0; i < particleCount; i++) {
-          let x = posX[i];
-          let y = posY[i];
-
-          // Safety: if anything goes NaN/Inf, reset the particle.
-          if (!Number.isFinite(x) || !Number.isFinite(y)) {
-            x = restX[i];
-            y = restY[i];
-            posX[i] = x;
-            posY[i] = y;
-            velX[i] = 0;
-            velY[i] = 0;
+          for(let i=0; i<numClusters; i++) {
+              const c = clusters[i];
+              
+              // Wander
+              c.vx += (Math.random() - 0.5) * 0.5;
+              c.vy += (Math.random() - 0.5) * 0.5;
+              
+              // Dampen
+              c.vx *= 0.98;
+              c.vy *= 0.98;
+              
+              // Move
+              c.x += c.vx;
+              c.y += c.vy;
+              
+              // Rotate
+              c.angle += c.vAngle;
+              
+              // Bounce
+              if (c.x < -100) c.x = width + 100;
+              if (c.x > width + 100) c.x = -100;
+              if (c.y < -100) c.y = height + 100;
+              if (c.y > height + 100) c.y = -100;
           }
-
-          const idx = flowIndexFor(x, y);
-
-          let ax = flowX[idx] * flowAccel;
-          let ay = flowY[idx] * flowAccel;
-
-          // Gentle spring to the original layout keeps motion ordered and satisfying.
-          ax += (restX[i] - x) * spring;
-          ay += (restY[i] - y) * spring;
-
-          let vx = (velX[i] + ax * dt) * damping;
-          let vy = (velY[i] + ay * dt) * damping;
-          vx = clamp(vx, -maxVel, maxVel);
-          vy = clamp(vy, -maxVel, maxVel);
-          velX[i] = vx;
-          velY[i] = vy;
-
-          let nx = x + vx * dt;
-          let ny = y + vy * dt;
-
-          // Wrap around for continuous motion.
-          if (nx < -margin) nx += width + margin * 2;
-          else if (nx > width + margin) nx -= width + margin * 2;
-          if (ny < -margin) ny += height + margin * 2;
-          else if (ny > height + margin) ny -= height + margin * 2;
-
-          posX[i] = nx;
-          posY[i] = ny;
-        }
-      } else {
-        // Reduced motion: keep static distribution.
-        if (posX && posY && restX && restY) {
-          for (let i = 0; i < particleCount; i++) {
-            posX[i] = restX[i];
-            posY[i] = restY[i];
-          }
-        }
       }
 
-      // Twinkle and drifting “cloud intensity” (so clusters shift over time)
-      const twinkleGlobal = 0.85 + 0.15 * ((Math.sin(time * 0.6) + 1) * 0.5);
-      // Lower frequency (bigger blobs) + slower drift => more coherent “clouds”.
-      const cloudScale = 0.0024;
-      // A bit faster so the motion is clearly visible.
-      const cloudX = time * 0.10;
-      const cloudY = time * 0.07;
-
-      // Smooth pointer towards target (frame-rate independent)
-      const pointerFollow = 1 - Math.exp(-dt * 18);
+      // Update Particles
+      const spring = motion.spring;
+      const friction = motion.friction;
+      
+      // Pointer interaction
       if (pointer.active) {
-        pointerSx = lerp(pointerSx, pointer.x, pointerFollow);
-        pointerSy = lerp(pointerSy, pointer.y, pointerFollow);
-      } else {
-        // Ease out when leaving
-        pointerSx = lerp(pointerSx, -1e9, pointerFollow);
-        pointerSy = lerp(pointerSy, -1e9, pointerFollow);
+        pointerSx = lerp(pointerSx, pointer.x, 0.1);
+        pointerSy = lerp(pointerSy, pointer.y, 0.1);
       }
 
-      // Pointer: keep it subtle + cheap (alpha boost only, no displacement/forces).
-      const radius = window.innerWidth < 700 ? 160 : 230;
-      const radius2 = radius * radius;
-      // Negative repulsion => attraction (tightening) towards the pointer.
-      const attractAmp = window.innerWidth < 700 ? 3.5 : 5.0;
-
-      // Draw gray pixels
-      // Brighten points and use additive blending for better contrast.
       ctx.globalCompositeOperation = 'lighter';
-      ctx.fillStyle = 'rgb(248,248,248)';
+
       for (let i = 0; i < particleCount; i++) {
-        if (isGreen[i]) continue;
-        const px = posX[i];
-        const py = posY[i];
-        const c = fbm2(px * cloudScale + cloudX, py * cloudScale + cloudY);
+          const c = clusters[clusterIdx[i]];
+          
+          // Calculate target position based on cluster pos + rotated offset
+          const cosA = Math.cos(c.angle);
+          const sinA = Math.sin(c.angle);
+          
+          const rx = targetRelX[i];
+          const ry = targetRelY[i];
+          
+          // Rotated offset
+          const rotX = rx * cosA - ry * sinA;
+          const rotY = rx * sinA + ry * cosA;
+          
+          const tx = c.x + rotX;
+          const ty = c.y + rotY;
+          
+          // Physics
+          if (!prefersReducedMotion) {
+              const dx = tx - posX[i];
+              const dy = ty - posY[i];
+              
+              velX[i] += dx * spring;
+              velY[i] += dy * spring;
+              
+              // Noise / Flow
+              const n = noise2(posX[i] * 0.002, posY[i] * 0.002 + t * 0.0001);
+              velX[i] += Math.cos(n * Math.PI * 2) * 0.2;
+              velY[i] += Math.sin(n * Math.PI * 2) * 0.2;
 
-        let ox = 0;
-        let oy = 0;
+              // Pointer Repulsion/Attraction
+              if (pointer.active) {
+                  const pdx = posX[i] - pointerSx;
+                  const pdy = posY[i] - pointerSy;
+                  const distSq = pdx*pdx + pdy*pdy;
+                  if (distSq < 20000) {
+                      const dist = Math.sqrt(distSq);
+                      const force = (20000 - distSq) / 20000;
+                      // Repel slightly to disrupt shapes
+                      velX[i] += (pdx / dist) * force * 2.0;
+                      velY[i] += (pdy / dist) * force * 2.0;
+                  }
+              }
 
-        // Cloud visibility mask (keep baseline high so points stay readable)
-        let cloud = clamp((c - 0.30) / 0.70, 0, 1);
-        cloud = cloud * cloud;
-        let vis = 0.55 + 0.45 * cloud;
-
-        // Hover color shift intensity (computed from same cheap distance check)
-        let hover = 0;
-
-        // Subtle pointer highlight + tightening (cheap)
-        if (pointer.active && !prefersReducedMotion) {
-          const dx = px - pointerSx;
-          const dy = py - pointerSy;
-          const d2 = dx * dx + dy * dy;
-          if (d2 < radius2) {
-            const fall = 1 - d2 / radius2;
-            const f2 = fall * fall;
-            vis += f2 * 0.14;
-            hover = f2;
-
-            // Tiny attraction draw-offset (cheap): pulls dots slightly towards the cursor.
-            const inv = 1 / (Math.sqrt(d2) + 1e-3);
-            ox -= dx * inv * (attractAmp * f2);
-            oy -= dy * inv * (attractAmp * f2);
+              velX[i] *= friction;
+              velY[i] *= friction;
+              
+              posX[i] += velX[i];
+              posY[i] += velY[i];
+          } else {
+              posX[i] = tx;
+              posY[i] = ty;
           }
-        }
 
-        const drawX = px + ox;
-        const drawY = py + oy;
-
-        const aWhite = baseAlpha[i] * vis * (0.82 + 0.18 * twinkleGlobal * twinkleMask[i]);
-        ctx.globalAlpha = aWhite;
-        ctx.beginPath();
-        ctx.arc(drawX, drawY, dotSize, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Visible but still subtle color shift near the pointer.
-        if (hover > 0) {
-          ctx.fillStyle = 'rgb(0,255,104)';
-          ctx.globalAlpha = baseAlpha[i] * (0.22 * hover);
+          // Draw
+          const alpha = baseAlpha[i] * (0.7 + 0.3 * Math.sin(t * 0.002 + twinkleMask[i] * 10));
+          
+          ctx.fillStyle = isGreen[i] ? 'rgb(0, 255, 104)' : 'rgb(248, 248, 248)';
+          ctx.globalAlpha = alpha;
+          
           ctx.beginPath();
-          ctx.arc(drawX, drawY, dotSize, 0, Math.PI * 2);
+          ctx.arc(posX[i], posY[i], isGreen[i] ? 2.5 : 1.5, 0, Math.PI * 2);
           ctx.fill();
-          ctx.fillStyle = 'rgb(248,248,248)';
-        }
       }
 
-      // Draw green pixels (site neon green)
-      ctx.fillStyle = 'rgb(0,255,104)';
-      for (let i = 0; i < particleCount; i++) {
-        if (!isGreen[i]) continue;
-        const px = posX[i];
-        const py = posY[i];
-        const c = fbm2(px * cloudScale + cloudX + 2.0, py * cloudScale + cloudY + 2.0);
-
-        let ox = 0;
-        let oy = 0;
-
-        let cloud = clamp((c - 0.32) / 0.68, 0, 1);
-        cloud = cloud * cloud;
-        let vis = 0.52 + 0.48 * cloud;
-
-        let hover = 0;
-
-        if (pointer.active && !prefersReducedMotion) {
-          const dx = px - pointerSx;
-          const dy = py - pointerSy;
-          const d2 = dx * dx + dy * dy;
-          if (d2 < radius2) {
-            const fall = 1 - d2 / radius2;
-            const f2 = fall * fall;
-            vis += f2 * 0.08;
-            hover = f2;
-
-            const inv = 1 / (Math.sqrt(d2) + 1e-3);
-            ox -= dx * inv * (attractAmp * f2);
-            oy -= dy * inv * (attractAmp * f2);
-          }
-        }
-
-        const drawX = px + ox;
-        const drawY = py + oy;
-
-        ctx.globalAlpha = baseAlpha[i] * vis * (0.80 + 0.20 * twinkleGlobal * twinkleMask[i]);
-        ctx.beginPath();
-        ctx.arc(drawX, drawY, dotSize, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Slight extra glow on hovered greens (kept subtle)
-        if (hover > 0) {
-          ctx.globalAlpha = baseAlpha[i] * (0.10 * hover);
-          ctx.beginPath();
-          ctx.arc(drawX, drawY, dotSize, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-
-      // Back to normal blending for overlays/UI.
+      // Vignette
       ctx.globalCompositeOperation = 'source-over';
-
-      // Vignette overlay
       ctx.globalAlpha = 1;
       ctx.fillStyle = vignetteGradient;
       ctx.fillRect(0, 0, width, height);
