@@ -1414,6 +1414,11 @@ document.addEventListener('DOMContentLoaded', () => {
               
               // Remap: (n - threshold) * gain
               let density = (n - 0.35) * 2.5;
+
+              // Add "Grain" (Temporal Noise)
+              // Adds a flickering static effect to the edges, simulating film grain/CCTV noise
+              density += (Math.random() - 0.5) * 0.15;
+
               if (density < 0) density = 0;
               if (density > 1) density = 1;
               
@@ -1435,7 +1440,8 @@ document.addEventListener('DOMContentLoaded', () => {
                   drawY += pY * depthFactor;
 
                   ctx.beginPath();
-                  ctx.arc(drawX, drawY, dotRadius, 0, Math.PI * 2);
+                  // Draw slightly smaller, sharper points for a more "pixel" look
+                  ctx.arc(drawX, drawY, dotRadius * 0.9, 0, Math.PI * 2);
                   
                   if (isGreen) {
                       // Foreground Layer (High Parallax)
@@ -1452,7 +1458,8 @@ document.addEventListener('DOMContentLoaded', () => {
                   } else {
                       // Background Layer (Low Parallax)
                       // Grey, fading out based on density
-                      const alpha = Math.min(1, (density - ditherMap[idx]) * 4);
+                      // Sharper alpha fade (* 8 instead of * 4) for crunchier edges
+                      const alpha = Math.min(1, (density - ditherMap[idx]) * 8);
                       // Use a cool grey
                       ctx.fillStyle = `rgba(180, 184, 190, ${alpha * 0.5})`;
                       ctx.shadowBlur = 0;
