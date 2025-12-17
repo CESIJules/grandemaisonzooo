@@ -1386,10 +1386,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const warpScale = 0.002;
       const warpStrength = 2.0;
       
-      // Mouse Repulsion Center
-      const mx = (targetMouseX + 1) / 2 * width;
-      const my = (targetMouseY + 1) / 2 * height;
-
       for (let y = 0; y < rows; y++) {
           for (let x = 0; x < cols; x++) {
               const px = x * spacing;
@@ -1436,20 +1432,6 @@ document.addEventListener('DOMContentLoaded', () => {
                   } else {
                       drawX += pX * 0.5;
                       drawY += pY * 0.5;
-                  }
-
-                  // Mouse Repulsion (Displacement ONLY)
-                  const distX = drawX - mx;
-                  const distY = drawY - my;
-                  const distSq = distX*distX + distY*distY;
-                  
-                  if (distSq < 20000) { 
-                      const dist = Math.sqrt(distSq);
-                      const force = (1 - dist / 140);
-                      const push = force * 30;
-                      const angle = Math.atan2(distY, distX);
-                      drawX += Math.cos(angle) * push;
-                      drawY += Math.sin(angle) * push;
                   }
 
                   ctx.beginPath();
