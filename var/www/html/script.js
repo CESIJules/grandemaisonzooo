@@ -1349,8 +1349,8 @@ document.addEventListener('DOMContentLoaded', () => {
       for(let i=0; i<count; i++) {
           // Bias towards center for dither? No, uniform is better for noise field.
           ditherMap[i] = Math.random();
-          // 15% chance of being green
-          greenMap[i] = Math.random() > 0.85 ? 1 : 0;
+          // Increased to ~25% chance of being highlight (white)
+          greenMap[i] = Math.random() > 0.75 ? 1 : 0;
       }
     }
 
