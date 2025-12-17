@@ -1375,8 +1375,9 @@ document.addEventListener('DOMContentLoaded', () => {
       mouseY += (targetMouseY - mouseY) * 0.05;
 
       // Parallax Offsets
-      const pX = -mouseX * 25; 
-      const pY = -mouseY * 25;
+      // Reduced strength for subtlety
+      const pX = -mouseX * 8; 
+      const pY = -mouseY * 8;
 
       // Draw Grid
       let idx = 0;
@@ -1425,14 +1426,13 @@ document.addEventListener('DOMContentLoaded', () => {
                   let drawX = px;
                   let drawY = py;
 
-                  // Apply Parallax
-                  if (isGreen) {
-                      drawX += pX * 1.5;
-                      drawY += pY * 1.5;
-                  } else {
-                      drawX += pX * 0.5;
-                      drawY += pY * 0.5;
-                  }
+                  // Apply Parallax based on Noise (Structure)
+                  // This gives volume to the clouds: denser areas move slightly more
+                  // n is roughly 0.35 to 1.0 here
+                  const depthFactor = 0.5 + (n * 0.5); 
+                  
+                  drawX += pX * depthFactor;
+                  drawY += pY * depthFactor;
 
                   ctx.beginPath();
                   ctx.arc(drawX, drawY, dotRadius, 0, Math.PI * 2);
