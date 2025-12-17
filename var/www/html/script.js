@@ -1438,21 +1438,23 @@ document.addEventListener('DOMContentLoaded', () => {
                   ctx.arc(drawX, drawY, dotRadius, 0, Math.PI * 2);
                   
                   if (isGreen) {
-                      ctx.fillStyle = 'rgba(0, 255, 104, 0.9)';
-                      // Occasional extra glow for green
-                      if (density > 0.8) {
-                          ctx.shadowBlur = 4;
-                          ctx.shadowColor = 'rgba(0, 255, 104, 0.5)';
+                      // Foreground Layer (High Parallax)
+                      // Bright white/silver for a "stardust" look
+                      ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+                      
+                      // Subtle glow for the densest points
+                      if (density > 0.85) {
+                          ctx.shadowBlur = 3;
+                          ctx.shadowColor = 'rgba(255, 255, 255, 0.4)';
                       } else {
                           ctx.shadowBlur = 0;
                       }
                   } else {
-                      // White/Grey
-                      // Alpha based on how much we exceeded the threshold (soft edges)
-                      // or just solid for crisp pixel look.
-                      // Let's do slight alpha for smoother fade-in
+                      // Background Layer (Low Parallax)
+                      // Grey, fading out based on density
                       const alpha = Math.min(1, (density - ditherMap[idx]) * 4);
-                      ctx.fillStyle = `rgba(248, 248, 248, ${alpha * 0.8})`;
+                      // Use a cool grey
+                      ctx.fillStyle = `rgba(180, 184, 190, ${alpha * 0.5})`;
                       ctx.shadowBlur = 0;
                   }
                   
