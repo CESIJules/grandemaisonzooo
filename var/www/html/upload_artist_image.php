@@ -31,7 +31,8 @@ if ($_FILES['image']['error'] !== UPLOAD_ERR_OK) {
 
 $target_dir = __DIR__ . "/images/";
 if (!file_exists($target_dir)) {
-    if (!mkdir($target_dir, 0777, true)) {
+    // Utilisation de permissions plus restrictives (0755)
+    if (!mkdir($target_dir, 0755, true)) {
         echo json_encode(['status' => 'error', 'message' => 'Failed to create images directory']);
         exit;
     }
@@ -39,23 +40,45 @@ if (!file_exists($target_dir)) {
 
 // Ensure writable
 if (!is_writable($target_dir)) {
-    @chmod($target_dir, 0777);
+    // Tentative de correction des permissions (0755 au lieu de 0777)
+    @chmod($target_dir, 0755);
     if (!is_writable($target_dir)) {
         echo json_encode(['status' => 'error', 'message' => 'Images directory is not writable. Check permissions for: ' . $target_dir]);
         exit;
     }
 }
 
-$file_extension = strtolower(pathinfo($_FILES["image"]["name"], PATHINFO_EXTENSION));
-$new_filename = uniqid('artist_') . '.' . $file_extension;
+// Vérification du type MIME réel
+$finfo = new finfo(FILEINFO_MIME_TYPE);
+$mime_type = $finfo->file($_FILES['image']['tmp_name']);
+
+$allowed_mimes = [
+    'image/jpeg' => 'jpg',
+    'image/png' => 'png',
+    'image/gif' => 'gif',
+    'image/webp' => 'webp'
+];
+
+if (!array_key_exists($mime_type, $allowed_mimes)) {
+    echo json_encode(['status' => 'error', 'message' => 'Type de fichier invalide (MIME). Seules les images sont autorisées.']);
+    exit;
+}
+
+// Force l'extension basée sur le type MIME détecté
+$safe_extension = $allowed_mimes[$mime_type];
+$new_filename = uniqid('artist_') . '.' . $safe_extension;
 $target_file = $target_dir . $new_filename;
 $relative_path = "images/" . $new_filename;
 
+// (Suppression de la vérification d'extension obsolète car nous utilisons le type MIME)
+/*
+$file_extension = strtolower(pathinfo($_FILES["image"]["name"], PATHINFO_EXTENSION));
 $allowed_types = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
 if (!in_array($file_extension, $allowed_types)) {
     echo json_encode(['status' => 'error', 'message' => 'Type de fichier invalide. Extensions acceptées : jpg, jpeg, png, gif, webp.']);
     exit;
 }
+*/
 
 if (move_uploaded_file($_FILES["image"]["tmp_name"], $target_file)) {
     echo json_encode(['status' => 'success', 'filepath' => $relative_path]);
