@@ -48,20 +48,31 @@ try {
         }
 
         if (!file_exists($upload_dir)) {
-            mkdir($upload_dir, 0777, true);
+            mkdir($upload_dir, 0755, true);
         }
 
         $tmp_name = $_FILES['image']['tmp_name'];
-        $file_extension = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
         
-        $allowed_types = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-        if (!in_array($file_extension, $allowed_types)) {
+        // Vérification du type MIME réel
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $mime_type = $finfo->file($tmp_name);
+
+        $allowed_mimes = [
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/gif' => 'gif',
+            'image/webp' => 'webp'
+        ];
+
+        if (!array_key_exists($mime_type, $allowed_mimes)) {
             http_response_code(400);
-            echo json_encode(['status' => 'error', 'message' => 'Type de fichier image non valide. Extensions acceptées : jpg, jpeg, png, gif, webp.']);
+            echo json_encode(['status' => 'error', 'message' => 'Type de fichier invalide (MIME). Seules les images sont autorisées.']);
             exit;
         }
 
-        $new_filename = uniqid('post_', true) . '.' . $file_extension;
+        // Force l'extension basée sur le type MIME détecté
+        $safe_extension = $allowed_mimes[$mime_type];
+        $new_filename = uniqid('post_', true) . '.' . $safe_extension;
         $destination = $upload_dir . $new_filename;
 
         if (move_uploaded_file($tmp_name, $destination)) {

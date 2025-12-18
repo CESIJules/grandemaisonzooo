@@ -5,8 +5,17 @@ header('Content-Type: application/json');
 $data = json_decode(file_get_contents('php://input'), true);
 $password = $data['password'] ?? '';
 
-// Mot de passe défini (hashé)
-$VALID_PASSWORD_HASH = '$6$Dxjpn28p42w8MgFv$nFfQL0BbyMAWRMoMlhDelTMLpefa4BUZxIKBWdMKTIvxsqQyRusda5lUXy9QM3WXGjM61zZXPbLi8QMhY6XNz.';
+// Chargement de la configuration depuis le fichier externe
+$configPath = __DIR__ . '/home/config.php';
+if (file_exists($configPath)) {
+    $config = require $configPath;
+    $VALID_PASSWORD_HASH = $config['admin_password_hash'];
+} else {
+    // Fallback sécurisé ou erreur si le fichier de config est absent
+    http_response_code(500);
+    echo json_encode(['status' => 'error', 'message' => 'Configuration introuvable']);
+    exit;
+}
 
 if (password_verify($password, $VALID_PASSWORD_HASH)) {
     $_SESSION['logged_in'] = true;
