@@ -6,7 +6,8 @@ $data = json_decode(file_get_contents('php://input'), true);
 $password = $data['password'] ?? '';
 
 // Chargement de la configuration depuis le fichier externe
-$configPath = __DIR__ . '/home/config.php';
+// Le fichier est situé dans le dossier home à la racine du projet
+$configPath = __DIR__ . '/../../../home/config.php';
 if (file_exists($configPath)) {
     $config = require $configPath;
     $VALID_PASSWORD_HASH = $config['admin_password_hash'];
