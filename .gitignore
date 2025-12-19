@@ -1,0 +1,93 @@
+##########################################################
+# IGNORE TOUT PAR DÉFAUT
+###########################################################
+/*
+
+###########################################################
+# EXCEPTIONS (whitelist)
+###########################################################
+
+############# /var #############
+!/var/
+/var/*
+
+!/var/www/
+!/var/www/html/
+# Ignorer le repo interne du site
+/var/www/html/.git
+/var/www/html/.git/**
+# Suivre tous les fichiers du site
+!/var/www/html/**
+# APRÈS l'inclusion, exclure les fichiers spécifiques
+/var/www/html/vid/
+/var/www/html/music_metadata.json
+/var/www/html/track_info.json
+/var/www/html/artists_profiles.json
+/var/www/html/introboucle_old.mp4
+
+############# /home #############
+!/home/
+/home/*
+
+# Autoriser /home/radio
+!/home/radio/
+/home/radio/*
+
+# Suivre les fichiers .liq et playlist
+!/home/radio/radio.liq
+!/home/radio/metadata.liq
+!/home/radio/playlist.m3u
+
+# Suivre seulement le DOSSIER musique (pas les mp3)
+!/home/radio/musique/
+/home/radio/musique/*
+
+############# /etc #############
+!/etc/
+/etc/*
+
+# ---- systemd ----
+!/etc/systemd/
+/etc/systemd/*
+
+!/etc/systemd/system/
+/etc/systemd/system/*
+
+# Suivre liquidsoap + icecast2 service
+!/etc/systemd/system/liquidsoap.service
+!/etc/systemd/system/liquidsoap@.service
+!/etc/systemd/system/liquidsoap.service.d/
+/etc/systemd/system/liquidsoap.service.d/*
+!/etc/systemd/system/liquidsoap.service.d/**
+!/etc/systemd/system/icecast2.service
+
+# ---- icecast2 ----
+!/etc/icecast2/
+/etc/icecast2/*
+
+# Suivre icecast.xml seulement
+!/etc/icecast2/icecast.xml
+
+# Ne PAS suivre admin/ ni web/
+/etc/icecast2/admin/
+/etc/icecast2/web/
+
+# ---- default ----
+!/etc/default/
+/etc/default/*
+!/etc/default/icecast2
+
+# ---- NGINX ----
+!/etc/nginx/
+/etc/nginx/*
+
+# nginx.conf
+!/etc/nginx/nginx.conf
+
+# sites-available + sites-enabled + conf.d
+!/etc/nginx/sites-available/
+!/etc/nginx/sites-available/**
+!/etc/nginx/sites-enabled/
+!/etc/nginx/sites-enabled/**
+!/etc/nginx/conf.d/
+!/etc/nginx/conf.d/**
