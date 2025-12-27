@@ -615,6 +615,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                 posts = posts.filter(post => post.artist && post.artist.toLowerCase() === artistFilter.toLowerCase());
             }
 
+            // Filter for Artist Role: Only show their own posts
+            if (currentUser && currentUser.role === 'artist') {
+                const userArtistId = currentUser.artist_id.toLowerCase().replace(/\s/g, '');
+                // Try to find artist name from profile to match against legacy posts
+                const artistProfile = artistProfiles.find(p => p.id === currentUser.artist_id);
+                const userArtistName = artistProfile ? artistProfile.name.toLowerCase().replace(/\s/g, '') : '';
+
+                posts = posts.filter(post => {
+                    const postArtist = post.artist ? post.artist.toLowerCase().replace(/\s/g, '') : '';
+                    return postArtist === userArtistId || postArtist === userArtistName;
+                });
+            }
+
             if (posts.length === 0) {
                 postsManagementContainer.innerHTML = '<p>Aucun post à gérer.</p>';
                 return;
@@ -1118,6 +1131,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (artistProfiles.length === 0) {
             artistsManagementContainer.innerHTML = '<p>Aucun profil artiste.</p>';
             return;
+        }
+
+        // If user is artist, don't show the list, just show the edit form for themselves directly
+        if (currentUser && currentUser.role === 'artist') {
+            const myProfile = artistProfiles.find(a => a.id === currentUser.artist_id);
+            if (myProfile) {
+                // Auto-trigger edit mode
+                editArtistProfile(myProfile.id);
+                // Hide the container that would show the list
+                artistsManagementContainer.style.display = 'none';
+                // Change the header text to be more relevant
+                const header = document.querySelector('#artists h2');
+                if (header) header.textContent = 'Mon Profil';
+                return;
+            }
         }
 
         const table = document.createElement('table');
