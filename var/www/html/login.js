@@ -21,8 +21,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await response.json();
 
       if (response.ok && data.status === 'success') {
-        // Redirection vers la page d'administration
-        window.location.href = 'admin.html';
+        // Attendre un court instant pour s'assurer que le cookie est bien défini
+        setTimeout(() => {
+            window.location.href = 'admin.html';
+        }, 100);
       } else {
         loginMessage.textContent = 'Mot de passe incorrect.';
         loginMessage.style.color = 'red';

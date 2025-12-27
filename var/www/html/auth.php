@@ -1,4 +1,13 @@
 <?php
+// Configuration des cookies de session pour éviter les problèmes de domaine/path
+session_set_cookie_params([
+    'lifetime' => 86400,
+    'path' => '/',
+    'domain' => '', // Laisser vide pour le domaine courant
+    'secure' => false, // Mettre à true si HTTPS
+    'httponly' => true,
+    'samesite' => 'Lax'
+]);
 session_start();
 header('Content-Type: application/json');
 
