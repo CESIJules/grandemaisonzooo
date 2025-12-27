@@ -3,26 +3,30 @@ session_start();
 header('Content-Type: application/json');
 
 $data = json_decode(file_get_contents('php://input'), true);
+$username = $data['username'] ?? '';
 $password = $data['password'] ?? '';
 
-// Chargement de la configuration depuis le fichier externe
-// Le fichier est situé dans le dossier home à la racine du projet
-$configPath = __DIR__ . '/../../../home/config.php';
-if (file_exists($configPath)) {
-    $config = require $configPath;
-    $VALID_PASSWORD_HASH = $config['admin_password_hash'];
+// Chargement des utilisateurs depuis le fichier externe
+$usersPath = __DIR__ . '/../../../home/users.json';
+
+if (file_exists($usersPath)) {
+    $users = json_decode(file_get_contents($usersPath), true);
 } else {
-    // Fallback sécurisé ou erreur si le fichier de config est absent
+    // Fallback ou erreur si le fichier est absent
     http_response_code(500);
-    echo json_encode(['status' => 'error', 'message' => 'Configuration introuvable']);
+    echo json_encode(['status' => 'error', 'message' => 'Configuration utilisateurs introuvable']);
     exit;
 }
 
-if (password_verify($password, $VALID_PASSWORD_HASH)) {
+if (isset($users[$username]) && password_verify($password, $users[$username]['password_hash'])) {
     $_SESSION['logged_in'] = true;
+    $_SESSION['user_id'] = $username;
+    $_SESSION['role'] = $users[$username]['role'];
+    $_SESSION['artist_id'] = $users[$username]['artist_id'];
+    
     echo json_encode(['status' => 'success']);
 } else {
     http_response_code(401);
-    echo json_encode(['status' => 'error', 'message' => 'Mot de passe incorrect']);
+    echo json_encode(['status' => 'error', 'message' => 'Identifiants incorrects']);
 }
 ?>

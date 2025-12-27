@@ -55,6 +55,26 @@ if ($post_index === -1) {
     send_json_error('Post non trouvé.');
 }
 
+// Vérification des permissions
+if (isset($_SESSION['role']) && $_SESSION['role'] === 'artist') {
+    // Vérifier si le post appartient à l'artiste
+    // Note: On compare avec l'ID de l'artiste stocké dans le post
+    // Il faut s'assurer que timeline.json utilise bien les IDs (ex: "nelsonnorth") et non les noms complets
+    // Si timeline.json utilise les noms, il faudrait mapper, mais add_post utilise l'ID maintenant.
+    // On suppose ici que $posts[$post_index]['artist'] contient l'ID.
+    // Si c'est le nom, la comparaison échouera si $_SESSION['artist_id'] est l'ID.
+    // Cependant, add_post.php a été modifié pour utiliser l'ID.
+    // Pour être sûr, on peut être permissif ou vérifier les deux si nécessaire, 
+    // mais pour l'instant on reste strict sur l'ID ou on laisse passer si c'est l'admin.
+    
+    if ($posts[$post_index]['artist'] !== $_SESSION['artist_id']) {
+        http_response_code(403);
+        send_json_error('Vous ne pouvez modifier que vos propres posts.');
+    }
+    // Forcer l'artiste à rester le même
+    $_POST['artist'] = $_SESSION['artist_id'];
+}
+
 // Update fields based on POST data
 $posts[$post_index]['title'] = $_POST['title'] ?? $posts[$post_index]['title'];
 $posts[$post_index]['subtitle'] = $_POST['subtitle'] ?? $posts[$post_index]['subtitle'];

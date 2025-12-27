@@ -34,7 +34,39 @@ try {
         throw new Exception('Le fichier timeline est corrompu ou mal formaté.');
     }
 
-    // 4. Filtrer le tableau pour supprimer le post
+    // 4. Trouver le post et vérifier les permissions
+    $post_to_delete = null;
+    foreach ($timeline as $post) {
+        if (isset($post['id']) && $post['id'] == $post_id) {
+            $post_to_delete = $post;
+            break;
+        }
+    }
+
+    if (!$post_to_delete) {
+        http_response_code(404);
+        echo json_encode(['status' => 'error', 'message' => 'Post non trouvé.']);
+        exit;
+    }
+
+    if (isset($_SESSION['role']) && $_SESSION['role'] === 'artist') {
+        if ($post_to_delete['artist'] !== $_SESSION['artist_id']) {
+            http_response_code(403);
+            echo json_encode(['status' => 'error', 'message' => 'Vous ne pouvez supprimer que vos propres posts.']);
+            exit;
+        }
+    }
+
+    // 5. Filtrer le tableau pour supprimer le post
+    $updated_timeline = array_filter($timeline, function($post) use ($post_id) {
+        return !(isset($post['id']) && $post['id'] == $post_id);
+    });
+
+    // Note: $post_found n'est plus nécessaire car on a vérifié avant
+    $post_found = true; 
+
+    /*
+    // Ancienne logique de filtrage direct
     $post_found = false;
     // Note: l'ID peut être un entier ou une chaîne, une comparaison non-stricte (==) est plus sûre.
     $updated_timeline = array_filter($timeline, function($post) use ($post_id, &$post_found) {
@@ -50,6 +82,7 @@ try {
         echo json_encode(['status' => 'error', 'message' => 'Post non trouvé.']);
         exit;
     }
+    */
 
     // Re-indexer le tableau pour éviter les clés discontinues après array_filter
     $updated_timeline = array_values($updated_timeline);

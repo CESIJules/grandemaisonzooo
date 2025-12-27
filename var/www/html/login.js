@@ -1,10 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
   const loginForm = document.getElementById('loginForm');
+  const usernameInput = document.getElementById('username');
   const passwordInput = document.getElementById('password');
   const loginMessage = document.getElementById('loginMessage');
   
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const username = usernameInput.value;
     const password = passwordInput.value;
 
     try {
@@ -13,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ password: password })
+        body: JSON.stringify({ username: username, password: password })
       });
 
       const data = await response.json();
