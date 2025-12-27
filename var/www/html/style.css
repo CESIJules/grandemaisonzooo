@@ -357,6 +357,27 @@ body.menu-open {
   color: #fff;
 }
 
+/* Login Icon (Discreet) */
+.menu-login-link {
+  position: absolute;
+  bottom: 40px;
+  left: 40px;
+  color: rgba(255, 255, 255, 0.2); /* Very discreet */
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+  z-index: 1002;
+  text-decoration: none;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-login-link:hover {
+  color: rgba(255, 255, 255, 0.8);
+  transform: scale(1.2);
+}
+
 /* Animated grid lines container */
 .menu-lines {
   position: absolute;
