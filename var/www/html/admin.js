@@ -550,37 +550,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // Fallback: add the ID as option if no name matched
                     const option = document.createElement('option');
                     option.value = currentUser.artist_id;
-                // Permission check for buttons
-                let canEdit = true;
-                if (currentUser && currentUser.role === 'artist') {
-                    // Check if post artist matches current user artist ID
-                    // Post artist might be name or ID.
-                    // We do a loose check.
-                    const postArtist = post.artist ? post.artist.toLowerCase().replace(/\s/g, '') : '';
-                    const userArtist = currentUser.artist_id.toLowerCase().replace(/\s/g, '');
-                    
-                    if (postArtist !== userArtist) {
-                        canEdit = false;
-                    }
+                    option.textContent = currentUser.artist_id + " (You)";
+                    option.selected = true;
+                    postArtistSelect.appendChild(option);
+                    postArtistSelect.disabled = true;
                 }
-
-                const tr = document.createElement('tr');
-                let actionsHtml = '';
-                if (canEdit) {
-                    actionsHtml = `
-                        <button class="btn edit-post-btn" data-id="${escapeHtml(String(post.id))}"><i class="fas fa-pencil-alt"></i></button>
-                        <button class="btn btn-danger delete-post-btn" data-id="${escapeHtml(String(post.id))}"><i class="fas fa-trash"></i></button>
-                    `;
-                } else {
-                    actionsHtml = `<span style="color: #666; font-size: 0.8em;">Lecture seule</span>`;
-                }
-
-                tr.innerHTML = `
-                    <td>${escapeHtml(displayTitle)}</td>
-                    <td>${escapeHtml(post.artist)}</td>
-                    <td>${new Date(post.date).toLocaleDateString('fr-FR')}</td>
-                    <td class="actions">
-                        ${actionsHtml}
+            }
+            
+        } catch (error) {
             console.error('Failed to populate artist dropdown:', error);
             postArtistSelect.innerHTML = '<option value="" disabled>Erreur</option>';
         }
@@ -634,14 +611,37 @@ document.addEventListener('DOMContentLoaded', async () => {
                     displayTitle = post.subtitle;
                 }
 
+                // Permission check for buttons
+                let canEdit = true;
+                if (currentUser && currentUser.role === 'artist') {
+                    // Check if post artist matches current user artist ID
+                    // Post artist might be name or ID.
+                    // We do a loose check.
+                    const postArtist = post.artist ? post.artist.toLowerCase().replace(/\s/g, '') : '';
+                    const userArtist = currentUser.artist_id.toLowerCase().replace(/\s/g, '');
+                    
+                    if (postArtist !== userArtist) {
+                        canEdit = false;
+                    }
+                }
+
                 const tr = document.createElement('tr');
+                let actionsHtml = '';
+                if (canEdit) {
+                    actionsHtml = `
+                        <button class="btn edit-post-btn" data-id="${escapeHtml(String(post.id))}"><i class="fas fa-pencil-alt"></i></button>
+                        <button class="btn btn-danger delete-post-btn" data-id="${escapeHtml(String(post.id))}"><i class="fas fa-trash"></i></button>
+                    `;
+                } else {
+                    actionsHtml = `<span style="color: #666; font-size: 0.8em;">Lecture seule</span>`;
+                }
+
                 tr.innerHTML = `
                     <td>${escapeHtml(displayTitle)}</td>
                     <td>${escapeHtml(post.artist)}</td>
                     <td>${new Date(post.date).toLocaleDateString('fr-FR')}</td>
                     <td class="actions">
-                        <button class="btn edit-post-btn" data-id="${escapeHtml(String(post.id))}"><i class="fas fa-pencil-alt"></i></button>
-                        <button class="btn btn-danger delete-post-btn" data-id="${escapeHtml(String(post.id))}"><i class="fas fa-trash"></i></button>
+                        ${actionsHtml}
                     </td>
                 `;
                 tbody.appendChild(tr);
