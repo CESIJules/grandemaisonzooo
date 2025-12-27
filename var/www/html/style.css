@@ -360,23 +360,26 @@ body.menu-open {
 /* Login Icon (Discreet) */
 .menu-login-link {
   position: absolute;
-  top: 30px;
-  left: 30px;
-  color: rgba(255, 255, 255, 0.3); /* Very discreet */
-  font-size: 1.5rem;
-  transition: all 0.3s ease;
-  z-index: 1002;
-  text-decoration: none;
-  padding: 10px;
+  bottom: 30px;
+  right: 30px;
+  width: 60px;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: rgba(255, 255, 255, 0.15); /* Ultra discreet */
+  font-size: 1.4rem;
+  transition: all 0.3s ease;
+  z-index: 1002;
+  text-decoration: none;
+  border-radius: 50%;
 }
 
 .menu-login-link:hover {
   color: #fff;
+  background-color: rgba(255, 255, 255, 0.1);
   transform: scale(1.1);
-  text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
 }
 
 /* Animated grid lines container */
