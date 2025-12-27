@@ -360,7 +360,7 @@ body.menu-open {
 /* Login Icon (Discreet) */
 .menu-login-link {
   position: absolute;
-  bottom: 30px;
+  top: 110px; /* 30px (top) + 60px (btn height) + 20px (gap) */
   right: 30px;
   width: 60px;
   height: 60px;
