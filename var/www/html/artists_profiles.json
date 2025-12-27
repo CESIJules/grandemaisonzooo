@@ -53,9 +53,18 @@
         "id": "artist_1766191568389",
         "name": "XECTNR",
         "location": "???, \u00bf\u00bf\u00bf",
-        "image": "images\/artist_69460675b9515.jpg",
+        "image": "images\/artist_694893dea6050.png",
         "listenLink": "https:\/\/linktr.ee\/imxectnr",
         "watchLink": "https:\/\/www.youtube.com\/@imxectnr",
         "instagramLink": "https:\/\/www.instagram.com\/imxectnr"
+    },
+    {
+        "id": "artist_1766355622017",
+        "name": "MQRCO",
+        "location": "Bordeaux, France",
+        "image": "images\/artist_694872a5f30bc.png",
+        "listenLink": "https:\/\/www.youtube.com\/@mqrcosound\/videos",
+        "watchLink": "https:\/\/www.youtube.com\/@mqrcosound\/videos",
+        "instagramLink": "https:\/\/www.instagram.com\/m_qrco\/"
     }
 ]
