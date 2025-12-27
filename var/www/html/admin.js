@@ -7,6 +7,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.location.href = 'login.html';
             return;
         }
+        currentUser = data;
+        
+        // UI Adjustments based on role
+        if (currentUser.role === 'artist') {
+            // Hide parts of the UI that artists shouldn't see/use
+            // e.g. maybe hide playlist creation if they shouldn't do it?
+            // For now we focus on what was requested: content modification.
+            
+            // Hide "Add Post" artist selection (will be handled in populateArtistDropdown)
+            // Hide "Filter" artist selection (will be handled in populateArtistFilterDropdown)
+        }
     } catch (e) {
         console.error('Auth check failed', e);
         window.location.href = 'login.html';
@@ -84,6 +95,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let artistProfiles = [];
     let allPosts = [];
     let allPlaylists = [];
+    let currentUser = null;
 
     // --- State ---
     let allAvailableSongs = [];
@@ -478,13 +490,97 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!response.ok) throw new Error('Could not fetch artists');
             const artists = await response.json();
             postArtistSelect.innerHTML = '<option value="" disabled selected>Choisir un artiste</option>';
+            
             artists.forEach(artist => {
-                const option = document.createElement('option');
-                option.value = artist;
-                option.textContent = artist;
-                postArtistSelect.appendChild(option);
+                // If user is artist, only show their own option
+                if (currentUser && currentUser.role === 'artist') {
+                    // We need to match artist name or ID. 
+                    // get_artists.php returns names usually.
+                    // Let's check if the artist string matches the user's artist_id (which might be an ID or name)
+                    // Actually, get_artists.php returns a list of strings from artists.json.
+                    // artists.json contains names like "Req1", "Nelson North".
+                    // currentUser.artist_id is like "req1", "nelsonnorth".
+                    // We need to be careful about matching.
+                    // Ideally we should use IDs everywhere.
+                    // But get_artists.php reads artists.json which is just a list of names.
+                    // artists_profiles.json has IDs and Names.
+                    
+                    // Let's try to match loosely or just allow all but select the right one?
+                    // No, we want to restrict.
+                    
+                    // Since we don't have a clear mapping here without fetching profiles,
+                    // maybe we should rely on the backend forcing the value.
+                    // But for UI, let's try to select the one that looks like the user.
+                    
+                    // Better approach: If artist, disable the select and set a hidden value?
+                    // Or just show their name if we can find it.
+                    
+                    // Let's just show all for now but auto-select if possible, 
+                    // OR if we can match, only show that.
+                    
+                    // Simple check: if artist name contains the ID (case insensitive)
+                    if (artist.toLowerCase().replace(/\s/g, '') === currentUser.artist_id.toLowerCase().replace(/\s/g, '')) {
+                         const option = document.createElement('option');
+                         option.value = artist; // The value sent to add_post (which is ignored by backend for artists now)
+                         option.textContent = artist;
+                         option.selected = true;
+                         postArtistSelect.appendChild(option);
+                    }
+                    // Also check if the artist name matches the user ID directly
+                    else if (artist.toLowerCase() === currentUser.artist_id.toLowerCase()) {
+                         const option = document.createElement('option');
+                         option.value = artist;
+                         option.textContent = artist;
+                         option.selected = true;
+                         postArtistSelect.appendChild(option);
+                    }
+                } else {
+                    const option = document.createElement('option');
+                    option.value = artist;
+                    option.textContent = artist;
+                    postArtistSelect.appendChild(option);
+                }
             });
-        } catch (error) {
+            
+            if (currentUser && currentUser.role === 'artist') {
+                // If we found a match, disable the select to prevent changing (visual only)
+                if (postArtistSelect.options.length > 1) { // 1 is the default disabled option
+                     postArtistSelect.disabled = true;
+                } else {
+                    // Fallback: add the ID as option if no name matched
+                    const option = document.createElement('option');
+                    option.value = currentUser.artist_id;
+                // Permission check for buttons
+                let canEdit = true;
+                if (currentUser && currentUser.role === 'artist') {
+                    // Check if post artist matches current user artist ID
+                    // Post artist might be name or ID.
+                    // We do a loose check.
+                    const postArtist = post.artist ? post.artist.toLowerCase().replace(/\s/g, '') : '';
+                    const userArtist = currentUser.artist_id.toLowerCase().replace(/\s/g, '');
+                    
+                    if (postArtist !== userArtist) {
+                        canEdit = false;
+                    }
+                }
+
+                const tr = document.createElement('tr');
+                let actionsHtml = '';
+                if (canEdit) {
+                    actionsHtml = `
+                        <button class="btn edit-post-btn" data-id="${escapeHtml(String(post.id))}"><i class="fas fa-pencil-alt"></i></button>
+                        <button class="btn btn-danger delete-post-btn" data-id="${escapeHtml(String(post.id))}"><i class="fas fa-trash"></i></button>
+                    `;
+                } else {
+                    actionsHtml = `<span style="color: #666; font-size: 0.8em;">Lecture seule</span>`;
+                }
+
+                tr.innerHTML = `
+                    <td>${escapeHtml(displayTitle)}</td>
+                    <td>${escapeHtml(post.artist)}</td>
+                    <td>${new Date(post.date).toLocaleDateString('fr-FR')}</td>
+                    <td class="actions">
+                        ${actionsHtml}
             console.error('Failed to populate artist dropdown:', error);
             postArtistSelect.innerHTML = '<option value="" disabled>Erreur</option>';
         }
@@ -1006,14 +1102,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         const tbody = document.createElement('tbody');
         
         artistProfiles.forEach(artist => {
+            // Permission check
+            let canEdit = true;
+            if (currentUser && currentUser.role === 'artist') {
+                if (artist.id !== currentUser.artist_id) {
+                    canEdit = false;
+                }
+            }
+
             const tr = document.createElement('tr');
+            let actionsHtml = '';
+            if (canEdit) {
+                actionsHtml = `
+                    <button class="btn edit-artist-btn" data-id="${escapeHtml(artist.id)}"><i class="fas fa-pencil-alt"></i></button>
+                    <button class="btn btn-danger delete-artist-btn" data-id="${escapeHtml(artist.id)}"><i class="fas fa-trash"></i></button>
+                `;
+            } else {
+                actionsHtml = `<span style="color: #666; font-size: 0.8em;">Lecture seule</span>`;
+            }
+
             tr.innerHTML = `
                 <td><img src="${escapeHtml(artist.image)}" alt="${escapeHtml(artist.name)}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;"></td>
                 <td>${escapeHtml(artist.name)}</td>
                 <td>${escapeHtml(artist.location)}</td>
                 <td class="actions">
-                    <button class="btn edit-artist-btn" data-id="${escapeHtml(artist.id)}"><i class="fas fa-pencil-alt"></i></button>
-                    <button class="btn btn-danger delete-artist-btn" data-id="${escapeHtml(artist.id)}"><i class="fas fa-trash"></i></button>
+                    ${actionsHtml}
                 </td>
             `;
             tbody.appendChild(tr);

@@ -2,6 +2,13 @@
 require_once 'auth_check.php';
 header('Content-Type: application/json');
 
+// Vérification de l'authentification
+if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+    http_response_code(401);
+    echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+    exit;
+}
+
 $file_path = 'timeline.json';
 $upload_dir = 'uploads/';
 
@@ -9,6 +16,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['status' => 'error', 'message' => 'Méthode non autorisée.']);
     exit;
+}
+
+// Force l'artiste si ce n'est pas un admin
+if (isset($_SESSION['role']) && $_SESSION['role'] === 'artist') {
+    $_POST['artist'] = $_SESSION['artist_id'];
 }
 
 try {
