@@ -13,12 +13,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         // UI Adjustments based on role
         if (currentUser.role === 'artist') {
-            // Hide parts of the UI that artists shouldn't see/use
-            // e.g. maybe hide playlist creation if they shouldn't do it?
-            // For now we focus on what was requested: content modification.
+            // 1. Hide Music and Playlists sections
+            const musicNav = document.querySelector('.nav-link[data-section="music"]');
+            const playlistsNav = document.querySelector('.nav-link[data-section="playlists"]');
+            if (musicNav) musicNav.style.display = 'none';
+            if (playlistsNav) playlistsNav.style.display = 'none';
+
+            // 2. Hide "Add Artist" form submit button (or change text)
+            // We want to prevent creating new artists.
+            // The form is used for both Add and Edit.
+            // We can hide the submit button initially, and only show it when editing.
+            const artistSubmitBtn = document.querySelector('#adminArtistForm button[type="submit"]');
+            if (artistSubmitBtn) {
+                // Hide it by default (Add mode)
+                artistSubmitBtn.style.display = 'none';
+            }
             
-            // Hide "Add Post" artist selection (will be handled in populateArtistDropdown)
-            // Hide "Filter" artist selection (will be handled in populateArtistFilterDropdown)
+            // Also hide the "Annuler" button initially as it resets to Add mode
+            const cancelBtn = document.getElementById('cancelArtistEditBtn');
+            if (cancelBtn) {
+                // Override click to just hide the form or do nothing special, 
+                // but mainly we want to ensure they can't go back to "Add" mode.
+                cancelBtn.addEventListener('click', () => {
+                    if (artistSubmitBtn) artistSubmitBtn.style.display = 'none';
+                });
+            }
         }
     } catch (e) {
         console.error('Auth check failed', e);
@@ -619,9 +638,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // Post artist might be name or ID.
                     // We do a loose check.
                     const postArtist = post.artist ? post.artist.toLowerCase().replace(/\s/g, '') : '';
-                    const userArtist = currentUser.artist_id.toLowerCase().replace(/\s/g, '');
+                    const userArtistId = currentUser.artist_id.toLowerCase().replace(/\s/g, '');
                     
-                    if (postArtist !== userArtist) {
+                    // Try to find artist name from profile to match against legacy posts
+                    const artistProfile = artistProfiles.find(p => p.id === currentUser.artist_id);
+                    const userArtistName = artistProfile ? artistProfile.name.toLowerCase().replace(/\s/g, '') : '';
+
+                    if (postArtist !== userArtistId && postArtist !== userArtistName) {
                         canEdit = false;
                     }
                 }
@@ -1230,7 +1253,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         cancelArtistEditBtn.style.display = 'inline-block';
-        adminArtistForm.querySelector('button[type="submit"]').innerHTML = '<i class="fas fa-save"></i> Modifier l\'artiste';
+        const submitBtn = adminArtistForm.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = '<i class="fas fa-save"></i> Modifier l\'artiste';
+        
+        // If artist, make sure the button is visible when editing
+        if (currentUser && currentUser.role === 'artist') {
+            submitBtn.style.display = 'inline-block';
+        }
+        
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
