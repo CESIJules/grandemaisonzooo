@@ -538,18 +538,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // Let's just show all for now but auto-select if possible, 
                     // OR if we can match, only show that.
                     
-                    // Simple check: if artist name contains the ID (case insensitive)
-                    if (artist.toLowerCase().replace(/\s/g, '') === currentUser.artist_id.toLowerCase().replace(/\s/g, '')) {
+                    // Improved matching using artistProfiles
+                    let isMatch = false;
+                    const artistNameClean = artist.toLowerCase().replace(/\s/g, '');
+                    const userIdClean = currentUser.artist_id.toLowerCase().replace(/\s/g, '');
+                    
+                    if (artistNameClean === userIdClean) isMatch = true;
+                    
+                    // Check against profile name if available
+                    if (!isMatch && artistProfiles.length > 0) {
+                        const profile = artistProfiles.find(p => p.id === currentUser.artist_id);
+                        if (profile && profile.name.toLowerCase().replace(/\s/g, '') === artistNameClean) {
+                            isMatch = true;
+                        }
+                    }
+
+                    if (isMatch) {
                          const option = document.createElement('option');
                          option.value = artist; // The value sent to add_post (which is ignored by backend for artists now)
-                         option.textContent = artist;
-                         option.selected = true;
-                         postArtistSelect.appendChild(option);
-                    }
-                    // Also check if the artist name matches the user ID directly
-                    else if (artist.toLowerCase() === currentUser.artist_id.toLowerCase()) {
-                         const option = document.createElement('option');
-                         option.value = artist;
                          option.textContent = artist;
                          option.selected = true;
                          postArtistSelect.appendChild(option);
@@ -568,9 +574,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                      postArtistSelect.disabled = true;
                 } else {
                     // Fallback: add the ID as option if no name matched
+                    // Try to find name in profiles first
+                    let displayName = currentUser.artist_id;
+                    if (artistProfiles.length > 0) {
+                        const profile = artistProfiles.find(p => p.id === currentUser.artist_id);
+                        if (profile) displayName = profile.name;
+                    }
+                    
                     const option = document.createElement('option');
-                    option.value = currentUser.artist_id;
-                    option.textContent = currentUser.artist_id + " (You)";
+                    option.value = displayName;
+                    option.textContent = displayName + " (You)";
                     option.selected = true;
                     postArtistSelect.appendChild(option);
                     postArtistSelect.disabled = true;
@@ -1437,14 +1450,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // --- Initial Load ---
-    function initializeAdminPanel() {
+    async function initializeAdminPanel() {
+        // Load profiles first so we have the ID -> Name mapping for filtering
+        await fetchArtistProfiles();
+
         populateArtistDropdown();
         populateArtistFilterDropdown();
         renderAdminPosts();
         renderMusicFiles();
         fetchAllSongs();
         fetchPlaylists();
-        fetchArtistProfiles();
         
         // Set initial view
         const timelineLink = document.querySelector('.nav-link[data-section="timeline"]');
