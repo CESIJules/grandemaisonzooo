@@ -360,10 +360,10 @@ body.menu-open {
 /* Login Icon (Discreet) */
 .menu-login-link {
   position: absolute;
-  bottom: 40px;
-  left: 40px;
-  color: rgba(255, 255, 255, 0.2); /* Very discreet */
-  font-size: 1.2rem;
+  top: 30px;
+  left: 30px;
+  color: rgba(255, 255, 255, 0.3); /* Very discreet */
+  font-size: 1.5rem;
   transition: all 0.3s ease;
   z-index: 1002;
   text-decoration: none;
@@ -374,8 +374,9 @@ body.menu-open {
 }
 
 .menu-login-link:hover {
-  color: rgba(255, 255, 255, 0.8);
-  transform: scale(1.2);
+  color: #fff;
+  transform: scale(1.1);
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
 }
 
 /* Animated grid lines container */
