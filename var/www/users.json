@@ -1,0 +1,42 @@
+{
+    "admin": {
+        "password_hash": "$6$Dxjpn28p42w8MgFv$nFfQL0BbyMAWRMoMlhDelTMLpefa4BUZxIKBWdMKTIvxsqQyRusda5lUXy9QM3WXGjM61zZXPbLi8QMhY6XNz.",
+        "role": "admin",
+        "artist_id": null
+    },
+    "nelsonnorth": {
+        "password_hash": "$2y$12$1ZvLmkcHkNDxUxuozlax5.\/wv0.L72NVdSPVfzcoyWScW.GhojEYy",
+        "role": "artist",
+        "artist_id": "nelsonnorth"
+    },
+    "req1": {
+        "password_hash": "$2y$12$Mz8yHU0Hq\/6zNGrgz6b8K.f6Y\/cZOuhUm0o8Ty6SimQa11a2bVnve",
+        "role": "artist",
+        "artist_id": "req1"
+    },
+    "mindset": {
+        "password_hash": "$2y$12$mo.msBkzMpb2HaACFvvDc.ETd\/mzPxofAAX\/21euTwwHu31anQRMy",
+        "role": "artist",
+        "artist_id": "mindset"
+    },
+    "shorebreak": {
+        "password_hash": "$2y$12$yWTmlWYpwMhz9Z8z7jEtj.wO6tISmo7RgGT0ehoOTl1X.j.NwYl.C",
+        "role": "artist",
+        "artist_id": "shorebreak"
+    },
+    "gukey": {
+        "password_hash": "$2y$12$YCYbxLFfpqeePVf62w7kkOgso4XnzWDKoNd0IdjtsGLdBWFS.zWGG",
+        "role": "artist",
+        "artist_id": "artist_1765227496251"
+    },
+    "XECTNR": {
+        "password_hash": "$2y$12$yaODctov33j4K\/k4U9Bsu.Z8saeRupGlXEk8U7M8dj29FQiz3E3Uy",
+        "role": "artist",
+        "artist_id": "artist_1766191568389"
+    },
+    "mqrco": {
+        "password_hash": "$2y$12$jzy01q47aCP3diqavckPNOqIKvdvisgjGkk9UOuZgAOj8GNqA0BYe",
+        "role": "artist",
+        "artist_id": "artist_1766355622017"
+    }
+}
