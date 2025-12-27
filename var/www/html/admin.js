@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
+    let currentUser = null;
+
     // --- Auth Check ---
     try {
         const response = await fetch('check_auth.php');
@@ -95,7 +97,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     let artistProfiles = [];
     let allPosts = [];
     let allPlaylists = [];
-    let currentUser = null;
 
     // --- State ---
     let allAvailableSongs = [];
