@@ -21,6 +21,10 @@
 # APRÈS l'inclusion, exclure les fichiers spécifiques
 /var/www/data/
 /var/www/html/vid/
+/var/www/html/uploads/**
+/var/www/html/images/**
+!/var/www/html/uploads/.gitkeep
+!/var/www/html/images/.gitkeep
 /var/www/html/music_metadata.json
 /var/www/html/track_info.json
 /var/www/html/artists_profiles.json
