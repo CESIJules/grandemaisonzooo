@@ -771,16 +771,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         ];
         
         for (const p of patterns) {
-            if (p.regex.test(lowerTitle)) return p.type;
+            if (p.regex.test(lowerTitle)) {
+                console.log(`detectPostType: "${title}" => ${p.type} (matched ${p.regex})`);
+                return p.type;
+            }
         }
         
         // Check for [FLIP] or (FLIP) pattern anywhere in title
-        if (/\[.*flip.*\]/i.test(title) || /\(.*flip.*\)/i.test(title)) return 'flip';
+        if (/\[.*flip.*\]/i.test(title) || /\(.*flip.*\)/i.test(title)) {
+            console.log(`detectPostType: "${title}" => flip (bracket match)`);
+            return 'flip';
+        }
         
         // Check for type anywhere but with word boundaries
-        if (/\bmixta?pe\b/i.test(title)) return 'mixtape';
-        if (/\balbum\b/i.test(title)) return 'album';
+        if (/\bmixta?pe\b/i.test(title)) {
+            console.log(`detectPostType: "${title}" => mixtape`);
+            return 'mixtape';
+        }
+        if (/\balbum\b/i.test(title)) {
+            console.log(`detectPostType: "${title}" => album`);
+            return 'album';
+        }
         
+        console.log(`detectPostType: "${title}" => other (no match), lowerTitle="${lowerTitle}"`);
         return 'other';
     }
 
