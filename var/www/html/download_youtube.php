@@ -55,11 +55,11 @@ exec($command . ' 2>&1', $output, $return_var);
 // --- Response ---
 if ($return_var === 0) {
     // Try to find the final filename from yt-dlp's output
-    $filename = 'Fichier audio'; // Default name in case parsing fails
+    $filename = null;
     foreach ($output as $line) {
         // The line indicating the final MP3 file looks like this:
         // [ExtractAudio] Destination: /path/to/music/Video Title.mp3
-        if (preg_match('/[ExtractAudio] Destination: (.*)/', $line, $matches)) {
+        if (preg_match('/\[ExtractAudio\] Destination: (.*)/', $line, $matches)) {
             $filename = basename($matches[1]);
             break;
         }
@@ -71,7 +71,32 @@ if ($return_var === 0) {
     $pm = new PlaylistManager();
     $pm->syncFallbackDirectory();
 
-    echo json_encode(['status' => 'success', 'message' => "$filename a été téléchargé, converti et ajouté."]);
+    // --- AUTO-ANALYZE NEW FILE (BACKGROUND) ---
+    $analyzing = false;
+    if ($filename) {
+        $pythonPath = '/home/radio/venv/bin/python';
+        $analyzeScript = '/home/radio/analyze_and_save.py';
+        $filepath = $outputDir . $filename;
+        
+        if (file_exists($filepath)) {
+            // Launch analysis in background (nohup + & to detach)
+            $cmd = sprintf(
+                'nohup %s %s %s > /dev/null 2>&1 &',
+                escapeshellcmd($pythonPath),
+                escapeshellarg($analyzeScript),
+                escapeshellarg($filepath)
+            );
+            exec($cmd);
+            $analyzing = true;
+        }
+    }
+
+    $displayName = $filename ?? 'Fichier audio';
+    $message = "$displayName a été téléchargé, converti et ajouté.";
+    if ($analyzing) {
+        $message .= " (analyse en cours...)";
+    }
+    echo json_encode(['status' => 'success', 'message' => $message, 'analyzing' => $analyzing]);
 } else {
     http_response_code(500);
     // Create a detailed error message for the admin to help with diagnostics.

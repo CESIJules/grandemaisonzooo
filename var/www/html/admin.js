@@ -307,10 +307,58 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Merge with existing cache
                 Object.assign(metadataCache, data);
                 console.log('Bulk metadata loaded:', Object.keys(data).length, 'items');
+                
+                // Populate genre filter after loading
+                populateGenreFilter();
             }
         } catch (e) {
             console.error('Failed to load bulk metadata:', e);
         }
+    }
+    
+    // Genre filter population function (declared early)
+    function populateGenreFilter() {
+        const libraryGenreFilter = document.getElementById('libraryGenreFilter');
+        const suggestionsGenreFilter = document.getElementById('suggestionsGenreFilter');
+        
+        const genres = new Set();
+        Object.values(metadataCache).forEach(meta => {
+            if (meta && meta.genre) genres.add(meta.genre);
+        });
+        
+        const sortedGenres = Array.from(genres).sort();
+        
+        // Update library filter
+        if (libraryGenreFilter) {
+            const currentValue = libraryGenreFilter.value;
+            libraryGenreFilter.innerHTML = '<option value="">Tous genres</option>';
+            sortedGenres.forEach(genre => {
+                const option = document.createElement('option');
+                option.value = genre;
+                option.textContent = genre;
+                libraryGenreFilter.appendChild(option);
+            });
+            if (currentValue && genres.has(currentValue)) {
+                libraryGenreFilter.value = currentValue;
+            }
+        }
+        
+        // Update suggestions filter
+        if (suggestionsGenreFilter) {
+            const currentValue = suggestionsGenreFilter.value;
+            suggestionsGenreFilter.innerHTML = '<option value="">Tous genres</option>';
+            sortedGenres.forEach(genre => {
+                const option = document.createElement('option');
+                option.value = genre;
+                option.textContent = genre;
+                suggestionsGenreFilter.appendChild(option);
+            });
+            if (currentValue && genres.has(currentValue)) {
+                suggestionsGenreFilter.value = currentValue;
+            }
+        }
+        
+        console.log('Genre filter populated:', sortedGenres.length, 'genres');
     }
 
     // Load metadata on startup
@@ -2490,20 +2538,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
     
-    // Render suggestions
+    // Render suggestions with filters and sorting
+    let currentSuggestions = [];
+    let suggestionSortBy = 'score';
+    let suggestionGenreFilter = '';
+    
     async function renderNewSuggestions() {
         const containerEl = document.getElementById('harmonicSuggestionsList');
         const basedOnEl = document.getElementById('suggestionsBasedOn');
+        const genreFilterEl = document.getElementById('suggestionsGenreFilter');
         
         if (!containerEl) return;
         
         if (!currentEditingPlaylist || currentEditingPlaylist.songs.length === 0) {
-            containerEl.innerHTML = '<p style="color: var(--text-secondary); padding: 20px;">Ajoutez des morceaux pour voir des suggestions</p>';
+            containerEl.innerHTML = `
+                <div class="suggestion-empty">
+                    <i class="fas fa-music"></i>
+                    <p>Ajoutez des morceaux pour voir des suggestions harmoniques</p>
+                </div>`;
             if (basedOnEl) basedOnEl.textContent = '-';
             return;
         }
         
-        containerEl.innerHTML = '<p style="color: var(--text-secondary); padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Analyse...</p>';
+        containerEl.innerHTML = `
+            <div class="suggestion-empty">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Analyse en cours...</p>
+            </div>`;
         
         const lastSongPath = currentEditingPlaylist.songs[currentEditingPlaylist.songs.length - 1];
         const lastSongFilename = lastSongPath.split('/').pop();
@@ -2512,155 +2573,153 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         const lastSongMeta = await getMusicMetadata(lastSongFilename);
         
-        // Check if we have valid metadata (camelot must exist and not be "Unknown")
+        // Check if we have valid metadata
         const hasValidMeta = lastSongMeta && !lastSongMeta.error && lastSongMeta.camelot && lastSongMeta.camelot !== 'Unknown' && lastSongMeta.bpm > 0;
         
         if (!hasValidMeta) {
-            // Show message but still display some songs as fallback
             containerEl.innerHTML = `
-                <div style="padding: 15px; background: rgba(255,165,0,0.1); border-radius: 8px; margin-bottom: 15px;">
-                    <p style="color: #ffa500; margin: 0; font-size: 0.85rem;">
+                <div style="padding: 15px; background: rgba(255,165,0,0.1); border-radius: 10px; margin-bottom: 10px;">
+                    <p style="color: #ffa500; margin: 0 0 10px 0; font-size: 0.85rem;">
                         <i class="fas fa-exclamation-triangle"></i> 
-                        Métadonnées non disponibles pour "${formatSongPathToTitle(lastSongPath)}".
-                        <button class="btn btn-sm btn-secondary" style="margin-left: 10px;" onclick="getMusicMetadata('${lastSongFilename}', true).then(() => renderNewSuggestions())">
-                            <i class="fas fa-sync"></i> Analyser
-                        </button>
+                        Métadonnées non disponibles pour ce morceau
                     </p>
+                    <button class="btn btn-sm" onclick="getMusicMetadata('${lastSongFilename}', true).then(() => renderNewSuggestions())">
+                        <i class="fas fa-sync"></i> Analyser maintenant
+                    </button>
                 </div>
             `;
             
-            // Show random songs as fallback
-            const fallbackSongs = allAvailableSongs
-                .filter(p => !currentEditingPlaylist.songs.includes(p))
-                .slice(0, 8);
-            
-            fallbackSongs.forEach(path => {
-                const filename = path.split('/').pop();
-                const meta = metadataCache[filename] || {};
-                
-                const item = document.createElement('div');
-                item.className = 'suggestion-item';
-                item.innerHTML = `
-                    <div class="suggestion-score okay"><i class="fas fa-question"></i></div>
-                    <div class="suggestion-content">
-                        <div class="song-title">${formatSongPathToTitle(path)}</div>
-                        <div class="song-meta">
-                            ${meta.bpm ? `<span class="suggestion-badge badge-bpm">${meta.bpm} BPM</span>` : ''}
-                            ${meta.camelot && meta.camelot !== 'Unknown' ? `<span class="suggestion-badge badge-key">${meta.camelot}</span>` : ''}
-                            ${meta.genre ? `<span class="suggestion-badge badge-genre">${meta.genre}</span>` : ''}
-                        </div>
-                    </div>
-                    <button class="btn-add-suggestion" title="Ajouter"><i class="fas fa-plus"></i></button>
-                `;
-                
-                item.querySelector('.btn-add-suggestion').addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    currentEditingPlaylist.songs.push(path);
-                    renderNewPlaylistSongs();
-                    renderNewLibrarySongs();
-                    renderNewSuggestions();
-                    autoSavePlaylist();
-                });
-                
-                containerEl.appendChild(item);
-            });
+            // Show some random songs as fallback
+            renderFallbackSuggestions(containerEl);
             return;
         }
         
         const targetBpm = lastSongMeta.bpm;
         const targetKey = lastSongMeta.camelot;
         const targetGenre = lastSongMeta.genre;
+        const targetEnergy = lastSongMeta.energy;
         const compatibleKeys = camelotWheel[targetKey]?.compatible || [];
         
-        // Count cached vs total songs
-        const cachedCount = Object.keys(metadataCache).length;
-        const totalSongs = allAvailableSongs.length;
-        
         // Find compatible songs with scoring
-        const suggestions = [];
+        currentSuggestions = [];
         for (const songPath of allAvailableSongs) {
             if (currentEditingPlaylist.songs.includes(songPath)) continue;
             
             const filename = songPath.split('/').pop();
             const meta = metadataCache[filename];
-            if (!meta || !meta.camelot) continue;
+            if (!meta || !meta.camelot || meta.camelot === 'Unknown') continue;
             
             // Calculate compatibility score
             let score = 0;
+            let keyMatch = false;
             
-            // Key compatibility (primary)
-            const keyMatch = compatibleKeys.includes(meta.camelot);
-            if (keyMatch) score += 50;
-            else if (meta.camelot === targetKey) score += 60; // Same key bonus
+            // Key compatibility (primary - 50 pts)
+            if (meta.camelot === targetKey) {
+                score += 60; // Same key = perfect
+                keyMatch = true;
+            } else if (compatibleKeys.includes(meta.camelot)) {
+                score += 50;
+                keyMatch = true;
+            }
             
-            // BPM proximity (±5% is ideal, ±10% is acceptable)
+            // BPM proximity (40 pts max)
             const bpmDiff = Math.abs(meta.bpm - targetBpm);
             const bpmRatio = bpmDiff / targetBpm;
-            if (bpmRatio <= 0.05) score += 40;
-            else if (bpmRatio <= 0.10) score += 25;
+            if (bpmRatio <= 0.03) score += 40;
+            else if (bpmRatio <= 0.06) score += 30;
+            else if (bpmRatio <= 0.10) score += 20;
             else if (bpmRatio <= 0.15) score += 10;
             
-            // Genre match bonus
+            // Genre match (20 pts)
             if (targetGenre && meta.genre && meta.genre.toLowerCase() === targetGenre.toLowerCase()) {
                 score += 20;
             }
             
-            // Energy proximity bonus
-            if (lastSongMeta.energy && meta.energy) {
-                const energyDiff = Math.abs(meta.energy - lastSongMeta.energy);
-                if (energyDiff <= 0.1) score += 10;
-                else if (energyDiff <= 0.2) score += 5;
+            // Energy proximity (10 pts)
+            if (targetEnergy && meta.energy) {
+                const energyDiff = Math.abs(meta.energy - targetEnergy);
+                if (energyDiff <= 0.15) score += 10;
+                else if (energyDiff <= 0.25) score += 5;
             }
             
-            if (score >= 50) { // Minimum threshold
-                suggestions.push({ path: songPath, meta, score, bpmDiff, keyMatch });
+            if (score >= 40) { // Minimum threshold
+                currentSuggestions.push({ 
+                    path: songPath, 
+                    meta, 
+                    score, 
+                    bpmDiff: Math.round(bpmDiff),
+                    keyMatch,
+                    targetBpm,
+                    targetKey
+                });
             }
         }
         
-        // Sort by score (descending)
-        suggestions.sort((a, b) => b.score - a.score);
+        // Apply genre filter if set
+        suggestionGenreFilter = genreFilterEl?.value || '';
+        
+        displaySuggestions(containerEl);
+    }
+    
+    function displaySuggestions(containerEl) {
+        if (!containerEl) containerEl = document.getElementById('harmonicSuggestionsList');
+        if (!containerEl) return;
+        
+        let filtered = [...currentSuggestions];
+        
+        // Apply genre filter
+        if (suggestionGenreFilter) {
+            filtered = filtered.filter(s => s.meta.genre === suggestionGenreFilter);
+        }
+        
+        // Sort
+        if (suggestionSortBy === 'score') {
+            filtered.sort((a, b) => b.score - a.score);
+        } else if (suggestionSortBy === 'bpm') {
+            filtered.sort((a, b) => a.bpmDiff - b.bpmDiff);
+        } else if (suggestionSortBy === 'key') {
+            filtered.sort((a, b) => (a.keyMatch === b.keyMatch) ? b.score - a.score : (a.keyMatch ? -1 : 1));
+        }
         
         containerEl.innerHTML = '';
         
-        // Show cache status if not many songs analyzed
-        if (cachedCount < totalSongs * 0.5) {
-            const cacheInfo = document.createElement('div');
-            cacheInfo.style.cssText = 'padding: 10px 15px; background: rgba(255,165,0,0.1); border-radius: 8px; margin-bottom: 10px; font-size: 0.85rem;';
-            cacheInfo.innerHTML = `
-                <i class="fas fa-info-circle" style="color: #ffa500;"></i>
-                <span style="color: var(--text-secondary);">${cachedCount}/${totalSongs} morceaux analysés</span>
-            `;
-            containerEl.appendChild(cacheInfo);
-        }
-        
-        if (suggestions.length === 0) {
-            containerEl.innerHTML += '<p style="color: var(--text-secondary); padding: 20px;">Aucune suggestion harmonique trouvée. Essayez d\'analyser plus de morceaux.</p>';
+        if (filtered.length === 0) {
+            containerEl.innerHTML = `
+                <div class="suggestion-empty">
+                    <i class="fas fa-search"></i>
+                    <p>${suggestionGenreFilter ? 'Aucune suggestion pour ce genre' : 'Aucune suggestion trouvée'}</p>
+                </div>`;
             return;
         }
         
-        suggestions.slice(0, 12).forEach(({ path, meta, score, keyMatch }) => {
+        filtered.slice(0, 15).forEach(({ path, meta, score, bpmDiff, keyMatch }) => {
             const item = document.createElement('div');
             item.className = 'suggestion-item';
             
-            // Genre badge if available
-            const genreBadge = meta.genre ? `<span class="suggestion-badge badge-genre">${meta.genre}</span>` : '';
+            // Score class
+            const scoreClass = score >= 90 ? 'perfect' : score >= 65 ? 'good' : 'okay';
+            const scoreIcon = score >= 90 ? 'crown' : score >= 65 ? 'check' : 'minus';
             
-            // Score indicator
-            const scoreClass = score >= 90 ? 'perfect' : score >= 70 ? 'good' : 'okay';
+            // BPM difference display
+            const bpmDisplay = bpmDiff === 0 ? '=' : (meta.bpm > currentSuggestions[0]?.targetBpm ? `+${bpmDiff}` : `-${bpmDiff}`);
             
             item.innerHTML = `
-                <div class="suggestion-score ${scoreClass}" title="Score: ${score}%">
-                    <i class="fas fa-${score >= 90 ? 'star' : score >= 70 ? 'check' : 'circle'}"></i>
+                <div class="suggestion-score ${scoreClass}" title="Score: ${score}">
+                    <i class="fas fa-${scoreIcon}"></i>
                 </div>
                 <div class="suggestion-content">
                     <div class="song-title">${formatSongPathToTitle(path)}</div>
                     <div class="song-meta">
-                        <span class="suggestion-badge badge-bpm">${meta.bpm} BPM</span>
-                        <span class="suggestion-badge badge-key ${keyMatch ? 'key-match' : ''}">${meta.camelot}</span>
-                        ${genreBadge}
+                        <span class="suggestion-badge badge-bpm">
+                            <i class="fas fa-drum"></i> ${meta.bpm} BPM
+                        </span>
+                        <span class="suggestion-badge badge-key ${keyMatch ? 'key-match' : ''}">
+                            <i class="fas fa-key"></i> ${meta.camelot}
+                        </span>
+                        ${meta.genre ? `<span class="suggestion-badge badge-genre">${meta.genre}</span>` : ''}
                     </div>
                 </div>
-                <button class="btn-add-suggestion" title="Ajouter">
+                <button class="btn-add-suggestion" title="Ajouter à la playlist">
                     <i class="fas fa-plus"></i>
                 </button>
             `;
@@ -2677,6 +2736,62 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
             
             containerEl.appendChild(item);
+        });
+    }
+    
+    function renderFallbackSuggestions(containerEl) {
+        const fallbackSongs = allAvailableSongs
+            .filter(p => !currentEditingPlaylist.songs.includes(p))
+            .slice(0, 6);
+        
+        fallbackSongs.forEach(path => {
+            const filename = path.split('/').pop();
+            const meta = metadataCache[filename] || {};
+            
+            const item = document.createElement('div');
+            item.className = 'suggestion-item';
+            item.innerHTML = `
+                <div class="suggestion-score okay"><i class="fas fa-question"></i></div>
+                <div class="suggestion-content">
+                    <div class="song-title">${formatSongPathToTitle(path)}</div>
+                    <div class="song-meta">
+                        ${meta.bpm ? `<span class="suggestion-badge badge-bpm"><i class="fas fa-drum"></i> ${meta.bpm}</span>` : ''}
+                        ${meta.camelot && meta.camelot !== 'Unknown' ? `<span class="suggestion-badge badge-key"><i class="fas fa-key"></i> ${meta.camelot}</span>` : ''}
+                        ${meta.genre ? `<span class="suggestion-badge badge-genre">${meta.genre}</span>` : ''}
+                    </div>
+                </div>
+                <button class="btn-add-suggestion" title="Ajouter"><i class="fas fa-plus"></i></button>
+            `;
+            
+            item.querySelector('.btn-add-suggestion').addEventListener('click', (e) => {
+                e.stopPropagation();
+                currentEditingPlaylist.songs.push(path);
+                renderNewPlaylistSongs();
+                renderNewLibrarySongs();
+                renderNewSuggestions();
+                autoSavePlaylist();
+            });
+            
+            containerEl.appendChild(item);
+        });
+    }
+    
+    // Sort button handlers
+    document.querySelectorAll('.suggestions-section .sort-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.suggestions-section .sort-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            suggestionSortBy = btn.dataset.sort;
+            displaySuggestions();
+        });
+    });
+    
+    // Genre filter handler for suggestions
+    const suggestionsGenreFilterEl = document.getElementById('suggestionsGenreFilter');
+    if (suggestionsGenreFilterEl) {
+        suggestionsGenreFilterEl.addEventListener('change', (e) => {
+            suggestionGenreFilter = e.target.value;
+            displaySuggestions();
         });
     }
     
@@ -2798,40 +2913,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Library search
     const librarySearchInput = document.getElementById('librarySearchInput');
     const libraryGenreFilter = document.getElementById('libraryGenreFilter');
-    
-    // Populate genre filter dropdown
-    function populateGenreFilter() {
-        if (!libraryGenreFilter) return;
-        
-        const genres = new Set();
-        Object.values(metadataCache).forEach(meta => {
-            if (meta.genre) genres.add(meta.genre);
-        });
-        
-        // Keep existing selection
-        const currentValue = libraryGenreFilter.value;
-        
-        // Clear and repopulate
-        libraryGenreFilter.innerHTML = '<option value="">Tous genres</option>';
-        Array.from(genres).sort().forEach(genre => {
-            const option = document.createElement('option');
-            option.value = genre;
-            option.textContent = genre;
-            libraryGenreFilter.appendChild(option);
-        });
-        
-        // Restore selection if still valid
-        if (currentValue && genres.has(currentValue)) {
-            libraryGenreFilter.value = currentValue;
-        }
-    }
-    
-    // Call after metadata loads
-    const originalLoadAllMetadata = loadAllMetadata;
-    loadAllMetadata = async function() {
-        await originalLoadAllMetadata();
-        populateGenreFilter();
-    };
     
     if (librarySearchInput) {
         librarySearchInput.addEventListener('input', (e) => {

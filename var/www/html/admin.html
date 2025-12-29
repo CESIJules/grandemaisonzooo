@@ -948,42 +948,67 @@
             border-color: var(--accent-primary);
         }
         
-        .suggestions-grid {
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            padding-bottom: 8px;
-        }
-        
-        .suggestion-item {
-            flex: 0 0 auto;
-            width: 220px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--surface-border);
-            border-radius: 12px;
-            padding: 14px;
-            cursor: pointer;
-            transition: all 0.25s;
+        .suggestions-filters {
             display: flex;
             align-items: center;
             gap: 12px;
+            margin-bottom: 12px;
+            padding: 0 4px;
+        }
+        
+        .suggestions-filters .filter-select {
+            flex: 0 0 auto;
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--surface-border);
+            background: var(--surface-color);
+            color: var(--text-color);
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        
+        .suggestions-filters .sort-buttons {
+            display: flex;
+            gap: 4px;
+            margin-left: auto;
+        }
+        
+        .suggestions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        
+        .suggestion-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--surface-border);
+            border-radius: 10px;
+            padding: 12px 14px;
+            cursor: pointer;
+            transition: all 0.2s;
         }
         
         .suggestion-item:hover {
             border-color: var(--accent-primary);
-            background: rgba(0, 255, 104, 0.08);
-            transform: translateY(-2px);
+            background: rgba(0, 255, 104, 0.06);
         }
         
         .suggestion-score {
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            font-size: 0.75rem;
+            font-size: 0.8rem;
+            font-weight: 700;
         }
         
         .suggestion-score.perfect {
@@ -994,11 +1019,13 @@
         .suggestion-score.good {
             background: rgba(0, 255, 104, 0.2);
             color: var(--accent-primary);
+            border: 2px solid var(--accent-primary);
         }
         
         .suggestion-score.okay {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--text-secondary);
+            background: rgba(255, 193, 7, 0.15);
+            color: #ffc107;
+            border: 2px solid rgba(255, 193, 7, 0.3);
         }
         
         .suggestion-content {
@@ -1007,7 +1034,7 @@
         }
         
         .suggestion-item .song-title {
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             font-weight: 500;
             margin-bottom: 6px;
             white-space: nowrap;
@@ -1018,12 +1045,13 @@
         .suggestion-item .song-meta {
             display: flex;
             flex-wrap: wrap;
-            gap: 4px;
+            gap: 6px;
+            align-items: center;
         }
         
         .btn-add-suggestion {
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             border: none;
             background: rgba(0, 255, 104, 0.15);
@@ -1031,6 +1059,7 @@
             cursor: pointer;
             transition: all 0.2s;
             flex-shrink: 0;
+            font-size: 1rem;
         }
         
         .btn-add-suggestion:hover {
@@ -1040,17 +1069,50 @@
         }
         
         .suggestion-badge {
-            font-size: 0.65rem;
-            padding: 3px 8px;
-            border-radius: 6px;
-            background: rgba(255, 255, 255, 0.1);
+            font-size: 0.7rem;
+            padding: 4px 10px;
+            border-radius: 20px;
             font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
         }
         
-        .badge-bpm { color: #ffc107; background: rgba(255, 193, 7, 0.15); }
-        .badge-key { color: #0dcaf0; background: rgba(13, 202, 240, 0.15); }
-        .badge-key.key-match { color: #00ff68; background: rgba(0, 255, 104, 0.2); }
-        .badge-genre { color: #c44dff; background: rgba(196, 77, 255, 0.15); }
+        .badge-bpm { 
+            color: #ffc107; 
+            background: rgba(255, 193, 7, 0.15); 
+        }
+        .badge-bpm i { font-size: 0.6rem; }
+        .badge-key { 
+            color: #0dcaf0; 
+            background: rgba(13, 202, 240, 0.15); 
+        }
+        .badge-key.key-match { 
+            color: #00ff68; 
+            background: rgba(0, 255, 104, 0.2);
+            border: 1px solid rgba(0, 255, 104, 0.3);
+        }
+        .badge-key i { font-size: 0.6rem; }
+        .badge-genre { 
+            color: #c44dff; 
+            background: rgba(196, 77, 255, 0.15); 
+        }
+        .badge-energy {
+            color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.15);
+        }
+        
+        .suggestion-empty {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+        }
+        
+        .suggestion-empty i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            opacity: 0.5;
+        }
         
         /* Modal */
         .modal-overlay {
@@ -3716,13 +3778,25 @@ https://open.spotify.com/playlist/abc456" style="width: 100%; background: #14141
                         <h3><i class="fas fa-magic"></i> Suggestions harmoniques</h3>
                         <div class="suggestions-controls">
                             <span class="suggestions-based-on">Basé sur: <strong id="suggestionsBasedOn">-</strong></span>
-                            <div class="sort-buttons">
-                                <button class="btn btn-sm sort-btn active" data-sort="bpm">BPM</button>
-                                <button class="btn btn-sm sort-btn" data-sort="key">Clé</button>
-                            </div>
                         </div>
                     </div>
-                    <div id="harmonicSuggestionsList" class="suggestions-grid">
+                    <div class="suggestions-filters">
+                        <select id="suggestionsGenreFilter" class="filter-select">
+                            <option value="">Tous genres</option>
+                        </select>
+                        <div class="sort-buttons">
+                            <button class="btn btn-sm sort-btn active" data-sort="score" title="Par score">
+                                <i class="fas fa-trophy"></i>
+                            </button>
+                            <button class="btn btn-sm sort-btn" data-sort="bpm" title="Par BPM">
+                                <i class="fas fa-tachometer-alt"></i>
+                            </button>
+                            <button class="btn btn-sm sort-btn" data-sort="key" title="Par clé">
+                                <i class="fas fa-key"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="harmonicSuggestionsList" class="suggestions-list">
                         <!-- Suggestions -->
                     </div>
                 </div>
