@@ -4,8 +4,8 @@ radio = playlist(id="main_playlist", mode="random.smart", reload=30, "/home/radi
 
 # Fonction de mise a jour des metadonnees
 def set_title_artist(m) =
-  # Calcul du titre a partir du chemin de fichier
-  title =
+  # Recupere le nom du fichier (sans le chemin)
+  filename =
     if m["filename"] == "" then
       "GRANDE MAISON RADIO"
     else
@@ -13,15 +13,30 @@ def set_title_artist(m) =
       list.nth(parts, list.length(parts) - 1)
     end
   
+  # Supprime l'extension (.mp3, .wav, etc.)
+  filename_no_ext = string.replace(pattern="\\.mp3$|\\.wav$|\\.flac$|\\.m4a$|\\.ogg$", (fun (_) -> ""), filename)
+  
+  # Essaye de parser "Artiste - Titre" ou utilise le nom complet comme titre
+  artist = ""
+  title = filename_no_ext
+  
+  # Si le fichier contient " - ", on split pour avoir Artiste et Titre
+  if string.contains(substring=" - ", filename_no_ext) then
+    parts = string.split(separator=" - ", filename_no_ext)
+    artist := list.nth(parts, 0)
+    title := list.nth(parts, 1)
+  end
+  
   # --- ANALYTICS HOOK ---
-  # Appel asynchrone au script PHP pour logger le morceau
-  # On utilise url.encode pour eviter les problemes avec les caracteres speciaux
-  ignore(http.get("http://127.0.0.1/scripts/log_track.php?artist=" ^ url.encode("") ^ "&title=" ^ url.encode(title)))
+  # Appel robuste via curl (plus fiable que http.get)
+  # On encode les parametres pour eviter les problemes avec les caracteres speciaux
+  cmd = "curl -s -o /dev/null 'http://127.0.0.1/scripts/log_track.php?artist=" ^ url.encode(artist) ^ "&title=" ^ url.encode(title) ^ "'"
+  ignore(process.run(cmd))
   # ----------------------
 
   [
     ("title",  title),
-    ("artist", "")
+    ("artist", artist)
   ]
 end
 
