@@ -2730,11 +2730,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             'Trance': ['Trance', 'Psytrance', 'Progressive Trance', 'Goa Trance', 'Uplifting Trance'],
             'Bass': ['Drum & Bass', 'Dubstep', 'Jungle', 'Garage', 'UK Garage', 'Grime', 'Breakbeat', 'DnB', 'Neurofunk'],
             'Hip Hop': ['Hip Hop', 'Rap', 'Trap', 'RnB', 'Urban', 'Drill', 'Old School', 'French Rap', 'US Rap', 'Cloud Rap', 'Gangsta Rap', 'Jazz Rap'],
-            'Chill': ['Ambient', 'Chillout', 'Downtempo', 'Lo-Fi', 'Lounge', 'Trip Hop', 'Chill Hop', 'Jazz Beats', 'Instrumental Hip Hop'],
+            'Chill': ['Ambient', 'Chillout', 'Downtempo', 'Lo-Fi', 'Lounge', 'Trip Hop', 'Chill Hop', 'Instrumental Hip Hop'],
             'Disco': ['Disco', 'Nu Disco', 'Funk', 'Soul', 'Boogie'],
             'Rock': ['Rock', 'Indie', 'Alternative', 'Metal', 'Punk', 'New Wave', 'Pop Punk', 'Grunge'],
             'Pop': ['Pop', 'Dance Pop', 'Synth Pop', 'Electropop', 'Hyperpop', 'Indie Pop', 'K-Pop'],
-            'Jazz': ['Jazz', 'Blues', 'Nu Jazz', 'Smooth Jazz', 'Bebop'],
+            'Jazz': ['Jazz', 'Blues', 'Nu Jazz', 'Smooth Jazz', 'Bebop', 'Acid Jazz', 'Jazz Beats'],
             'Reggae': ['Reggae', 'Dub', 'Dancehall', 'Ska', 'Roots Reggae'],
             'Latin': ['Latin', 'Reggaeton', 'Salsa', 'Bachata', 'Cumbia']
         };
@@ -2797,16 +2797,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             else if (bpmRatio <= 0.06) score += 20;
             else if (bpmRatio <= 0.10) score += 10;
             
-            // Genre match (40 pts - Increased from 20)
+            // Genre match (60 pts - Increased from 40)
             // Stronger emphasis on keeping the vibe
             if (targetGenre && meta.genre) {
                 if (meta.genre.toLowerCase() === targetGenre.toLowerCase()) {
-                    score += 40;
+                    score += 60;
                 } else {
                     const targetFam = getGenreFamily(targetGenre);
                     const metaFam = getGenreFamily(meta.genre);
                     if (targetFam && metaFam && targetFam === metaFam) {
-                        score += 20; // Same family bonus
+                        score += 40; // Same family bonus
                     }
                 }
             }
@@ -2831,16 +2831,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (globalEnergyDiff <= 0.15) score += 10;
             }
 
-            // Global Genre Coherence (30 pts - Increased from 10)
+            // Global Genre Coherence (40 pts - Increased from 30)
             // If the song matches the dominant genre of the playlist, big bonus
             if (dominantGenre && meta.genre) {
                 if (meta.genre.toLowerCase() === dominantGenre) {
-                    score += 30;
+                    score += 40;
                 } else {
                     const domFam = getGenreFamily(dominantGenre);
                     const metaFam = getGenreFamily(meta.genre);
                     if (domFam && metaFam && domFam === metaFam) {
-                        score += 15; // Same family bonus
+                        score += 20; // Same family bonus
                     }
                 }
             }
