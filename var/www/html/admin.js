@@ -837,13 +837,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             posts.forEach(post => {
                 let displayTitle = post.title;
+                // If title equals artist name, use subtitle as actual title
                 if (post.artist && post.title && post.title.trim().toLowerCase() === post.artist.trim().toLowerCase() && post.subtitle) {
                     displayTitle = post.subtitle;
                 }
 
-                // Get or detect post type
-                const postType = post.type || detectPostType(post.title);
-                const typeLabel = typeLabels[postType] || 'Single';
+                // Get or detect post type - use displayTitle which has the real title
+                const postType = post.type || detectPostType(displayTitle);
+                const typeLabel = typeLabels[postType] || 'Autre';
 
                 // Permission check for buttons
                 let canEdit = true;
