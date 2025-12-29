@@ -2738,26 +2738,26 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             // 1. TRANSITION SCORE (vs Last Song) - Max 100 pts
             
-            // Key compatibility (primary - 50 pts)
+            // Key compatibility (primary - 40 pts, reduced from 60)
             if (meta.camelot === targetKey) {
-                score += 60; // Same key = perfect
+                score += 40; // Same key
                 keyMatch = true;
             } else if (compatibleKeys.includes(meta.camelot)) {
-                score += 50;
+                score += 30;
                 keyMatch = true;
             }
             
-            // BPM proximity (40 pts max)
+            // BPM proximity (30 pts max)
             const bpmDiff = Math.abs(meta.bpm - targetBpm);
             const bpmRatio = bpmDiff / targetBpm;
-            if (bpmRatio <= 0.03) score += 40;
-            else if (bpmRatio <= 0.06) score += 30;
-            else if (bpmRatio <= 0.10) score += 20;
-            else if (bpmRatio <= 0.15) score += 10;
+            if (bpmRatio <= 0.03) score += 30;
+            else if (bpmRatio <= 0.06) score += 20;
+            else if (bpmRatio <= 0.10) score += 10;
             
-            // Genre match (20 pts)
+            // Genre match (40 pts - Increased from 20)
+            // Stronger emphasis on keeping the vibe
             if (targetGenre && meta.genre && meta.genre.toLowerCase() === targetGenre.toLowerCase()) {
-                score += 20;
+                score += 40;
             }
             
             // Energy proximity (10 pts)
@@ -2767,12 +2767,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 else if (energyDiff <= 0.25) score += 5;
             }
 
-            // 2. GLOBAL COHERENCE SCORE (vs Playlist Stats) - Max 30 pts bonus
+            // 2. GLOBAL COHERENCE SCORE (vs Playlist Stats) - Max 50 pts bonus
             
             // Global BPM Coherence
             const globalBpmDiff = Math.abs(meta.bpm - playlistAvgBpm);
             const globalBpmRatio = globalBpmDiff / playlistAvgBpm;
-            if (globalBpmRatio <= 0.05) score += 10; // Close to average
+            if (globalBpmRatio <= 0.05) score += 10; 
             
             // Global Energy Coherence
             if (meta.energy) {
@@ -2780,9 +2780,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (globalEnergyDiff <= 0.15) score += 10;
             }
 
-            // Global Genre Coherence
+            // Global Genre Coherence (30 pts - Increased from 10)
+            // If the song matches the dominant genre of the playlist, big bonus
             if (dominantGenre && meta.genre && meta.genre.toLowerCase() === dominantGenre) {
-                score += 10;
+                score += 30;
             }
             
             if (score >= 40) { // Minimum threshold
