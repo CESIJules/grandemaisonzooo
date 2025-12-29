@@ -48,6 +48,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- New Sidebar Navigation ---
     const navLinks = document.querySelectorAll('.nav-link');
     const adminSections = document.querySelectorAll('.admin-section');
+    let analyticsInterval = null;
+
+    // Helper to refresh analytics
+    function refreshAnalyticsData() {
+        if (typeof loadAnalyticsHeader === 'function') loadAnalyticsHeader();
+        // loadAudienceChart is assigned to window, so we check window.loadAudienceChart
+        if (typeof window.loadAudienceChart === 'function') window.loadAudienceChart('24h');
+        if (typeof loadTopLists === 'function') loadTopLists();
+        if (typeof loadHeatmap === 'function') loadHeatmap();
+    }
 
     navLinks.forEach(link => {
         link.addEventListener('click', (e) => {
@@ -62,6 +72,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             adminSections.forEach(section => {
                 section.style.display = section.id === sectionId ? 'block' : 'none';
             });
+
+            // Handle Analytics Auto-Refresh
+            if (sectionId === 'analytics') {
+                refreshAnalyticsData();
+                // Refresh every 30 seconds
+                if (analyticsInterval) clearInterval(analyticsInterval);
+                analyticsInterval = setInterval(refreshAnalyticsData, 30000);
+            } else {
+                if (analyticsInterval) {
+                    clearInterval(analyticsInterval);
+                    analyticsInterval = null;
+                }
+            }
         });
     });
 
@@ -1783,17 +1806,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
 
         } catch (e) {}
-    }
-
-    // Init Analytics when section is shown
-    const analyticsLink = document.querySelector('.nav-link[data-section="analytics"]');
-    if (analyticsLink) {
-        analyticsLink.addEventListener('click', () => {
-            loadAnalyticsHeader();
-            loadAudienceChart('24h');
-            loadTopLists();
-            loadHeatmap();
-        });
     }
 
     // --- Initial Load ---
