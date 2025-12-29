@@ -82,19 +82,25 @@ try {
             
         case 'stats_header':
             // Stats rapides pour le haut du dashboard
-            // 1. Pic d'audience (30j)
+            // 1. Pic d'audience (30j) et comparaison avec les 30j précédents
             $peak = $pdo->query("SELECT MAX(listeners) FROM audience_logs WHERE timestamp > datetime('now', '-30 days')")->fetchColumn();
+            $peak_prev = $pdo->query("SELECT MAX(listeners) FROM audience_logs WHERE timestamp > datetime('now', '-60 days') AND timestamp <= datetime('now', '-30 days')")->fetchColumn();
             
-            // 2. Moyenne auditeurs (24h)
+            // 2. Moyenne auditeurs (24h) et comparaison avec hier
             $avg = $pdo->query("SELECT AVG(listeners) FROM audience_logs WHERE timestamp > datetime('now', '-24 hours')")->fetchColumn();
+            $avg_prev = $pdo->query("SELECT AVG(listeners) FROM audience_logs WHERE timestamp > datetime('now', '-48 hours') AND timestamp <= datetime('now', '-24 hours')")->fetchColumn();
             
-            // 3. Total tracks joués (24h)
+            // 3. Total tracks joués (24h) et comparaison avec hier
             $tracks = $pdo->query("SELECT COUNT(*) FROM play_history WHERE timestamp > datetime('now', '-24 hours')")->fetchColumn();
+            $tracks_prev = $pdo->query("SELECT COUNT(*) FROM play_history WHERE timestamp > datetime('now', '-48 hours') AND timestamp <= datetime('now', '-24 hours')")->fetchColumn();
             
             $response = ['status' => 'success', 'data' => [
                 'peak_30d' => $peak ?: 0,
+                'peak_prev_30d' => $peak_prev ?: 0,
                 'avg_24h' => round($avg ?: 0, 1),
-                'tracks_24h' => $tracks ?: 0
+                'avg_prev_24h' => round($avg_prev ?: 0, 1),
+                'tracks_24h' => $tracks ?: 0,
+                'tracks_prev_24h' => $tracks_prev ?: 0
             ]];
             break;
 

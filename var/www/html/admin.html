@@ -1102,6 +1102,367 @@
         }
 
         /* =============================================
+           POSTS VIEW TOGGLE & LIST VIEW
+           ============================================= */
+        .posts-view-toggle {
+            display: flex;
+            gap: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px;
+            border-radius: 8px;
+        }
+        
+        .posts-view-toggle button {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .posts-view-toggle button.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+        
+        .posts-view-toggle button:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Posts List View */
+        .posts-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .post-list-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px 16px;
+            background: var(--surface-color);
+            border: 1px solid var(--surface-border);
+            border-radius: 12px;
+            transition: all 0.2s;
+        }
+        
+        .post-list-item:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        .post-list-image {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+        
+        .post-list-no-image {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+        
+        .post-list-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .post-list-title {
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 4px;
+        }
+        
+        .post-list-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        
+        .post-list-actions {
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .post-list-item:hover .post-list-actions {
+            opacity: 1;
+        }
+
+        /* Post Type Badge */
+        .post-type-badge {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 3px 8px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+        }
+        
+        .post-type-badge.single { background: #6366f1; color: #fff; }
+        .post-type-badge.ep { background: #8b5cf6; color: #fff; }
+        .post-type-badge.album { background: #ec4899; color: #fff; }
+        .post-type-badge.clip { background: #ef4444; color: #fff; }
+        .post-type-badge.mixtape { background: #f59e0b; color: #000; }
+        .post-type-badge.flip { background: #10b981; color: #fff; }
+        .post-type-badge.other { background: #64748b; color: #fff; }
+
+        /* =============================================
+           ANALYTICS KPIs ENHANCED
+           ============================================= */
+        .analytics-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .analytics-kpi-card {
+            background: var(--surface-color);
+            border: 1px solid var(--surface-border);
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .analytics-kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--kpi-color, var(--accent-primary));
+        }
+        
+        .analytics-kpi-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .analytics-kpi-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: rgba(var(--kpi-color-rgb, 0, 255, 104), 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            color: var(--kpi-color, var(--accent-primary));
+        }
+        
+        .analytics-kpi-icon i {
+            animation: pulse-icon 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse-icon {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .analytics-kpi-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .analytics-kpi-value {
+            font-size: 2.8rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 8px;
+            color: var(--kpi-color, var(--accent-primary));
+        }
+        
+        .analytics-kpi-comparison {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+        }
+        
+        .analytics-kpi-comparison.up {
+            color: #10b981;
+        }
+        
+        .analytics-kpi-comparison.down {
+            color: #ef4444;
+        }
+        
+        .analytics-kpi-comparison.neutral {
+            color: var(--text-secondary);
+        }
+        
+        .analytics-kpi-sparkline {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            opacity: 0.3;
+        }
+
+        /* =============================================
+           ARTIST CARD ENHANCEMENTS
+           ============================================= */
+        .artist-card-badge {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            z-index: 2;
+        }
+        
+        .artist-card-badge i {
+            color: var(--accent-primary);
+        }
+        
+        .artist-card-actions-visible {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 12px 20px;
+            background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .artist-card:hover .artist-card-actions-visible {
+            opacity: 1;
+        }
+
+        /* =============================================
+           PLAYLIST CARD ENHANCEMENTS
+           ============================================= */
+        .playlist-card-preview {
+            display: flex;
+            gap: 4px;
+            margin-top: 12px;
+            margin-bottom: 8px;
+        }
+        
+        .playlist-preview-track {
+            flex: 1;
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+        
+        .playlist-preview-track.filled {
+            background: var(--card-color, #00ff68);
+            opacity: 0.6;
+        }
+        
+        .playlist-card-duration {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .playlist-card.is-live .playlist-card-icon {
+            animation: now-playing 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes now-playing {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .playlist-now-playing-indicator {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            display: flex;
+            gap: 2px;
+            align-items: flex-end;
+            height: 16px;
+        }
+        
+        .playlist-now-playing-indicator span {
+            width: 3px;
+            background: var(--accent-primary);
+            border-radius: 1px;
+            animation: equalizer 0.8s ease-in-out infinite;
+        }
+        
+        .playlist-now-playing-indicator span:nth-child(1) { animation-delay: 0s; }
+        .playlist-now-playing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .playlist-now-playing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes equalizer {
+            0%, 100% { height: 4px; }
+            50% { height: 16px; }
+        }
+        
+        .playlist-tracks-preview {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--surface-border);
+        }
+        
+        .playlist-track-mini {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        
+        .playlist-track-mini i {
+            font-size: 0.6rem;
+            color: var(--card-color, #00ff68);
+        }
+        
+        .playlist-track-mini span {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* =============================================
            ARTISTS GRID - MODERN CARDS
            ============================================= */
         .artists-grid {
@@ -2771,6 +3132,10 @@
                 <div class="modern-table-header">
                     <h3><i class="fas fa-stream"></i> Posts publiés</h3>
                     <div class="modern-table-search">
+                        <div class="posts-view-toggle">
+                            <button id="viewGridBtn" class="active" title="Vue grille"><i class="fas fa-th-large"></i></button>
+                            <button id="viewListBtn" title="Vue liste"><i class="fas fa-list"></i></button>
+                        </div>
                         <select id="postArtistFilter" style="background: rgba(255,255,255,0.05); border: 1px solid var(--surface-border); border-radius: 8px; padding: 10px 16px; color: var(--text-primary); font-size: 0.9rem;"></select>
                         <button type="button" class="btn btn-primary" id="openAddPostModal"><i class="fas fa-plus"></i> Nouveau post</button>
                     </div>
@@ -2792,7 +3157,8 @@
                             <div class="form-grid">
                                 <div class="form-group">
                                     <label for="postTitle">Titre du Projet</label>
-                                    <input type="text" id="postTitle" name="title" placeholder="Ex: Single - Nom du Single" required>
+                                    <input type="text" id="postTitle" name="title" placeholder="Ex: Single - Nom du titre" required>
+                                    <small style="color: var(--text-secondary); font-size: 0.75rem;">Le type (Single, EP, Album, Clip, Mixtape, Flip) est détecté automatiquement</small>
                                 </div>
                                 <div class="form-group">
                                     <label for="postArtist">Artiste</label>
@@ -2891,19 +3257,37 @@
         <section id="analytics" class="admin-section" style="display: none;">
             <h2>Analytics</h2>
             
-            <!-- Stats Header -->
-            <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 30px;">
-                <div class="card" style="text-align: center; padding: 20px; margin-bottom: 0;">
-                    <h3 style="margin-bottom: 10px; font-size: 0.9rem;">Pic d'audience (30j)</h3>
-                    <div id="statPeak" style="font-size: 2.5rem; font-weight: 800; color: var(--accent-primary);">0</div>
+            <!-- Enhanced KPIs -->
+            <div class="analytics-kpi-grid">
+                <div class="analytics-kpi-card" style="--kpi-color: #00ff68; --kpi-color-rgb: 0, 255, 104;">
+                    <div class="analytics-kpi-header">
+                        <div class="analytics-kpi-icon"><i class="fas fa-chart-line"></i></div>
+                        <div class="analytics-kpi-label">Pic d'audience (30j)</div>
+                    </div>
+                    <div class="analytics-kpi-value" id="statPeak">0</div>
+                    <div class="analytics-kpi-comparison neutral" id="statPeakComparison">
+                        <i class="fas fa-minus"></i> <span>vs mois dernier</span>
+                    </div>
                 </div>
-                <div class="card" style="text-align: center; padding: 20px; margin-bottom: 0;">
-                    <h3 style="margin-bottom: 10px; font-size: 0.9rem;">Moyenne (24h)</h3>
-                    <div id="statAvg" style="font-size: 2.5rem; font-weight: 800; color: #fff;">0</div>
+                <div class="analytics-kpi-card" style="--kpi-color: #3b82f6; --kpi-color-rgb: 59, 130, 246;">
+                    <div class="analytics-kpi-header">
+                        <div class="analytics-kpi-icon"><i class="fas fa-users"></i></div>
+                        <div class="analytics-kpi-label">Moyenne (24h)</div>
+                    </div>
+                    <div class="analytics-kpi-value" id="statAvg">0</div>
+                    <div class="analytics-kpi-comparison neutral" id="statAvgComparison">
+                        <i class="fas fa-minus"></i> <span>vs hier</span>
+                    </div>
                 </div>
-                <div class="card" style="text-align: center; padding: 20px; margin-bottom: 0;">
-                    <h3 style="margin-bottom: 10px; font-size: 0.9rem;">Tracks joués (24h)</h3>
-                    <div id="statTracks" style="font-size: 2.5rem; font-weight: 800; color: #888;">0</div>
+                <div class="analytics-kpi-card" style="--kpi-color: #8b5cf6; --kpi-color-rgb: 139, 92, 246;">
+                    <div class="analytics-kpi-header">
+                        <div class="analytics-kpi-icon"><i class="fas fa-play-circle"></i></div>
+                        <div class="analytics-kpi-label">Tracks joués (24h)</div>
+                    </div>
+                    <div class="analytics-kpi-value" id="statTracks">0</div>
+                    <div class="analytics-kpi-comparison neutral" id="statTracksComparison">
+                        <i class="fas fa-minus"></i> <span>vs hier</span>
+                    </div>
                 </div>
             </div>
 

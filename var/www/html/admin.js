@@ -242,6 +242,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let artistProfiles = [];
     let allPosts = [];
     let allPlaylists = [];
+    let currentPostsView = 'grid'; // 'grid' or 'list'
 
     // --- State ---
     let allAvailableSongs = [];
@@ -742,6 +743,41 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // POSTS (TIMELINE)
+    const typeLabels = {
+        'single': 'Single',
+        'ep': 'EP',
+        'album': 'Album',
+        'clip': 'Clip',
+        'mixtape': 'Mixtape',
+        'flip': 'Flip',
+        'live': 'Live Session',
+        'other': 'Autre'
+    };
+
+    function detectPostType(title) {
+        if (!title) return 'other';
+        const lowerTitle = title.toLowerCase().trim();
+        
+        // Check for patterns at the start: "TYPE - ..." or "TYPE:"
+        if (lowerTitle.startsWith('single -') || lowerTitle.startsWith('single:') || lowerTitle.startsWith('single ')) return 'single';
+        if (lowerTitle.startsWith('ep -') || lowerTitle.startsWith('ep:') || lowerTitle.startsWith('ep ')) return 'ep';
+        if (lowerTitle.startsWith('album -') || lowerTitle.startsWith('album:') || lowerTitle.startsWith('album ')) return 'album';
+        if (lowerTitle.startsWith('clip -') || lowerTitle.startsWith('clip:') || lowerTitle.startsWith('clip ')) return 'clip';
+        if (lowerTitle.startsWith('mixtape -') || lowerTitle.startsWith('mixtape:') || lowerTitle.startsWith('mixtape ')) return 'mixtape';
+        if (lowerTitle.startsWith('flip -') || lowerTitle.startsWith('flip:') || lowerTitle.startsWith('flip ')) return 'flip';
+        if (lowerTitle.startsWith('live session') || lowerTitle.startsWith('live -')) return 'live';
+        
+        // Check for [FLIP] pattern in title (like "LE BOG [UCYLL FLIP]")
+        if (lowerTitle.includes('[') && lowerTitle.includes('flip]')) return 'flip';
+        if (lowerTitle.includes('(') && lowerTitle.includes('flip)')) return 'flip';
+        
+        // Fallback checks anywhere in title
+        if (lowerTitle.includes('mixtape')) return 'mixtape';
+        if (lowerTitle.includes('album')) return 'album';
+        
+        return 'other';
+    }
+
     async function renderAdminPosts(artistFilter = 'all') {
         try {
             const response = await fetch('get_posts.php', { cache: 'no-store' });
@@ -776,6 +812,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
+            // Set container class based on view
+            postsManagementContainer.className = currentPostsView === 'grid' ? 'modern-table-content posts-grid' : 'modern-table-content posts-list';
             postsManagementContainer.innerHTML = '';
             
             posts.forEach(post => {
@@ -783,6 +821,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (post.artist && post.title && post.title.trim().toLowerCase() === post.artist.trim().toLowerCase() && post.subtitle) {
                     displayTitle = post.subtitle;
                 }
+
+                // Get or detect post type
+                const postType = post.type || detectPostType(post.title);
+                const typeLabel = typeLabels[postType] || 'Single';
 
                 // Permission check for buttons
                 let canEdit = true;
@@ -797,46 +839,79 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 }
 
-                const card = document.createElement('div');
-                card.className = 'post-card';
-                
                 const imageUrl = post.image || null;
                 const formattedDate = new Date(post.date).toLocaleDateString('fr-FR', { 
                     day: 'numeric', 
                     month: 'short', 
                     year: 'numeric' 
                 });
-                
-                card.innerHTML = `
-                    <div class="post-card-bg" style="${imageUrl ? `background-image: url('${escapeHtml(imageUrl)}')` : 'background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)'}"></div>
-                    ${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="" class="post-card-image" onerror="this.style.display='none'">` : 
-                    `<div class="post-card-no-image"><i class="fas fa-music"></i></div>`}
-                    ${post.link ? `<a href="${escapeHtml(post.link)}" target="_blank" class="post-card-link" title="Voir le lien"><i class="fas fa-external-link-alt"></i></a>` : ''}
-                    ${canEdit ? `
-                    <div class="post-card-actions">
-                        <button class="post-action-btn edit-post-btn" data-id="${escapeHtml(String(post.id))}" title="Modifier">
-                            <i class="fas fa-pencil-alt"></i>
-                        </button>
-                        <button class="post-action-btn danger delete-post-btn" data-id="${escapeHtml(String(post.id))}" title="Supprimer">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                    ` : ''}
-                    <div class="post-card-content">
-                        <div class="post-card-title">${escapeHtml(displayTitle)}</div>
-                        <div class="post-card-meta">
-                            <span class="post-card-artist">
-                                <i class="fas fa-user"></i>
-                                ${escapeHtml(post.artist || 'Inconnu')}
-                            </span>
-                            <span class="post-card-date">
-                                <i class="far fa-calendar"></i>
-                                ${formattedDate}
-                            </span>
+
+                if (currentPostsView === 'grid') {
+                    // Grid view (cards)
+                    const card = document.createElement('div');
+                    card.className = 'post-card';
+                    
+                    card.innerHTML = `
+                        <div class="post-card-bg" style="${imageUrl ? `background-image: url('${escapeHtml(imageUrl)}')` : 'background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)'}"></div>
+                        ${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="" class="post-card-image" onerror="this.style.display='none'">` : 
+                        `<div class="post-card-no-image"><i class="fas fa-music"></i></div>`}
+                        ${post.link ? `<a href="${escapeHtml(post.link)}" target="_blank" class="post-card-link" title="Voir le lien"><i class="fas fa-external-link-alt"></i></a>` : ''}
+                        ${canEdit ? `
+                        <div class="post-card-actions">
+                            <button class="post-action-btn edit-post-btn" data-id="${escapeHtml(String(post.id))}" title="Modifier">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>
+                            <button class="post-action-btn danger delete-post-btn" data-id="${escapeHtml(String(post.id))}" title="Supprimer">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </div>
-                    </div>
-                `;
-                postsManagementContainer.appendChild(card);
+                        ` : ''}
+                        <div class="post-card-content">
+                            <div class="post-card-title">${escapeHtml(displayTitle)}</div>
+                            <div class="post-card-meta">
+                                <span class="post-type-badge ${postType}">${typeLabel}</span>
+                                <span class="post-card-artist">
+                                    <i class="fas fa-user"></i>
+                                    ${escapeHtml(post.artist || 'Inconnu')}
+                                </span>
+                                <span class="post-card-date">
+                                    <i class="far fa-calendar"></i>
+                                    ${formattedDate}
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                    postsManagementContainer.appendChild(card);
+                } else {
+                    // List view (compact)
+                    const item = document.createElement('div');
+                    item.className = 'post-list-item';
+                    
+                    item.innerHTML = `
+                        ${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="" class="post-list-image" onerror="this.style.display='none'">` : 
+                        `<div class="post-list-no-image"><i class="fas fa-music"></i></div>`}
+                        <div class="post-list-info">
+                            <div class="post-list-title">${escapeHtml(displayTitle)}</div>
+                            <div class="post-list-meta">
+                                <span class="post-type-badge ${postType}">${typeLabel}</span>
+                                <span><i class="fas fa-user"></i> ${escapeHtml(post.artist || 'Inconnu')}</span>
+                                <span><i class="far fa-calendar"></i> ${formattedDate}</span>
+                                ${post.link ? `<a href="${escapeHtml(post.link)}" target="_blank" style="color: var(--accent-primary);"><i class="fas fa-external-link-alt"></i></a>` : ''}
+                            </div>
+                        </div>
+                        ${canEdit ? `
+                        <div class="post-list-actions">
+                            <button class="btn-icon edit-post-btn" data-id="${escapeHtml(String(post.id))}" title="Modifier">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>
+                            <button class="btn-icon danger delete-post-btn" data-id="${escapeHtml(String(post.id))}" title="Supprimer">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                        ` : ''}
+                    `;
+                    postsManagementContainer.appendChild(item);
+                }
             });
 
         } catch (error) {
@@ -1407,6 +1482,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
+        // Count releases per artist from allPosts
+        const releaseCount = {};
+        allPosts.forEach(post => {
+            const artistName = (post.artist || '').toLowerCase().replace(/\s/g, '');
+            if (artistName) {
+                releaseCount[artistName] = (releaseCount[artistName] || 0) + 1;
+            }
+        });
+
+        // Helper to get release count for an artist
+        function getArtistReleaseCount(artist) {
+            const artistId = (artist.id || '').toLowerCase().replace(/\s/g, '');
+            const artistName = (artist.name || '').toLowerCase().replace(/\s/g, '');
+            return releaseCount[artistId] || releaseCount[artistName] || 0;
+        }
+
         // If user is artist, show only their own profile card (no modal auto-open)
         if (currentUser && currentUser.role === 'artist') {
             const myProfile = artistProfiles.find(a => a.id === currentUser.artist_id);
@@ -1416,6 +1507,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const addBtn = document.getElementById('openAddArtistModal');
                 if (addBtn) addBtn.style.display = 'none';
                 
+                const myReleases = getArtistReleaseCount(myProfile);
+                
                 // Show only my profile card
                 artistsManagementContainer.innerHTML = '';
                 const card = document.createElement('div');
@@ -1424,6 +1517,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const imageUrl = myProfile.image || 'images/placeholder.jpg';
                 
                 card.innerHTML = `
+                    <div class="artist-card-badge">
+                        <i class="fas fa-compact-disc"></i> ${myReleases} release${myReleases !== 1 ? 's' : ''}
+                    </div>
                     <div class="artist-card-actions">
                         <button class="artist-action-btn edit-artist-btn" data-id="${escapeHtml(myProfile.id)}" title="Modifier mon profil">
                             <i class="fas fa-pencil-alt"></i>
@@ -1459,12 +1555,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
 
+            const artistReleases = getArtistReleaseCount(artist);
             const card = document.createElement('div');
             card.className = 'artist-card';
             
             const imageUrl = artist.image || 'images/placeholder.jpg';
             
             card.innerHTML = `
+                <div class="artist-card-badge">
+                    <i class="fas fa-compact-disc"></i> ${artistReleases} release${artistReleases !== 1 ? 's' : ''}
+                </div>
                 ${canEdit ? `
                 <div class="artist-card-actions">
                     <button class="artist-action-btn edit-artist-btn" data-id="${escapeHtml(artist.id)}" title="Modifier">
@@ -1649,6 +1749,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (postArtistFilter) {
         postArtistFilter.addEventListener('change', (e) => {
             renderAdminPosts(e.target.value);
+        });
+    }
+
+    // Posts View Toggle
+    const viewGridBtn = document.getElementById('viewGridBtn');
+    const viewListBtn = document.getElementById('viewListBtn');
+    
+    if (viewGridBtn) {
+        viewGridBtn.addEventListener('click', () => {
+            currentPostsView = 'grid';
+            viewGridBtn.classList.add('active');
+            viewListBtn.classList.remove('active');
+            renderAdminPosts(postArtistFilter ? postArtistFilter.value : 'all');
+        });
+    }
+    
+    if (viewListBtn) {
+        viewListBtn.addEventListener('click', () => {
+            currentPostsView = 'list';
+            viewListBtn.classList.add('active');
+            viewGridBtn.classList.remove('active');
+            renderAdminPosts(postArtistFilter ? postArtistFilter.value : 'all');
         });
     }
 
@@ -1885,17 +2007,54 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Analytics Section ---
     let audienceChartInstance = null;
     let heatmapChartInstance = null;
+    let previousAnalyticsData = null;
 
     async function loadAnalyticsHeader() {
         try {
             const res = await fetch('api_analytics.php?type=stats_header');
             const json = await res.json();
             if (json.status === 'success') {
-                document.getElementById('statPeak').textContent = json.data.peak_30d;
-                document.getElementById('statAvg').textContent = json.data.avg_24h;
-                document.getElementById('statTracks').textContent = json.data.tracks_24h;
+                const data = json.data;
+                
+                // Update values
+                document.getElementById('statPeak').textContent = data.peak_30d;
+                document.getElementById('statAvg').textContent = data.avg_24h;
+                document.getElementById('statTracks').textContent = data.tracks_24h;
+                
+                // Update comparisons if we have previous data
+                updateKpiComparison('statPeakComparison', data.peak_30d, data.peak_prev_30d, 'vs mois dernier');
+                updateKpiComparison('statAvgComparison', data.avg_24h, data.avg_prev_24h, 'vs hier');
+                updateKpiComparison('statTracksComparison', data.tracks_24h, data.tracks_prev_24h, 'vs hier');
             }
         } catch (e) { console.error(e); }
+    }
+    
+    function updateKpiComparison(elementId, current, previous, label) {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+        
+        const currentVal = parseFloat(current) || 0;
+        const previousVal = parseFloat(previous) || 0;
+        
+        if (previousVal === 0) {
+            el.className = 'analytics-kpi-comparison neutral';
+            el.innerHTML = `<i class="fas fa-minus"></i> <span>${label}</span>`;
+            return;
+        }
+        
+        const diff = currentVal - previousVal;
+        const percentChange = ((diff / previousVal) * 100).toFixed(0);
+        
+        if (diff > 0) {
+            el.className = 'analytics-kpi-comparison up';
+            el.innerHTML = `<i class="fas fa-arrow-up"></i> <span>+${percentChange}% ${label}</span>`;
+        } else if (diff < 0) {
+            el.className = 'analytics-kpi-comparison down';
+            el.innerHTML = `<i class="fas fa-arrow-down"></i> <span>${percentChange}% ${label}</span>`;
+        } else {
+            el.className = 'analytics-kpi-comparison neutral';
+            el.innerHTML = `<i class="fas fa-equals"></i> <span>= ${label}</span>`;
+        }
     }
 
     window.loadAudienceChart = async function(range) {
@@ -2076,20 +2235,47 @@ document.addEventListener('DOMContentLoaded', async () => {
             const color = playlist.color || '#00ff68';
             const icon = playlist.icon || 'music';
             
+            // Calculate total duration (estimate ~3min per song if no metadata)
+            const songCount = playlist.songs.length;
+            const estimatedMinutes = songCount * 3;
+            const hours = Math.floor(estimatedMinutes / 60);
+            const mins = estimatedMinutes % 60;
+            const durationStr = hours > 0 ? `${hours}h ${mins}min` : `${mins} min`;
+            
+            // Get first 3-4 tracks for preview
+            const previewTracks = playlist.songs.slice(0, 4);
+            
             const card = document.createElement('div');
             card.className = `playlist-card ${isLive ? 'is-live' : ''}`;
             card.style.setProperty('--card-color', color);
             card.dataset.playlistName = playlist.name;
             
             card.innerHTML = `
+                ${isLive ? `
+                <div class="playlist-now-playing-indicator">
+                    <span></span><span></span><span></span>
+                </div>
+                ` : ''}
                 <div class="playlist-card-icon" style="color: ${color}">
                     <i class="fas fa-${icon}"></i>
                 </div>
                 <div class="playlist-card-name">${escapeHtml(playlist.name)}</div>
                 <div class="playlist-card-meta">
-                    <span>${playlist.songs.length} morceaux</span>
+                    <span>${songCount} morceaux</span>
                     ${isLive ? '<span class="live-badge">LIVE</span>' : ''}
                 </div>
+                <div class="playlist-card-duration">
+                    <i class="far fa-clock"></i> ~${durationStr}
+                </div>
+                ${previewTracks.length > 0 ? `
+                <div class="playlist-tracks-preview">
+                    ${previewTracks.map(song => {
+                        const songName = song.split('/').pop().replace(/\.[^/.]+$/, '').substring(0, 30);
+                        return `<div class="playlist-track-mini"><i class="fas fa-music"></i><span>${escapeHtml(songName)}</span></div>`;
+                    }).join('')}
+                    ${songCount > 4 ? `<div class="playlist-track-mini" style="opacity: 0.5;"><i class="fas fa-ellipsis-h"></i><span>+${songCount - 4} autres</span></div>` : ''}
+                </div>
+                ` : ''}
             `;
             
             card.addEventListener('click', () => openNewPlaylistEditor(playlist));
