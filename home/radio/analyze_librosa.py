@@ -24,7 +24,11 @@ def get_id3_tags(file_path):
     try:
         from mutagen.mp3 import MP3
         from mutagen.id3 import ID3
-        
+    except ImportError:
+        # mutagen not installed - return empty data
+        return {'genre': None, 'artist': None, 'title': None, 'album': None, 'id3_error': 'mutagen not installed'}
+    
+    try:
         audio = MP3(file_path, ID3=ID3)
         tags = audio.tags
         
@@ -269,25 +273,30 @@ def analyze_audio(file_path):
         return {'error': str(e)}
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print(json.dumps({'error': 'No file provided'}))
-        sys.exit(1)
-    
-    file_path = sys.argv[1]
-    
-    # Check for --tags-only flag (fast mode, just extract ID3 tags)
-    tags_only = '--tags-only' in sys.argv
-    
-    # Ensure file exists
-    if not os.path.exists(file_path):
-        print(json.dumps({'error': f'File not found: {file_path}'}))
-        sys.exit(1)
+    try:
+        if len(sys.argv) < 2:
+            print(json.dumps({'error': 'No file provided'}))
+            sys.exit(1)
+        
+        file_path = sys.argv[1]
+        
+        # Check for --tags-only flag (fast mode, just extract ID3 tags)
+        tags_only = '--tags-only' in sys.argv
+        
+        # Ensure file exists
+        if not os.path.exists(file_path):
+            print(json.dumps({'error': f'File not found: {file_path}'}))
+            sys.exit(1)
 
-    if tags_only:
-        # Fast mode: only extract ID3 tags (genre, artist, etc.)
-        result = get_id3_tags(file_path)
-        result['mode'] = 'tags_only'
-        print(json.dumps(result))
-    else:
-        # Full analysis mode
-        print(json.dumps(analyze_audio(file_path)))
+        if tags_only:
+            # Fast mode: only extract ID3 tags (genre, artist, etc.)
+            result = get_id3_tags(file_path)
+            result['mode'] = 'tags_only'
+            print(json.dumps(result))
+        else:
+            # Full analysis mode
+            print(json.dumps(analyze_audio(file_path)))
+    except Exception as e:
+        # Catch any uncaught exception and return as JSON
+        print(json.dumps({'error': f'Uncaught exception: {str(e)}', 'type': type(e).__name__}))
+        sys.exit(1)

@@ -2512,14 +2512,58 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         const lastSongMeta = await getMusicMetadata(lastSongFilename);
         
-        if (!lastSongMeta || lastSongMeta.error || !lastSongMeta.camelot) {
+        // Check if we have valid metadata (camelot must exist and not be "Unknown")
+        const hasValidMeta = lastSongMeta && !lastSongMeta.error && lastSongMeta.camelot && lastSongMeta.camelot !== 'Unknown' && lastSongMeta.bpm > 0;
+        
+        if (!hasValidMeta) {
+            // Show message but still display some songs as fallback
             containerEl.innerHTML = `
-                <div style="padding: 20px; text-align: center;">
-                    <p style="color: var(--text-secondary); margin-bottom: 10px;">Impossible d'analyser le dernier morceau</p>
-                    <button class="btn btn-sm btn-secondary" onclick="getMusicMetadata('${lastSongFilename}', true).then(() => renderNewSuggestions())">
-                        <i class="fas fa-sync"></i> Réessayer
-                    </button>
-                </div>`;
+                <div style="padding: 15px; background: rgba(255,165,0,0.1); border-radius: 8px; margin-bottom: 15px;">
+                    <p style="color: #ffa500; margin: 0; font-size: 0.85rem;">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        Métadonnées non disponibles pour "${formatSongPathToTitle(lastSongPath)}".
+                        <button class="btn btn-sm btn-secondary" style="margin-left: 10px;" onclick="getMusicMetadata('${lastSongFilename}', true).then(() => renderNewSuggestions())">
+                            <i class="fas fa-sync"></i> Analyser
+                        </button>
+                    </p>
+                </div>
+            `;
+            
+            // Show random songs as fallback
+            const fallbackSongs = allAvailableSongs
+                .filter(p => !currentEditingPlaylist.songs.includes(p))
+                .slice(0, 8);
+            
+            fallbackSongs.forEach(path => {
+                const filename = path.split('/').pop();
+                const meta = metadataCache[filename] || {};
+                
+                const item = document.createElement('div');
+                item.className = 'suggestion-item';
+                item.innerHTML = `
+                    <div class="suggestion-score okay"><i class="fas fa-question"></i></div>
+                    <div class="suggestion-content">
+                        <div class="song-title">${formatSongPathToTitle(path)}</div>
+                        <div class="song-meta">
+                            ${meta.bpm ? `<span class="suggestion-badge badge-bpm">${meta.bpm} BPM</span>` : ''}
+                            ${meta.camelot && meta.camelot !== 'Unknown' ? `<span class="suggestion-badge badge-key">${meta.camelot}</span>` : ''}
+                            ${meta.genre ? `<span class="suggestion-badge badge-genre">${meta.genre}</span>` : ''}
+                        </div>
+                    </div>
+                    <button class="btn-add-suggestion" title="Ajouter"><i class="fas fa-plus"></i></button>
+                `;
+                
+                item.querySelector('.btn-add-suggestion').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    currentEditingPlaylist.songs.push(path);
+                    renderNewPlaylistSongs();
+                    renderNewLibrarySongs();
+                    renderNewSuggestions();
+                    autoSavePlaylist();
+                });
+                
+                containerEl.appendChild(item);
+            });
             return;
         }
         
