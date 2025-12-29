@@ -4,6 +4,7 @@ header('Content-Type: application/json');
 
 // --- Configuration ---
 $outputDir = '/home/radio/musique/';
+$spotdlPath = '/root/.local/bin/spotdl';
 $postData = json_decode(file_get_contents('php://input'), true);
 $spotifyUrl = $postData['url'] ?? '';
 
@@ -14,17 +15,24 @@ if (empty($spotifyUrl) || !preg_match('/(open\.spotify\.com|spotify:)/', $spotif
     exit;
 }
 
+// Check if spotdl exists
+if (!file_exists($spotdlPath)) {
+    http_response_code(500);
+    echo json_encode(['status' => 'error', 'message' => 'spotdl non trouvé. Installez-le avec: pipx install spotdl']);
+    exit;
+}
+
 // --- Command Execution ---
 // Sanitize the URL for shell usage to prevent command injection
 $sanitizedUrl = escapeshellarg($spotifyUrl);
 $escapedOutputDir = escapeshellarg($outputDir);
 
-// Build the spotdl command
+// Build the spotdl command with full path
 // --output: Specify the output directory and format
 // --format mp3: Output as MP3
 // --bitrate 320k: Best quality
 // --output format: {artist} - {title}.{output-ext}
-$command = "cd $escapedOutputDir && spotdl download $sanitizedUrl --output \"{artist} - {title}.{output-ext}\" --format mp3 --bitrate 320k";
+$command = "cd $escapedOutputDir && $spotdlPath download $sanitizedUrl --output \"{artist} - {title}.{output-ext}\" --format mp3 --bitrate 320k";
 
 $output = [];
 $return_var = 0;
