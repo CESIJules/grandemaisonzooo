@@ -723,7 +723,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const card = document.createElement('div');
                 card.className = 'post-card';
                 
-                const imageUrl = post.image ? `uploads/${post.image}` : null;
+                const imageUrl = post.image || null;
                 const formattedDate = new Date(post.date).toLocaleDateString('fr-FR', { 
                     day: 'numeric', 
                     month: 'short', 
@@ -731,8 +731,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
                 
                 card.innerHTML = `
-                    <div class="post-card-bg" style="${imageUrl ? `background-image: url('${imageUrl}')` : 'background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)'}"></div>
-                    ${imageUrl ? `<img src="${imageUrl}" alt="" class="post-card-image" onerror="this.style.display='none'">` : 
+                    <div class="post-card-bg" style="${imageUrl ? `background-image: url('${escapeHtml(imageUrl)}')` : 'background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)'}"></div>
+                    ${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="" class="post-card-image" onerror="this.style.display='none'">` : 
                     `<div class="post-card-no-image"><i class="fas fa-music"></i></div>`}
                     ${post.link ? `<a href="${escapeHtml(post.link)}" target="_blank" class="post-card-link" title="Voir le lien"><i class="fas fa-external-link-alt"></i></a>` : ''}
                     ${canEdit ? `
