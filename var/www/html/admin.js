@@ -1823,7 +1823,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Render playlists as cards
     function renderPlaylistsGrid() {
-        if (!playlistsGrid) return;
+        console.log('renderPlaylistsGrid called');
+        console.log('playlistsGrid element:', playlistsGrid);
+        console.log('allPlaylists:', allPlaylists);
+        
+        if (!playlistsGrid) {
+            console.error('playlistsGrid element not found!');
+            return;
+        }
         
         playlistsGrid.innerHTML = '';
         
