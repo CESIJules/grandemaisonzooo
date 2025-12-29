@@ -2158,16 +2158,17 @@ body.menu-open {
 #progress-info {
   opacity: 1;
   pointer-events: auto;
-  position: absolute;
-  left: 50%;
-  top: calc(50% + 5px); /* Juste en dessous du titre */
-  transform: translateX(-50%);
+  position: relative;
+  left: auto;
+  top: auto;
+  transform: none;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
-  width: 400px;
-  max-width: 80%;
+  width: 100%;
+  max-width: 400px;
+  margin-top: 4px;
   transition: opacity 0.5s ease;
 }
 
