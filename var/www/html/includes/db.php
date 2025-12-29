@@ -18,6 +18,9 @@ class AnalyticsDB {
             $this->pdo = new PDO("sqlite:" . $this->dbPath);
             $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+            
+            // Forcer le fuseau horaire sur Paris pour PHP
+            date_default_timezone_set('Europe/Paris');
         } catch (PDOException $e) {
             die("Erreur de connexion BDD Analytics : " . $e->getMessage());
         }
@@ -29,9 +32,12 @@ class AnalyticsDB {
     
     public function initTables() {
         // Table Audience (Logs toutes les X minutes)
+        // On utilise datetime('now', 'localtime') pour stocker l'heure locale si besoin, 
+        // mais CURRENT_TIMESTAMP est UTC par défaut.
+        // Pour corriger le décalage, on va stocker explicitement la date PHP.
         $this->pdo->exec("CREATE TABLE IF NOT EXISTS audience_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            timestamp DATETIME, 
             listeners INTEGER,
             peak_listeners INTEGER
         )");
@@ -39,7 +45,7 @@ class AnalyticsDB {
         // Table Historique des morceaux
         $this->pdo->exec("CREATE TABLE IF NOT EXISTS play_history (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            timestamp DATETIME,
             artist TEXT,
             title TEXT,
             listeners_start INTEGER

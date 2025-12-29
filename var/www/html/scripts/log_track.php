@@ -25,8 +25,9 @@ $currentListeners = $stmt->fetchColumn();
 if ($currentListeners === false) $currentListeners = 0;
 
 // Insertion
-$stmt = $pdo->prepare("INSERT INTO play_history (artist, title, listeners_start) VALUES (?, ?, ?)");
-$stmt->execute([$artist, $title, $currentListeners]);
+$now = date('Y-m-d H:i:s');
+$stmt = $pdo->prepare("INSERT INTO play_history (timestamp, artist, title, listeners_start) VALUES (?, ?, ?, ?)");
+$stmt->execute([$now, $artist, $title, $currentListeners]);
 
-echo "Track loggé : $artist - $title ($currentListeners auditeurs)";
+echo "Track loggé : $artist - $title ($currentListeners auditeurs) à $now";
 ?>

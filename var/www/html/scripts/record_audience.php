@@ -42,8 +42,11 @@ if ($json === false) {
 $db = new AnalyticsDB();
 $pdo = $db->getPDO();
 
-$stmt = $pdo->prepare("INSERT INTO audience_logs (listeners, peak_listeners) VALUES (?, ?)");
-$stmt->execute([$listeners, $peak]);
+// On insère la date actuelle avec le bon fuseau horaire
+$now = date('Y-m-d H:i:s');
 
-echo "Audience enregistrée : $listeners auditeurs (Pic: $peak)";
+$stmt = $pdo->prepare("INSERT INTO audience_logs (timestamp, listeners, peak_listeners) VALUES (?, ?, ?)");
+$stmt->execute([$now, $listeners, $peak]);
+
+echo "Audience enregistrée : $listeners auditeurs (Pic: $peak) à $now";
 ?>
