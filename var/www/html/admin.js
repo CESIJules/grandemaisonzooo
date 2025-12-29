@@ -676,7 +676,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Filter for Artist Role: Only show their own posts
             if (currentUser && currentUser.role === 'artist') {
                 const userArtistId = currentUser.artist_id.toLowerCase().replace(/\s/g, '');
-                // Try to find artist name from profile to match against legacy posts
                 const artistProfile = artistProfiles.find(p => p.id === currentUser.artist_id);
                 const userArtistName = artistProfile ? artistProfile.name.toLowerCase().replace(/\s/g, '') : '';
 
@@ -687,17 +686,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             if (posts.length === 0) {
-                postsManagementContainer.innerHTML = '<p>Aucun post à gérer.</p>';
+                postsManagementContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-stream"></i>
+                        <p>Aucun post à afficher</p>
+                    </div>
+                `;
                 return;
             }
 
-            const table = document.createElement('table');
-            table.className = 'item-list';
-            table.innerHTML = `<thead><tr><th>Titre</th><th>Artiste</th><th>Date</th><th class="actions">Actions</th></tr></thead>`;
-            const tbody = document.createElement('tbody');
+            postsManagementContainer.innerHTML = '';
+            
             posts.forEach(post => {
                 let displayTitle = post.title;
-                // Fix: Si le titre est identique à l'artiste et qu'il y a un sous-titre, afficher le sous-titre
                 if (post.artist && post.title && post.title.trim().toLowerCase() === post.artist.trim().toLowerCase() && post.subtitle) {
                     displayTitle = post.subtitle;
                 }
@@ -705,13 +706,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Permission check for buttons
                 let canEdit = true;
                 if (currentUser && currentUser.role === 'artist') {
-                    // Check if post artist matches current user artist ID
-                    // Post artist might be name or ID.
-                    // We do a loose check.
                     const postArtist = post.artist ? post.artist.toLowerCase().replace(/\s/g, '') : '';
                     const userArtistId = currentUser.artist_id.toLowerCase().replace(/\s/g, '');
-                    
-                    // Try to find artist name from profile to match against legacy posts
                     const artistProfile = artistProfiles.find(p => p.id === currentUser.artist_id);
                     const userArtistName = artistProfile ? artistProfile.name.toLowerCase().replace(/\s/g, '') : '';
 
@@ -720,33 +716,42 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 }
 
-                const tr = document.createElement('tr');
-                let actionsHtml = '';
-                if (canEdit) {
-                    actionsHtml = `
-                        <button class="btn edit-post-btn" data-id="${escapeHtml(String(post.id))}"><i class="fas fa-pencil-alt"></i></button>
-                        <button class="btn btn-danger delete-post-btn" data-id="${escapeHtml(String(post.id))}"><i class="fas fa-trash"></i></button>
-                    `;
-                } else {
-                    actionsHtml = `<span style="color: #666; font-size: 0.8em;">Lecture seule</span>`;
-                }
-
-                tr.innerHTML = `
-                    <td>${escapeHtml(displayTitle)}</td>
-                    <td>${escapeHtml(post.artist)}</td>
-                    <td>${new Date(post.date).toLocaleDateString('fr-FR')}</td>
-                    <td class="actions">
-                        ${actionsHtml}
-                    </td>
+                const item = document.createElement('div');
+                item.className = 'modern-list-item';
+                
+                const imageUrl = post.image ? `uploads/${post.image}` : 'images/placeholder.jpg';
+                
+                item.innerHTML = `
+                    <img src="${imageUrl}" alt="" class="modern-list-item-image" onerror="this.style.display='none'">
+                    <div class="modern-list-item-info">
+                        <div class="modern-list-item-title">${escapeHtml(displayTitle)}</div>
+                        <div class="modern-list-item-subtitle">
+                            <span>${escapeHtml(post.artist || 'Inconnu')}</span>
+                            <span style="margin: 0 8px;">•</span>
+                            <span>${new Date(post.date).toLocaleDateString('fr-FR')}</span>
+                        </div>
+                    </div>
+                    <div class="modern-list-item-actions">
+                        ${canEdit ? `
+                            <button class="btn-icon edit-post-btn" data-id="${escapeHtml(String(post.id))}" title="Modifier">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>
+                            <button class="btn-icon danger delete-post-btn" data-id="${escapeHtml(String(post.id))}" title="Supprimer">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        ` : `<span style="color: #666; font-size: 0.8em;">Lecture seule</span>`}
+                    </div>
                 `;
-                tbody.appendChild(tr);
+                postsManagementContainer.appendChild(item);
             });
-            table.appendChild(tbody);
-            postsManagementContainer.innerHTML = '';
-            postsManagementContainer.appendChild(table);
 
         } catch (error) {
-            postsManagementContainer.innerHTML = `<p style="color: var(--accent-danger);">Impossible de charger les posts: ${error.message}</p>`;
+            postsManagementContainer.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>Impossible de charger les posts: ${error.message}</p>
+                </div>
+            `;
         }
     }
 
@@ -1022,37 +1027,59 @@ document.addEventListener('DOMContentLoaded', async () => {
                 allMusicFiles = result.files || [];
                 allMusicFiles.sort((a, b) => a.localeCompare(b));
             }
+            
+            // Update stats
+            const totalTracksEl = document.getElementById('totalTracksCount');
+            if (totalTracksEl) totalTracksEl.textContent = allMusicFiles.length;
 
             const filteredFiles = allMusicFiles.filter(file => 
                 formatSongPathToTitle(file).toLowerCase().includes(filter.toLowerCase())
             );
 
             if (filteredFiles.length === 0) {
-                musicManagementContainer.innerHTML = `<p>${allMusicFiles.length === 0 ? 'Aucun fichier de musique trouvé.' : 'Aucun fichier ne correspond à votre recherche.'}</p>`;
+                musicManagementContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-music"></i>
+                        <p>${allMusicFiles.length === 0 ? 'Aucun fichier de musique trouvé' : 'Aucun résultat pour cette recherche'}</p>
+                    </div>
+                `;
                 return;
             }
             
-            const table = document.createElement('table');
-            table.className = 'item-list';
-            table.innerHTML = `<thead><tr><th>Titre</th><th class="actions">Actions</th></tr></thead>`;
-            const tbody = document.createElement('tbody');
-            filteredFiles.forEach(file => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${formatSongPathToTitle(file)}</td>
-                    <td class="actions">
-                        <button class="btn rename-music-btn" data-filename="${escapeHtml(file)}"><i class="fas fa-pencil-alt"></i></button>
-                        <button class="btn btn-danger delete-music-btn" data-filename="${escapeHtml(file)}"><i class="fas fa-trash"></i></button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-            table.appendChild(tbody);
             musicManagementContainer.innerHTML = '';
-            musicManagementContainer.appendChild(table);
+            
+            filteredFiles.forEach(file => {
+                const item = document.createElement('div');
+                item.className = 'modern-list-item';
+                
+                item.innerHTML = `
+                    <div class="modern-list-item-image" style="display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-music" style="color: var(--text-secondary);"></i>
+                    </div>
+                    <div class="modern-list-item-info">
+                        <div class="modern-list-item-title">${formatSongPathToTitle(file)}</div>
+                        <div class="modern-list-item-subtitle">${file.split('.').pop().toUpperCase()}</div>
+                    </div>
+                    <div class="modern-list-item-actions">
+                        <button class="btn-icon rename-music-btn" data-filename="${escapeHtml(file)}" title="Renommer">
+                            <i class="fas fa-pencil-alt"></i>
+                        </button>
+                        <button class="btn-icon danger delete-music-btn" data-filename="${escapeHtml(file)}" title="Supprimer">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                
+                musicManagementContainer.appendChild(item);
+            });
 
         } catch (error) {
-            musicManagementContainer.innerHTML = `<p style="color: var(--accent-danger);">Impossible de charger les fichiers: ${error.message}</p>`;
+            musicManagementContainer.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>Impossible de charger les fichiers: ${error.message}</p>
+                </div>
+            `;
         }
     }
     
@@ -1294,7 +1321,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function renderArtistProfiles() {
         if (artistProfiles.length === 0) {
-            artistsManagementContainer.innerHTML = '<p>Aucun profil artiste.</p>';
+            artistsManagementContainer.innerHTML = `
+                <div class="empty-state" style="grid-column: 1 / -1;">
+                    <i class="fas fa-users"></i>
+                    <p>Aucun artiste dans le collectif</p>
+                </div>
+            `;
             return;
         }
 
@@ -1302,21 +1334,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (currentUser && currentUser.role === 'artist') {
             const myProfile = artistProfiles.find(a => a.id === currentUser.artist_id);
             if (myProfile) {
-                // Auto-trigger edit mode
                 editArtistProfile(myProfile.id);
-                // Hide the container that would show the list
                 artistsManagementContainer.style.display = 'none';
-                // Change the header text to be more relevant
-                const header = document.querySelector('#artists h2');
+                const header = document.querySelector('#artists .section-header h2');
                 if (header) header.textContent = 'Mon Profil';
                 return;
             }
         }
 
-        const table = document.createElement('table');
-        table.className = 'item-list';
-        table.innerHTML = `<thead><tr><th>Image</th><th>Nom</th><th>Localisation</th><th class="actions">Actions</th></tr></thead>`;
-        const tbody = document.createElement('tbody');
+        artistsManagementContainer.innerHTML = '';
         
         artistProfiles.forEach(artist => {
             // Permission check
@@ -1327,30 +1353,38 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
 
-            const tr = document.createElement('tr');
-            let actionsHtml = '';
-            if (canEdit) {
-                actionsHtml = `
-                    <button class="btn edit-artist-btn" data-id="${escapeHtml(artist.id)}"><i class="fas fa-pencil-alt"></i></button>
-                    <button class="btn btn-danger delete-artist-btn" data-id="${escapeHtml(artist.id)}"><i class="fas fa-trash"></i></button>
-                `;
-            } else {
-                actionsHtml = `<span style="color: #666; font-size: 0.8em;">Lecture seule</span>`;
-            }
-
-            tr.innerHTML = `
-                <td><img src="${escapeHtml(artist.image)}" alt="${escapeHtml(artist.name)}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;"></td>
-                <td>${escapeHtml(artist.name)}</td>
-                <td>${escapeHtml(artist.location)}</td>
-                <td class="actions">
-                    ${actionsHtml}
-                </td>
+            const card = document.createElement('div');
+            card.className = 'modern-card';
+            
+            const imageUrl = artist.image || 'images/placeholder.jpg';
+            
+            card.innerHTML = `
+                <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(artist.name)}" class="modern-card-image" onerror="this.src='images/placeholder.jpg'">
+                <div class="modern-card-content">
+                    <div class="modern-card-title">${escapeHtml(artist.name)}</div>
+                    <div class="modern-card-subtitle">
+                        <i class="fas fa-map-marker-alt"></i> ${escapeHtml(artist.location || 'Non spécifié')}
+                    </div>
+                    <div class="modern-card-meta">
+                        ${artist.listenLink ? '<span class="modern-card-tag"><i class="fas fa-headphones"></i> Music</span>' : ''}
+                        ${artist.watchLink ? '<span class="modern-card-tag"><i class="fab fa-youtube"></i> Video</span>' : ''}
+                        ${artist.instagramLink ? '<span class="modern-card-tag"><i class="fab fa-instagram"></i> Insta</span>' : ''}
+                    </div>
+                </div>
+                ${canEdit ? `
+                <div class="modern-card-actions">
+                    <button class="btn btn-secondary edit-artist-btn" data-id="${escapeHtml(artist.id)}">
+                        <i class="fas fa-pencil-alt"></i> Modifier
+                    </button>
+                    <button class="btn btn-danger delete-artist-btn" data-id="${escapeHtml(artist.id)}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                ` : ''}
             `;
-            tbody.appendChild(tr);
+            
+            artistsManagementContainer.appendChild(card);
         });
-        table.appendChild(tbody);
-        artistsManagementContainer.innerHTML = '';
-        artistsManagementContainer.appendChild(table);
     }
 
     async function saveArtistProfile(formData) {
@@ -1846,24 +1880,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Open the new playlist editor
     function openNewPlaylistEditor(playlist) {
-        console.log('Opening playlist editor for:', playlist.name);
         currentEditingPlaylist = JSON.parse(JSON.stringify(playlist));
         
         // Hide grid, show editor
         const grid = document.getElementById('playlistsGrid');
         const editor = document.getElementById('playlistEditorPanel');
         
-        console.log('Grid element:', grid);
-        console.log('Editor element:', editor);
-        
-        if (grid) {
-            grid.style.display = 'none';
-            console.log('Grid hidden');
-        }
-        if (editor) {
-            editor.style.display = 'block';
-            console.log('Editor shown');
-        }
+        if (grid) grid.style.display = 'none';
+        if (editor) editor.style.display = 'block';
         
         // Populate editor
         const nameInput = document.getElementById('editPlaylistNameInput');
@@ -2189,8 +2213,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     body: JSON.stringify({ name, color, icon })
                 });
                 const result = await response.json();
-                
-                console.log('Create playlist response:', result);
                 
                 if (result.status !== 'success') {
                     throw new Error(result.message || 'Erreur inconnue');
