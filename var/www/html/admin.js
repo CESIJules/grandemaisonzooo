@@ -1248,9 +1248,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const item = document.createElement('div');
                 item.className = 'modern-list-item';
                 
+                const coverUrl = `get_cover.php?file=${encodeURIComponent(file)}`;
+                
                 item.innerHTML = `
-                    <div class="modern-list-item-image" style="display: flex; align-items: center; justify-content: center;">
-                        <i class="fas fa-music" style="color: var(--text-secondary);"></i>
+                    <div class="modern-list-item-image">
+                        <img src="${coverUrl}" alt="Cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="cover-fallback" style="display: none; align-items: center; justify-content: center; width: 100%; height: 100%;">
+                            <i class="fas fa-music" style="color: var(--text-secondary);"></i>
+                        </div>
                     </div>
                     <div class="modern-list-item-info">
                         <div class="modern-list-item-title">${formatSongPathToTitle(file)}</div>
