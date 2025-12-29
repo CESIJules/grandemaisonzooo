@@ -142,6 +142,12 @@ function convertToCamelot($key, $mode) {
 
 $camelot = convertToCamelot($key_key, $key_mode);
 
+// Extract genre and ID3 tags from Python analysis
+$genre = $pyData['genre'] ?? null;
+$id3_artist = $pyData['id3_artist'] ?? null;
+$id3_title = $pyData['id3_title'] ?? null;
+$id3_album = $pyData['id3_album'] ?? null;
+
 // 4. PREPARE RESULT
 $result = [
     'bpm' => $bpm,
@@ -149,6 +155,10 @@ $result = [
     'camelot' => $camelot,
     'energy' => $energy,
     'danceability' => $danceability,
+    'genre' => $genre,
+    'id3_artist' => $id3_artist,
+    'id3_title' => $id3_title,
+    'id3_album' => $id3_album,
     'valence' => 0.5, // Placeholder
     'acousticness' => 0.0, // Placeholder
     'source' => $source,

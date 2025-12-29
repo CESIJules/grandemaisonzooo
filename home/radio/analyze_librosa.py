@@ -18,6 +18,48 @@ import warnings
 # Suppress warnings
 warnings.filterwarnings('ignore')
 
+# --- ID3 Tag Reading (for genre extraction) ---
+def get_id3_tags(file_path):
+    """Extract genre and other metadata from MP3 ID3 tags"""
+    try:
+        from mutagen.mp3 import MP3
+        from mutagen.id3 import ID3
+        
+        audio = MP3(file_path, ID3=ID3)
+        tags = audio.tags
+        
+        if not tags:
+            return {'genre': None, 'artist': None, 'title': None, 'album': None}
+        
+        # Genre can be in TCON frame
+        genre = None
+        if 'TCON' in tags:
+            genre = str(tags['TCON'].text[0]) if tags['TCON'].text else None
+        
+        # Artist
+        artist = None
+        if 'TPE1' in tags:
+            artist = str(tags['TPE1'].text[0]) if tags['TPE1'].text else None
+        
+        # Title
+        title = None
+        if 'TIT2' in tags:
+            title = str(tags['TIT2'].text[0]) if tags['TIT2'].text else None
+            
+        # Album
+        album = None
+        if 'TALB' in tags:
+            album = str(tags['TALB'].text[0]) if tags['TALB'].text else None
+        
+        return {
+            'genre': genre,
+            'artist': artist,
+            'title': title,
+            'album': album
+        }
+    except Exception as e:
+        return {'genre': None, 'artist': None, 'title': None, 'album': None, 'id3_error': str(e)}
+
 def analyze_audio(file_path):
     try:
         # --- LOAD AUDIO ---
@@ -207,13 +249,20 @@ def analyze_audio(file_path):
         if danceability > 1.0: danceability = 1.0
         if danceability < 0.0: danceability = 0.0
 
+        # Get ID3 tags (genre, artist, etc.)
+        id3_tags = get_id3_tags(file_path)
+
         return {
             'bpm': round(float(bpm), 1),
             'key_key': int(key_idx),
             'key_mode': int(mode),
             'energy': round(energy, 2),
             'danceability': round(danceability, 2),
-            'version': 'v3_clamped_verified'
+            'genre': id3_tags.get('genre'),
+            'id3_artist': id3_tags.get('artist'),
+            'id3_title': id3_tags.get('title'),
+            'id3_album': id3_tags.get('album'),
+            'version': 'v4_with_genre'
         }
 
     except Exception as e:
@@ -223,11 +272,22 @@ if __name__ == '__main__':
     if len(sys.argv) < 2:
         print(json.dumps({'error': 'No file provided'}))
         sys.exit(1)
-        
+    
     file_path = sys.argv[1]
+    
+    # Check for --tags-only flag (fast mode, just extract ID3 tags)
+    tags_only = '--tags-only' in sys.argv
+    
     # Ensure file exists
     if not os.path.exists(file_path):
         print(json.dumps({'error': f'File not found: {file_path}'}))
         sys.exit(1)
 
-    print(json.dumps(analyze_audio(file_path)))
+    if tags_only:
+        # Fast mode: only extract ID3 tags (genre, artist, etc.)
+        result = get_id3_tags(file_path)
+        result['mode'] = 'tags_only'
+        print(json.dumps(result))
+    else:
+        # Full analysis mode
+        print(json.dumps(analyze_audio(file_path)))

@@ -684,6 +684,12 @@
             font-weight: 700;
         }
         
+        .library-filters {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
         .search-input {
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid var(--surface-border);
@@ -691,8 +697,30 @@
             padding: 10px 16px;
             font-size: 0.85rem;
             color: var(--text-primary);
-            width: 180px;
+            width: 140px;
             transition: all 0.2s;
+        }
+        
+        .genre-filter-select {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--surface-border);
+            border-radius: 10px;
+            padding: 8px 12px;
+            font-size: 0.8rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+            max-width: 120px;
+        }
+        
+        .genre-filter-select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+        
+        .genre-filter-select option {
+            background: var(--bg-color);
+            color: var(--text-primary);
         }
         
         .search-input::placeholder {
@@ -785,14 +813,38 @@
             opacity: 1;
         }
         
-        .song-item .song-title {
+        .song-item .song-info {
             flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .song-item .song-title {
             font-size: 0.9rem;
             font-weight: 500;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
+        
+        .song-item .song-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        
+        .song-badge {
+            font-size: 0.6rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        
+        .song-badge.badge-bpm { color: #ffc107; background: rgba(255, 193, 7, 0.12); }
+        .song-badge.badge-key { color: #0dcaf0; background: rgba(13, 202, 240, 0.12); }
+        .song-badge.badge-genre { color: #c44dff; background: rgba(196, 77, 255, 0.12); }
         
         .song-item .song-actions {
             display: flex;
@@ -905,23 +957,59 @@
         
         .suggestion-item {
             flex: 0 0 auto;
-            width: 180px;
+            width: 220px;
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--surface-border);
-            border-radius: 10px;
-            padding: 12px;
+            border-radius: 12px;
+            padding: 14px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.25s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
         
         .suggestion-item:hover {
             border-color: var(--accent-primary);
-            background: rgba(0, 255, 104, 0.05);
+            background: rgba(0, 255, 104, 0.08);
+            transform: translateY(-2px);
+        }
+        
+        .suggestion-score {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 0.75rem;
+        }
+        
+        .suggestion-score.perfect {
+            background: linear-gradient(135deg, #00ff68, #00cc52);
+            color: #000;
+        }
+        
+        .suggestion-score.good {
+            background: rgba(0, 255, 104, 0.2);
+            color: var(--accent-primary);
+        }
+        
+        .suggestion-score.okay {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-secondary);
+        }
+        
+        .suggestion-content {
+            flex: 1;
+            min-width: 0;
         }
         
         .suggestion-item .song-title {
-            font-size: 0.8rem;
-            margin-bottom: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 6px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -929,18 +1017,40 @@
         
         .suggestion-item .song-meta {
             display: flex;
-            gap: 6px;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        
+        .btn-add-suggestion {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(0, 255, 104, 0.15);
+            color: var(--accent-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        
+        .btn-add-suggestion:hover {
+            background: var(--accent-primary);
+            color: #000;
+            transform: scale(1.1);
         }
         
         .suggestion-badge {
             font-size: 0.65rem;
-            padding: 2px 6px;
-            border-radius: 4px;
+            padding: 3px 8px;
+            border-radius: 6px;
             background: rgba(255, 255, 255, 0.1);
+            font-weight: 600;
         }
         
-        .badge-bpm { color: #ffc107; }
-        .badge-key { color: #0dcaf0; }
+        .badge-bpm { color: #ffc107; background: rgba(255, 193, 7, 0.15); }
+        .badge-key { color: #0dcaf0; background: rgba(13, 202, 240, 0.15); }
+        .badge-key.key-match { color: #00ff68; background: rgba(0, 255, 104, 0.2); }
+        .badge-genre { color: #c44dff; background: rgba(196, 77, 255, 0.15); }
         
         /* Modal */
         .modal-overlay {
@@ -3585,7 +3695,12 @@ https://open.spotify.com/playlist/abc456" style="width: 100%; background: #14141
                     <div class="editor-column library-column">
                         <div class="column-header">
                             <h3><i class="fas fa-database"></i> Bibliothèque</h3>
-                            <input type="text" id="librarySearchInput" class="search-input" placeholder="Rechercher...">
+                            <div class="library-filters">
+                                <input type="text" id="librarySearchInput" class="search-input" placeholder="Rechercher...">
+                                <select id="libraryGenreFilter" class="genre-filter-select">
+                                    <option value="">Tous genres</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="library-content">
                             <ul id="librarySongsList" class="songs-list">
