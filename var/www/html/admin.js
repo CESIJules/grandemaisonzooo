@@ -2689,40 +2689,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const targetEnergy = lastSongMeta.energy;
         const compatibleKeys = camelotWheel[targetKey]?.compatible || [];
         
-        // --- GLOBAL COHERENCE ANALYSIS ---
-        let playlistTotalBpm = 0;
-        let playlistTotalEnergy = 0;
-        let playlistGenreCounts = {};
-        let playlistValidCount = 0;
-
-        // Analyze entire playlist for global stats
-        for (const path of currentEditingPlaylist.songs) {
-            const fname = path.split('/').pop();
-            const m = metadataCache[fname];
-            if (m && m.bpm) {
-                playlistTotalBpm += m.bpm;
-                if (m.energy) playlistTotalEnergy += m.energy;
-                if (m.genre) {
-                    const g = m.genre.toLowerCase();
-                    playlistGenreCounts[g] = (playlistGenreCounts[g] || 0) + 1;
-                }
-                playlistValidCount++;
-            }
-        }
-
-        const playlistAvgBpm = playlistValidCount > 0 ? playlistTotalBpm / playlistValidCount : targetBpm;
-        const playlistAvgEnergy = playlistValidCount > 0 ? playlistTotalEnergy / playlistValidCount : targetEnergy;
-        
-        // Find dominant genre
-        let dominantGenre = null;
-        let maxGenreCount = 0;
-        for (const [g, count] of Object.entries(playlistGenreCounts)) {
-            if (count > maxGenreCount) {
-                maxGenreCount = count;
-                dominantGenre = g;
-            }
-        }
-
         // Genre Families Definition
         const genreFamilies = {
             'House': ['House', 'Deep House', 'Tech House', 'Progressive House', 'Electro House', 'Disco House', 'Funky House', 'Chicago House', 'Acid House', 'Minimal House', 'Tropical House', 'Bass House'],
@@ -2764,6 +2730,55 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (g.includes('latin') || g.includes('reggaeton')) return 'Latin';
 
             return null;
+        }
+
+        // --- GLOBAL COHERENCE ANALYSIS ---
+        let playlistTotalBpm = 0;
+        let playlistTotalEnergy = 0;
+        let playlistGenreCounts = {};
+        let playlistFamilyCounts = {};
+        let playlistValidCount = 0;
+
+        // Analyze entire playlist for global stats
+        for (const path of currentEditingPlaylist.songs) {
+            const fname = path.split('/').pop();
+            const m = metadataCache[fname];
+            if (m && m.bpm) {
+                playlistTotalBpm += m.bpm;
+                if (m.energy) playlistTotalEnergy += m.energy;
+                if (m.genre) {
+                    const g = m.genre.toLowerCase();
+                    playlistGenreCounts[g] = (playlistGenreCounts[g] || 0) + 1;
+                    
+                    const fam = getGenreFamily(m.genre);
+                    if (fam) {
+                        playlistFamilyCounts[fam] = (playlistFamilyCounts[fam] || 0) + 1;
+                    }
+                }
+                playlistValidCount++;
+            }
+        }
+
+        const playlistAvgBpm = playlistValidCount > 0 ? playlistTotalBpm / playlistValidCount : targetBpm;
+        const playlistAvgEnergy = playlistValidCount > 0 ? playlistTotalEnergy / playlistValidCount : targetEnergy;
+        
+        // Find dominant genre and family
+        let dominantGenre = null;
+        let maxGenreCount = 0;
+        for (const [g, count] of Object.entries(playlistGenreCounts)) {
+            if (count > maxGenreCount) {
+                maxGenreCount = count;
+                dominantGenre = g;
+            }
+        }
+
+        let dominantFamily = null;
+        let maxFamilyCount = 0;
+        for (const [f, count] of Object.entries(playlistFamilyCounts)) {
+            if (count > maxFamilyCount) {
+                maxFamilyCount = count;
+                dominantFamily = f;
+            }
         }
 
         // Find compatible songs with scoring
@@ -2837,7 +2852,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (meta.genre.toLowerCase() === dominantGenre) {
                     score += 40;
                 } else {
-                    const domFam = getGenreFamily(dominantGenre);
+                    const domFam = dominantFamily || getGenreFamily(dominantGenre);
                     const metaFam = getGenreFamily(meta.genre);
                     if (domFam && metaFam && domFam === metaFam) {
                         score += 20; // Same family bonus
