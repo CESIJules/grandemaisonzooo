@@ -2725,25 +2725,44 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Genre Families Definition
         const genreFamilies = {
-            'House': ['House', 'Deep House', 'Tech House', 'Progressive House', 'Electro House', 'Disco House', 'Funky House', 'Chicago House', 'Acid House', 'Minimal House'],
-            'Techno': ['Techno', 'Minimal', 'Acid', 'Hard Techno', 'Industrial', 'Dub Techno', 'Detroit Techno'],
+            'House': ['House', 'Deep House', 'Tech House', 'Progressive House', 'Electro House', 'Disco House', 'Funky House', 'Chicago House', 'Acid House', 'Minimal House', 'Tropical House', 'Bass House'],
+            'Techno': ['Techno', 'Minimal', 'Acid', 'Hard Techno', 'Industrial', 'Dub Techno', 'Detroit Techno', 'Peak Time / Driving'],
             'Trance': ['Trance', 'Psytrance', 'Progressive Trance', 'Goa Trance', 'Uplifting Trance'],
-            'Bass': ['Drum & Bass', 'Dubstep', 'Jungle', 'Garage', 'Bass House', 'UK Garage', 'Grime', 'Breakbeat'],
-            'Hip Hop': ['Hip Hop', 'Rap', 'Trap', 'RnB', 'Urban', 'Drill', 'Old School'],
-            'Chill': ['Ambient', 'Chillout', 'Downtempo', 'Lo-Fi', 'Lounge', 'Trip Hop'],
+            'Bass': ['Drum & Bass', 'Dubstep', 'Jungle', 'Garage', 'UK Garage', 'Grime', 'Breakbeat', 'DnB', 'Neurofunk'],
+            'Hip Hop': ['Hip Hop', 'Rap', 'Trap', 'RnB', 'Urban', 'Drill', 'Old School', 'French Rap', 'US Rap', 'Cloud Rap', 'Gangsta Rap', 'Jazz Rap'],
+            'Chill': ['Ambient', 'Chillout', 'Downtempo', 'Lo-Fi', 'Lounge', 'Trip Hop', 'Chill Hop', 'Jazz Beats', 'Instrumental Hip Hop'],
             'Disco': ['Disco', 'Nu Disco', 'Funk', 'Soul', 'Boogie'],
-            'Rock': ['Rock', 'Indie', 'Alternative', 'Metal', 'Punk', 'New Wave'],
-            'Pop': ['Pop', 'Dance Pop', 'Synth Pop', 'Electropop'],
-            'Jazz': ['Jazz', 'Blues', 'Nu Jazz'],
-            'Reggae': ['Reggae', 'Dub', 'Dancehall', 'Ska']
+            'Rock': ['Rock', 'Indie', 'Alternative', 'Metal', 'Punk', 'New Wave', 'Pop Punk', 'Grunge'],
+            'Pop': ['Pop', 'Dance Pop', 'Synth Pop', 'Electropop', 'Hyperpop', 'Indie Pop', 'K-Pop'],
+            'Jazz': ['Jazz', 'Blues', 'Nu Jazz', 'Smooth Jazz', 'Bebop'],
+            'Reggae': ['Reggae', 'Dub', 'Dancehall', 'Ska', 'Roots Reggae'],
+            'Latin': ['Latin', 'Reggaeton', 'Salsa', 'Bachata', 'Cumbia']
         };
 
         function getGenreFamily(g) {
             if (!g) return null;
             g = g.toLowerCase();
+            
+            // 1. Check exact match or list membership
             for (const [fam, members] of Object.entries(genreFamilies)) {
                 if (members.some(m => m.toLowerCase() === g)) return fam;
             }
+
+            // 2. Check for keywords (Smart matching)
+            if (g.includes('house')) return 'House';
+            if (g.includes('techno')) return 'Techno';
+            if (g.includes('trance')) return 'Trance';
+            if (g.includes('drum & bass') || g.includes('dnb') || g.includes('jungle')) return 'Bass';
+            if (g.includes('dubstep') || g.includes('garage')) return 'Bass';
+            if (g.includes('hip hop') || g.includes('rap') || g.includes('drill') || g.includes('trap')) return 'Hip Hop';
+            if (g.includes('lo-fi') || g.includes('chill') || g.includes('downtempo')) return 'Chill';
+            if (g.includes('jazz') || g.includes('blues')) return 'Jazz';
+            if (g.includes('disco') || g.includes('funk') || g.includes('soul')) return 'Disco';
+            if (g.includes('rock') || g.includes('metal') || g.includes('punk')) return 'Rock';
+            if (g.includes('reggae') || g.includes('dub')) return 'Reggae';
+            if (g.includes('pop')) return 'Pop';
+            if (g.includes('latin') || g.includes('reggaeton')) return 'Latin';
+
             return null;
         }
 
