@@ -1477,7 +1477,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (audienceChartInstance) audienceChartInstance.destroy();
 
             const labels = json.data.map(d => {
-                const date = new Date(d.timestamp + 'Z'); // UTC
+                // La date est déjà stockée en local (Europe/Paris) dans la BDD
+                // On la parse directement sans ajouter 'Z' (qui forcerait UTC)
+                // Remplacement de l'espace par T pour compatibilité Safari/iOS : "2023-12-29 02:00:00" -> "2023-12-29T02:00:00"
+                const dateStr = d.timestamp.replace(' ', 'T');
+                const date = new Date(dateStr); 
+                
                 return range === '24h' 
                     ? date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
                     : date.toLocaleDateString() + ' ' + date.getHours() + 'h';
