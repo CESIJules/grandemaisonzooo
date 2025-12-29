@@ -84,12 +84,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Music Section ---
     const youtubeDownloadForm = document.getElementById('youtubeDownloadForm');
-
     const youtubeUrlInput = document.getElementById('youtubeUrl');
     const youtubeFormMessage = document.getElementById('youtubeFormMessage');
     const musicManagementContainer = document.getElementById('musicManagementContainer');
     const musicSearchInput = document.getElementById('musicSearchInput');
     const skipSongBtn = document.getElementById('skipSongBtn');
+    
+    // --- Bulk Download Section ---
+    const bulkDownloadForm = document.getElementById('bulkDownloadForm');
+    const bulkYoutubeUrls = document.getElementById('bulkYoutubeUrls');
+    const bulkFormMessage = document.getElementById('bulkFormMessage');
+    const bulkProgressContainer = document.getElementById('bulkProgressContainer');
+    const bulkProgressBar = document.getElementById('bulkProgressBar');
+    const bulkProgressText = document.getElementById('bulkProgressText');
+    const bulkProgressPercent = document.getElementById('bulkProgressPercent');
+    const bulkDownloadLog = document.getElementById('bulkDownloadLog');
 
     // --- Playlist Section ---
     const createPlaylistForm = document.getElementById('createPlaylistForm');
@@ -828,6 +837,95 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // BULK DOWNLOAD
+    async function bulkDownloadYoutube(urls) {
+        const validUrls = urls
+            .split('\n')
+            .map(url => url.trim())
+            .filter(url => url && (url.includes('youtube.com') || url.includes('youtu.be')));
+        
+        if (validUrls.length === 0) {
+            bulkFormMessage.textContent = 'Aucune URL YouTube valide trouvée.';
+            bulkFormMessage.style.color = 'var(--accent-danger)';
+            return;
+        }
+
+        // Show progress UI
+        bulkProgressContainer.style.display = 'block';
+        bulkDownloadLog.innerHTML = '';
+        bulkFormMessage.textContent = '';
+        
+        const submitBtn = bulkDownloadForm.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Téléchargement...';
+
+        let completed = 0;
+        let success = 0;
+        let failed = 0;
+        const total = validUrls.length;
+
+        function updateProgress() {
+            const percent = Math.round((completed / total) * 100);
+            bulkProgressBar.style.width = percent + '%';
+            bulkProgressText.textContent = `${completed} / ${total}`;
+            bulkProgressPercent.textContent = percent + '%';
+        }
+
+        function addLog(message, isError = false) {
+            const logEntry = document.createElement('div');
+            logEntry.style.color = isError ? 'var(--accent-danger)' : 'lightgreen';
+            logEntry.textContent = message;
+            bulkDownloadLog.appendChild(logEntry);
+            bulkDownloadLog.scrollTop = bulkDownloadLog.scrollHeight;
+        }
+
+        updateProgress();
+
+        // Process URLs sequentially to avoid overloading the server
+        for (const url of validUrls) {
+            try {
+                addLog(`⏳ Téléchargement: ${url.substring(0, 50)}...`);
+                
+                const response = await fetch('download_youtube.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: url })
+                });
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    success++;
+                    addLog(`✅ ${result.message}`);
+                } else {
+                    failed++;
+                    addLog(`❌ Erreur: ${result.message}`, true);
+                }
+            } catch (error) {
+                failed++;
+                addLog(`❌ Erreur réseau: ${error.message}`, true);
+            }
+            
+            completed++;
+            updateProgress();
+        }
+
+        // Final summary
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-layer-group"></i> Télécharger tout';
+        
+        if (failed === 0) {
+            bulkFormMessage.textContent = `✅ ${success} fichier(s) téléchargé(s) avec succès !`;
+            bulkFormMessage.style.color = 'lightgreen';
+            bulkYoutubeUrls.value = '';
+        } else {
+            bulkFormMessage.textContent = `${success} réussi(s), ${failed} échec(s)`;
+            bulkFormMessage.style.color = failed === total ? 'var(--accent-danger)' : 'orange';
+        }
+
+        // Refresh music list
+        renderMusicFiles('', true);
+    }
+
     // MUSIC
     async function renderMusicFiles(filter = '', forceRefresh = false) {
         try {
@@ -1388,6 +1486,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         youtubeDownloadForm.addEventListener('submit', (e) => {
             e.preventDefault();
             downloadYoutube(youtubeUrlInput.value);
+        });
+    }
+
+    // Bulk Download
+    if (bulkDownloadForm) {
+        bulkDownloadForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            bulkDownloadYoutube(bulkYoutubeUrls.value);
         });
     }
 
