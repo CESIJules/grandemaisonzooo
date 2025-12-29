@@ -62,7 +62,51 @@ if (file_exists($newPath)) {
 
 // 9. Rename the file
 if (rename($oldPath, $newPath)) {
-    echo json_encode(['status' => 'success', 'message' => 'Le fichier a été renommé avec succès.']);
+    // 10. Update the analytics database with the new filename
+    $dbUpdated = false;
+    $dbPath = '/var/www/data/analytics.db';
+    
+    if (file_exists($dbPath)) {
+        try {
+            $db = new SQLite3($dbPath);
+            
+            // Parse old and new filenames to extract artist and title
+            // Format: "artist-title.mp3"
+            $oldBasename = pathinfo($oldFilename, PATHINFO_FILENAME);
+            $newBasename = pathinfo($newFilename, PATHINFO_FILENAME);
+            
+            // Extract artist and title from old filename
+            $oldParts = explode('-', $oldBasename, 2);
+            $oldArtist = trim($oldParts[0] ?? '');
+            $oldTitle = trim($oldParts[1] ?? $oldBasename);
+            
+            // Extract artist and title from new filename
+            $newParts = explode('-', $newBasename, 2);
+            $newArtist = trim($newParts[0] ?? '');
+            $newTitle = trim($newParts[1] ?? $newBasename);
+            
+            // Update play_history table
+            $stmt = $db->prepare('UPDATE play_history SET artist = :new_artist, title = :new_title WHERE artist = :old_artist AND title = :old_title');
+            $stmt->bindValue(':new_artist', $newArtist, SQLITE3_TEXT);
+            $stmt->bindValue(':new_title', $newTitle, SQLITE3_TEXT);
+            $stmt->bindValue(':old_artist', $oldArtist, SQLITE3_TEXT);
+            $stmt->bindValue(':old_title', $oldTitle, SQLITE3_TEXT);
+            $stmt->execute();
+            
+            $dbUpdated = $db->changes() > 0;
+            $db->close();
+        } catch (Exception $e) {
+            // Log error but don't fail the rename operation
+            error_log("Failed to update analytics DB after rename: " . $e->getMessage());
+        }
+    }
+    
+    $message = 'Le fichier a été renommé avec succès.';
+    if ($dbUpdated) {
+        $message .= ' L\'historique de lecture a été mis à jour.';
+    }
+    
+    echo json_encode(['status' => 'success', 'message' => $message]);
 } else {
     http_response_code(500); // Internal Server Error
     echo json_encode(['status' => 'error', 'message' => 'Une erreur est survenue lors du renommage du fichier.']);
