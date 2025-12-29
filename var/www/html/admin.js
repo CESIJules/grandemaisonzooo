@@ -731,10 +731,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
                 
                 card.innerHTML = `
+                    <div class="post-card-bg" style="${imageUrl ? `background-image: url('${imageUrl}')` : 'background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)'}"></div>
                     ${imageUrl ? `<img src="${imageUrl}" alt="" class="post-card-image" onerror="this.style.display='none'">` : 
-                    `<div class="post-card-image" style="display: flex; align-items: center; justify-content: center;">
-                        <i class="fas fa-music" style="font-size: 3rem; opacity: 0.3;"></i>
-                    </div>`}
+                    `<div class="post-card-no-image"><i class="fas fa-music"></i></div>`}
                     ${post.link ? `<a href="${escapeHtml(post.link)}" target="_blank" class="post-card-link" title="Voir le lien"><i class="fas fa-external-link-alt"></i></a>` : ''}
                     ${canEdit ? `
                     <div class="post-card-actions">
