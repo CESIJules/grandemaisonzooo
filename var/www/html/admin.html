@@ -1713,6 +1713,7 @@
             text-decoration: none;
             opacity: 0;
             transition: all 0.2s;
+            z-index: 3;
         }
 
         .post-card:hover .post-card-link {
@@ -1732,6 +1733,7 @@
             gap: 8px;
             opacity: 0;
             transition: opacity 0.2s;
+            z-index: 3;
         }
 
         .post-card:hover .post-card-actions {
@@ -2033,10 +2035,636 @@
             color: var(--text-primary);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
+
+        /* =============================================
+           RESPONSIVE DESIGN
+           ============================================= */
+        
+        /* Mobile menu toggle button */
+        .mobile-menu-toggle {
+            display: none;
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            z-index: 1001;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: var(--surface-color);
+            border: 1px solid var(--surface-border);
+            color: var(--text-primary);
+            font-size: 1.2rem;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Tablet - 1024px and below */
+        @media (max-width: 1024px) {
+            .admin-main-content {
+                padding: 40px 30px;
+            }
+            
+            h2 {
+                font-size: 2rem;
+            }
+            
+            .editor-content {
+                grid-template-columns: 1fr;
+                height: auto;
+                max-height: none;
+            }
+            
+            .editor-column {
+                border-right: none;
+                border-bottom: 1px solid var(--surface-border);
+                min-height: 300px;
+            }
+            
+            .editor-column:last-child {
+                border-bottom: none;
+            }
+            
+            .playlist-editor-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+                height: auto;
+                min-height: auto;
+            }
+            
+            .playlist-songs-panel,
+            .all-available-songs-panel {
+                grid-column: 1;
+                min-height: 300px;
+            }
+            
+            .playlist-songs-panel {
+                grid-row: 1;
+            }
+            
+            .all-available-songs-panel {
+                grid-row: 2;
+            }
+            
+            .suggestions-panel {
+                grid-column: 1;
+                grid-row: 3;
+                min-height: 250px;
+            }
+            
+            .playlists-grid {
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+                gap: 16px;
+            }
+            
+            .posts-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 16px;
+            }
+            
+            .artists-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 20px;
+            }
+        }
+
+        /* Small tablets and large phones - 768px and below */
+        @media (max-width: 768px) {
+            .mobile-menu-toggle {
+                display: flex;
+            }
+            
+            body {
+                flex-direction: column;
+            }
+            
+            .admin-sidebar {
+                position: fixed;
+                top: 0;
+                left: -280px;
+                width: 280px;
+                height: 100vh;
+                z-index: 1000;
+                transition: left 0.3s ease;
+                padding-top: 70px;
+            }
+            
+            .admin-sidebar.open {
+                left: 0;
+            }
+            
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.6);
+                z-index: 999;
+            }
+            
+            .sidebar-overlay.active {
+                display: block;
+            }
+            
+            .admin-main-content {
+                padding: 80px 20px 30px;
+                width: 100%;
+                min-height: 100vh;
+            }
+            
+            h2 {
+                font-size: 1.75rem;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 16px;
+            }
+            
+            .section-header .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+            
+            .form-actions .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .playlists-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+            
+            .playlists-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 12px;
+            }
+            
+            .playlist-card {
+                padding: 16px;
+            }
+            
+            .playlist-card-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+            }
+            
+            .playlist-card-name {
+                font-size: 1rem;
+            }
+            
+            .posts-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            
+            .post-card {
+                min-height: 160px;
+            }
+            
+            .post-card-image {
+                width: 70px;
+                height: 70px;
+            }
+            
+            .post-card-no-image {
+                width: 70px;
+                height: 70px;
+                font-size: 1.5rem;
+            }
+            
+            .post-card-content {
+                padding: 16px;
+                padding-left: 100px;
+                min-height: 100px;
+            }
+            
+            .post-card-title {
+                font-size: 1rem;
+            }
+            
+            .post-card-meta {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
+            }
+            
+            .artists-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 16px;
+            }
+            
+            .artist-card-image {
+                height: 150px;
+            }
+            
+            .artist-card-content {
+                padding: 16px;
+            }
+            
+            .artist-card-name {
+                font-size: 1.1rem;
+            }
+            
+            .artist-card-links {
+                gap: 8px;
+            }
+            
+            .artist-link-btn {
+                width: 36px;
+                height: 36px;
+            }
+            
+            .modern-table-header {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 12px;
+            }
+            
+            .modern-table-search {
+                width: 100%;
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .modern-table-search select,
+            .modern-table-search .btn,
+            .modern-table-search input {
+                width: 100%;
+            }
+            
+            .editor-header {
+                flex-direction: column;
+                gap: 16px;
+                padding: 16px;
+            }
+            
+            .editor-title-section {
+                width: 100%;
+            }
+            
+            .playlist-name-input {
+                width: 100%;
+                font-size: 1.2rem;
+            }
+            
+            .editor-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+            
+            .modal-content {
+                max-width: 95%;
+                border-radius: 16px;
+            }
+            
+            .modal-body {
+                padding: 20px;
+            }
+            
+            .modal-footer {
+                flex-direction: column;
+                gap: 12px;
+            }
+            
+            .modal-footer .form-message {
+                text-align: center;
+                width: 100%;
+            }
+            
+            .modal-footer .form-actions {
+                width: 100%;
+            }
+            
+            .card {
+                padding: 20px;
+                border-radius: 12px;
+            }
+            
+            .tabs {
+                flex-wrap: wrap;
+            }
+            
+            .tab-btn {
+                flex: 1 1 calc(50% - 4px);
+                padding: 10px 12px;
+                font-size: 0.8rem;
+            }
+            
+            /* Music section stats */
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 12px !important;
+            }
+            
+            .stat-card {
+                padding: 16px !important;
+            }
+            
+            .stat-card-value {
+                font-size: 1.5rem !important;
+            }
+            
+            .suggestions-controls {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .suggestions-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+
+        /* Mobile phones - 480px and below */
+        @media (max-width: 480px) {
+            .admin-main-content {
+                padding: 70px 16px 24px;
+            }
+            
+            h2 {
+                font-size: 1.5rem;
+            }
+            
+            h3 {
+                font-size: 0.95rem;
+            }
+            
+            .sidebar-header {
+                font-size: 1.5rem;
+            }
+            
+            .btn {
+                padding: 10px 16px;
+                font-size: 0.85rem;
+            }
+            
+            .playlists-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            
+            .playlist-card {
+                padding: 14px;
+                min-height: auto;
+            }
+            
+            .playlist-card-icon {
+                width: 36px;
+                height: 36px;
+                font-size: 1rem;
+                margin-bottom: 10px;
+            }
+            
+            .playlist-card-name {
+                font-size: 0.9rem;
+            }
+            
+            .playlist-card-meta {
+                font-size: 0.7rem;
+            }
+            
+            .artists-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .artist-card-image {
+                height: 180px;
+            }
+            
+            .artist-card-actions {
+                opacity: 1;
+            }
+            
+            .post-card-actions {
+                opacity: 1;
+            }
+            
+            .post-card-image {
+                width: 60px;
+                height: 60px;
+                top: 12px;
+                left: 12px;
+            }
+            
+            .post-card-no-image {
+                width: 60px;
+                height: 60px;
+                top: 12px;
+                left: 12px;
+                font-size: 1.3rem;
+            }
+            
+            .post-card-content {
+                padding: 12px;
+                padding-left: 85px;
+                min-height: 85px;
+            }
+            
+            .post-card-title {
+                font-size: 0.95rem;
+                -webkit-line-clamp: 2;
+                line-clamp: 2;
+            }
+            
+            .post-card-meta {
+                font-size: 0.75rem;
+            }
+            
+            .post-card-artist,
+            .post-card-date {
+                padding: 3px 8px;
+            }
+            
+            .modern-list-item {
+                padding: 12px 16px;
+                gap: 12px;
+            }
+            
+            .modern-list-item-image {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .modern-list-item-title {
+                font-size: 0.9rem;
+            }
+            
+            .modern-list-item-subtitle {
+                font-size: 0.75rem;
+            }
+            
+            .modern-list-item-actions {
+                opacity: 1;
+            }
+            
+            .btn-icon {
+                width: 32px;
+                height: 32px;
+            }
+            
+            .column-header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+            
+            .search-input {
+                width: 100%;
+            }
+            
+            .song-item {
+                padding: 8px 10px;
+            }
+            
+            .song-item .song-title {
+                font-size: 0.8rem;
+            }
+            
+            .song-item .song-actions {
+                opacity: 1;
+            }
+            
+            .suggestion-item {
+                width: 150px;
+                padding: 10px;
+            }
+            
+            .suggestion-item .song-title {
+                font-size: 0.75rem;
+            }
+            
+            .modal-header {
+                padding: 16px;
+            }
+            
+            .modal-header h3 {
+                font-size: 1.1rem;
+            }
+            
+            .modal-body {
+                padding: 16px;
+            }
+            
+            .modal-footer {
+                padding: 12px 16px;
+            }
+            
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                padding: 12px 14px;
+                font-size: 0.95rem;
+            }
+            
+            .form-group label {
+                font-size: 0.8rem;
+            }
+            
+            /* Stats cards on mobile */
+            .stats-grid {
+                grid-template-columns: 1fr 1fr !important;
+            }
+            
+            .stat-card-icon {
+                width: 40px !important;
+                height: 40px !important;
+                font-size: 1rem !important;
+            }
+            
+            .stat-card-value {
+                font-size: 1.3rem !important;
+            }
+            
+            .stat-card-label {
+                font-size: 0.7rem !important;
+            }
+            
+            .color-picker-grid,
+            .icon-picker-grid {
+                justify-content: center;
+            }
+            
+            .color-option,
+            .icon-option {
+                width: 32px;
+                height: 32px;
+            }
+        }
+
+        /* Extra small phones - 360px and below */
+        @media (max-width: 360px) {
+            .admin-main-content {
+                padding: 65px 12px 20px;
+            }
+            
+            .playlists-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab-btn {
+                flex: 1;
+            }
+            
+            .editor-actions {
+                flex-direction: column;
+            }
+            
+            .editor-actions .btn {
+                width: 100%;
+            }
+        }
+
+        /* Landscape orientation on mobile */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .admin-sidebar {
+                padding-top: 16px;
+            }
+            
+            .sidebar-nav a {
+                padding: 10px 16px;
+            }
+            
+            .modal-body {
+                max-height: 50vh;
+            }
+        }
+
+        /* High DPI / Retina displays */
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            .post-card-bg {
+                filter: blur(25px);
+            }
+        }
     </style>
 </head>
 <body>
-    <nav class="admin-sidebar">
+    <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu">
+        <i class="fas fa-bars"></i>
+    </button>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <nav class="admin-sidebar" id="adminSidebar">
         <div class="sidebar-header">GMZ ADMIN</div>
         <div class="sidebar-nav">
             <ul>
