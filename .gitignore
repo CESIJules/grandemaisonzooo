@@ -19,6 +19,7 @@
 # Suivre tous les fichiers du site
 !/var/www/html/**
 # APRÈS l'inclusion, exclure les fichiers spécifiques
+/var/www/data/
 /var/www/html/vid/
 /var/www/html/music_metadata.json
 /var/www/html/track_info.json
