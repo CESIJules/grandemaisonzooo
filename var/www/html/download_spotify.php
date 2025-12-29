@@ -4,7 +4,7 @@ header('Content-Type: application/json');
 
 // --- Configuration ---
 $outputDir = '/home/radio/musique/';
-$spotdlPath = '/root/.local/bin/spotdl';
+$spotdlPath = '/opt/spotdl-venv/bin/spotdl';
 $postData = json_decode(file_get_contents('php://input'), true);
 $spotifyUrl = $postData['url'] ?? '';
 
