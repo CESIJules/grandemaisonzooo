@@ -17,6 +17,12 @@ if (!isset($_GET['file']) || empty($_GET['file'])) {
 
 $fileName = $_GET['file'];
 $sanitizedFileName = basename($fileName);
+
+// Ajouter .mp3 si pas d'extension (Icecast envoie le titre sans extension)
+if (!preg_match('/\.\w{2,4}$/', $sanitizedFileName)) {
+    $sanitizedFileName .= '.mp3';
+}
+
 $fullPath = $musicDirectory . $sanitizedFileName;
 
 if (realpath($fullPath) === false || strpos(realpath($fullPath), $musicDirectory) !== 0) {
