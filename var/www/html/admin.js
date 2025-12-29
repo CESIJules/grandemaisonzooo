@@ -90,6 +90,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const musicSearchInput = document.getElementById('musicSearchInput');
     const skipSongBtn = document.getElementById('skipSongBtn');
     
+    // --- Spotify Download Section ---
+    const spotifyDownloadForm = document.getElementById('spotifyDownloadForm');
+    const spotifyUrlInput = document.getElementById('spotifyUrl');
+    const spotifyFormMessage = document.getElementById('spotifyFormMessage');
+    
     // --- Bulk Download Section ---
     const bulkDownloadForm = document.getElementById('bulkDownloadForm');
     const bulkYoutubeUrls = document.getElementById('bulkYoutubeUrls');
@@ -837,12 +842,56 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // BULK DOWNLOAD
+    // SPOTIFY DOWNLOAD
+    async function downloadSpotify(url) {
+        spotifyFormMessage.textContent = 'Téléchargement en cours... (peut prendre du temps pour les playlists)';
+        spotifyFormMessage.style.color = 'var(--text-primary)';
+        
+        const submitBtn = spotifyDownloadForm.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Téléchargement...';
+        
+        try {
+            const response = await fetch('download_spotify.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: url })
+            });
+            const result = await response.json();
+            
+            if (result.status === 'success') {
+                spotifyFormMessage.textContent = '✅ ' + result.message;
+                spotifyFormMessage.style.color = 'lightgreen';
+                spotifyUrlInput.value = '';
+                renderMusicFiles('', true);
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (error) {
+            spotifyFormMessage.textContent = 'Erreur: ' + error.message;
+            spotifyFormMessage.style.color = 'var(--accent-danger)';
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fab fa-spotify"></i> Télécharger';
+        }
+    }
+
+    // Helper function to detect URL type
+    function getUrlType(url) {
+        if (url.includes('youtube.com') || url.includes('youtu.be')) {
+            return 'youtube';
+        } else if (url.includes('spotify.com') || url.startsWith('spotify:')) {
+            return 'spotify';
+        }
+        return null;
+    }
+
+    // BULK DOWNLOAD (YouTube + Spotify)
     async function bulkDownloadYoutube(urls) {
         const validUrls = urls
             .split('\n')
             .map(url => url.trim())
-            .filter(url => url && (url.includes('youtube.com') || url.includes('youtu.be')));
+            .filter(url => url && getUrlType(url) !== null);
         
         if (validUrls.length === 0) {
             bulkFormMessage.textContent = 'Aucune URL YouTube valide trouvée.';
@@ -871,9 +920,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             bulkProgressPercent.textContent = percent + '%';
         }
 
-        function addLog(message, isError = false) {
+        function addLog(message, isError = false, isSpotify = false) {
             const logEntry = document.createElement('div');
-            logEntry.style.color = isError ? 'var(--accent-danger)' : 'lightgreen';
+            logEntry.style.color = isError ? 'var(--accent-danger)' : (isSpotify ? '#1db954' : 'lightgreen');
             logEntry.textContent = message;
             bulkDownloadLog.appendChild(logEntry);
             bulkDownloadLog.scrollTop = bulkDownloadLog.scrollHeight;
@@ -883,10 +932,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Process URLs sequentially to avoid overloading the server
         for (const url of validUrls) {
+            const urlType = getUrlType(url);
+            const isSpotify = urlType === 'spotify';
+            const endpoint = isSpotify ? 'download_spotify.php' : 'download_youtube.php';
+            const icon = isSpotify ? '🟢' : '🔴';
+            
             try {
-                addLog(`⏳ Téléchargement: ${url.substring(0, 50)}...`);
+                addLog(`${icon} ⏳ Téléchargement: ${url.substring(0, 50)}...`, false, isSpotify);
                 
-                const response = await fetch('download_youtube.php', {
+                const response = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ url: url })
@@ -895,20 +949,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 if (result.status === 'success') {
                     success++;
-                    addLog(`✅ ${result.message}`);
+                    addLog(`${icon} ✅ ${result.message}`, false, isSpotify);
                 } else {
                     failed++;
-                    addLog(`❌ Erreur: ${result.message}`, true);
+                    addLog(`${icon} ❌ Erreur: ${result.message}`, true);
                 }
             } catch (error) {
                 failed++;
-                addLog(`❌ Erreur réseau: ${error.message}`, true);
+                addLog(`${icon} ❌ Erreur réseau: ${error.message}`, true);
             }
             
             completed++;
             updateProgress();
         }
-
         // Final summary
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="fas fa-layer-group"></i> Télécharger tout';
@@ -1481,11 +1534,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Music
+    // Music - YouTube
     if (youtubeDownloadForm) {
         youtubeDownloadForm.addEventListener('submit', (e) => {
             e.preventDefault();
             downloadYoutube(youtubeUrlInput.value);
+        });
+    }
+
+    // Music - Spotify
+    if (spotifyDownloadForm) {
+        spotifyDownloadForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            downloadSpotify(spotifyUrlInput.value);
         });
     }
 

@@ -735,7 +735,7 @@
             <h2>Gestion de la Musique</h2>
             <div class="section-grid" style="margin-bottom: 30px;">
                 <div class="card">
-                    <h3>Télécharger depuis YouTube</h3>
+                    <h3><i class="fab fa-youtube" style="color: #ff0000;"></i> Télécharger depuis YouTube</h3>
                     <form id="youtubeDownloadForm" class="form-grid">
                         <div class="form-group" style="grid-column: 1 / -1;">
                             <label for="youtubeUrl">URL de la vidéo YouTube</label>
@@ -743,10 +743,26 @@
                         </div>
                         <div class="form-actions">
                             <span id="youtubeFormMessage"></span>
-                            <button type="submit" class="btn btn-primary"><i class="fab fa-youtube"></i> Télécharger en MP3</button>
+                            <button type="submit" class="btn btn-primary"><i class="fab fa-youtube"></i> Télécharger</button>
                         </div>
                     </form>
                 </div>
+                <div class="card">
+                    <h3><i class="fab fa-spotify" style="color: #1db954;"></i> Télécharger depuis Spotify</h3>
+                    <form id="spotifyDownloadForm" class="form-grid">
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label for="spotifyUrl">URL Spotify (track ou playlist)</label>
+                            <input type="url" id="spotifyUrl" placeholder="https://open.spotify.com/track/... ou /playlist/..." required>
+                        </div>
+                        <div class="form-actions">
+                            <span id="spotifyFormMessage"></span>
+                            <button type="submit" class="btn" style="background: #1db954;"><i class="fab fa-spotify"></i> Télécharger</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="section-grid" style="margin-bottom: 30px;">
                 <div class="card">
                     <h3>Contrôle de la Radio</h3>
                     <div class="form-actions" style="justify-content: center;">
@@ -758,11 +774,15 @@
             <!-- Bulk Download Section -->
             <div class="card" style="margin-bottom: 30px;">
                 <h3><i class="fas fa-download"></i> Téléchargement en masse</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 0.9rem;">
+                    Collez des URLs YouTube ou Spotify (une par ligne). Les playlists Spotify sont supportées !
+                </p>
                 <form id="bulkDownloadForm" class="form-grid">
                     <div class="form-group" style="grid-column: 1 / -1;">
-                        <label for="bulkYoutubeUrls">URLs YouTube (une par ligne)</label>
+                        <label for="bulkYoutubeUrls">URLs YouTube / Spotify (une par ligne)</label>
                         <textarea id="bulkYoutubeUrls" rows="8" placeholder="https://www.youtube.com/watch?v=abc123
-https://www.youtube.com/watch?v=def456
+https://open.spotify.com/track/xyz789
+https://open.spotify.com/playlist/abc456
 https://youtu.be/ghi789" style="width: 100%; background: var(--surface-color); border: 1px solid var(--surface-border); border-radius: 8px; padding: 12px; color: var(--text-primary); font-family: monospace; resize: vertical;"></textarea>
                     </div>
                     <div class="form-actions" style="flex-direction: column; align-items: stretch; gap: 12px;">
