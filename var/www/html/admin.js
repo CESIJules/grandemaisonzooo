@@ -2284,7 +2284,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Add playlist cards
         allPlaylists.forEach(playlist => {
             const isLive = playlist.name === currentActivePlaylist;
-            const color = playlist.color || '#00ff68';
+            const color = playlist.color || '#a855f7';
             const icon = playlist.icon || 'music';
             const cover = playlist.cover || '';
             
@@ -3011,7 +3011,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         newCreatePlaylistForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('newPlaylistName').value.trim();
-            const color = document.getElementById('newPlaylistColor')?.value || '#00ff68';
+            const color = document.getElementById('newPlaylistColor')?.value || '#a855f7';
             const cover = document.getElementById('newPlaylistCover')?.value || '';
             
             if (!name) return;
@@ -3034,9 +3034,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 // Reset color selection
                 document.querySelectorAll('.color-option').forEach(b => b.classList.remove('active'));
-                document.querySelector('.color-option[data-color="#00ff68"]')?.classList.add('active');
+                document.querySelector('.color-option[data-color="#a855f7"]')?.classList.add('active');
                 const colorInput = document.getElementById('newPlaylistColor');
-                if (colorInput) colorInput.value = '#00ff68';
+                if (colorInput) colorInput.value = '#a855f7';
                 
                 // Reset cover
                 resetCoverPreview();

@@ -19,17 +19,26 @@
     <style>
         /* --- Base & Typography --- */
         :root {
-            --bg-color: #121212;
-            --bg-color-translucent: rgba(18, 18, 18, 0.5);
-            --surface-color: #1E1E1E;
-            --surface-border: #333333;
-            --surface-hover: #2a2a2a;
-            --text-primary: #f5f5f5;
-            --text-secondary: #aaa;
-            --accent-primary: #007bff;
-            --accent-danger: #dc3545;
+            --bg-color: #0a0a0f;
+            --bg-color-translucent: rgba(10, 10, 15, 0.85);
+            --surface-color: #12121a;
+            --surface-border: #252532;
+            --surface-hover: #1a1a25;
+            --text-primary: #f0f0f5;
+            --text-secondary: #8888a0;
+            --accent-primary: #a855f7;
+            --accent-secondary: #ec4899;
+            --accent-tertiary: #6366f1;
+            --accent-danger: #ef4444;
+            --accent-success: #22c55e;
+            --accent-warning: #f59e0b;
+            --gradient-primary: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+            --gradient-secondary: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --gradient-accent: linear-gradient(135deg, #ec4899 0%, #f59e0b 100%);
             --font-body: 'Space Grotesk', sans-serif;
             --font-heading: 'Syne', sans-serif;
+            --glow-primary: 0 0 20px rgba(168, 85, 247, 0.4);
+            --glow-secondary: 0 0 20px rgba(236, 72, 153, 0.4);
         }
 
         * { box-sizing: border-box; }
@@ -153,7 +162,7 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent-primary) 0%, #667eea 100%);
+            background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -210,14 +219,15 @@
             letter-spacing: 0.5px;
         }
         .btn-primary {
-            background-color: #fff; /* High contrast */
-            color: #000;
-            border: 1px solid #fff;
+            background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+            color: #fff;
+            border: none;
+            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
         }
         .btn-primary:hover {
-            background-color: #e0e0e0;
-            border-color: #e0e0e0;
-            transform: translateY(-1px);
+            background: linear-gradient(135deg, #9333ea 0%, #db2777 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(168, 85, 247, 0.4);
         }
         .btn-secondary {
             background-color: transparent;
@@ -399,13 +409,13 @@
             left: 0;
             right: 0;
             height: 4px;
-            background: var(--card-color, #00ff68);
+            background: var(--card-color, #a855f7);
             opacity: 0.8;
         }
         
         .playlist-card:hover {
             transform: translateY(-6px);
-            border-color: var(--card-color, #00ff68);
+            border-color: var(--card-color, #a855f7);
             box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
         }
         
@@ -456,8 +466,8 @@
         
         .playlist-card.is-live {
             border-color: var(--accent-primary);
-            box-shadow: 0 0 30px rgba(0, 255, 104, 0.15);
-            background: linear-gradient(135deg, var(--surface-color) 0%, rgba(0, 255, 104, 0.03) 100%);
+            box-shadow: 0 0 30px rgba(168, 85, 247, 0.15);
+            background: linear-gradient(135deg, var(--surface-color) 0%, rgba(168, 85, 247, 0.03) 100%);
         }
         
         .playlist-card-icon {
@@ -470,7 +480,7 @@
             justify-content: center;
             font-size: 1.6rem;
             margin-bottom: 16px;
-            color: var(--card-color, #00ff68);
+            color: var(--card-color, #a855f7);
             transition: transform 0.3s;
         }
         
@@ -497,8 +507,8 @@
         }
         
         .playlist-card .live-badge {
-            background: var(--accent-primary);
-            color: #000;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            color: #fff;
             padding: 3px 10px;
             border-radius: 12px;
             font-size: 0.7rem;
@@ -508,8 +518,8 @@
         }
         
         @keyframes pulse-live {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
+            0%, 100% { opacity: 1; box-shadow: 0 0 10px rgba(168, 85, 247, 0.5); }
+            50% { opacity: 0.85; box-shadow: 0 0 20px rgba(236, 72, 153, 0.6); }
         }
         
         /* Card de création */
@@ -532,7 +542,7 @@
             border-color: var(--accent-primary);
             color: var(--accent-primary);
             transform: translateY(-6px);
-            background: rgba(0, 255, 104, 0.02);
+            background: rgba(168, 85, 247, 0.02);
         }
         
         .playlist-card.create-card i {
@@ -581,7 +591,7 @@
         
         .editor-cover-preview:hover {
             border-color: var(--accent-primary);
-            background: rgba(0, 245, 160, 0.1);
+            background: rgba(168, 85, 247, 0.1);
         }
         
         .editor-cover-preview i {
@@ -657,8 +667,8 @@
         }
         
         .status-badge.live {
-            background: var(--accent-primary);
-            color: #000;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            color: #fff;
             animation: pulse-live 2s infinite;
         }
         
@@ -668,20 +678,21 @@
         }
         
         .btn-success {
-            background: var(--accent-primary);
-            color: #000;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            color: #fff;
             border: none;
             font-weight: 700;
         }
         
         .btn-success:hover {
-            background: #00cc55;
+            background: linear-gradient(135deg, #9333ea, #db2777);
             transform: translateY(-2px);
+            box-shadow: var(--glow-primary);
         }
         
         .btn-success:disabled {
-            background: rgba(0, 255, 104, 0.3);
-            color: rgba(0, 0, 0, 0.5);
+            background: rgba(168, 85, 247, 0.3);
+            color: rgba(255, 255, 255, 0.5);
             cursor: not-allowed;
             transform: none;
         }
@@ -816,11 +827,11 @@
             outline: none;
             border-color: var(--accent-primary);
             background: rgba(255, 255, 255, 0.1);
-            box-shadow: 0 0 0 3px rgba(0, 255, 104, 0.1);
+            box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
         }
         
         .songs-dropzone.drag-over {
-            background: rgba(0, 255, 104, 0.08);
+            background: rgba(168, 85, 247, 0.08);
             border: 2px dashed var(--accent-primary);
             border-radius: 12px;
             margin: 8px;
@@ -927,9 +938,9 @@
             font-weight: 600;
         }
         
-        .song-badge.badge-bpm { color: #ffc107; background: rgba(255, 193, 7, 0.12); }
-        .song-badge.badge-key { color: #0dcaf0; background: rgba(13, 202, 240, 0.12); }
-        .song-badge.badge-genre { color: #c44dff; background: rgba(196, 77, 255, 0.12); }
+        .song-badge.badge-bpm { color: #f472b6; background: rgba(244, 114, 182, 0.15); }
+        .song-badge.badge-key { color: #818cf8; background: rgba(129, 140, 248, 0.15); }
+        .song-badge.badge-genre { color: #c084fc; background: rgba(192, 132, 252, 0.15); }
         
         .song-item .song-actions {
             display: flex;
@@ -961,27 +972,27 @@
         
         .song-item .btn-icon.btn-add {
             color: var(--accent-primary);
-            background: rgba(0, 255, 104, 0.1);
-            border: 2px solid rgba(0, 255, 104, 0.25);
+            background: rgba(168, 85, 247, 0.1);
+            border: 2px solid rgba(168, 85, 247, 0.25);
             border-radius: 10px;
             transition: all 0.25s ease;
         }
         
         .song-item .btn-icon.btn-add:hover {
-            background: linear-gradient(135deg, var(--accent-primary), #00cc52);
-            color: #000;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            color: #fff;
             border-color: transparent;
             transform: scale(1.1) rotate(90deg);
-            box-shadow: 0 4px 12px rgba(0, 255, 104, 0.35);
+            box-shadow: 0 4px 12px rgba(168, 85, 247, 0.45);
         }
         
         .song-item .btn-icon.btn-remove {
             color: var(--accent-danger);
-            background: rgba(255, 77, 77, 0.1);
+            background: rgba(239, 68, 68, 0.1);
         }
         
         .song-item .btn-icon.btn-remove:hover {
-            background: rgba(255, 77, 77, 0.25);
+            background: rgba(239, 68, 68, 0.25);
         }
         
         /* Section suggestions */
@@ -1042,16 +1053,16 @@
         }
         
         .sort-btn:hover {
-            background: rgba(255, 255, 255, 0.12);
-            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(168, 85, 247, 0.15);
+            border-color: rgba(168, 85, 247, 0.3);
             transform: translateY(-1px);
         }
         
         .sort-btn.active {
-            background: linear-gradient(135deg, var(--accent-primary), #00cc52);
-            color: #000;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            color: #fff;
             border-color: transparent;
-            box-shadow: 0 4px 12px rgba(0, 255, 104, 0.3);
+            box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
         }
         
         .suggestions-filters {
@@ -1102,7 +1113,7 @@
         
         .suggestion-item:hover {
             border-color: var(--accent-primary);
-            background: rgba(0, 255, 104, 0.06);
+            background: rgba(168, 85, 247, 0.06);
         }
         
         .suggestion-score {
@@ -1123,21 +1134,21 @@
         }
         
         .suggestion-score.perfect {
-            background: linear-gradient(135deg, #00ff68, #00cc52);
-            color: #000;
-            box-shadow: 0 4px 15px rgba(0, 255, 104, 0.4);
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.5);
         }
         
         .suggestion-score.good {
-            background: linear-gradient(135deg, rgba(0, 255, 104, 0.25), rgba(0, 200, 100, 0.15));
-            color: var(--accent-primary);
-            border: 2px solid rgba(0, 255, 104, 0.4);
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(236, 72, 153, 0.15));
+            color: #c084fc;
+            border: 2px solid rgba(168, 85, 247, 0.4);
         }
         
         .suggestion-score.okay {
-            background: linear-gradient(135deg, rgba(255, 193, 7, 0.2), rgba(255, 170, 0, 0.1));
-            color: #ffcc00;
-            border: 2px solid rgba(255, 193, 7, 0.35);
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(129, 140, 248, 0.1));
+            color: #818cf8;
+            border: 2px solid rgba(99, 102, 241, 0.35);
         }
         
         .suggestion-content {
@@ -1165,8 +1176,8 @@
             width: 40px;
             height: 40px;
             border-radius: 12px;
-            border: 2px solid rgba(0, 255, 104, 0.3);
-            background: rgba(0, 255, 104, 0.08);
+            border: 2px solid rgba(168, 85, 247, 0.3);
+            background: rgba(168, 85, 247, 0.08);
             color: var(--accent-primary);
             cursor: pointer;
             transition: all 0.25s ease;
@@ -1178,11 +1189,11 @@
         }
         
         .btn-add-suggestion:hover {
-            background: linear-gradient(135deg, var(--accent-primary), #00cc52);
-            color: #000;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            color: #fff;
             border-color: transparent;
             transform: scale(1.08) rotate(90deg);
-            box-shadow: 0 4px 15px rgba(0, 255, 104, 0.4);
+            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.5);
         }
         
         .suggestion-badge {
@@ -1196,27 +1207,27 @@
         }
         
         .badge-bpm { 
-            color: #ffc107; 
-            background: rgba(255, 193, 7, 0.15); 
+            color: #f472b6; 
+            background: rgba(244, 114, 182, 0.15); 
         }
         .badge-bpm i { font-size: 0.6rem; }
         .badge-key { 
-            color: #0dcaf0; 
-            background: rgba(13, 202, 240, 0.15); 
+            color: #818cf8; 
+            background: rgba(129, 140, 248, 0.15); 
         }
         .badge-key.key-match { 
-            color: #00ff68; 
-            background: rgba(0, 255, 104, 0.2);
-            border: 1px solid rgba(0, 255, 104, 0.3);
+            color: #a855f7; 
+            background: rgba(168, 85, 247, 0.2);
+            border: 1px solid rgba(168, 85, 247, 0.3);
         }
         .badge-key i { font-size: 0.6rem; }
         .badge-genre { 
-            color: #c44dff; 
-            background: rgba(196, 77, 255, 0.15); 
+            color: #c084fc; 
+            background: rgba(192, 132, 252, 0.15); 
         }
         .badge-energy {
-            color: #ff6b6b;
-            background: rgba(255, 107, 107, 0.15);
+            color: #fb7185;
+            background: rgba(251, 113, 133, 0.15);
         }
         
         .suggestion-empty {
@@ -1378,7 +1389,7 @@
         
         .cover-preview:hover {
             border-color: var(--accent-primary);
-            background: rgba(0, 245, 160, 0.1);
+            background: rgba(168, 85, 247, 0.1);
         }
         
         .cover-preview i {
@@ -1863,7 +1874,7 @@
         }
         
         .playlist-preview-track.filled {
-            background: var(--card-color, #00ff68);
+            background: var(--card-color, #a855f7);
             opacity: 0.6;
         }
         
@@ -1896,7 +1907,7 @@
         
         .playlist-now-playing-indicator span {
             width: 3px;
-            background: var(--accent-primary);
+            background: linear-gradient(to top, #a855f7, #ec4899);
             border-radius: 1px;
             animation: equalizer 0.8s ease-in-out infinite;
         }
@@ -1927,7 +1938,7 @@
         
         .playlist-track-mini i {
             font-size: 0.6rem;
-            color: var(--card-color, #00ff68);
+            color: var(--card-color, #a855f7);
         }
         
         .playlist-track-mini span {
@@ -3733,7 +3744,7 @@
             
             <!-- Enhanced KPIs -->
             <div class="analytics-kpi-grid">
-                <div class="analytics-kpi-card" style="--kpi-color: #00ff68; --kpi-color-rgb: 0, 255, 104;">
+                <div class="analytics-kpi-card" style="--kpi-color: #a855f7; --kpi-color-rgb: 0, 255, 104;">
                     <div class="analytics-kpi-header">
                         <div class="analytics-kpi-icon"><i class="fas fa-chart-line"></i></div>
                         <div class="analytics-kpi-label">Pic d'audience (30j)</div>
@@ -4071,16 +4082,16 @@ https://open.spotify.com/playlist/abc456" style="width: 100%; background: #14141
                         <div class="form-group">
                             <label>Couleur d'accent</label>
                             <div class="color-picker-grid">
-                                <button type="button" class="color-option active" data-color="#00ff68" style="background: #00ff68;"></button>
-                                <button type="button" class="color-option" data-color="#ff6b6b" style="background: #ff6b6b;"></button>
-                                <button type="button" class="color-option" data-color="#4ecdc4" style="background: #4ecdc4;"></button>
-                                <button type="button" class="color-option" data-color="#ffe66d" style="background: #ffe66d;"></button>
-                                <button type="button" class="color-option" data-color="#c44dff" style="background: #c44dff;"></button>
-                                <button type="button" class="color-option" data-color="#ff9f43" style="background: #ff9f43;"></button>
-                                <button type="button" class="color-option" data-color="#54a0ff" style="background: #54a0ff;"></button>
-                                <button type="button" class="color-option" data-color="#1a1a2e" style="background: #1a1a2e; border: 1px solid #333;"></button>
+                                <button type="button" class="color-option active" data-color="#a855f7" style="background: linear-gradient(135deg, #a855f7, #9333ea);"></button>
+                                <button type="button" class="color-option" data-color="#ec4899" style="background: linear-gradient(135deg, #ec4899, #db2777);"></button>
+                                <button type="button" class="color-option" data-color="#6366f1" style="background: linear-gradient(135deg, #6366f1, #4f46e5);"></button>
+                                <button type="button" class="color-option" data-color="#f59e0b" style="background: linear-gradient(135deg, #f59e0b, #d97706);"></button>
+                                <button type="button" class="color-option" data-color="#22c55e" style="background: linear-gradient(135deg, #22c55e, #16a34a);"></button>
+                                <button type="button" class="color-option" data-color="#ef4444" style="background: linear-gradient(135deg, #ef4444, #dc2626);"></button>
+                                <button type="button" class="color-option" data-color="#06b6d4" style="background: linear-gradient(135deg, #06b6d4, #0891b2);"></button>
+                                <button type="button" class="color-option" data-color="#8b5cf6" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);"></button>
                             </div>
-                            <input type="hidden" id="newPlaylistColor" value="#00ff68">
+                            <input type="hidden" id="newPlaylistColor" value="#a855f7">
                         </div>
                         <div class="form-actions">
                             <button type="button" class="btn" id="cancelCreatePlaylist">Annuler</button>
