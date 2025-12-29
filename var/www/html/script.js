@@ -2145,7 +2145,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Toggle du menu historique
   if (historyToggle && historyDropdown) {
-    historyToggle.addEventListener('click', () => {
+    historyToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
       historyOpen = !historyOpen;
       historyToggle.classList.toggle('open', historyOpen);
       historyDropdown.classList.toggle('open', historyOpen);
@@ -2153,6 +2154,15 @@ document.addEventListener('DOMContentLoaded', () => {
       // Charger l'historique à l'ouverture
       if (historyOpen) {
         fetchPlayHistory();
+      }
+    });
+    
+    // Fermer le dropdown en cliquant en dehors
+    document.addEventListener('click', (e) => {
+      if (historyOpen && !historyDropdown.contains(e.target) && !historyToggle.contains(e.target)) {
+        historyOpen = false;
+        historyToggle.classList.remove('open');
+        historyDropdown.classList.remove('open');
       }
     });
   }
