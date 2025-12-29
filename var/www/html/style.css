@@ -1433,13 +1433,11 @@ body.menu-open {
   letter-spacing: 1px;
   white-space: nowrap;
 
-  /* Style "Timeline Post" */
-  background-color: transparent;
+  /* Style sans blur direct - le blur sera sur un pseudo-element */
+  background-color: rgba(0, 0, 0, 0.4);
   padding: 10px 20px 14px 20px;
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
   
   /* Adaptation longueur */
