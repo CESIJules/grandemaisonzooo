@@ -1846,11 +1846,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Open the new playlist editor
     function openNewPlaylistEditor(playlist) {
+        console.log('Opening playlist editor for:', playlist.name);
         currentEditingPlaylist = JSON.parse(JSON.stringify(playlist));
         
         // Hide grid, show editor
-        if (playlistsGrid) playlistsGrid.style.display = 'none';
-        if (playlistEditorPanel) playlistEditorPanel.style.display = 'block';
+        const grid = document.getElementById('playlistsGrid');
+        const editor = document.getElementById('playlistEditorPanel');
+        
+        console.log('Grid element:', grid);
+        console.log('Editor element:', editor);
+        
+        if (grid) {
+            grid.style.display = 'none';
+            console.log('Grid hidden');
+        }
+        if (editor) {
+            editor.style.display = 'block';
+            console.log('Editor shown');
+        }
         
         // Populate editor
         const nameInput = document.getElementById('editPlaylistNameInput');
@@ -2176,15 +2189,31 @@ document.addEventListener('DOMContentLoaded', async () => {
                     body: JSON.stringify({ name, color, icon })
                 });
                 const result = await response.json();
-                if (result.status !== 'success') throw new Error(result.message);
                 
+                console.log('Create playlist response:', result);
+                
+                if (result.status !== 'success') {
+                    throw new Error(result.message || 'Erreur inconnue');
+                }
+                
+                // Success! Close modal and refresh
                 if (createPlaylistModal) createPlaylistModal.style.display = 'none';
                 document.getElementById('newPlaylistName').value = '';
+                
+                // Reset color/icon selection
+                document.querySelectorAll('.color-option').forEach(b => b.classList.remove('active'));
+                document.querySelector('.color-option[data-color="#00ff68"]')?.classList.add('active');
+                document.getElementById('newPlaylistColor').value = '#00ff68';
+                
+                document.querySelectorAll('.icon-option').forEach(b => b.classList.remove('active'));
+                document.querySelector('.icon-option[data-icon="music"]')?.classList.add('active');
+                document.getElementById('newPlaylistIcon').value = 'music';
                 
                 await fetchPlaylists();
                 renderPlaylistsGrid();
                 
             } catch (error) {
+                console.error('Create playlist error:', error);
                 alert('Erreur: ' + error.message);
             }
         });

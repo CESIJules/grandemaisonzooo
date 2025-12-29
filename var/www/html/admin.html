@@ -542,18 +542,36 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 0;
-            height: 45vh;
-            min-height: 350px;
+            height: 50vh;
+            min-height: 400px;
+            max-height: 60vh;
         }
         
         .editor-column {
             display: flex;
             flex-direction: column;
             border-right: 1px solid var(--surface-border);
+            overflow: hidden;
         }
         
         .editor-column:last-child {
             border-right: none;
+        }
+        
+        /* Ensure library content is scrollable */
+        .library-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            min-height: 0; /* Important for flex scroll */
+        }
+        
+        .songs-dropzone {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            position: relative;
+            min-height: 0; /* Important for flex scroll */
         }
         
         .column-header {
@@ -597,14 +615,6 @@
             border-color: var(--accent-primary);
         }
         
-        /* Zone de drop */
-        .songs-dropzone {
-            flex: 1;
-            overflow-y: auto;
-            padding: 12px;
-            position: relative;
-        }
-        
         .songs-dropzone.drag-over {
             background: rgba(0, 255, 104, 0.05);
         }
@@ -632,12 +642,6 @@
         
         .songs-list:not(:empty) + .dropzone-hint {
             display: none;
-        }
-        
-        .library-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 12px;
         }
         
         /* Items de la liste */
