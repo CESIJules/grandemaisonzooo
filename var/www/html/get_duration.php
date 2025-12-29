@@ -34,13 +34,31 @@ if (realpath($fullPath) === false || strpos(realpath($fullPath), $musicDirectory
 
 // --- LOGIQUE DE SYNCHRONISATION ---
 // On lit le fichier de suivi écrit par log_track.php (appelé par Liquidsoap)
-// IMPORTANT: Ne pas modifier ce fichier ici! Seul log_track.php doit l'écrire.
-$start_time = time(); // Fallback si pas d'info
+$start_time = time(); // Fallback si pas d'info ou morceau différent
+$current_track_filename = null;
 
 if (file_exists($track_info_file)) {
     $track_info = json_decode(file_get_contents($track_info_file), true);
-    if (isset($track_info['start_time'])) {
-        $start_time = $track_info['start_time'];
+    if (isset($track_info['filename']) && isset($track_info['start_time'])) {
+        $current_track_filename = $track_info['filename'];
+        
+        // IMPORTANT: Vérifier si le fichier demandé correspond au morceau en cours
+        // Normaliser les deux noms pour comparaison (sans extension, minuscule, trim)
+        $requestedBase = strtolower(trim(pathinfo($sanitizedFileName, PATHINFO_FILENAME)));
+        $currentBase = strtolower(trim(pathinfo($current_track_filename, PATHINFO_FILENAME)));
+        
+        // Comparer aussi sans les espaces multiples et caractères spéciaux
+        $requestedNorm = preg_replace('/\s+/', ' ', $requestedBase);
+        $currentNorm = preg_replace('/\s+/', ' ', $currentBase);
+        
+        // Debug log
+        error_log("get_duration.php - requested: '$requestedNorm', current: '$currentNorm'");
+        
+        if ($requestedNorm === $currentNorm) {
+            // Le fichier demandé EST le morceau en cours -> utiliser le start_time du serveur
+            $start_time = $track_info['start_time'];
+        }
+        // Sinon on garde le fallback (time()) car le frontend demande un ancien morceau
     }
 }
 
@@ -53,7 +71,7 @@ $command = sprintf(
 $duration = shell_exec($command);
 
 
-// --- Réponse (Logique originale enrichie) ---
+// --- Réponse ---
 if ($duration === null || !is_numeric(trim($duration))) {
     http_response_code(500);
     echo json_encode(['error' => 'Failed to extract duration from file.', 'details' => 'Command output: ' . $duration]);
@@ -61,10 +79,12 @@ if ($duration === null || !is_numeric(trim($duration))) {
 }
 
 // Succès : on renvoie la durée ET les informations de synchronisation
+// On inclut aussi le morceau actuellement en cours selon Liquidsoap
 echo json_encode([
     'duration' => floatval(trim($duration)),
     'start_time' => $start_time,
-    'server_now' => time()
+    'server_now' => time(),
+    'current_track' => $current_track_filename // Pour debug/sync
 ]);
 
 ?>

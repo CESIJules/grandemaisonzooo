@@ -2109,8 +2109,18 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await response.json();
       
       if (response.ok && data.duration && data.start_time && data.server_now) {
-        // Vérifier si le morceau a changé côté serveur (différent fichier)
-        // get_duration.php retourne le start_time du fichier actuel
+        // Vérifier si le morceau a changé côté serveur via current_track
+        if (data.current_track) {
+          const serverTrack = data.current_track.replace(/\.[^/.]+$/, "").toLowerCase();
+          const clientTrack = rawTitle.replace(/\.[^/.]+$/, "").toLowerCase();
+          if (serverTrack !== clientTrack) {
+            // Le serveur joue un morceau différent! Forcer un fetch
+            console.log('Resync: morceau différent détecté, forcing fetch...', serverTrack, 'vs', clientTrack);
+            fetchCurrentSong();
+            return;
+          }
+        }
+        
         const serverElapsed = data.server_now - data.start_time;
         const clientElapsed = (Date.now() / 1000) - trackStartTime;
         
@@ -2133,60 +2143,89 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!currentSong) return;
     try {
-      const response = await fetch(`https://grandemaisonzoo.com/status-json.xsl?nocache=${new Date().getTime()}`);
-      if (!response.ok) throw new Error("Impossible de récupérer les infos Icecast");
+      // Utiliser get_current_track.php comme source de vérité (écrit par Liquidsoap)
+      // Icecast est utilisé uniquement pour le nombre d'auditeurs
+      const [trackResponse, icecastResponse] = await Promise.all([
+        fetch(`./get_current_track.php?nocache=${Date.now()}`),
+        fetch(`https://grandemaisonzoo.com/status-json.xsl?nocache=${Date.now()}`)
+      ]);
 
-      const data = await response.json();
       let title = "Aucun morceau en cours";
       let rawTitle = "";
       let listeners = 0;
 
-      if (data.icestats && data.icestats.source) {
-        const source = Array.isArray(data.icestats.source) 
-          ? data.icestats.source.find(s => s.listenurl.includes('/stream')) 
-          : data.icestats.source;
-        
-        if (source && source.title) {
-          rawTitle = source.title; // Garder le nom de fichier original
-          title = rawTitle
+      // Récupérer le nombre d'auditeurs depuis Icecast
+      if (icecastResponse.ok) {
+        const icecastData = await icecastResponse.json();
+        if (icecastData.icestats && icecastData.icestats.source) {
+          const source = Array.isArray(icecastData.icestats.source) 
+            ? icecastData.icestats.source.find(s => s.listenurl.includes('/stream')) 
+            : icecastData.icestats.source;
+          if (source && source.listeners) listeners = source.listeners;
+        }
+      }
+
+      // Récupérer le morceau en cours depuis notre API (source de vérité)
+      if (trackResponse.ok) {
+        const trackData = await trackResponse.json();
+        if (trackData.filename && !trackData.error) {
+          rawTitle = trackData.filename;
+          title = trackData.display_title || rawTitle
             .replace(/\.[^/.]+$/, "")
             .replace(/_/g, ' ')
             .replace(/\s*-\s*/g, ' - ')
             .toUpperCase();
-          if (source.listeners) listeners = source.listeners;
+          
+          // Synchroniser directement avec les données du serveur
+          if (trackData.duration > 0 && trackData.start_time) {
+            const serverElapsed = trackData.elapsed || (trackData.server_now - trackData.start_time);
+            
+            // Vérifier si c'est un nouveau morceau ou si on doit juste resync
+            const currentTitle = currentSong.querySelector('.title').textContent;
+            const isNewTrack = (title !== currentTitle);
+            
+            if (isNewTrack || isFirstTitleLoad) {
+              console.log('Nouveau morceau détecté:', title);
+              
+              // Mise à jour du titre
+              updateTitleUI(title);
+              lastKnownTitle = rawTitle;
+              isFirstTitleLoad = false;
+              
+              // Mise à jour de la progression avec les données exactes du serveur
+              trackDuration = trackData.duration;
+              trackStartTime = (Date.now() / 1000) - serverElapsed;
+              
+              if (progressInterval) clearInterval(progressInterval);
+              updateProgressBar();
+              progressInterval = setInterval(updateProgressBar, 250);
+              if (progressInfo) progressInfo.classList.add('visible');
+              
+              // Redémarrer l'intervalle de resync
+              if (resyncInterval) clearInterval(resyncInterval);
+              resyncInterval = setInterval(() => {
+                if (!document.hidden && lastKnownTitle) {
+                  resyncProgress(lastKnownTitle);
+                }
+              }, 30000);
+            } else {
+              // Même morceau - vérifier le drift silencieusement
+              const clientElapsed = (Date.now() / 1000) - trackStartTime;
+              const drift = Math.abs(serverElapsed - clientElapsed);
+              if (drift > 2) {
+                console.log(`Drift de ${drift.toFixed(1)}s détecté, correction...`);
+                trackStartTime = (Date.now() / 1000) - serverElapsed;
+                trackDuration = trackData.duration;
+              }
+            }
+          }
         }
       }
 
+      // Mettre à jour le compteur d'auditeurs
       const listenerCountEl = document.getElementById('listenerCount');
       if (listenerCountEl) {
         listenerCountEl.innerHTML = `<i class="fas fa-user"></i> ${listeners}`;
-      }
-
-      const currentTitle = currentSong.querySelector('.title').textContent;
-      
-      // Détection du changement de morceau - SANS délai artificiel
-      if (title !== currentTitle) {
-        if (isFirstTitleLoad) {
-            isFirstTitleLoad = false;
-            updateTitleUI(title);
-            if (rawTitle) fetchAndSetProgress(rawTitle, true);
-            return;
-        }
-
-        // Annuler tout timeout précédent
-        if (pendingTitleTimeout) {
-            clearTimeout(pendingTitleTimeout);
-            pendingTitleTimeout = null;
-        }
-
-        // Mise à jour IMMÉDIATE de l'UI et de la progression
-        // Le serveur (log_track.php) a déjà enregistré le start_time correct
-        console.log('Changement de morceau détecté:', title);
-        updateTitleUI(title);
-        if (rawTitle) {
-            lastKnownTitle = rawTitle;
-            fetchAndSetProgress(rawTitle, true); // Toujours sync avec le serveur
-        }
       }
 
     } catch (err) {
