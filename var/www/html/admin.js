@@ -1449,6 +1449,181 @@ document.addEventListener('DOMContentLoaded', async () => {
         cancelPlaylistEditBtn.addEventListener('click', cancelPlaylistEdit);
     }
 
+    // --- Analytics Section ---
+    let audienceChartInstance = null;
+    let heatmapChartInstance = null;
+
+    async function loadAnalyticsHeader() {
+        try {
+            const res = await fetch('api_analytics.php?type=stats_header');
+            const json = await res.json();
+            if (json.status === 'success') {
+                document.getElementById('statPeak').textContent = json.data.peak_30d;
+                document.getElementById('statAvg').textContent = json.data.avg_24h;
+                document.getElementById('statTracks').textContent = json.data.tracks_24h;
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    window.loadAudienceChart = async function(range) {
+        try {
+            const res = await fetch(`api_analytics.php?type=audience&range=${range}`);
+            const json = await res.json();
+            
+            if (json.status !== 'success') return;
+
+            const ctx = document.getElementById('audienceChart').getContext('2d');
+            
+            if (audienceChartInstance) audienceChartInstance.destroy();
+
+            const labels = json.data.map(d => {
+                const date = new Date(d.timestamp + 'Z'); // UTC
+                return range === '24h' 
+                    ? date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                    : date.toLocaleDateString() + ' ' + date.getHours() + 'h';
+            });
+            
+            const values = json.data.map(d => d.listeners);
+
+            audienceChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Auditeurs',
+                        data: values,
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#333' } },
+                        x: { grid: { display: false } }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index',
+                    },
+                }
+            });
+        } catch (e) { console.error(e); }
+    };
+
+    async function loadTopLists() {
+        // Top Tracks
+        try {
+            const res = await fetch('api_analytics.php?type=top_tracks');
+            const json = await res.json();
+            const list = document.getElementById('topTracksList');
+            list.innerHTML = '';
+            if (json.status === 'success') {
+                json.data.forEach((item, index) => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; width:100%;">
+                            <span><strong>${index+1}.</strong> ${escapeHtml(item.title)} <small style="color:#666">(${escapeHtml(item.artist)})</small></span>
+                            <span class="badge" style="background:#333; padding:2px 6px; border-radius:4px;">${item.count} plays</span>
+                        </div>
+                    `;
+                    list.appendChild(li);
+                });
+            }
+        } catch (e) {}
+
+        // Top Artists
+        try {
+            const res = await fetch('api_analytics.php?type=top_artists');
+            const json = await res.json();
+            const list = document.getElementById('topArtistsList');
+            list.innerHTML = '';
+            if (json.status === 'success') {
+                json.data.forEach((item, index) => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; width:100%;">
+                            <span><strong>${index+1}.</strong> ${escapeHtml(item.artist)}</span>
+                            <span class="badge" style="background:#333; padding:2px 6px; border-radius:4px;">${item.count} plays</span>
+                        </div>
+                    `;
+                    list.appendChild(li);
+                });
+            }
+        } catch (e) {}
+    }
+
+    async function loadHeatmap() {
+        try {
+            const res = await fetch('api_analytics.php?type=heatmap');
+            const json = await res.json();
+            if (json.status !== 'success') return;
+
+            // Transform data for chart (Group by Hour)
+            // We want to see which hour of the day is busiest on average
+            const hours = new Array(24).fill(0);
+            const counts = new Array(24).fill(0);
+
+            json.data.forEach(d => {
+                const h = parseInt(d.hour_of_day);
+                hours[h] += parseFloat(d.avg_listeners);
+                counts[h]++;
+            });
+
+            const avgByHour = hours.map((total, i) => counts[i] ? total / counts[i] : 0);
+
+            const ctx = document.getElementById('heatmapChart').getContext('2d');
+            if (heatmapChartInstance) heatmapChartInstance.destroy();
+
+            heatmapChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => i + 'h'),
+                    datasets: [{
+                        label: 'Auditeurs Moyens',
+                        data: avgByHour,
+                        backgroundColor: avgByHour.map(v => {
+                            // Color scale based on value
+                            const max = Math.max(...avgByHour);
+                            const opacity = max > 0 ? (v / max) : 0.5;
+                            return `rgba(220, 53, 69, ${opacity})`; // Red scale
+                        }),
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#333' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+        } catch (e) {}
+    }
+
+    // Init Analytics when section is shown
+    const analyticsLink = document.querySelector('.nav-link[data-section="analytics"]');
+    if (analyticsLink) {
+        analyticsLink.addEventListener('click', () => {
+            loadAnalyticsHeader();
+            loadAudienceChart('24h');
+            loadTopLists();
+            loadHeatmap();
+        });
+    }
+
     // --- Initial Load ---
     async function initializeAdminPanel() {
         // Load profiles first so we have the ID -> Name mapping for filtering

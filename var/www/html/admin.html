@@ -13,6 +13,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;700&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="admin.js?v=3" defer></script>
 
     <style>
@@ -663,7 +664,72 @@
             </div>
         </section>
 
-        <!-- SECTION: MUSIQUE -->
+        <!-- SECTION ANALYTICS -->
+        <section id="analytics" class="admin-section" style="display: none;">
+            <h2>Analytics</h2>
+            
+            <!-- Stats Header -->
+            <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 30px;">
+                <div class="card" style="text-align: center; padding: 20px; margin-bottom: 0;">
+                    <h3 style="margin-bottom: 10px; font-size: 0.9rem;">Pic d'audience (30j)</h3>
+                    <div id="statPeak" style="font-size: 2.5rem; font-weight: 800; color: var(--accent-primary);">0</div>
+                </div>
+                <div class="card" style="text-align: center; padding: 20px; margin-bottom: 0;">
+                    <h3 style="margin-bottom: 10px; font-size: 0.9rem;">Moyenne (24h)</h3>
+                    <div id="statAvg" style="font-size: 2.5rem; font-weight: 800; color: #fff;">0</div>
+                </div>
+                <div class="card" style="text-align: center; padding: 20px; margin-bottom: 0;">
+                    <h3 style="margin-bottom: 10px; font-size: 0.9rem;">Tracks joués (24h)</h3>
+                    <div id="statTracks" style="font-size: 2.5rem; font-weight: 800; color: #888;">0</div>
+                </div>
+            </div>
+
+            <!-- Audience Chart -->
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3>Audience en temps réel</h3>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-primary" onclick="loadAudienceChart('24h')">24h</button>
+                        <button class="btn btn-sm btn-secondary" onclick="loadAudienceChart('7d')">7 Jours</button>
+                    </div>
+                </div>
+                <div style="height: 300px; width: 100%;">
+                    <canvas id="audienceChart"></canvas>
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <!-- Top Tracks -->
+                <div class="card">
+                    <h3>Top Titres (30j)</h3>
+                    <div class="panel-content" style="height: 300px;">
+                        <ul id="topTracksList" class="item-list">
+                            <!-- JS injected -->
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Top Artists -->
+                <div class="card">
+                    <h3>Top Artistes (30j)</h3>
+                    <div class="panel-content" style="height: 300px;">
+                        <ul id="topArtistsList" class="item-list">
+                            <!-- JS injected -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Heatmap (Simplified as Bar Chart for now) -->
+            <div class="card">
+                <h3>Heures de Pointe (Moyenne 30j)</h3>
+                <div style="height: 300px; width: 100%;">
+                    <canvas id="heatmapChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION MUSIQUE -->
         <section id="music" class="admin-section">
             <h2>Gestion de la Musique</h2>
             <div class="section-grid" style="margin-bottom: 30px;">
