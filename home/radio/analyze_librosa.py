@@ -18,6 +18,52 @@ import warnings
 # Suppress warnings
 warnings.filterwarnings('ignore')
 
+# --- Camelot Wheel Conversion ---
+def convert_to_camelot(key, mode):
+    """
+    Convert key (0-11) and mode (0=minor, 1=major) to Camelot notation
+    Key: 0=C, 1=C#, 2=D, 3=D#, 4=E, 5=F, 6=F#, 7=G, 8=G#, 9=A, 10=A#, 11=B
+    """
+    # Camelot wheel mapping
+    # Major keys (mode=1) -> B suffix
+    # Minor keys (mode=0) -> A suffix
+    camelot_major = {
+        0: '8B',   # C
+        1: '3B',   # C#/Db
+        2: '10B',  # D
+        3: '5B',   # D#/Eb
+        4: '12B',  # E
+        5: '7B',   # F
+        6: '2B',   # F#/Gb
+        7: '9B',   # G
+        8: '4B',   # G#/Ab
+        9: '11B',  # A
+        10: '6B',  # A#/Bb
+        11: '1B'   # B
+    }
+    camelot_minor = {
+        0: '5A',   # Cm
+        1: '12A',  # C#m
+        2: '7A',   # Dm
+        3: '2A',   # D#m
+        4: '9A',   # Em
+        5: '4A',   # Fm
+        6: '11A',  # F#m
+        7: '6A',   # Gm
+        8: '1A',   # G#m
+        9: '8A',   # Am
+        10: '3A',  # A#m
+        11: '10A'  # Bm
+    }
+    
+    if key < 0 or key > 11:
+        return 'Unknown'
+    
+    if mode == 1:
+        return camelot_major.get(key, 'Unknown')
+    else:
+        return camelot_minor.get(key, 'Unknown')
+
 # --- ID3 Tag Reading (for genre extraction) ---
 def get_id3_tags(file_path):
     """Extract genre and other metadata from MP3 ID3 tags"""
@@ -256,10 +302,14 @@ def analyze_audio(file_path):
         # Get ID3 tags (genre, artist, etc.)
         id3_tags = get_id3_tags(file_path)
 
+        # Convert key to Camelot notation
+        camelot = convert_to_camelot(int(key_idx), int(mode))
+
         return {
             'bpm': round(float(bpm), 1),
             'key_key': int(key_idx),
             'key_mode': int(mode),
+            'camelot': camelot,
             'energy': round(energy, 2),
             'danceability': round(danceability, 2),
             'genre': id3_tags.get('genre'),
