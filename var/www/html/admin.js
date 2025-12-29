@@ -2715,12 +2715,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Initial Load ---
     async function initializeAdminPanel() {
-        // Load profiles first so we have the ID -> Name mapping for filtering
+        // Load posts first so allPosts is available for artist release counts
+        await renderAdminPosts();
+        
+        // Then load artist profiles (which uses allPosts for release counts)
         await fetchArtistProfiles();
 
         populateArtistDropdown();
         populateArtistFilterDropdown();
-        renderAdminPosts();
         renderMusicFiles();
         fetchAllSongs();
         fetchPlaylists();
