@@ -2482,6 +2482,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (hintEl) hintEl.style.display = currentEditingPlaylist.songs.length === 0 ? 'block' : 'none';
         
         currentEditingPlaylist.songs.forEach((songPath, index) => {
+            const filename = songPath.split('/').pop();
+            const coverUrl = `get_cover.php?file=${encodeURIComponent(filename)}`;
+            
             const li = document.createElement('li');
             li.className = 'song-item';
             li.draggable = true;
@@ -2490,6 +2493,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             li.innerHTML = `
                 <span class="drag-handle"><i class="fas fa-grip-vertical"></i></span>
+                <div class="song-cover">
+                    <img src="${coverUrl}" alt="" loading="lazy">
+                </div>
                 <span class="song-title">${formatSongPathToTitle(songPath)}</span>
                 <div class="song-actions">
                     <button class="btn-icon btn-remove" title="Retirer"><i class="fas fa-times"></i></button>
@@ -2586,7 +2592,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (meta.genre) metaBadges += `<span class="song-badge badge-genre">${meta.genre}</span>`;
             }
             
+            // Cover URL
+            const coverUrl = `get_cover.php?file=${encodeURIComponent(filename)}`;
+            
             li.innerHTML = `
+                <div class="song-cover">
+                    <img src="${coverUrl}" alt="" loading="lazy">
+                </div>
                 <div class="song-info">
                     <span class="song-title">${formatSongPathToTitle(songPath)}</span>
                     ${metaBadges ? `<div class="song-badges">${metaBadges}</div>` : ''}
@@ -2775,9 +2787,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             // BPM difference display
             const bpmDisplay = bpmDiff === 0 ? '=' : (meta.bpm > currentSuggestions[0]?.targetBpm ? `+${bpmDiff}` : `-${bpmDiff}`);
             
+            // Cover URL
+            const filename = path.split('/').pop();
+            const coverUrl = `get_cover.php?file=${encodeURIComponent(filename)}`;
+            
             item.innerHTML = `
-                <div class="suggestion-score ${scoreClass}" title="Score: ${score}">
-                    <i class="fas fa-${scoreIcon}"></i>
+                <div class="suggestion-cover">
+                    <img src="${coverUrl}" alt="" loading="lazy">
+                    <div class="suggestion-score ${scoreClass}" title="Score: ${score}">
+                        <i class="fas fa-${scoreIcon}"></i>
+                    </div>
                 </div>
                 <div class="suggestion-content">
                     <div class="song-title">${formatSongPathToTitle(path)}</div>
