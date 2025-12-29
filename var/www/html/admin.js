@@ -691,7 +691,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (posts.length === 0) {
                 postsManagementContainer.innerHTML = `
-                    <div class="empty-state">
+                    <div class="empty-state" style="grid-column: 1 / -1;">
                         <i class="fas fa-stream"></i>
                         <p>Aucun post à afficher</p>
                     </div>
@@ -720,38 +720,52 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 }
 
-                const item = document.createElement('div');
-                item.className = 'modern-list-item';
+                const card = document.createElement('div');
+                card.className = 'post-card';
                 
-                const imageUrl = post.image ? `uploads/${post.image}` : 'images/placeholder.jpg';
+                const imageUrl = post.image ? `uploads/${post.image}` : null;
+                const formattedDate = new Date(post.date).toLocaleDateString('fr-FR', { 
+                    day: 'numeric', 
+                    month: 'short', 
+                    year: 'numeric' 
+                });
                 
-                item.innerHTML = `
-                    <img src="${imageUrl}" alt="" class="modern-list-item-image" onerror="this.style.display='none'">
-                    <div class="modern-list-item-info">
-                        <div class="modern-list-item-title">${escapeHtml(displayTitle)}</div>
-                        <div class="modern-list-item-subtitle">
-                            <span>${escapeHtml(post.artist || 'Inconnu')}</span>
-                            <span style="margin: 0 8px;">•</span>
-                            <span>${new Date(post.date).toLocaleDateString('fr-FR')}</span>
+                card.innerHTML = `
+                    ${imageUrl ? `<img src="${imageUrl}" alt="" class="post-card-image" onerror="this.style.display='none'">` : 
+                    `<div class="post-card-image" style="display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-music" style="font-size: 3rem; opacity: 0.3;"></i>
+                    </div>`}
+                    ${post.link ? `<a href="${escapeHtml(post.link)}" target="_blank" class="post-card-link" title="Voir le lien"><i class="fas fa-external-link-alt"></i></a>` : ''}
+                    ${canEdit ? `
+                    <div class="post-card-actions">
+                        <button class="post-action-btn edit-post-btn" data-id="${escapeHtml(String(post.id))}" title="Modifier">
+                            <i class="fas fa-pencil-alt"></i>
+                        </button>
+                        <button class="post-action-btn danger delete-post-btn" data-id="${escapeHtml(String(post.id))}" title="Supprimer">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    ` : ''}
+                    <div class="post-card-content">
+                        <div class="post-card-title">${escapeHtml(displayTitle)}</div>
+                        <div class="post-card-meta">
+                            <span class="post-card-artist">
+                                <i class="fas fa-user"></i>
+                                ${escapeHtml(post.artist || 'Inconnu')}
+                            </span>
+                            <span class="post-card-date">
+                                <i class="far fa-calendar"></i>
+                                ${formattedDate}
+                            </span>
                         </div>
                     </div>
-                    <div class="modern-list-item-actions">
-                        ${canEdit ? `
-                            <button class="btn-icon edit-post-btn" data-id="${escapeHtml(String(post.id))}" title="Modifier">
-                                <i class="fas fa-pencil-alt"></i>
-                            </button>
-                            <button class="btn-icon danger delete-post-btn" data-id="${escapeHtml(String(post.id))}" title="Supprimer">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        ` : `<span style="color: #666; font-size: 0.8em;">Lecture seule</span>`}
-                    </div>
                 `;
-                postsManagementContainer.appendChild(item);
+                postsManagementContainer.appendChild(card);
             });
 
         } catch (error) {
             postsManagementContainer.innerHTML = `
-                <div class="empty-state">
+                <div class="empty-state" style="grid-column: 1 / -1;">
                     <i class="fas fa-exclamation-triangle"></i>
                     <p>Impossible de charger les posts: ${error.message}</p>
                 </div>
@@ -1306,15 +1320,43 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        // If user is artist, don't show the list, just show the edit form for themselves directly
+        // If user is artist, show only their own profile card (no modal auto-open)
         if (currentUser && currentUser.role === 'artist') {
             const myProfile = artistProfiles.find(a => a.id === currentUser.artist_id);
             if (myProfile) {
-                editArtistProfile(myProfile.id);
                 const header = document.querySelector('#artists .section-header h2');
                 if (header) header.textContent = 'Mon Profil';
                 const addBtn = document.getElementById('openAddArtistModal');
                 if (addBtn) addBtn.style.display = 'none';
+                
+                // Show only my profile card
+                artistsManagementContainer.innerHTML = '';
+                const card = document.createElement('div');
+                card.className = 'artist-card';
+                
+                const imageUrl = myProfile.image || 'images/placeholder.jpg';
+                
+                card.innerHTML = `
+                    <div class="artist-card-actions">
+                        <button class="artist-action-btn edit-artist-btn" data-id="${escapeHtml(myProfile.id)}" title="Modifier mon profil">
+                            <i class="fas fa-pencil-alt"></i>
+                        </button>
+                    </div>
+                    <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(myProfile.name)}" class="artist-card-image" onerror="this.src='images/placeholder.jpg'">
+                    <div class="artist-card-content">
+                        <div class="artist-card-name">${escapeHtml(myProfile.name)}</div>
+                        <div class="artist-card-location">
+                            <i class="fas fa-map-marker-alt"></i> ${escapeHtml(myProfile.location || 'Non spécifié')}
+                        </div>
+                        <div class="artist-card-links">
+                            ${myProfile.listenLink ? `<a href="${escapeHtml(myProfile.listenLink)}" target="_blank" class="artist-link-btn" title="Écouter"><i class="fas fa-headphones"></i></a>` : ''}
+                            ${myProfile.watchLink ? `<a href="${escapeHtml(myProfile.watchLink)}" target="_blank" class="artist-link-btn" title="Regarder"><i class="fab fa-youtube"></i></a>` : ''}
+                            ${myProfile.instagramLink ? `<a href="${escapeHtml(myProfile.instagramLink)}" target="_blank" class="artist-link-btn" title="Instagram"><i class="fab fa-instagram"></i></a>` : ''}
+                        </div>
+                    </div>
+                `;
+                
+                artistsManagementContainer.appendChild(card);
                 return;
             }
         }
