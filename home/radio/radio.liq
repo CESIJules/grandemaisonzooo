@@ -16,27 +16,24 @@ def set_title_artist(m) =
   # Supprime l'extension (.mp3, .wav, etc.)
   filename_no_ext = string.replace(pattern="\\.mp3$|\\.wav$|\\.flac$|\\.m4a$|\\.ogg$", (fun (_) -> ""), filename)
   
-  # Essaye de parser "Artiste - Titre" ou utilise le nom complet comme titre
-  artist = ""
-  title = filename_no_ext
-  
-  # Si le fichier contient " - ", on split pour avoir Artiste et Titre
-  if string.contains(substring=" - ", filename_no_ext) then
-    parts = string.split(separator=" - ", filename_no_ext)
-    artist := list.nth(parts, 0)
-    title := list.nth(parts, 1)
-  end
+  # Parse "Artiste - Titre" si possible, sinon titre = nom complet
+  result = 
+    if string.contains(substring=" - ", filename_no_ext) then
+      let parts = string.split(separator=" - ", filename_no_ext)
+      { artist = list.nth(parts, 0), title = list.nth(parts, 1) }
+    else
+      { artist = "", title = filename_no_ext }
+    end
   
   # --- ANALYTICS HOOK ---
   # Appel robuste via curl (plus fiable que http.get)
-  # On encode les parametres pour eviter les problemes avec les caracteres speciaux
-  cmd = "curl -s -o /dev/null 'http://127.0.0.1/scripts/log_track.php?artist=" ^ url.encode(artist) ^ "&title=" ^ url.encode(title) ^ "'"
+  cmd = "curl -s -o /dev/null 'http://127.0.0.1/scripts/log_track.php?artist=" ^ url.encode(result.artist) ^ "&title=" ^ url.encode(result.title) ^ "'"
   ignore(process.run(cmd))
   # ----------------------
 
   [
-    ("title",  title),
-    ("artist", artist)
+    ("title",  result.title),
+    ("artist", result.artist)
   ]
 end
 
