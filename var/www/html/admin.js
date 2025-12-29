@@ -2952,69 +2952,58 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
     
-    // Cover upload
-    const coverPreview = document.getElementById('coverPreview');
-    const coverFileInput = document.getElementById('coverFileInput');
-    const newPlaylistCover = document.getElementById('newPlaylistCover');
+    // Cover upload for create playlist modal
+    const newCoverPreview = document.getElementById('newPlaylistCoverPreview');
+    const newCoverFileInput = document.getElementById('newPlaylistCoverInput');
+    const newPlaylistCoverHidden = document.getElementById('newPlaylistCover');
+    const removeCoverBtn = document.getElementById('removeCoverBtn');
     
-    if (coverPreview && coverFileInput) {
-        coverPreview.addEventListener('click', (e) => {
-            // Don't trigger if clicking remove button
-            if (e.target.closest('.remove-cover')) return;
-            coverFileInput.click();
-        });
-        
-        coverFileInput.addEventListener('change', (e) => {
+    if (newCoverFileInput) {
+        newCoverFileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     const base64 = event.target.result;
-                    newPlaylistCover.value = base64;
+                    if (newPlaylistCoverHidden) newPlaylistCoverHidden.value = base64;
                     
                     // Update preview
-                    coverPreview.innerHTML = `
-                        <img src="${base64}" alt="Cover">
-                        <button type="button" class="remove-cover" title="Supprimer">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    `;
-                    coverPreview.classList.add('has-cover');
+                    if (newCoverPreview) {
+                        newCoverPreview.innerHTML = `<img src="${base64}" alt="Cover">`;
+                        newCoverPreview.classList.add('has-cover');
+                    }
                     
-                    // Hide fallback pickers
-                    const fallback = document.querySelector('.cover-fallback-pickers');
-                    if (fallback) fallback.style.display = 'none';
+                    // Show remove button
+                    if (removeCoverBtn) removeCoverBtn.style.display = 'inline-flex';
                 };
                 reader.readAsDataURL(file);
             }
         });
-        
-        // Remove cover handler (delegated)
-        coverPreview.addEventListener('click', (e) => {
-            const removeBtn = e.target.closest('.remove-cover');
-            if (removeBtn) {
-                e.stopPropagation();
-                resetCoverPreview();
-            }
+    }
+    
+    // Remove cover button handler
+    if (removeCoverBtn) {
+        removeCoverBtn.addEventListener('click', () => {
+            resetCoverPreview();
         });
     }
     
     function resetCoverPreview() {
-        const coverPreview = document.getElementById('coverPreview');
-        const coverFileInput = document.getElementById('coverFileInput');
+        const coverPreview = document.getElementById('newPlaylistCoverPreview');
+        const coverFileInput = document.getElementById('newPlaylistCoverInput');
         const newPlaylistCover = document.getElementById('newPlaylistCover');
-        const fallback = document.querySelector('.cover-fallback-pickers');
+        const removeCoverBtn = document.getElementById('removeCoverBtn');
         
         if (coverPreview) {
             coverPreview.innerHTML = `
                 <i class="fas fa-image"></i>
-                <span>Cliquer pour ajouter</span>
+                <span>Aucune image</span>
             `;
             coverPreview.classList.remove('has-cover');
         }
         if (coverFileInput) coverFileInput.value = '';
         if (newPlaylistCover) newPlaylistCover.value = '';
-        if (fallback) fallback.style.display = 'flex';
+        if (removeCoverBtn) removeCoverBtn.style.display = 'none';
     }
     
     // Create playlist form (new)
@@ -3022,9 +3011,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         newCreatePlaylistForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('newPlaylistName').value.trim();
-            const color = document.getElementById('newPlaylistColor').value;
-            const icon = document.getElementById('newPlaylistIcon').value;
-            const cover = document.getElementById('newPlaylistCover').value;
+            const color = document.getElementById('newPlaylistColor')?.value || '#00ff68';
+            const cover = document.getElementById('newPlaylistCover')?.value || '';
             
             if (!name) return;
             
@@ -3032,7 +3020,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const response = await fetch('create_playlist.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, color, icon, cover })
+                    body: JSON.stringify({ name, color, cover })
                 });
                 const result = await response.json();
                 
@@ -3044,14 +3032,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (createPlaylistModal) createPlaylistModal.style.display = 'none';
                 document.getElementById('newPlaylistName').value = '';
                 
-                // Reset color/icon selection
+                // Reset color selection
                 document.querySelectorAll('.color-option').forEach(b => b.classList.remove('active'));
                 document.querySelector('.color-option[data-color="#00ff68"]')?.classList.add('active');
-                document.getElementById('newPlaylistColor').value = '#00ff68';
-                
-                document.querySelectorAll('.icon-option').forEach(b => b.classList.remove('active'));
-                document.querySelector('.icon-option[data-icon="music"]')?.classList.add('active');
-                document.getElementById('newPlaylistIcon').value = 'music';
+                const colorInput = document.getElementById('newPlaylistColor');
+                if (colorInput) colorInput.value = '#00ff68';
                 
                 // Reset cover
                 resetCoverPreview();

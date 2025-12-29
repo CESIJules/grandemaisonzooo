@@ -1398,6 +1398,31 @@
             display: flex;
         }
         
+        .cover-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .cover-actions .btn-sm {
+            font-size: 0.8rem;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--surface-border);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .cover-actions .btn-sm:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--accent-primary);
+        }
+        
         .cover-fallback-pickers {
             display: flex;
             flex-direction: column;
