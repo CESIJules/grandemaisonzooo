@@ -12,6 +12,13 @@ def set_title_artist(m) =
       parts = string.split(separator="/", m["filename"])
       list.nth(parts, list.length(parts) - 1)
     end
+  
+  # --- ANALYTICS HOOK ---
+  # Appel asynchrone au script PHP pour logger le morceau
+  # On utilise url.encode pour eviter les problemes avec les caracteres speciaux
+  ignore(http.get("http://127.0.0.1/scripts/log_track.php?artist=" ^ url.encode("") ^ "&title=" ^ url.encode(title)))
+  # ----------------------
+
   [
     ("title",  title),
     ("artist", "")
