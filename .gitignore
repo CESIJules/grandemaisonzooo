@@ -22,7 +22,6 @@
 /var/www/data/
 /var/www/html/vid/
 /var/www/html/uploads/**
-/var/www/html/images/**
 !/var/www/html/uploads/.gitkeep
 !/var/www/html/images/.gitkeep
 /var/www/html/music_metadata.json
