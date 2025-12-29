@@ -758,22 +758,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!title) return 'other';
         const lowerTitle = title.toLowerCase().trim();
         
-        // Check for patterns at the start: "TYPE - ..." or "TYPE:"
-        if (lowerTitle.startsWith('single -') || lowerTitle.startsWith('single:') || lowerTitle.startsWith('single ')) return 'single';
-        if (lowerTitle.startsWith('ep -') || lowerTitle.startsWith('ep:') || lowerTitle.startsWith('ep ')) return 'ep';
-        if (lowerTitle.startsWith('album -') || lowerTitle.startsWith('album:') || lowerTitle.startsWith('album ')) return 'album';
-        if (lowerTitle.startsWith('clip -') || lowerTitle.startsWith('clip:') || lowerTitle.startsWith('clip ')) return 'clip';
-        if (lowerTitle.startsWith('mixtape -') || lowerTitle.startsWith('mixtape:') || lowerTitle.startsWith('mixtape ')) return 'mixtape';
-        if (lowerTitle.startsWith('flip -') || lowerTitle.startsWith('flip:') || lowerTitle.startsWith('flip ')) return 'flip';
-        if (lowerTitle.startsWith('live session') || lowerTitle.startsWith('live -')) return 'live';
+        // Check for patterns at the start: "TYPE - ..." or "TYPE:" (case insensitive)
+        const patterns = [
+            { regex: /^single\s*[-:]/, type: 'single' },
+            { regex: /^ep\s*[-:]/, type: 'ep' },
+            { regex: /^album\s*[-:]/, type: 'album' },
+            { regex: /^clip\s*[-:]/, type: 'clip' },
+            { regex: /^mixtape\s*[-:]/, type: 'mixtape' },
+            { regex: /^flip\s*[-:]/, type: 'flip' },
+            { regex: /^live\s*session/, type: 'live' },
+            { regex: /^live\s*[-:]/, type: 'live' },
+        ];
         
-        // Check for [FLIP] pattern in title (like "LE BOG [UCYLL FLIP]")
-        if (lowerTitle.includes('[') && lowerTitle.includes('flip]')) return 'flip';
-        if (lowerTitle.includes('(') && lowerTitle.includes('flip)')) return 'flip';
+        for (const p of patterns) {
+            if (p.regex.test(lowerTitle)) return p.type;
+        }
         
-        // Fallback checks anywhere in title
-        if (lowerTitle.includes('mixtape')) return 'mixtape';
-        if (lowerTitle.includes('album')) return 'album';
+        // Check for [FLIP] or (FLIP) pattern anywhere in title
+        if (/\[.*flip.*\]/i.test(title) || /\(.*flip.*\)/i.test(title)) return 'flip';
+        
+        // Check for type anywhere but with word boundaries
+        if (/\bmixta?pe\b/i.test(title)) return 'mixtape';
+        if (/\balbum\b/i.test(title)) return 'album';
         
         return 'other';
     }
@@ -1485,16 +1491,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Count releases per artist from allPosts
         const releaseCount = {};
         allPosts.forEach(post => {
-            const artistName = (post.artist || '').toLowerCase().replace(/\s/g, '');
-            if (artistName) {
-                releaseCount[artistName] = (releaseCount[artistName] || 0) + 1;
+            const postArtist = (post.artist || '').toLowerCase().trim();
+            if (postArtist) {
+                releaseCount[postArtist] = (releaseCount[postArtist] || 0) + 1;
             }
         });
 
         // Helper to get release count for an artist
         function getArtistReleaseCount(artist) {
-            const artistId = (artist.id || '').toLowerCase().replace(/\s/g, '');
-            const artistName = (artist.name || '').toLowerCase().replace(/\s/g, '');
+            // Try matching by ID, name, or name without spaces
+            const artistId = (artist.id || '').toLowerCase().trim();
+            const artistName = (artist.name || '').toLowerCase().trim();
+            
+            // Check all possible matches
             return releaseCount[artistId] || releaseCount[artistName] || 0;
         }
 
