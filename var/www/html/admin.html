@@ -134,6 +134,54 @@
         }
         .sidebar-footer {
             margin-top: auto;
+            padding: 16px;
+            border-top: 1px solid var(--surface-border);
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        .sidebar-user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+        
+        .sidebar-user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-primary) 0%, #667eea 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            color: #fff;
+            text-transform: uppercase;
+            flex-shrink: 0;
+        }
+        
+        .sidebar-user-details {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .sidebar-user-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .sidebar-user-role {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: capitalize;
         }
 
         /* --- General Components --- */
@@ -1561,6 +1609,29 @@
         .modern-table-content {
             padding: 20px;
         }
+        
+        .modern-table-content.scrollable {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .modern-table-content.scrollable::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .modern-table-content.scrollable::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+        
+        .modern-table-content.scrollable::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+        
+        .modern-table-content.scrollable::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
 
         /* =============================================
            POSTS GRID - MODERN CARDS
@@ -1577,7 +1648,8 @@
             overflow: hidden;
             transition: all 0.3s ease;
             position: relative;
-            min-height: 200px;
+            display: flex;
+            flex-direction: column;
         }
 
         .post-card-bg {
@@ -1652,9 +1724,10 @@
         .post-card-content {
             position: relative;
             z-index: 2;
-            padding: 20px;
-            padding-left: 112px;
-            min-height: 112px;
+            padding: 16px;
+            padding-left: 108px;
+            padding-bottom: 50px;
+            min-height: 100px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -1727,7 +1800,7 @@
 
         .post-card-actions {
             position: absolute;
-            top: 12px;
+            bottom: 12px;
             right: 12px;
             display: flex;
             gap: 8px;
@@ -2676,6 +2749,13 @@
             </ul>
         </div>
         <div class="sidebar-footer">
+            <div class="sidebar-user-info">
+                <div class="sidebar-user-avatar" id="sidebarUserAvatar">?</div>
+                <div class="sidebar-user-details">
+                    <div class="sidebar-user-name" id="sidebarUserName">Chargement...</div>
+                    <div class="sidebar-user-role" id="sidebarUserRole">-</div>
+                </div>
+            </div>
             <button id="logoutBtn" class="btn btn-danger" style="width: 100%;"><i class="fas fa-sign-out-alt"></i> Logout</button>
         </div>
     </nav>
@@ -2983,7 +3063,7 @@ https://open.spotify.com/playlist/abc456" style="width: 100%; background: #14141
                         <input type="text" id="musicSearchInput" placeholder="Rechercher...">
                     </div>
                 </div>
-                <div class="modern-table-content" id="musicManagementContainer">
+                <div class="modern-table-content scrollable" id="musicManagementContainer">
                     <!-- Fichiers générés dynamiquement -->
                 </div>
             </div>

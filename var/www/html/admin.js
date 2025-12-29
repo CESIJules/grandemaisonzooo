@@ -11,6 +11,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         currentUser = data;
         
+        // Update sidebar user info
+        updateSidebarUserInfo(currentUser);
+        
         // UI Adjustments based on role
         if (currentUser.role === 'artist') {
             // 1. Hide Music and Playlists sections
@@ -62,6 +65,44 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (sidebarOverlay) sidebarOverlay.classList.remove('active');
         if (mobileMenuToggle) mobileMenuToggle.innerHTML = '<i class="fas fa-bars"></i>';
         document.body.style.overflow = '';
+    }
+
+    // --- Update Sidebar User Info ---
+    function updateSidebarUserInfo(user) {
+        const avatarEl = document.getElementById('sidebarUserAvatar');
+        const nameEl = document.getElementById('sidebarUserName');
+        const roleEl = document.getElementById('sidebarUserRole');
+        
+        if (!user) return;
+        
+        // Get display name
+        let displayName = user.user_id || 'Utilisateur';
+        
+        // For artist role, try to get the artist name
+        if (user.role === 'artist' && user.artist_id) {
+            // Will be updated when artistProfiles is loaded
+            displayName = user.artist_id;
+        }
+        
+        // Update avatar with first letter
+        if (avatarEl) {
+            avatarEl.textContent = displayName.charAt(0).toUpperCase();
+        }
+        
+        // Update name
+        if (nameEl) {
+            nameEl.textContent = displayName;
+        }
+        
+        // Update role with proper label
+        if (roleEl) {
+            const roleLabels = {
+                'admin': 'Administrateur',
+                'artist': 'Artiste',
+                'guest': 'Invité'
+            };
+            roleEl.textContent = roleLabels[user.role] || user.role;
+        }
     }
 
     if (mobileMenuToggle) {
@@ -1338,6 +1379,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!response.ok) throw new Error('Failed to fetch artist profiles');
             artistProfiles = await response.json();
             renderArtistProfiles();
+            
+            // Update sidebar user name for artist role (now that we have artist names)
+            if (currentUser && currentUser.role === 'artist' && currentUser.artist_id) {
+                const profile = artistProfiles.find(p => p.id === currentUser.artist_id);
+                if (profile) {
+                    const nameEl = document.getElementById('sidebarUserName');
+                    const avatarEl = document.getElementById('sidebarUserAvatar');
+                    if (nameEl) nameEl.textContent = profile.name;
+                    if (avatarEl) avatarEl.textContent = profile.name.charAt(0).toUpperCase();
+                }
+            }
         } catch (error) {
             console.error('Error fetching artist profiles:', error);
             artistsManagementContainer.innerHTML = '<p style="color: var(--accent-danger);">Erreur de chargement des artistes.</p>';
