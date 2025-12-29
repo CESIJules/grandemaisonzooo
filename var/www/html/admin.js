@@ -1808,6 +1808,456 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (e) {}
     }
 
+    // =============================================
+    // NEW PLAYLIST MANAGEMENT SYSTEM
+    // =============================================
+    
+    const playlistsGrid = document.getElementById('playlistsGrid');
+    const playlistEditorPanel = document.getElementById('playlistEditorPanel');
+    const createPlaylistBtn = document.getElementById('createPlaylistBtn');
+    const createPlaylistModal = document.getElementById('createPlaylistModal');
+    const closeCreateModal = document.getElementById('closeCreateModal');
+    const cancelCreatePlaylist = document.getElementById('cancelCreatePlaylist');
+    const newCreatePlaylistForm = document.getElementById('createPlaylistForm');
+    const backToPlaylistsBtn = document.getElementById('backToPlaylistsBtn');
+    
+    // Render playlists as cards
+    function renderPlaylistsGrid() {
+        if (!playlistsGrid) return;
+        
+        playlistsGrid.innerHTML = '';
+        
+        // Add playlist cards
+        allPlaylists.forEach(playlist => {
+            const isLive = playlist.name === currentActivePlaylist;
+            const color = playlist.color || '#00ff68';
+            const icon = playlist.icon || 'music';
+            
+            const card = document.createElement('div');
+            card.className = `playlist-card ${isLive ? 'is-live' : ''}`;
+            card.style.setProperty('--card-color', color);
+            card.dataset.playlistName = playlist.name;
+            
+            card.innerHTML = `
+                <div class="playlist-card-icon" style="color: ${color}">
+                    <i class="fas fa-${icon}"></i>
+                </div>
+                <div class="playlist-card-name">${escapeHtml(playlist.name)}</div>
+                <div class="playlist-card-meta">
+                    <span>${playlist.songs.length} morceaux</span>
+                    ${isLive ? '<span class="live-badge">LIVE</span>' : ''}
+                </div>
+            `;
+            
+            card.addEventListener('click', () => openNewPlaylistEditor(playlist));
+            playlistsGrid.appendChild(card);
+        });
+        
+        // Add "create" card at the end
+        const createCard = document.createElement('div');
+        createCard.className = 'playlist-card create-card';
+        createCard.innerHTML = `
+            <i class="fas fa-plus"></i>
+            <span>Nouvelle Playlist</span>
+        `;
+        createCard.addEventListener('click', () => {
+            if (createPlaylistModal) createPlaylistModal.style.display = 'flex';
+        });
+        playlistsGrid.appendChild(createCard);
+    }
+    
+    // Open the new playlist editor
+    function openNewPlaylistEditor(playlist) {
+        currentEditingPlaylist = JSON.parse(JSON.stringify(playlist));
+        
+        // Hide grid, show editor
+        if (playlistsGrid) playlistsGrid.style.display = 'none';
+        if (playlistEditorPanel) playlistEditorPanel.style.display = 'block';
+        
+        // Populate editor
+        const nameInput = document.getElementById('editPlaylistNameInput');
+        const songCountEl = document.getElementById('editorSongCount');
+        const statusEl = document.getElementById('editorPlaylistStatus');
+        const activateBtn = document.getElementById('activatePlaylistBtn');
+        
+        if (nameInput) nameInput.value = playlist.name;
+        if (songCountEl) songCountEl.textContent = `${playlist.songs.length} morceaux`;
+        
+        const isLive = playlist.name === currentActivePlaylist;
+        if (statusEl) {
+            statusEl.textContent = isLive ? 'LIVE' : '';
+            statusEl.className = `status-badge ${isLive ? 'live' : ''}`;
+        }
+        if (activateBtn) {
+            activateBtn.disabled = isLive;
+            activateBtn.innerHTML = isLive ? '<i class="fas fa-broadcast-tower"></i> En LIVE' : '<i class="fas fa-broadcast-tower"></i> Mettre en LIVE';
+        }
+        
+        renderNewPlaylistSongs();
+        renderNewLibrarySongs();
+        renderNewSuggestions();
+    }
+    
+    // Close editor, back to grid
+    function closePlaylistEditor() {
+        if (playlistsGrid) playlistsGrid.style.display = 'grid';
+        if (playlistEditorPanel) playlistEditorPanel.style.display = 'none';
+        currentEditingPlaylist = null;
+        fetchPlaylists().then(() => renderPlaylistsGrid());
+    }
+    
+    // Render songs in the playlist (left column)
+    function renderNewPlaylistSongs() {
+        const listEl = document.getElementById('playlistSongsList');
+        const countEl = document.getElementById('playlistSongsCount');
+        const hintEl = document.getElementById('playlistDropHint');
+        
+        if (!listEl || !currentEditingPlaylist) return;
+        
+        listEl.innerHTML = '';
+        
+        if (countEl) countEl.textContent = currentEditingPlaylist.songs.length;
+        if (hintEl) hintEl.style.display = currentEditingPlaylist.songs.length === 0 ? 'block' : 'none';
+        
+        currentEditingPlaylist.songs.forEach((songPath, index) => {
+            const li = document.createElement('li');
+            li.className = 'song-item';
+            li.draggable = true;
+            li.dataset.index = index;
+            li.dataset.path = songPath;
+            
+            li.innerHTML = `
+                <span class="drag-handle"><i class="fas fa-grip-vertical"></i></span>
+                <span class="song-title">${formatSongPathToTitle(songPath)}</span>
+                <div class="song-actions">
+                    <button class="btn-icon btn-remove" title="Retirer"><i class="fas fa-times"></i></button>
+                </div>
+            `;
+            
+            // Remove button
+            li.querySelector('.btn-remove').addEventListener('click', (e) => {
+                e.stopPropagation();
+                currentEditingPlaylist.songs.splice(index, 1);
+                renderNewPlaylistSongs();
+                renderNewSuggestions();
+                autoSavePlaylist();
+            });
+            
+            // Drag events
+            li.addEventListener('dragstart', handleDragStart);
+            li.addEventListener('dragend', handleDragEnd);
+            li.addEventListener('dragover', handleDragOver);
+            li.addEventListener('drop', handleDrop);
+            
+            listEl.appendChild(li);
+        });
+    }
+    
+    // Drag & Drop handlers
+    let draggedItem = null;
+    
+    function handleDragStart(e) {
+        draggedItem = this;
+        this.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+    }
+    
+    function handleDragEnd() {
+        this.classList.remove('dragging');
+        draggedItem = null;
+    }
+    
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+    }
+    
+    function handleDrop(e) {
+        e.preventDefault();
+        if (!draggedItem || draggedItem === this) return;
+        
+        const fromIndex = parseInt(draggedItem.dataset.index);
+        const toIndex = parseInt(this.dataset.index);
+        
+        // Reorder array
+        const [removed] = currentEditingPlaylist.songs.splice(fromIndex, 1);
+        currentEditingPlaylist.songs.splice(toIndex, 0, removed);
+        
+        renderNewPlaylistSongs();
+        autoSavePlaylist();
+    }
+    
+    // Render library songs (right column)
+    function renderNewLibrarySongs(filter = '') {
+        const listEl = document.getElementById('librarySongsList');
+        if (!listEl) return;
+        
+        listEl.innerHTML = '';
+        
+        const playlistSongs = currentEditingPlaylist ? currentEditingPlaylist.songs : [];
+        const filteredSongs = allAvailableSongs.filter(songPath => {
+            const matchesFilter = formatSongPathToTitle(songPath).toLowerCase().includes(filter.toLowerCase());
+            const notInPlaylist = !playlistSongs.includes(songPath);
+            return matchesFilter && notInPlaylist;
+        });
+        
+        if (filteredSongs.length === 0) {
+            listEl.innerHTML = '<li class="song-item" style="justify-content: center; color: var(--text-secondary);">Aucun morceau trouvé</li>';
+            return;
+        }
+        
+        filteredSongs.forEach(songPath => {
+            const li = document.createElement('li');
+            li.className = 'song-item';
+            li.innerHTML = `
+                <span class="song-title">${formatSongPathToTitle(songPath)}</span>
+                <div class="song-actions" style="opacity: 1;">
+                    <button class="btn-icon btn-add" title="Ajouter"><i class="fas fa-plus"></i></button>
+                </div>
+            `;
+            
+            li.querySelector('.btn-add').addEventListener('click', async () => {
+                if (!currentEditingPlaylist.songs.includes(songPath)) {
+                    currentEditingPlaylist.songs.push(songPath);
+                    renderNewPlaylistSongs();
+                    renderNewLibrarySongs(filter);
+                    renderNewSuggestions();
+                    autoSavePlaylist();
+                }
+            });
+            
+            listEl.appendChild(li);
+        });
+    }
+    
+    // Render suggestions
+    async function renderNewSuggestions() {
+        const containerEl = document.getElementById('harmonicSuggestionsList');
+        const basedOnEl = document.getElementById('suggestionsBasedOn');
+        
+        if (!containerEl) return;
+        
+        if (!currentEditingPlaylist || currentEditingPlaylist.songs.length === 0) {
+            containerEl.innerHTML = '<p style="color: var(--text-secondary); padding: 20px;">Ajoutez des morceaux pour voir des suggestions</p>';
+            if (basedOnEl) basedOnEl.textContent = '-';
+            return;
+        }
+        
+        containerEl.innerHTML = '<p style="color: var(--text-secondary); padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Analyse...</p>';
+        
+        const lastSongPath = currentEditingPlaylist.songs[currentEditingPlaylist.songs.length - 1];
+        const lastSongFilename = lastSongPath.split('/').pop();
+        
+        if (basedOnEl) basedOnEl.textContent = formatSongPathToTitle(lastSongPath);
+        
+        const lastSongMeta = await getMusicMetadata(lastSongFilename);
+        
+        if (!lastSongMeta || lastSongMeta.error || !lastSongMeta.camelot) {
+            containerEl.innerHTML = '<p style="color: var(--text-secondary); padding: 20px;">Impossible d\'analyser le dernier morceau</p>';
+            return;
+        }
+        
+        const targetBpm = lastSongMeta.bpm;
+        const targetKey = lastSongMeta.camelot;
+        const compatibleKeys = camelotWheel[targetKey]?.compatible || [];
+        
+        // Find compatible songs
+        const suggestions = [];
+        for (const songPath of allAvailableSongs) {
+            if (currentEditingPlaylist.songs.includes(songPath)) continue;
+            
+            const filename = songPath.split('/').pop();
+            const meta = metadataCache[filename];
+            if (!meta || !meta.camelot) continue;
+            
+            if (compatibleKeys.includes(meta.camelot)) {
+                const bpmDiff = Math.abs(meta.bpm - targetBpm);
+                suggestions.push({ path: songPath, meta, bpmDiff });
+            }
+        }
+        
+        // Sort by BPM proximity
+        suggestions.sort((a, b) => a.bpmDiff - b.bpmDiff);
+        
+        containerEl.innerHTML = '';
+        
+        if (suggestions.length === 0) {
+            containerEl.innerHTML = '<p style="color: var(--text-secondary); padding: 20px;">Aucune suggestion harmonique trouvée</p>';
+            return;
+        }
+        
+        suggestions.slice(0, 10).forEach(({ path, meta }) => {
+            const item = document.createElement('div');
+            item.className = 'suggestion-item';
+            item.innerHTML = `
+                <div class="song-title">${formatSongPathToTitle(path)}</div>
+                <div class="song-meta">
+                    <span class="suggestion-badge badge-bpm">${meta.bpm} BPM</span>
+                    <span class="suggestion-badge badge-key">${meta.camelot}</span>
+                </div>
+            `;
+            
+            item.addEventListener('click', async () => {
+                if (!currentEditingPlaylist.songs.includes(path)) {
+                    currentEditingPlaylist.songs.push(path);
+                    renderNewPlaylistSongs();
+                    renderNewLibrarySongs();
+                    renderNewSuggestions();
+                    autoSavePlaylist();
+                }
+            });
+            
+            containerEl.appendChild(item);
+        });
+    }
+    
+    // Auto-save playlist changes
+    let saveTimeout = null;
+    async function autoSavePlaylist() {
+        if (!currentEditingPlaylist) return;
+        
+        // Update song count
+        const countEl = document.getElementById('editorSongCount');
+        if (countEl) countEl.textContent = `${currentEditingPlaylist.songs.length} morceaux`;
+        
+        // Debounced save
+        if (saveTimeout) clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(async () => {
+            try {
+                await fetch('update_playlist.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: currentEditingPlaylist.name,
+                        songs: currentEditingPlaylist.songs
+                    })
+                });
+            } catch (e) {
+                console.error('Auto-save failed:', e);
+            }
+        }, 1000);
+    }
+    
+    // Event listeners for new playlist system
+    if (createPlaylistBtn) {
+        createPlaylistBtn.addEventListener('click', () => {
+            if (createPlaylistModal) createPlaylistModal.style.display = 'flex';
+        });
+    }
+    
+    if (closeCreateModal) {
+        closeCreateModal.addEventListener('click', () => {
+            if (createPlaylistModal) createPlaylistModal.style.display = 'none';
+        });
+    }
+    
+    if (cancelCreatePlaylist) {
+        cancelCreatePlaylist.addEventListener('click', () => {
+            if (createPlaylistModal) createPlaylistModal.style.display = 'none';
+        });
+    }
+    
+    if (backToPlaylistsBtn) {
+        backToPlaylistsBtn.addEventListener('click', closePlaylistEditor);
+    }
+    
+    // Color picker
+    document.querySelectorAll('.color-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.color-option').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const colorInput = document.getElementById('newPlaylistColor');
+            if (colorInput) colorInput.value = btn.dataset.color;
+        });
+    });
+    
+    // Icon picker
+    document.querySelectorAll('.icon-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.icon-option').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const iconInput = document.getElementById('newPlaylistIcon');
+            if (iconInput) iconInput.value = btn.dataset.icon;
+        });
+    });
+    
+    // Create playlist form (new)
+    if (newCreatePlaylistForm) {
+        newCreatePlaylistForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('newPlaylistName').value.trim();
+            const color = document.getElementById('newPlaylistColor').value;
+            const icon = document.getElementById('newPlaylistIcon').value;
+            
+            if (!name) return;
+            
+            try {
+                const response = await fetch('create_playlist.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, color, icon })
+                });
+                const result = await response.json();
+                if (result.status !== 'success') throw new Error(result.message);
+                
+                if (createPlaylistModal) createPlaylistModal.style.display = 'none';
+                document.getElementById('newPlaylistName').value = '';
+                
+                await fetchPlaylists();
+                renderPlaylistsGrid();
+                
+            } catch (error) {
+                alert('Erreur: ' + error.message);
+            }
+        });
+    }
+    
+    // Library search
+    const librarySearchInput = document.getElementById('librarySearchInput');
+    if (librarySearchInput) {
+        librarySearchInput.addEventListener('input', (e) => {
+            renderNewLibrarySongs(e.target.value);
+        });
+    }
+    
+    // Activate playlist button
+    const activatePlaylistBtn = document.getElementById('activatePlaylistBtn');
+    if (activatePlaylistBtn) {
+        activatePlaylistBtn.addEventListener('click', async () => {
+            if (!currentEditingPlaylist) return;
+            await setActivePlaylist(currentEditingPlaylist.name);
+            
+            // Update UI
+            currentActivePlaylist = currentEditingPlaylist.name;
+            const statusEl = document.getElementById('editorPlaylistStatus');
+            if (statusEl) {
+                statusEl.textContent = 'LIVE';
+                statusEl.className = 'status-badge live';
+            }
+            activatePlaylistBtn.disabled = true;
+            activatePlaylistBtn.innerHTML = '<i class="fas fa-broadcast-tower"></i> En LIVE';
+        });
+    }
+    
+    // Delete playlist button
+    const deletePlaylistBtn = document.getElementById('deletePlaylistBtn');
+    if (deletePlaylistBtn) {
+        deletePlaylistBtn.addEventListener('click', async () => {
+            if (!currentEditingPlaylist) return;
+            if (!confirm(`Supprimer la playlist "${currentEditingPlaylist.name}" ?`)) return;
+            
+            await deletePlaylist(currentEditingPlaylist.name);
+            closePlaylistEditor();
+        });
+    }
+    
+    // Override fetchPlaylists to also render the grid
+    const originalFetchPlaylists = fetchPlaylists;
+    fetchPlaylists = async function() {
+        await originalFetchPlaylists();
+        renderPlaylistsGrid();
+    };
+
     // --- Initial Load ---
     async function initializeAdminPanel() {
         // Load profiles first so we have the ID -> Name mapping for filtering

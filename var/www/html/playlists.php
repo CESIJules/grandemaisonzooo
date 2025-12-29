@@ -84,7 +84,7 @@ class PlaylistManager {
         return ['status' => 'success', 'data' => $data];
     }
 
-    public function createPlaylist($name, $songs = []) {
+    public function createPlaylist($name, $songs = [], $color = '#6366f1', $icon = '🎵') {
         $data = $this->readPlaylists();
         foreach ($data['playlists'] as $playlist) {
             if ($playlist['name'] === $name) {
@@ -98,7 +98,13 @@ class PlaylistManager {
             mkdir($playlistPath, 0777, true);
         }
 
-        $newPlaylist = ['name' => $name, 'songs' => $songs, 'dir' => $dirName];
+        $newPlaylist = [
+            'name' => $name, 
+            'songs' => $songs, 
+            'dir' => $dirName,
+            'color' => $color,
+            'icon' => $icon
+        ];
         $data['playlists'][] = $newPlaylist;
 
         if ($this->savePlaylists($data)) {
