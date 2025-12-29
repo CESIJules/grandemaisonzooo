@@ -1877,13 +1877,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Playlists
-    if (createPlaylistForm) {
-        createPlaylistForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            createPlaylist(newPlaylistNameInput.value);
-        });
-    }
+    // Playlists - Legacy listener removed, using new system in playlist editor section
 
     if (existingPlaylistsContainer) {
         existingPlaylistsContainer.addEventListener('click', (e) => {
