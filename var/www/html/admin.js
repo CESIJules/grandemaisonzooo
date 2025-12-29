@@ -158,6 +158,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const cancelArtistEditBtn = document.getElementById('cancelArtistEditBtn');
     const artistImagePreview = document.getElementById('artistImagePreview');
     
+    // --- Modals ---
+    const postModal = document.getElementById('postModal');
+    const artistModal = document.getElementById('artistModal');
+    
     let artistProfiles = [];
     let allPosts = [];
     let allPlaylists = [];
@@ -769,15 +773,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             const result = await response.json();
             if (result.status !== 'success') throw new Error(result.message || 'Erreur inconnue.');
             
-            adminFormMessage.textContent = 'Post ajouté !';
-            adminFormMessage.style.color = 'lightgreen';
-            adminTimelineForm.reset();
+            closePostModal();
             renderAdminPosts();
         } catch (error) {
             adminFormMessage.textContent = `Erreur: ${error.message}`;
             adminFormMessage.style.color = 'var(--accent-danger)';
-        } finally {
-            setTimeout(() => adminFormMessage.textContent = '', 3000);
         }
     }
 
@@ -795,19 +795,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             const result = await response.json();
             if (result.status !== 'success') throw new Error(result.message || 'Erreur inconnue.');
 
-            adminFormMessage.textContent = 'Post mis à jour !';
-            adminFormMessage.style.color = 'lightgreen';
-            adminTimelineForm.reset();
+            closePostModal();
             renderAdminPosts();
-            const editingIdField = adminTimelineForm.querySelector('input[name="editingPostId"]');
-            if (editingIdField) editingIdField.remove();
-            adminTimelineForm.querySelector('button[type="submit"]').innerHTML = '<i class="fas fa-plus"></i> Ajouter au Timeline';
-
         } catch (error) {
             adminFormMessage.textContent = `Erreur: ${error.message}`;
             adminFormMessage.style.color = 'var(--accent-danger)';
-        } finally {
-            setTimeout(() => adminFormMessage.textContent = '', 3000);
         }
     }
 
@@ -833,23 +825,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const post = allPosts.find(p => String(p.id) === String(postId));
         if (!post) return;
 
-        document.getElementById('postTitle').value = post.title;
-        document.getElementById('postArtist').value = post.artist;
-        document.getElementById('postDate').value = post.date;
-        document.getElementById('postLink').value = post.link;
-        
-        // Handle hidden ID field
-        let editingIdField = adminTimelineForm.querySelector('input[name="editingPostId"]');
-        if (!editingIdField) {
-            editingIdField = document.createElement('input');
-            editingIdField.type = 'hidden';
-            editingIdField.name = 'editingPostId';
-            adminTimelineForm.appendChild(editingIdField);
-        }
-        editingIdField.value = post.id;
-
-        adminTimelineForm.querySelector('button[type="submit"]').innerHTML = '<i class="fas fa-save"></i> Modifier le Post';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        openPostModal(post);
     }
 
     async function downloadYoutube(url) {
@@ -1335,9 +1311,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             const myProfile = artistProfiles.find(a => a.id === currentUser.artist_id);
             if (myProfile) {
                 editArtistProfile(myProfile.id);
-                artistsManagementContainer.style.display = 'none';
                 const header = document.querySelector('#artists .section-header h2');
                 if (header) header.textContent = 'Mon Profil';
+                const addBtn = document.getElementById('openAddArtistModal');
+                if (addBtn) addBtn.style.display = 'none';
                 return;
             }
         }
@@ -1354,33 +1331,33 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             const card = document.createElement('div');
-            card.className = 'modern-card';
+            card.className = 'artist-card';
             
             const imageUrl = artist.image || 'images/placeholder.jpg';
             
             card.innerHTML = `
-                <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(artist.name)}" class="modern-card-image" onerror="this.src='images/placeholder.jpg'">
-                <div class="modern-card-content">
-                    <div class="modern-card-title">${escapeHtml(artist.name)}</div>
-                    <div class="modern-card-subtitle">
-                        <i class="fas fa-map-marker-alt"></i> ${escapeHtml(artist.location || 'Non spécifié')}
-                    </div>
-                    <div class="modern-card-meta">
-                        ${artist.listenLink ? '<span class="modern-card-tag"><i class="fas fa-headphones"></i> Music</span>' : ''}
-                        ${artist.watchLink ? '<span class="modern-card-tag"><i class="fab fa-youtube"></i> Video</span>' : ''}
-                        ${artist.instagramLink ? '<span class="modern-card-tag"><i class="fab fa-instagram"></i> Insta</span>' : ''}
-                    </div>
-                </div>
                 ${canEdit ? `
-                <div class="modern-card-actions">
-                    <button class="btn btn-secondary edit-artist-btn" data-id="${escapeHtml(artist.id)}">
-                        <i class="fas fa-pencil-alt"></i> Modifier
+                <div class="artist-card-actions">
+                    <button class="artist-action-btn edit-artist-btn" data-id="${escapeHtml(artist.id)}" title="Modifier">
+                        <i class="fas fa-pencil-alt"></i>
                     </button>
-                    <button class="btn btn-danger delete-artist-btn" data-id="${escapeHtml(artist.id)}">
+                    <button class="artist-action-btn danger delete-artist-btn" data-id="${escapeHtml(artist.id)}" title="Supprimer">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
                 ` : ''}
+                <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(artist.name)}" class="artist-card-image" onerror="this.src='images/placeholder.jpg'">
+                <div class="artist-card-content">
+                    <div class="artist-card-name">${escapeHtml(artist.name)}</div>
+                    <div class="artist-card-location">
+                        <i class="fas fa-map-marker-alt"></i> ${escapeHtml(artist.location || 'Non spécifié')}
+                    </div>
+                    <div class="artist-card-links">
+                        ${artist.listenLink ? `<a href="${escapeHtml(artist.listenLink)}" target="_blank" class="artist-link-btn" title="Écouter"><i class="fas fa-headphones"></i></a>` : ''}
+                        ${artist.watchLink ? `<a href="${escapeHtml(artist.watchLink)}" target="_blank" class="artist-link-btn" title="Regarder"><i class="fab fa-youtube"></i></a>` : ''}
+                        ${artist.instagramLink ? `<a href="${escapeHtml(artist.instagramLink)}" target="_blank" class="artist-link-btn" title="Instagram"><i class="fab fa-instagram"></i></a>` : ''}
+                    </div>
+                </div>
             `;
             
             artistsManagementContainer.appendChild(card);
@@ -1431,7 +1408,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         await saveProfilesToServer();
-        resetArtistForm();
+        closeArtistModal();
     }
 
     async function saveProfilesToServer() {
@@ -1465,30 +1442,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const artist = artistProfiles.find(a => a.id === id);
         if (!artist) return;
 
-        document.getElementById('editingArtistId').value = artist.id;
-        document.getElementById('artistName').value = artist.name;
-        document.getElementById('artistLocation').value = artist.location;
-        document.getElementById('artistListenLink').value = artist.listenLink || '';
-        document.getElementById('artistWatchLink').value = artist.watchLink || '';
-        document.getElementById('artistInstagramLink').value = artist.instagramLink || '';
-        document.getElementById('currentArtistImage').value = artist.image;
-        
-        if (artist.image) {
-            artistImagePreview.innerHTML = `<img src="${artist.image}" style="width: 100px; border-radius: 4px;">`;
-        } else {
-            artistImagePreview.innerHTML = '';
-        }
-
-        cancelArtistEditBtn.style.display = 'inline-block';
-        const submitBtn = adminArtistForm.querySelector('button[type="submit"]');
-        submitBtn.innerHTML = '<i class="fas fa-save"></i> Modifier l\'artiste';
-        
-        // If artist, make sure the button is visible when editing
-        if (currentUser && currentUser.role === 'artist') {
-            submitBtn.style.display = 'inline-block';
-        }
-        
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        openArtistModal(artist);
     }
 
     function resetArtistForm() {
@@ -1650,6 +1604,154 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (cancelPlaylistEditBtn) {
         cancelPlaylistEditBtn.addEventListener('click', cancelPlaylistEdit);
     }
+
+    // --- Modal Management ---
+    function openPostModal(post = null) {
+        if (!postModal) return;
+        
+        const modalTitle = document.getElementById('postModalTitle');
+        const submitBtn = postModal.querySelector('button[type="submit"]');
+        
+        if (post) {
+            // Edit mode
+            if (modalTitle) modalTitle.textContent = 'Modifier le post';
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> Enregistrer';
+            
+            document.getElementById('postTitle').value = post.title;
+            document.getElementById('postArtist').value = post.artist;
+            document.getElementById('postDate').value = post.date;
+            document.getElementById('postLink').value = post.link;
+            
+            let editingIdField = adminTimelineForm.querySelector('input[name="editingPostId"]');
+            if (!editingIdField) {
+                editingIdField = document.createElement('input');
+                editingIdField.type = 'hidden';
+                editingIdField.name = 'editingPostId';
+                adminTimelineForm.appendChild(editingIdField);
+            }
+            editingIdField.value = post.id;
+        } else {
+            // Add mode
+            if (modalTitle) modalTitle.textContent = 'Nouveau post';
+            submitBtn.innerHTML = '<i class="fas fa-plus"></i> Ajouter';
+            adminTimelineForm.reset();
+            
+            const editingIdField = adminTimelineForm.querySelector('input[name="editingPostId"]');
+            if (editingIdField) editingIdField.value = '';
+        }
+        
+        postModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closePostModal() {
+        if (!postModal) return;
+        postModal.classList.remove('active');
+        document.body.style.overflow = '';
+        adminTimelineForm.reset();
+        
+        const editingIdField = adminTimelineForm.querySelector('input[name="editingPostId"]');
+        if (editingIdField) editingIdField.value = '';
+        
+        if (adminFormMessage) adminFormMessage.textContent = '';
+    }
+    
+    function openArtistModal(artist = null) {
+        if (!artistModal) return;
+        
+        const modalTitle = document.getElementById('artistModalTitle');
+        const submitBtn = artistModal.querySelector('button[type="submit"]');
+        
+        if (artist) {
+            // Edit mode
+            if (modalTitle) modalTitle.textContent = 'Modifier l\'artiste';
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> Enregistrer';
+            
+            document.getElementById('editingArtistId').value = artist.id;
+            document.getElementById('artistName').value = artist.name;
+            document.getElementById('artistLocation').value = artist.location;
+            document.getElementById('artistListenLink').value = artist.listenLink || '';
+            document.getElementById('artistWatchLink').value = artist.watchLink || '';
+            document.getElementById('artistInstagramLink').value = artist.instagramLink || '';
+            document.getElementById('currentArtistImage').value = artist.image || '';
+            
+            if (artist.image && artistImagePreview) {
+                artistImagePreview.innerHTML = `<img src="${artist.image}" style="width: 100px; border-radius: 8px;">`;
+            } else if (artistImagePreview) {
+                artistImagePreview.innerHTML = '';
+            }
+        } else {
+            // Add mode
+            if (modalTitle) modalTitle.textContent = 'Nouvel artiste';
+            submitBtn.innerHTML = '<i class="fas fa-plus"></i> Ajouter';
+            resetArtistForm();
+        }
+        
+        artistModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeArtistModal() {
+        if (!artistModal) return;
+        artistModal.classList.remove('active');
+        document.body.style.overflow = '';
+        resetArtistForm();
+        
+        if (artistFormMessage) artistFormMessage.textContent = '';
+    }
+    
+    // Post Modal event listeners
+    const openAddPostModalBtn = document.getElementById('openAddPostModal');
+    if (openAddPostModalBtn) {
+        openAddPostModalBtn.addEventListener('click', () => openPostModal(null));
+    }
+    
+    const closePostModalBtn = document.getElementById('closePostModal');
+    if (closePostModalBtn) {
+        closePostModalBtn.addEventListener('click', closePostModal);
+    }
+    
+    const cancelPostModalBtn = document.getElementById('cancelPostModal');
+    if (cancelPostModalBtn) {
+        cancelPostModalBtn.addEventListener('click', closePostModal);
+    }
+    
+    // Artist Modal event listeners
+    const openAddArtistModalBtn = document.getElementById('openAddArtistModal');
+    if (openAddArtistModalBtn) {
+        openAddArtistModalBtn.addEventListener('click', () => openArtistModal(null));
+    }
+    
+    const closeArtistModalBtn = document.getElementById('closeArtistModal');
+    if (closeArtistModalBtn) {
+        closeArtistModalBtn.addEventListener('click', closeArtistModal);
+    }
+    
+    const cancelArtistModalBtn = document.getElementById('cancelArtistModal');
+    if (cancelArtistModalBtn) {
+        cancelArtistModalBtn.addEventListener('click', closeArtistModal);
+    }
+    
+    // Close modals on overlay click
+    if (postModal) {
+        postModal.addEventListener('click', (e) => {
+            if (e.target === postModal) closePostModal();
+        });
+    }
+    
+    if (artistModal) {
+        artistModal.addEventListener('click', (e) => {
+            if (e.target === artistModal) closeArtistModal();
+        });
+    }
+    
+    // Close modals on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            if (postModal && postModal.classList.contains('active')) closePostModal();
+            if (artistModal && artistModal.classList.contains('active')) closeArtistModal();
+        }
+    });
 
     // --- Analytics Section ---
     let audienceChartInstance = null;

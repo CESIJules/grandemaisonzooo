@@ -952,6 +952,224 @@
             margin-top: 20px;
         }
 
+        /* =============================================
+           IMPROVED MODAL STYLES
+           ============================================= */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: var(--surface-color);
+            border: 1px solid var(--surface-border);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow: hidden;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+            animation: modalSlideIn 0.3s ease;
+        }
+        
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--surface-border);
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+        
+        .modal-close {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+        
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            max-height: 60vh;
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            border-top: 1px solid var(--surface-border);
+            background: rgba(0, 0, 0, 0.15);
+        }
+        
+        .modal-footer .form-actions {
+            display: flex;
+            gap: 12px;
+            margin: 0;
+        }
+
+        /* =============================================
+           ARTISTS GRID - MODERN CARDS
+           ============================================= */
+        .artists-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+        }
+        
+        .artist-card {
+            background: var(--surface-color);
+            border: 1px solid var(--surface-border);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .artist-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .artist-card-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+        }
+        
+        .artist-card-content {
+            padding: 20px;
+        }
+        
+        .artist-card-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        
+        .artist-card-location {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+        
+        .artist-card-links {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .artist-link-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--surface-border);
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        
+        .artist-link-btn:hover {
+            background: #fff;
+            color: #000;
+            border-color: #fff;
+            transform: scale(1.1);
+        }
+        
+        .artist-card-actions {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .artist-card:hover .artist-card-actions {
+            opacity: 1;
+        }
+        
+        .artist-action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .artist-action-btn:hover {
+            background: #fff;
+            color: #000;
+            transform: scale(1.1);
+        }
+        
+        .artist-action-btn.danger:hover {
+            background: var(--accent-danger);
+            color: #fff;
+        }
+
         /* --- Legacy Playlist Editor (keep for compatibility) --- */
         #playlistEditModal { display: none !important; }
         
@@ -1639,55 +1857,60 @@
                 <h2>Timeline</h2>
             </div>
             
-            <!-- Form Panel -->
-            <div class="modern-form-panel">
-                <div class="modern-form-header">
-                    <h3><i class="fas fa-plus-circle"></i> Ajouter un nouveau post</h3>
-                </div>
-                <form id="adminTimelineForm">
-                    <div class="modern-form-content">
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="postTitle">Titre du Projet</label>
-                                <input type="text" id="postTitle" name="title" placeholder="Ex: Nouveau single" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="postArtist">Artiste</label>
-                                <select id="postArtist" name="artist" required></select>
-                            </div>
-                            <div class="form-group">
-                                <label for="postDate">Date</label>
-                                <input type="date" id="postDate" name="date" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="postLink">Lien (optionnel)</label>
-                                <input type="url" id="postLink" name="link" placeholder="https://...">
-                            </div>
-                            <div class="form-group" style="grid-column: 1 / -1;">
-                                <label for="postImage">Image du post</label>
-                                <input type="file" id="postImage" name="image" accept=".jpg, .jpeg, .png, .gif, .webp">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modern-form-footer">
-                        <span id="adminFormMessage" class="form-message"></span>
-                        <div class="form-actions">
-                            <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> Publier</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            
             <!-- Posts List -->
             <div class="modern-table-container">
                 <div class="modern-table-header">
                     <h3><i class="fas fa-stream"></i> Posts publiés</h3>
                     <div class="modern-table-search">
                         <select id="postArtistFilter" style="background: rgba(255,255,255,0.05); border: 1px solid var(--surface-border); border-radius: 8px; padding: 10px 16px; color: var(--text-primary); font-size: 0.9rem;"></select>
+                        <button type="button" class="btn btn-primary" id="openAddPostModal"><i class="fas fa-plus"></i> Nouveau post</button>
                     </div>
                 </div>
                 <div class="modern-table-content" id="postsManagementContainer">
                     <!-- Posts générés dynamiquement -->
+                </div>
+            </div>
+            
+            <!-- Modal Add/Edit Post -->
+            <div id="postModal" class="modal-overlay">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 id="postModalTitle" class="modal-title">Nouveau post</h3>
+                        <button class="modal-close" id="closePostModal">&times;</button>
+                    </div>
+                    <form id="adminTimelineForm">
+                        <div class="modal-body">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="postTitle">Titre du Projet</label>
+                                    <input type="text" id="postTitle" name="title" placeholder="Ex: Nouveau single" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="postArtist">Artiste</label>
+                                    <select id="postArtist" name="artist" required></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="postDate">Date</label>
+                                    <input type="date" id="postDate" name="date" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="postLink">Lien (optionnel)</label>
+                                    <input type="url" id="postLink" name="link" placeholder="https://...">
+                                </div>
+                                <div class="form-group" style="grid-column: 1 / -1;">
+                                    <label for="postImage">Image du post</label>
+                                    <input type="file" id="postImage" name="image" accept=".jpg, .jpeg, .png, .gif, .webp">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <span id="adminFormMessage" class="form-message"></span>
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary" id="cancelPostModal">Annuler</button>
+                                <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Publier</button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
             </div>
         </section>
@@ -1696,58 +1919,64 @@
         <section id="artists" class="admin-section">
             <div class="section-header">
                 <h2>Artistes</h2>
-            </div>
-            
-            <!-- Form Panel -->
-            <div class="modern-form-panel">
-                <div class="modern-form-header">
-                    <h3><i class="fas fa-user-plus"></i> <span id="artistFormTitle">Ajouter un artiste</span></h3>
-                </div>
-                <form id="adminArtistForm">
-                    <input type="hidden" name="editingArtistId" id="editingArtistId">
-                    <div class="modern-form-content">
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="artistName">Nom de Scène</label>
-                                <input type="text" id="artistName" name="name" placeholder="Ex: Nelson North" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="artistLocation">Localisation</label>
-                                <input type="text" id="artistLocation" name="location" placeholder="Ex: Nice, France">
-                            </div>
-                            <div class="form-group">
-                                <label for="artistListenLink">Lien Écouter</label>
-                                <input type="url" id="artistListenLink" name="listenLink" placeholder="Apple Music, Spotify...">
-                            </div>
-                            <div class="form-group">
-                                <label for="artistWatchLink">Lien Regarder</label>
-                                <input type="url" id="artistWatchLink" name="watchLink" placeholder="YouTube...">
-                            </div>
-                            <div class="form-group">
-                                <label for="artistInstagramLink">Instagram</label>
-                                <input type="url" id="artistInstagramLink" name="instagramLink" placeholder="https://instagram.com/...">
-                            </div>
-                            <div class="form-group">
-                                <label for="artistImage">Photo</label>
-                                <input type="file" id="artistImage" name="image" accept=".jpg, .jpeg, .png, .gif, .webp">
-                                <input type="hidden" id="currentArtistImage" name="currentImage">
-                            </div>
-                        </div>
-                        <div id="artistImagePreview" style="margin-top: 16px;"></div>
-                    </div>
-                    <div class="modern-form-footer">
-                        <span id="artistFormMessage" class="form-message"></span>
-                        <div class="form-actions">
-                            <button type="button" id="cancelArtistEditBtn" class="btn btn-secondary" style="display: none;"><i class="fas fa-times"></i> Annuler</button>
-                            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Enregistrer</button>
-                        </div>
-                    </div>
-                </form>
+                <button type="button" class="btn btn-primary" id="openAddArtistModal"><i class="fas fa-plus"></i> Nouvel artiste</button>
             </div>
             
             <!-- Artists Grid -->
-            <div class="modern-table-container">
-                <div class="modern-table-header">
+            <div id="artistsManagementContainer" class="artists-grid">
+                <!-- Artistes générés dynamiquement -->
+            </div>
+            
+            <!-- Modal Add/Edit Artist -->
+            <div id="artistModal" class="modal-overlay">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 id="artistModalTitle" class="modal-title">Nouvel artiste</h3>
+                        <button class="modal-close" id="closeArtistModal">&times;</button>
+                    </div>
+                    <form id="adminArtistForm">
+                        <input type="hidden" name="editingArtistId" id="editingArtistId">
+                        <div class="modal-body">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="artistName">Nom de Scène</label>
+                                    <input type="text" id="artistName" name="name" placeholder="Ex: Nelson North" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="artistLocation">Localisation</label>
+                                    <input type="text" id="artistLocation" name="location" placeholder="Ex: Nice, France">
+                                </div>
+                                <div class="form-group">
+                                    <label for="artistListenLink">Lien Écouter</label>
+                                    <input type="url" id="artistListenLink" name="listenLink" placeholder="Spotify, Apple Music...">
+                                </div>
+                                <div class="form-group">
+                                    <label for="artistWatchLink">Lien Regarder</label>
+                                    <input type="url" id="artistWatchLink" name="watchLink" placeholder="YouTube...">
+                                </div>
+                                <div class="form-group">
+                                    <label for="artistInstagramLink">Instagram</label>
+                                    <input type="url" id="artistInstagramLink" name="instagramLink" placeholder="https://instagram.com/...">
+                                </div>
+                                <div class="form-group">
+                                    <label for="artistImage">Photo</label>
+                                    <input type="file" id="artistImage" name="image" accept=".jpg, .jpeg, .png, .gif, .webp">
+                                    <input type="hidden" id="currentArtistImage" name="currentImage">
+                                </div>
+                            </div>
+                            <div id="artistImagePreview" style="margin-top: 16px;"></div>
+                        </div>
+                        <div class="modal-footer">
+                            <span id="artistFormMessage" class="form-message"></span>
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary" id="cancelArtistModal">Annuler</button>
+                                <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Enregistrer</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
                     <h3><i class="fas fa-users"></i> Artistes du collectif</h3>
                 </div>
                 <div id="artistsManagementContainer" class="modern-grid" style="padding: 24px;">
