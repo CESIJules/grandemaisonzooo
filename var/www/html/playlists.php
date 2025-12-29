@@ -84,12 +84,8 @@ class PlaylistManager {
         return ['status' => 'success', 'data' => $data];
     }
 
-    public function createPlaylist($name, $songs = [], $color = '#6366f1', $icon = '🎵') {
+    public function createPlaylist($name, $songs = [], $color = '#6366f1', $icon = 'music') {
         $data = $this->readPlaylists();
-        
-        // Debug: log what we're checking
-        error_log("Creating playlist: " . $name);
-        error_log("Existing playlists: " . json_encode(array_column($data['playlists'], 'name')));
         
         foreach ($data['playlists'] as $playlist) {
             if (strtolower(trim($playlist['name'])) === strtolower(trim($name))) {

@@ -7,7 +7,7 @@ $input = json_decode(file_get_contents('php://input'), true);
 $name = $input['name'] ?? '';
 $songs = $input['songs'] ?? [];
 $color = $input['color'] ?? '#6366f1';
-$icon = $input['icon'] ?? '🎵';
+$icon = $input['icon'] ?? 'music';
 
 if (empty($name)) {
     echo json_encode(['status' => 'error', 'message' => 'Le nom de la playlist ne peut pas être vide.']);

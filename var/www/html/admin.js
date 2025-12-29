@@ -85,6 +85,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     analyticsInterval = null;
                 }
             }
+            
+            // Reset playlist view when entering playlists section
+            if (sectionId === 'playlists') {
+                const playlistsGridEl = document.getElementById('playlistsGrid');
+                const playlistEditorPanelEl = document.getElementById('playlistEditorPanel');
+                if (playlistsGridEl) playlistsGridEl.style.display = 'grid';
+                if (playlistEditorPanelEl) playlistEditorPanelEl.style.display = 'none';
+            }
         });
     });
 
@@ -1793,14 +1801,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Render playlists as cards
     function renderPlaylistsGrid() {
-        console.log('renderPlaylistsGrid called');
-        console.log('playlistsGrid element:', playlistsGrid);
-        console.log('allPlaylists:', allPlaylists);
-        
-        if (!playlistsGrid) {
-            console.error('playlistsGrid element not found!');
-            return;
-        }
+        if (!playlistsGrid) return;
         
         playlistsGrid.innerHTML = '';
         
