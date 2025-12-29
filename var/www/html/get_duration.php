@@ -5,7 +5,7 @@ header('Content-Type: application/json');
 
 // --- Configuration ---
 $musicDirectory = '/home/radio/musique/';
-// Fichier temporaire pour suivre l'heure de début de la piste actuelle.
+// Fichier temporaire écrit par log_track.php (appelé par Liquidsoap) pour suivre le morceau actuel
 $track_info_file = '/tmp/radio_track_info.json';
 
 // --- Validation et Sécurité (Logique originale) ---
@@ -32,27 +32,16 @@ if (realpath($fullPath) === false || strpos(realpath($fullPath), $musicDirectory
 }
 
 
-// --- NOUVELLE LOGIQUE : Suivi de la synchronisation ---
-$start_time = time(); // On initialise avec l'heure actuelle par défaut
-$track_info = [];
+// --- LOGIQUE DE SYNCHRONISATION ---
+// On lit le fichier de suivi écrit par log_track.php (appelé par Liquidsoap)
+// IMPORTANT: Ne pas modifier ce fichier ici! Seul log_track.php doit l'écrire.
+$start_time = time(); // Fallback si pas d'info
 
-// On lit le fichier de suivi s'il existe
 if (file_exists($track_info_file)) {
     $track_info = json_decode(file_get_contents($track_info_file), true);
-}
-
-// On vérifie si la chanson demandée est différente de celle en mémoire
-if (!isset($track_info['filename']) || $track_info['filename'] !== $sanitizedFileName) {
-    // C'est une nouvelle chanson. On met à jour le fichier avec le nom et l'heure de début actuels.
-    $track_info = [
-        'filename' => $sanitizedFileName,
-        'start_time' => time(),
-    ];
-    file_put_contents($track_info_file, json_encode($track_info));
-    $start_time = $track_info['start_time'];
-} else {
-    // C'est la même chanson, on utilise simplement l'heure de début déjà enregistrée.
-    $start_time = $track_info['start_time'];
+    if (isset($track_info['start_time'])) {
+        $start_time = $track_info['start_time'];
+    }
 }
 
 
@@ -71,7 +60,7 @@ if ($duration === null || !is_numeric(trim($duration))) {
     exit;
 }
 
-// Succès : on renvoie la durée (comme avant) ET les informations de synchronisation
+// Succès : on renvoie la durée ET les informations de synchronisation
 echo json_encode([
     'duration' => floatval(trim($duration)),
     'start_time' => $start_time,

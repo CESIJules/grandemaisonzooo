@@ -1194,6 +1194,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const now = Date.now() / 1000;
     let elapsed = now - trackStartTime;
 
+    // Si le morceau devrait être terminé, forcer un fetch immédiat pour détecter le nouveau morceau
+    if (elapsed > trackDuration + 2) {
+      console.log('Morceau terminé, resync...');
+      // Forcer une vérification immédiate
+      if (typeof fetchCurrentSong === 'function') {
+        fetchCurrentSong();
+      }
+      // Réinitialiser pour éviter les appels répétés
+      elapsed = trackDuration;
+    }
+
     // S'assurer que le temps écoulé ne dépasse pas la durée
     if (elapsed > trackDuration) elapsed = trackDuration;
     if (elapsed < 0) elapsed = 0;
@@ -1754,13 +1765,12 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('radio').classList.add('playing');
       
       if (!fetchInterval) {
-          // On attend 1.5s avant la première récupération d'infos.
-          // Cela laisse le temps à Icecast de mettre à jour ses métadonnées après le début de la lecture.
+          // On attend 500ms avant la première récupération d'infos.
           setTimeout(() => {
             fetchCurrentSong(); // Premier appel
-            // PERFORMANCE: Increased interval to 8s to reduce server load
-            fetchInterval = setInterval(fetchCurrentSong, 8000);
-          }, 1500);
+            // Polling toutes les 2 secondes pour détecter rapidement les changements
+            fetchInterval = setInterval(fetchCurrentSong, 2000);
+          }, 500);
       }
       
       // PERFORMANCE: visibilitychange API - stop fetching when tab hidden
@@ -1770,7 +1780,7 @@ document.addEventListener('DOMContentLoaded', () => {
               fetchInterval = null;
           } else if (!document.hidden && !audio.paused && !fetchInterval) {
               fetchCurrentSong();
-              fetchInterval = setInterval(fetchCurrentSong, 8000);
+              fetchInterval = setInterval(fetchCurrentSong, 2000);
           }
       });
 
@@ -2154,6 +2164,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const currentTitle = currentSong.querySelector('.title').textContent;
       
+      // Détection du changement de morceau - SANS délai artificiel
       if (title !== currentTitle) {
         if (isFirstTitleLoad) {
             isFirstTitleLoad = false;
@@ -2162,31 +2173,20 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (pendingTitle === title) return;
-
-        if (pendingTitleTimeout) clearTimeout(pendingTitleTimeout);
-
-        pendingTitle = title;
-        
-        const SERVER_OFFSET = 12000; 
-        let bufferDelay = 0;
-
-        if (audio && !audio.paused && audio.buffered.length > 0) {
-            const bufferedEnd = audio.buffered.end(audio.buffered.length - 1);
-            const currentTime = audio.currentTime;
-            bufferDelay = (bufferedEnd - currentTime) * 1000;
-        }
-        
-        if (bufferDelay < 0 || bufferDelay > 60000) bufferDelay = 0;
-        
-        const totalDelay = bufferDelay + SERVER_OFFSET;
-        
-        pendingTitleTimeout = setTimeout(() => {
-            updateTitleUI(title);
-            if (rawTitle) fetchAndSetProgress(rawTitle, false); // Lancer la progression en même temps que le titre
-            pendingTitle = null;
+        // Annuler tout timeout précédent
+        if (pendingTitleTimeout) {
+            clearTimeout(pendingTitleTimeout);
             pendingTitleTimeout = null;
-        }, totalDelay);
+        }
+
+        // Mise à jour IMMÉDIATE de l'UI et de la progression
+        // Le serveur (log_track.php) a déjà enregistré le start_time correct
+        console.log('Changement de morceau détecté:', title);
+        updateTitleUI(title);
+        if (rawTitle) {
+            lastKnownTitle = rawTitle;
+            fetchAndSetProgress(rawTitle, true); // Toujours sync avec le serveur
+        }
       }
 
     } catch (err) {
