@@ -38,102 +38,45 @@ outputDefaultCover();
 
 /**
  * Extract embedded album art from MP3 file
+ * Simple approach: find JPEG/PNG magic bytes after APIC tag
  */
 function extractCoverFromMP3($filepath) {
-    $file = fopen($filepath, 'rb');
-    if (!$file) return null;
+    // Read enough data to include the cover (typically < 500KB)
+    $data = file_get_contents($filepath, false, null, 0, 512000);
+    if (!$data) return null;
     
-    // Read first 10 bytes to check for ID3v2
-    $header = fread($file, 10);
-    if (substr($header, 0, 3) !== 'ID3') {
-        fclose($file);
+    // Check for ID3v2 header
+    if (substr($data, 0, 3) !== 'ID3') {
         return null;
     }
     
-    // Get ID3v2 size (syncsafe integer)
-    $size = (ord($header[6]) << 21) | (ord($header[7]) << 14) | (ord($header[8]) << 7) | ord($header[9]);
+    // Find APIC frame
+    $apicPos = strpos($data, 'APIC');
+    if ($apicPos === false) {
+        return null;
+    }
     
-    // Read entire ID3v2 tag
-    $id3data = fread($file, $size);
-    fclose($file);
+    // Look for JPEG (FFD8) or PNG (89504E47) after APIC
+    $jpegStart = strpos($data, "\xFF\xD8", $apicPos);
+    $pngStart = strpos($data, "\x89PNG", $apicPos);
     
-    // Search for APIC frame
-    $pos = 0;
-    while ($pos < strlen($id3data) - 10) {
-        $frameId = substr($id3data, $pos, 4);
-        
-        if ($frameId === 'APIC') {
-            // Frame size (4 bytes, big endian for ID3v2.4, regular for v2.3)
-            $frameSize = (ord($id3data[$pos + 4]) << 24) | 
-                         (ord($id3data[$pos + 5]) << 16) | 
-                         (ord($id3data[$pos + 6]) << 8) | 
-                         ord($id3data[$pos + 7]);
-            
-            // If frame size seems wrong (syncsafe), recalculate
-            if ($frameSize > $size) {
-                $frameSize = (ord($id3data[$pos + 4]) << 21) | 
-                             (ord($id3data[$pos + 5]) << 14) | 
-                             (ord($id3data[$pos + 6]) << 7) | 
-                             ord($id3data[$pos + 7]);
-            }
-            
-            // Skip frame header (10 bytes) 
-            $frameData = substr($id3data, $pos + 10, $frameSize);
-            
-            // Parse APIC frame
-            // Format: encoding (1 byte) + mime type (null-terminated) + picture type (1 byte) + description (null-terminated) + picture data
-            $encoding = ord($frameData[0]);
-            $mimeEnd = strpos($frameData, "\x00", 1);
-            
-            if ($mimeEnd !== false) {
-                $mimeType = substr($frameData, 1, $mimeEnd - 1);
-                
-                // Default mime type if empty
-                if (empty($mimeType) || $mimeType === 'image/') {
-                    $mimeType = 'image/jpeg';
-                }
-                
-                // Find start of image data (after description null terminator)
-                $descStart = $mimeEnd + 2; // +1 for picture type, +1 for null
-                
-                // Handle different encodings for description
-                if ($encoding == 0 || $encoding == 3) {
-                    // ISO-8859-1 or UTF-8
-                    $descEnd = strpos($frameData, "\x00", $descStart);
-                } else {
-                    // UTF-16
-                    $descEnd = strpos($frameData, "\x00\x00", $descStart);
-                    if ($descEnd !== false) $descEnd += 1;
-                }
-                
-                if ($descEnd !== false) {
-                    $imageData = substr($frameData, $descEnd + 1);
-                    
-                    // Verify it looks like image data (JPEG or PNG magic bytes)
-                    if (substr($imageData, 0, 2) === "\xFF\xD8" || // JPEG
-                        substr($imageData, 0, 8) === "\x89PNG\r\n\x1a\n") { // PNG
-                        return [
-                            'mime' => $mimeType,
-                            'data' => $imageData
-                        ];
-                    }
-                }
-            }
+    if ($jpegStart !== false && ($pngStart === false || $jpegStart < $pngStart)) {
+        // Found JPEG - find end marker (FFD9)
+        $jpegEnd = strpos($data, "\xFF\xD9", $jpegStart);
+        if ($jpegEnd !== false) {
+            return [
+                'mime' => 'image/jpeg',
+                'data' => substr($data, $jpegStart, $jpegEnd - $jpegStart + 2)
+            ];
         }
-        
-        // Move to next frame
-        if (strlen($id3data) > $pos + 4) {
-            $nextFrameSize = (ord($id3data[$pos + 4]) << 24) | 
-                             (ord($id3data[$pos + 5]) << 16) | 
-                             (ord($id3data[$pos + 6]) << 8) | 
-                             ord($id3data[$pos + 7]);
-            
-            if ($nextFrameSize <= 0 || $nextFrameSize > $size) {
-                break;
-            }
-            $pos += 10 + $nextFrameSize;
-        } else {
-            break;
+    } elseif ($pngStart !== false) {
+        // Found PNG - find IEND chunk
+        $iendPos = strpos($data, "IEND", $pngStart);
+        if ($iendPos !== false) {
+            return [
+                'mime' => 'image/png',
+                'data' => substr($data, $pngStart, $iendPos - $pngStart + 8)
+            ];
         }
     }
     
