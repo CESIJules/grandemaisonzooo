@@ -1107,43 +1107,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (result.status !== 'success') throw new Error(result.message || 'Erreur de récupération.');
             
             currentActivePlaylist = result.data.active_playlist;
-            const playlists = result.data.playlists;
-            allPlaylists = playlists; // Store globally
-
-            if (playlists.length === 0) {
-                existingPlaylistsContainer.innerHTML = '<p>Aucune playlist créée.</p>';
-                return;
-            }
-
-            const table = document.createElement('table');
-            table.className = 'item-list';
-            table.innerHTML = `<thead><tr><th>Nom</th><th>Titres</th><th class="actions">Actions</th></tr></thead>`;
-            const tbody = document.createElement('tbody');
-            playlists.forEach(playlist => {
-                const tr = document.createElement('tr');
-                if (playlist.name === currentActivePlaylist) {
-                    tr.classList.add('playing');
-                }
-                tr.innerHTML = `
-                    <td>${escapeHtml(playlist.name)}</td>
-                    <td>${playlist.songs.length}</td>
-                    <td class="actions">
-                        <div class="action-buttons-container">
-                            <button class="btn activate-playlist-btn" title="Activer" data-playlist-name="${escapeHtml(playlist.name)}" ${playlist.name === currentActivePlaylist ? 'disabled' : ''}><i class="fas fa-play-circle"></i></button>
-                            <button class="btn deactivate-playlist-btn" title="Désactiver" data-playlist-name="${escapeHtml(playlist.name)}" ${playlist.name !== currentActivePlaylist ? 'disabled' : ''}><i class="fas fa-stop-circle"></i></button>
-                            <button class="btn edit-playlist-btn" title="Modifier" data-playlist-name="${escapeHtml(playlist.name)}"><i class="fas fa-edit"></i></button>
-                            <button class="btn btn-danger delete-playlist-btn" title="Supprimer" data-playlist-name="${escapeHtml(playlist.name)}"><i class="fas fa-trash"></i></button>
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-            table.appendChild(tbody);
-            existingPlaylistsContainer.innerHTML = '';
-            existingPlaylistsContainer.appendChild(table);
+            allPlaylists = result.data.playlists || [];
+            
+            console.log('Playlists loaded:', allPlaylists.length);
 
         } catch (error) {
-            existingPlaylistsContainer.innerHTML = `<p style="color: var(--accent-danger);">Impossible de charger les playlists: ${error.message}</p>`;
+            console.error('Failed to fetch playlists:', error);
+            allPlaylists = [];
         }
     }
 
