@@ -2723,6 +2723,30 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
+        // Genre Families Definition
+        const genreFamilies = {
+            'House': ['House', 'Deep House', 'Tech House', 'Progressive House', 'Electro House', 'Disco House', 'Funky House', 'Chicago House', 'Acid House', 'Minimal House'],
+            'Techno': ['Techno', 'Minimal', 'Acid', 'Hard Techno', 'Industrial', 'Dub Techno', 'Detroit Techno'],
+            'Trance': ['Trance', 'Psytrance', 'Progressive Trance', 'Goa Trance', 'Uplifting Trance'],
+            'Bass': ['Drum & Bass', 'Dubstep', 'Jungle', 'Garage', 'Bass House', 'UK Garage', 'Grime', 'Breakbeat'],
+            'Hip Hop': ['Hip Hop', 'Rap', 'Trap', 'RnB', 'Urban', 'Drill', 'Old School'],
+            'Chill': ['Ambient', 'Chillout', 'Downtempo', 'Lo-Fi', 'Lounge', 'Trip Hop'],
+            'Disco': ['Disco', 'Nu Disco', 'Funk', 'Soul', 'Boogie'],
+            'Rock': ['Rock', 'Indie', 'Alternative', 'Metal', 'Punk', 'New Wave'],
+            'Pop': ['Pop', 'Dance Pop', 'Synth Pop', 'Electropop'],
+            'Jazz': ['Jazz', 'Blues', 'Nu Jazz'],
+            'Reggae': ['Reggae', 'Dub', 'Dancehall', 'Ska']
+        };
+
+        function getGenreFamily(g) {
+            if (!g) return null;
+            g = g.toLowerCase();
+            for (const [fam, members] of Object.entries(genreFamilies)) {
+                if (members.some(m => m.toLowerCase() === g)) return fam;
+            }
+            return null;
+        }
+
         // Find compatible songs with scoring
         currentSuggestions = [];
         for (const songPath of allAvailableSongs) {
@@ -2756,8 +2780,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             // Genre match (40 pts - Increased from 20)
             // Stronger emphasis on keeping the vibe
-            if (targetGenre && meta.genre && meta.genre.toLowerCase() === targetGenre.toLowerCase()) {
-                score += 40;
+            if (targetGenre && meta.genre) {
+                if (meta.genre.toLowerCase() === targetGenre.toLowerCase()) {
+                    score += 40;
+                } else {
+                    const targetFam = getGenreFamily(targetGenre);
+                    const metaFam = getGenreFamily(meta.genre);
+                    if (targetFam && metaFam && targetFam === metaFam) {
+                        score += 20; // Same family bonus
+                    }
+                }
             }
             
             // Energy proximity (10 pts)
@@ -2782,8 +2814,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Global Genre Coherence (30 pts - Increased from 10)
             // If the song matches the dominant genre of the playlist, big bonus
-            if (dominantGenre && meta.genre && meta.genre.toLowerCase() === dominantGenre) {
-                score += 30;
+            if (dominantGenre && meta.genre) {
+                if (meta.genre.toLowerCase() === dominantGenre) {
+                    score += 30;
+                } else {
+                    const domFam = getGenreFamily(dominantGenre);
+                    const metaFam = getGenreFamily(meta.genre);
+                    if (domFam && metaFam && domFam === metaFam) {
+                        score += 15; // Same family bonus
+                    }
+                }
             }
             
             if (score >= 40) { // Minimum threshold
