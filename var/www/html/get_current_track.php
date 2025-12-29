@@ -9,6 +9,12 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
 $track_info_file = '/tmp/radio_track_info.json';
 $musicDirectory = '/home/radio/musique/';
 
+// IMPORTANT: Délai de buffer Icecast (burst-size / bitrate)
+// burst-size = 262144 bytes, bitrate ~128kbps = 16000 bytes/sec
+// Donc le buffer = ~16 secondes. On ajoute ce délai au start_time
+// pour que le timestamp côté client corresponde à l'audio réellement entendu
+$ICECAST_BUFFER_DELAY = 16; // secondes (ajuster si nécessaire)
+
 // Vérifier si le fichier de suivi existe
 if (!file_exists($track_info_file)) {
     echo json_encode([
@@ -46,8 +52,14 @@ if (file_exists($fullPath)) {
 }
 
 // Calculer le temps écoulé depuis le début
+// IMPORTANT: Ajouter le délai de buffer Icecast au start_time
+// L'audio atteint réellement l'auditeur X secondes après que Liquidsoap l'a envoyé
 $server_now = time();
-$elapsed = $server_now - $start_time;
+$adjusted_start_time = $start_time + $ICECAST_BUFFER_DELAY;
+$elapsed = $server_now - $adjusted_start_time;
+
+// S'assurer que elapsed n'est pas négatif (si le morceau vient de commencer)
+if ($elapsed < 0) $elapsed = 0;
 
 // Formater le titre pour l'affichage (comme le fait le frontend)
 $displayTitle = pathinfo($filename, PATHINFO_FILENAME);
@@ -58,10 +70,11 @@ $displayTitle = strtoupper($displayTitle);
 echo json_encode([
     'filename' => $filename,
     'display_title' => $displayTitle,
-    'start_time' => $start_time,
+    'start_time' => $adjusted_start_time, // Temps ajusté avec le buffer
     'duration' => $duration,
     'elapsed' => $elapsed,
     'remaining' => max(0, $duration - $elapsed),
-    'server_now' => $server_now
+    'server_now' => $server_now,
+    'buffer_delay' => $ICECAST_BUFFER_DELAY // Pour debug
 ]);
 ?>
