@@ -84,7 +84,7 @@ class PlaylistManager {
         return ['status' => 'success', 'data' => $data];
     }
 
-    public function createPlaylist($name, $songs = [], $color = '#6366f1', $icon = 'music') {
+    public function createPlaylist($name, $songs = [], $color = '#6366f1', $icon = 'music', $cover = '') {
         $data = $this->readPlaylists();
         
         foreach ($data['playlists'] as $playlist) {
@@ -104,7 +104,8 @@ class PlaylistManager {
             'songs' => $songs, 
             'dir' => $dirName,
             'color' => $color,
-            'icon' => $icon
+            'icon' => $icon,
+            'cover' => $cover
         ];
         $data['playlists'][] = $newPlaylist;
 
@@ -114,15 +115,36 @@ class PlaylistManager {
         return ['status' => 'error', 'message' => 'Erreur lors de la sauvegarde de la playlist.'];
     }
 
-    public function updatePlaylist($name, $newSongs) {
+    public function updatePlaylist($name, $newSongs, $newName = null) {
         $data = $this->readPlaylists();
         $playlistPath = null;
         $found = false;
 
         foreach ($data['playlists'] as &$playlist) {
             if ($playlist['name'] === $name) {
+                // Update songs
                 $playlist['songs'] = $newSongs;
                 $playlistPath = $this->playlistsDir . '/' . $playlist['dir'];
+                
+                // Handle rename if new name is provided
+                if ($newName !== null && $newName !== $name && !empty(trim($newName))) {
+                    // Check if new name already exists
+                    foreach ($data['playlists'] as $other) {
+                        if ($other['name'] !== $name && strtolower(trim($other['name'])) === strtolower(trim($newName))) {
+                            return ['status' => 'error', 'message' => "Une playlist avec le nom '{$newName}' existe déjà."];
+                        }
+                    }
+                    
+                    // Update playlist name
+                    $oldName = $playlist['name'];
+                    $playlist['name'] = trim($newName);
+                    
+                    // Update active_playlist if this was the active one
+                    if ($data['active_playlist'] === $oldName) {
+                        $data['active_playlist'] = $playlist['name'];
+                    }
+                }
+                
                 $found = true;
                 break;
             }
@@ -154,6 +176,32 @@ class PlaylistManager {
             return ['status' => 'success', 'message' => 'Playlist mise à jour avec succès.'];
         }
         return ['status' => 'error', 'message' => 'Erreur lors de la mise à jour de la playlist.'];
+    }
+
+    public function updatePlaylistCover($name, $coverPath) {
+        $data = $this->readPlaylists();
+        $found = false;
+
+        foreach ($data['playlists'] as &$playlist) {
+            if ($playlist['name'] === $name) {
+                // Delete old cover if exists
+                if (!empty($playlist['cover']) && file_exists(__DIR__ . '/' . $playlist['cover'])) {
+                    @unlink(__DIR__ . '/' . $playlist['cover']);
+                }
+                $playlist['cover'] = $coverPath;
+                $found = true;
+                break;
+            }
+        }
+
+        if (!$found) {
+            return ['status' => 'error', 'message' => 'Playlist introuvable.'];
+        }
+
+        if ($this->savePlaylists($data)) {
+            return ['status' => 'success', 'message' => 'Cover mise à jour avec succès.'];
+        }
+        return ['status' => 'error', 'message' => 'Erreur lors de la mise à jour de la cover.'];
     }
 
     public function deletePlaylist($name) {

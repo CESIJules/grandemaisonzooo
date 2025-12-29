@@ -2286,6 +2286,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const isLive = playlist.name === currentActivePlaylist;
             const color = playlist.color || '#00ff68';
             const icon = playlist.icon || 'music';
+            const cover = playlist.cover || '';
             
             // Calculate total duration (estimate ~3min per song if no metadata)
             const songCount = playlist.songs.length;
@@ -2298,9 +2299,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             const previewTracks = playlist.songs.slice(0, 4);
             
             const card = document.createElement('div');
-            card.className = `playlist-card ${isLive ? 'is-live' : ''}`;
+            card.className = `playlist-card ${isLive ? 'is-live' : ''} ${cover ? 'has-cover' : ''}`;
             card.style.setProperty('--card-color', color);
             card.dataset.playlistName = playlist.name;
+            
+            // Set cover as background if available
+            if (cover) {
+                card.style.backgroundImage = `url('${cover}')`;
+            }
             
             card.innerHTML = `
                 ${isLive ? `
@@ -2308,9 +2314,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <span></span><span></span><span></span>
                 </div>
                 ` : ''}
+                ${cover ? `
+                <div class="playlist-card-cover-overlay"></div>
+                ` : `
                 <div class="playlist-card-icon" style="color: ${color}">
                     <i class="fas fa-${icon}"></i>
                 </div>
+                `}
                 <div class="playlist-card-name">${escapeHtml(playlist.name)}</div>
                 <div class="playlist-card-meta">
                     <span>${songCount} morceaux</span>
@@ -2350,6 +2360,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Open the new playlist editor
     function openNewPlaylistEditor(playlist) {
         currentEditingPlaylist = JSON.parse(JSON.stringify(playlist));
+        originalPlaylistName = playlist.name; // Store original name for rename tracking
         
         // Hide grid, show editor
         const grid = document.getElementById('playlistsGrid');
@@ -2363,9 +2374,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         const songCountEl = document.getElementById('editorSongCount');
         const statusEl = document.getElementById('editorPlaylistStatus');
         const activateBtn = document.getElementById('activatePlaylistBtn');
+        const coverPreview = document.getElementById('editorCoverPreview');
         
         if (nameInput) nameInput.value = playlist.name;
         if (songCountEl) songCountEl.textContent = `${playlist.songs.length} morceaux`;
+        
+        // Load cover preview
+        if (coverPreview) {
+            if (playlist.cover) {
+                coverPreview.innerHTML = `<img src="${playlist.cover}" alt="Cover">`;
+                coverPreview.classList.add('has-cover');
+            } else {
+                coverPreview.innerHTML = '<i class="fas fa-image"></i>';
+                coverPreview.classList.remove('has-cover');
+            }
+        }
         
         const isLive = playlist.name === currentActivePlaylist;
         if (statusEl) {
@@ -2387,7 +2410,62 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (playlistsGrid) playlistsGrid.style.display = 'grid';
         if (playlistEditorPanel) playlistEditorPanel.style.display = 'none';
         currentEditingPlaylist = null;
+        originalPlaylistName = null;
         fetchPlaylists().then(() => renderPlaylistsGrid());
+    }
+    
+    // Playlist name input listener
+    const editPlaylistNameInput = document.getElementById('editPlaylistNameInput');
+    if (editPlaylistNameInput) {
+        editPlaylistNameInput.addEventListener('input', (e) => {
+            if (currentEditingPlaylist) {
+                currentEditingPlaylist.name = e.target.value.trim();
+                autoSavePlaylist();
+            }
+        });
+    }
+    
+    // Editor cover upload
+    const editorCoverPreview = document.getElementById('editorCoverPreview');
+    const editorCoverInput = document.getElementById('editorCoverInput');
+    
+    if (editorCoverPreview && editorCoverInput) {
+        editorCoverPreview.addEventListener('click', () => {
+            editorCoverInput.click();
+        });
+        
+        editorCoverInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file && currentEditingPlaylist) {
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    const base64 = event.target.result;
+                    
+                    // Update preview
+                    editorCoverPreview.innerHTML = `<img src="${base64}" alt="Cover">`;
+                    editorCoverPreview.classList.add('has-cover');
+                    
+                    // Save cover via API
+                    try {
+                        const response = await fetch('update_playlist_cover.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                name: originalPlaylistName,
+                                cover: base64
+                            })
+                        });
+                        const result = await response.json();
+                        if (result.status === 'success' && result.coverPath) {
+                            currentEditingPlaylist.cover = result.coverPath;
+                        }
+                    } catch (error) {
+                        console.error('Error updating cover:', error);
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
     }
     
     // Render songs in the playlist (left column)
@@ -2791,6 +2869,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Auto-save playlist changes
     let saveTimeout = null;
+    let originalPlaylistName = null; // Track the original name for rename detection
+    
     async function autoSavePlaylist() {
         if (!currentEditingPlaylist) return;
         
@@ -2802,14 +2882,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (saveTimeout) clearTimeout(saveTimeout);
         saveTimeout = setTimeout(async () => {
             try {
-                await fetch('update_playlist.php', {
+                const payload = {
+                    name: originalPlaylistName || currentEditingPlaylist.name,
+                    songs: currentEditingPlaylist.songs
+                };
+                
+                // Include newName if it's different from original
+                if (originalPlaylistName && currentEditingPlaylist.name !== originalPlaylistName) {
+                    payload.newName = currentEditingPlaylist.name;
+                }
+                
+                const response = await fetch('update_playlist.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name: currentEditingPlaylist.name,
-                        songs: currentEditingPlaylist.songs
-                    })
+                    body: JSON.stringify(payload)
                 });
+                
+                const result = await response.json();
+                if (result.status === 'success' && payload.newName) {
+                    // Update original name after successful rename
+                    originalPlaylistName = currentEditingPlaylist.name;
+                }
             } catch (e) {
                 console.error('Auto-save failed:', e);
             }
@@ -2859,6 +2952,71 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
     
+    // Cover upload
+    const coverPreview = document.getElementById('coverPreview');
+    const coverFileInput = document.getElementById('coverFileInput');
+    const newPlaylistCover = document.getElementById('newPlaylistCover');
+    
+    if (coverPreview && coverFileInput) {
+        coverPreview.addEventListener('click', (e) => {
+            // Don't trigger if clicking remove button
+            if (e.target.closest('.remove-cover')) return;
+            coverFileInput.click();
+        });
+        
+        coverFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const base64 = event.target.result;
+                    newPlaylistCover.value = base64;
+                    
+                    // Update preview
+                    coverPreview.innerHTML = `
+                        <img src="${base64}" alt="Cover">
+                        <button type="button" class="remove-cover" title="Supprimer">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                    coverPreview.classList.add('has-cover');
+                    
+                    // Hide fallback pickers
+                    const fallback = document.querySelector('.cover-fallback-pickers');
+                    if (fallback) fallback.style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Remove cover handler (delegated)
+        coverPreview.addEventListener('click', (e) => {
+            const removeBtn = e.target.closest('.remove-cover');
+            if (removeBtn) {
+                e.stopPropagation();
+                resetCoverPreview();
+            }
+        });
+    }
+    
+    function resetCoverPreview() {
+        const coverPreview = document.getElementById('coverPreview');
+        const coverFileInput = document.getElementById('coverFileInput');
+        const newPlaylistCover = document.getElementById('newPlaylistCover');
+        const fallback = document.querySelector('.cover-fallback-pickers');
+        
+        if (coverPreview) {
+            coverPreview.innerHTML = `
+                <i class="fas fa-image"></i>
+                <span>Cliquer pour ajouter</span>
+            `;
+            coverPreview.classList.remove('has-cover');
+        }
+        if (coverFileInput) coverFileInput.value = '';
+        if (newPlaylistCover) newPlaylistCover.value = '';
+        if (fallback) fallback.style.display = 'flex';
+    }
+    
     // Create playlist form (new)
     if (newCreatePlaylistForm) {
         newCreatePlaylistForm.addEventListener('submit', async (e) => {
@@ -2866,6 +3024,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const name = document.getElementById('newPlaylistName').value.trim();
             const color = document.getElementById('newPlaylistColor').value;
             const icon = document.getElementById('newPlaylistIcon').value;
+            const cover = document.getElementById('newPlaylistCover').value;
             
             if (!name) return;
             
@@ -2873,7 +3032,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const response = await fetch('create_playlist.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, color, icon })
+                    body: JSON.stringify({ name, color, icon, cover })
                 });
                 const result = await response.json();
                 
@@ -2893,6 +3052,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.querySelectorAll('.icon-option').forEach(b => b.classList.remove('active'));
                 document.querySelector('.icon-option[data-icon="music"]')?.classList.add('active');
                 document.getElementById('newPlaylistIcon').value = 'music';
+                
+                // Reset cover
+                resetCoverPreview();
                 
                 await fetchPlaylists();
                 renderPlaylistsGrid();
