@@ -1929,6 +1929,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let pendingTitle = null;
   let pendingTitleTimeout = null;
   let isFirstTitleLoad = true;
+  let lastKnownTitle = null; // Pour détecter les changements de morceau
+  let resyncInterval = null; // Interval pour resynchroniser périodiquement
   
   // PERFORMANCE: Cache for reducing fetch requests
   const CACHE_KEY = 'radio_current_song';
@@ -2047,6 +2049,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (progressInfo) progressInfo.classList.remove('visible');
 
+    // Mettre à jour le titre connu pour détecter les changements
+    lastKnownTitle = rawTitle;
+
     try {
       const response = await fetch(`./get_duration.php?file=${encodeURIComponent(rawTitle)}&nocache=${new Date().getTime()}`);
       const data = await response.json();
@@ -2058,24 +2063,57 @@ document.addEventListener('DOMContentLoaded', () => {
       if (response.ok && data.duration && data.duration > 0) {
         trackDuration = data.duration;
         
-        // Lors du chargement de la page, on synchronise avec le temps écoulé du serveur
-        if (isInitialLoad && data.start_time && data.server_now) {
+        // TOUJOURS synchroniser avec le serveur pour éviter les décalages
+        if (data.start_time && data.server_now) {
           const elapsed = data.server_now - data.start_time;
           const initialElapsed = Math.max(0, elapsed);
           // On calcule un trackStartTime "fictif" dans le passé pour l'horloge du client
           trackStartTime = (Date.now() / 1000) - initialElapsed;
         } else {
-          // Comportement original pour les transitions de son : on démarre le compteur maintenant
+          // Fallback : on démarre le compteur maintenant
           trackStartTime = Date.now() / 1000;
         }
 
         updateProgressBar(); // Premier appel
         progressInterval = setInterval(updateProgressBar, 250);
         if (progressInfo) progressInfo.classList.add('visible');
+        
+        // Démarrer/redémarrer l'intervalle de resynchronisation (toutes les 30 secondes)
+        if (resyncInterval) clearInterval(resyncInterval);
+        resyncInterval = setInterval(() => {
+          if (!document.hidden && lastKnownTitle) {
+            resyncProgress(lastKnownTitle);
+          }
+        }, 30000);
       }
     } catch (e) {
       console.error("Erreur lors de la récupération de la durée:", e);
       if (progressInfo) progressInfo.classList.remove('visible');
+    }
+  }
+
+  // Fonction de resynchronisation silencieuse (corrige le décalage sans changer l'UI)
+  async function resyncProgress(rawTitle) {
+    try {
+      const response = await fetch(`./get_duration.php?file=${encodeURIComponent(rawTitle)}&nocache=${new Date().getTime()}`);
+      const data = await response.json();
+      
+      if (response.ok && data.duration && data.start_time && data.server_now) {
+        // Vérifier si le morceau a changé côté serveur (différent fichier)
+        // get_duration.php retourne le start_time du fichier actuel
+        const serverElapsed = data.server_now - data.start_time;
+        const clientElapsed = (Date.now() / 1000) - trackStartTime;
+        
+        // Si le décalage est > 3 secondes, on resynchronise
+        const drift = Math.abs(serverElapsed - clientElapsed);
+        if (drift > 3) {
+          console.log(`Resync: drift de ${drift.toFixed(1)}s détecté, correction...`);
+          trackStartTime = (Date.now() / 1000) - serverElapsed;
+          trackDuration = data.duration;
+        }
+      }
+    } catch (e) {
+      // Silently ignore resync errors
     }
   }
 
