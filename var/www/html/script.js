@@ -2137,6 +2137,57 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // --- HISTORIQUE DE LECTURE ---
+  const historyToggle = document.getElementById('history-toggle');
+  const historyDropdown = document.getElementById('history-dropdown');
+  const historyList = document.getElementById('history-list');
+  let historyOpen = false;
+
+  // Toggle du menu historique
+  if (historyToggle && historyDropdown) {
+    historyToggle.addEventListener('click', () => {
+      historyOpen = !historyOpen;
+      historyToggle.classList.toggle('open', historyOpen);
+      historyDropdown.classList.toggle('open', historyOpen);
+      
+      // Charger l'historique à l'ouverture
+      if (historyOpen) {
+        fetchPlayHistory();
+      }
+    });
+  }
+
+  // Récupérer l'historique depuis le serveur
+  async function fetchPlayHistory() {
+    if (!historyList) return;
+    
+    try {
+      const response = await fetch(`./get_play_history.php?limit=3&nocache=${Date.now()}`);
+      const data = await response.json();
+      
+      if (data.success && data.history && data.history.length > 0) {
+        historyList.innerHTML = data.history.map(track => `
+          <div class="history-item">
+            <span class="history-title">${escapeHtml(track.display)}</span>
+            <span class="history-time">${escapeHtml(track.relative_time)}</span>
+          </div>
+        `).join('');
+      } else {
+        historyList.innerHTML = '<div class="history-item"><span class="history-title" style="color:#666;">Aucun historique</span></div>';
+      }
+    } catch (e) {
+      console.error('Erreur historique:', e);
+      historyList.innerHTML = '<div class="history-item"><span class="history-title" style="color:#666;">Erreur de chargement</span></div>';
+    }
+  }
+
+  // Helper pour échapper le HTML
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
   async function fetchCurrentSong() {
     // PERFORMANCE: Skip if hidden
     if (document.hidden) return;
@@ -2201,6 +2252,11 @@ document.addEventListener('DOMContentLoaded', () => {
               updateTitleUI(title);
               lastKnownTitle = rawTitle;
               isFirstTitleLoad = false;
+              
+              // Rafraîchir l'historique si le menu est ouvert
+              if (historyOpen) {
+                fetchPlayHistory();
+              }
               
               // Mise à jour de la progression
               // On soustrait le buffer_delay car c'est le temps réel écoulé pour l'auditeur
