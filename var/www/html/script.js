@@ -1768,8 +1768,8 @@ document.addEventListener('DOMContentLoaded', () => {
           // On attend 500ms avant la première récupération d'infos.
           setTimeout(() => {
             fetchCurrentSong(); // Premier appel
-            // Polling toutes les 2 secondes pour détecter rapidement les changements
-            fetchInterval = setInterval(fetchCurrentSong, 2000);
+            // Polling toutes les 5 secondes (optimisé pour réduire la charge serveur)
+            fetchInterval = setInterval(fetchCurrentSong, 5000);
           }, 500);
       }
       
@@ -1780,7 +1780,7 @@ document.addEventListener('DOMContentLoaded', () => {
               fetchInterval = null;
           } else if (!document.hidden && !audio.paused && !fetchInterval) {
               fetchCurrentSong();
-              fetchInterval = setInterval(fetchCurrentSong, 2000);
+              fetchInterval = setInterval(fetchCurrentSong, 5000);
           }
       });
 
@@ -2179,22 +2179,34 @@ document.addEventListener('DOMContentLoaded', () => {
           // Synchroniser directement avec les données du serveur
           if (trackData.duration > 0 && trackData.start_time) {
             const serverElapsed = trackData.elapsed || (trackData.server_now - trackData.start_time);
+            const bufferDelay = trackData.buffer_delay || 16;
             
             // Vérifier si c'est un nouveau morceau ou si on doit juste resync
             const currentTitle = currentSong.querySelector('.title').textContent;
             const isNewTrack = (title !== currentTitle);
             
             if (isNewTrack || isFirstTitleLoad) {
-              console.log('Nouveau morceau détecté:', title);
+              // IMPORTANT: Attendre que l'audio du nouveau morceau soit réellement arrivé
+              // avant de changer le titre (délai de buffer Icecast)
+              if (serverElapsed < bufferDelay && !isFirstTitleLoad) {
+                // Le nouveau morceau a commencé côté serveur mais l'audio n'est pas encore arrivé
+                // On continue avec l'ancien titre et timer, on changera au prochain poll
+                console.log(`Nouveau morceau détecté mais audio pas encore arrivé (${serverElapsed.toFixed(1)}s < ${bufferDelay}s)`);
+                return;
+              }
+              
+              console.log('Changement de morceau:', title);
               
               // Mise à jour du titre
               updateTitleUI(title);
               lastKnownTitle = rawTitle;
               isFirstTitleLoad = false;
               
-              // Mise à jour de la progression avec les données exactes du serveur
+              // Mise à jour de la progression
+              // On soustrait le buffer_delay car c'est le temps réel écoulé pour l'auditeur
               trackDuration = trackData.duration;
-              trackStartTime = (Date.now() / 1000) - serverElapsed;
+              const adjustedElapsed = Math.max(0, serverElapsed - bufferDelay);
+              trackStartTime = (Date.now() / 1000) - adjustedElapsed;
               
               if (progressInterval) clearInterval(progressInterval);
               updateProgressBar();
@@ -2210,11 +2222,12 @@ document.addEventListener('DOMContentLoaded', () => {
               }, 30000);
             } else {
               // Même morceau - vérifier le drift silencieusement
+              const adjustedServerElapsed = Math.max(0, serverElapsed - bufferDelay);
               const clientElapsed = (Date.now() / 1000) - trackStartTime;
-              const drift = Math.abs(serverElapsed - clientElapsed);
+              const drift = Math.abs(adjustedServerElapsed - clientElapsed);
               if (drift > 2) {
                 console.log(`Drift de ${drift.toFixed(1)}s détecté, correction...`);
-                trackStartTime = (Date.now() / 1000) - serverElapsed;
+                trackStartTime = (Date.now() / 1000) - adjustedServerElapsed;
                 trackDuration = trackData.duration;
               }
             }

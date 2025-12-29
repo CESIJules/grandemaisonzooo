@@ -7,6 +7,7 @@ header('Content-Type: application/json');
 header('Cache-Control: no-cache, no-store, must-revalidate');
 
 $track_info_file = '/tmp/radio_track_info.json';
+$duration_cache_file = '/tmp/radio_duration_cache.json';
 $musicDirectory = '/home/radio/musique/';
 
 // IMPORTANT: Délai de buffer Icecast (burst-size / bitrate)
@@ -38,27 +39,39 @@ $filename = $track_info['filename'];
 $start_time = $track_info['start_time'];
 $duration = 0;
 
-// Essayer de récupérer la durée du fichier
-$fullPath = $musicDirectory . $filename;
-if (file_exists($fullPath)) {
-    $command = sprintf(
-        'ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 %s',
-        escapeshellarg($fullPath)
-    );
-    $durationOutput = shell_exec($command);
-    if ($durationOutput !== null && is_numeric(trim($durationOutput))) {
-        $duration = floatval(trim($durationOutput));
+// OPTIMISATION: Cache des durées pour éviter les appels ffprobe répétés
+// Chaque fichier n'est analysé qu'une seule fois
+$duration_cache = [];
+if (file_exists($duration_cache_file)) {
+    $duration_cache = json_decode(file_get_contents($duration_cache_file), true) ?: [];
+}
+
+if (isset($duration_cache[$filename])) {
+    // Durée en cache
+    $duration = $duration_cache[$filename];
+} else {
+    // Calculer la durée et la mettre en cache
+    $fullPath = $musicDirectory . $filename;
+    if (file_exists($fullPath)) {
+        $command = sprintf(
+            'ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 %s',
+            escapeshellarg($fullPath)
+        );
+        $durationOutput = shell_exec($command);
+        if ($durationOutput !== null && is_numeric(trim($durationOutput))) {
+            $duration = floatval(trim($durationOutput));
+            // Sauvegarder en cache
+            $duration_cache[$filename] = $duration;
+            file_put_contents($duration_cache_file, json_encode($duration_cache));
+        }
     }
 }
 
 // Calculer le temps écoulé depuis le début
-// IMPORTANT: Ajouter le délai de buffer Icecast au start_time
-// L'audio atteint réellement l'auditeur X secondes après que Liquidsoap l'a envoyé
 $server_now = time();
-$adjusted_start_time = $start_time + $ICECAST_BUFFER_DELAY;
-$elapsed = $server_now - $adjusted_start_time;
+$elapsed = $server_now - $start_time;
 
-// S'assurer que elapsed n'est pas négatif (si le morceau vient de commencer)
+// S'assurer que elapsed n'est pas négatif
 if ($elapsed < 0) $elapsed = 0;
 
 // Formater le titre pour l'affichage (comme le fait le frontend)
@@ -70,11 +83,11 @@ $displayTitle = strtoupper($displayTitle);
 echo json_encode([
     'filename' => $filename,
     'display_title' => $displayTitle,
-    'start_time' => $adjusted_start_time, // Temps ajusté avec le buffer
+    'start_time' => $start_time,
     'duration' => $duration,
     'elapsed' => $elapsed,
     'remaining' => max(0, $duration - $elapsed),
     'server_now' => $server_now,
-    'buffer_delay' => $ICECAST_BUFFER_DELAY // Pour debug
+    'buffer_delay' => $ICECAST_BUFFER_DELAY // Le frontend doit attendre ce délai avant de changer de titre
 ]);
 ?>
