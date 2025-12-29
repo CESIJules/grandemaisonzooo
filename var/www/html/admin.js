@@ -2689,6 +2689,40 @@ document.addEventListener('DOMContentLoaded', async () => {
         const targetEnergy = lastSongMeta.energy;
         const compatibleKeys = camelotWheel[targetKey]?.compatible || [];
         
+        // --- GLOBAL COHERENCE ANALYSIS ---
+        let playlistTotalBpm = 0;
+        let playlistTotalEnergy = 0;
+        let playlistGenreCounts = {};
+        let playlistValidCount = 0;
+
+        // Analyze entire playlist for global stats
+        for (const path of currentEditingPlaylist.songs) {
+            const fname = path.split('/').pop();
+            const m = metadataCache[fname];
+            if (m && m.bpm) {
+                playlistTotalBpm += m.bpm;
+                if (m.energy) playlistTotalEnergy += m.energy;
+                if (m.genre) {
+                    const g = m.genre.toLowerCase();
+                    playlistGenreCounts[g] = (playlistGenreCounts[g] || 0) + 1;
+                }
+                playlistValidCount++;
+            }
+        }
+
+        const playlistAvgBpm = playlistValidCount > 0 ? playlistTotalBpm / playlistValidCount : targetBpm;
+        const playlistAvgEnergy = playlistValidCount > 0 ? playlistTotalEnergy / playlistValidCount : targetEnergy;
+        
+        // Find dominant genre
+        let dominantGenre = null;
+        let maxGenreCount = 0;
+        for (const [g, count] of Object.entries(playlistGenreCounts)) {
+            if (count > maxGenreCount) {
+                maxGenreCount = count;
+                dominantGenre = g;
+            }
+        }
+
         // Find compatible songs with scoring
         currentSuggestions = [];
         for (const songPath of allAvailableSongs) {
@@ -2701,6 +2735,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Calculate compatibility score
             let score = 0;
             let keyMatch = false;
+            
+            // 1. TRANSITION SCORE (vs Last Song) - Max 100 pts
             
             // Key compatibility (primary - 50 pts)
             if (meta.camelot === targetKey) {
@@ -2729,6 +2765,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const energyDiff = Math.abs(meta.energy - targetEnergy);
                 if (energyDiff <= 0.15) score += 10;
                 else if (energyDiff <= 0.25) score += 5;
+            }
+
+            // 2. GLOBAL COHERENCE SCORE (vs Playlist Stats) - Max 30 pts bonus
+            
+            // Global BPM Coherence
+            const globalBpmDiff = Math.abs(meta.bpm - playlistAvgBpm);
+            const globalBpmRatio = globalBpmDiff / playlistAvgBpm;
+            if (globalBpmRatio <= 0.05) score += 10; // Close to average
+            
+            // Global Energy Coherence
+            if (meta.energy) {
+                const globalEnergyDiff = Math.abs(meta.energy - playlistAvgEnergy);
+                if (globalEnergyDiff <= 0.15) score += 10;
+            }
+
+            // Global Genre Coherence
+            if (dominantGenre && meta.genre && meta.genre.toLowerCase() === dominantGenre) {
+                score += 10;
             }
             
             if (score >= 40) { // Minimum threshold
