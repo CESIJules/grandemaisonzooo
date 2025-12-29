@@ -2592,7 +2592,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     ${metaBadges ? `<div class="song-badges">${metaBadges}</div>` : ''}
                 </div>
                 <div class="song-actions" style="opacity: 1;">
-                    <button class="btn-icon btn-add" title="Ajouter"><i class="fas fa-plus"></i></button>
+                    <button class="btn-icon btn-add" title="Ajouter"><i class="fas fa-chevron-left"></i></button>
                 </div>
             `;
             
@@ -2770,7 +2770,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             // Score class
             const scoreClass = score >= 90 ? 'perfect' : score >= 65 ? 'good' : 'okay';
-            const scoreIcon = score >= 90 ? 'crown' : score >= 65 ? 'check' : 'minus';
+            const scoreIcon = score >= 90 ? 'fire' : score >= 65 ? 'bolt' : 'wave-square';
             
             // BPM difference display
             const bpmDisplay = bpmDiff === 0 ? '=' : (meta.bpm > currentSuggestions[0]?.targetBpm ? `+${bpmDiff}` : `-${bpmDiff}`);
@@ -2792,7 +2792,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                 </div>
                 <button class="btn-add-suggestion" title="Ajouter à la playlist">
-                    <i class="fas fa-plus"></i>
+                    <i class="fas fa-arrow-right"></i>
                 </button>
             `;
             
@@ -2823,7 +2823,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const item = document.createElement('div');
             item.className = 'suggestion-item';
             item.innerHTML = `
-                <div class="suggestion-score okay"><i class="fas fa-question"></i></div>
+                <div class="suggestion-score okay"><i class="fas fa-music"></i></div>
                 <div class="suggestion-content">
                     <div class="song-title">${formatSongPathToTitle(path)}</div>
                     <div class="song-meta">
@@ -2832,7 +2832,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         ${meta.genre ? `<span class="suggestion-badge badge-genre">${meta.genre}</span>` : ''}
                     </div>
                 </div>
-                <button class="btn-add-suggestion" title="Ajouter"><i class="fas fa-plus"></i></button>
+                <button class="btn-add-suggestion" title="Ajouter"><i class="fas fa-arrow-right"></i></button>
             `;
             
             item.querySelector('.btn-add-suggestion').addEventListener('click', (e) => {

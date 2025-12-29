@@ -962,10 +962,17 @@
         .song-item .btn-icon.btn-add {
             color: var(--accent-primary);
             background: rgba(0, 255, 104, 0.1);
+            border: 2px solid rgba(0, 255, 104, 0.25);
+            border-radius: 10px;
+            transition: all 0.25s ease;
         }
         
         .song-item .btn-icon.btn-add:hover {
-            background: rgba(0, 255, 104, 0.25);
+            background: linear-gradient(135deg, var(--accent-primary), #00cc52);
+            color: #000;
+            border-color: transparent;
+            transform: scale(1.1) rotate(90deg);
+            box-shadow: 0 4px 12px rgba(0, 255, 104, 0.35);
         }
         
         .song-item .btn-icon.btn-remove {
@@ -1021,16 +1028,30 @@
         }
         
         .sort-btn {
-            padding: 4px 10px !important;
-            font-size: 0.7rem !important;
+            width: 34px;
+            height: 34px;
+            padding: 0 !important;
+            font-size: 0.85rem !important;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--surface-border);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        
+        .sort-btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
         }
         
         .sort-btn.active {
-            background: var(--accent-primary);
+            background: linear-gradient(135deg, var(--accent-primary), #00cc52);
             color: #000;
-            border-color: var(--accent-primary);
+            border-color: transparent;
+            box-shadow: 0 4px 12px rgba(0, 255, 104, 0.3);
         }
         
         .suggestions-filters {
@@ -1085,32 +1106,38 @@
         }
         
         .suggestion-score {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            font-size: 0.8rem;
+            font-size: 1rem;
             font-weight: 700;
+            transition: transform 0.2s ease;
+        }
+        
+        .suggestion-item:hover .suggestion-score {
+            transform: scale(1.08);
         }
         
         .suggestion-score.perfect {
             background: linear-gradient(135deg, #00ff68, #00cc52);
             color: #000;
+            box-shadow: 0 4px 15px rgba(0, 255, 104, 0.4);
         }
         
         .suggestion-score.good {
-            background: rgba(0, 255, 104, 0.2);
+            background: linear-gradient(135deg, rgba(0, 255, 104, 0.25), rgba(0, 200, 100, 0.15));
             color: var(--accent-primary);
-            border: 2px solid var(--accent-primary);
+            border: 2px solid rgba(0, 255, 104, 0.4);
         }
         
         .suggestion-score.okay {
-            background: rgba(255, 193, 7, 0.15);
-            color: #ffc107;
-            border: 2px solid rgba(255, 193, 7, 0.3);
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.2), rgba(255, 170, 0, 0.1));
+            color: #ffcc00;
+            border: 2px solid rgba(255, 193, 7, 0.35);
         }
         
         .suggestion-content {
@@ -1135,22 +1162,27 @@
         }
         
         .btn-add-suggestion {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            border: none;
-            background: rgba(0, 255, 104, 0.15);
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            border: 2px solid rgba(0, 255, 104, 0.3);
+            background: rgba(0, 255, 104, 0.08);
             color: var(--accent-primary);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.25s ease;
             flex-shrink: 0;
-            font-size: 1rem;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .btn-add-suggestion:hover {
-            background: var(--accent-primary);
+            background: linear-gradient(135deg, var(--accent-primary), #00cc52);
             color: #000;
-            transform: scale(1.1);
+            border-color: transparent;
+            transform: scale(1.08) rotate(90deg);
+            box-shadow: 0 4px 15px rgba(0, 255, 104, 0.4);
         }
         
         .suggestion-badge {
@@ -3988,14 +4020,14 @@ https://open.spotify.com/playlist/abc456" style="width: 100%; background: #14141
                             <option value="">Tous genres</option>
                         </select>
                         <div class="sort-buttons">
-                            <button class="btn btn-sm sort-btn active" data-sort="score" title="Par score">
-                                <i class="fas fa-trophy"></i>
+                            <button class="btn btn-sm sort-btn active" data-sort="score" title="Trier par score">
+                                <i class="fas fa-fire"></i>
                             </button>
-                            <button class="btn btn-sm sort-btn" data-sort="bpm" title="Par BPM">
-                                <i class="fas fa-tachometer-alt"></i>
+                            <button class="btn btn-sm sort-btn" data-sort="bpm" title="Trier par BPM">
+                                <i class="fas fa-heartbeat"></i>
                             </button>
-                            <button class="btn btn-sm sort-btn" data-sort="key" title="Par clé">
-                                <i class="fas fa-key"></i>
+                            <button class="btn btn-sm sort-btn" data-sort="key" title="Trier par tonalité">
+                                <i class="fas fa-music"></i>
                             </button>
                         </div>
                     </div>
