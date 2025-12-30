@@ -3991,9 +3991,14 @@ https://open.spotify.com/playlist/abc456" style="width: 100%; background: #14141
         <section id="playlists" class="admin-section">
             <div class="playlists-header">
                 <h2>Gestion des Playlists</h2>
-                <button id="createPlaylistBtn" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> Nouvelle Playlist
-                </button>
+                <div style="display: flex; gap: 10px;">
+                    <button id="fallbackModeBtn" class="btn btn-secondary" title="Désactiver la playlist active et jouer tout en aléatoire">
+                        <i class="fas fa-random"></i> Mode Fallback
+                    </button>
+                    <button id="createPlaylistBtn" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Nouvelle Playlist
+                    </button>
+                </div>
             </div>
             
             <!-- Grille des playlists -->

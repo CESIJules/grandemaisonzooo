@@ -2274,6 +2274,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const playlistsGrid = document.getElementById('playlistsGrid');
     const playlistEditorPanel = document.getElementById('playlistEditorPanel');
     const createPlaylistBtn = document.getElementById('createPlaylistBtn');
+    const fallbackModeBtn = document.getElementById('fallbackModeBtn');
     const createPlaylistModal = document.getElementById('createPlaylistModal');
     const closeCreateModal = document.getElementById('closeCreateModal');
     const cancelCreatePlaylist = document.getElementById('cancelCreatePlaylist');
@@ -3063,6 +3064,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     // Event listeners for new playlist system
+    if (fallbackModeBtn) {
+        fallbackModeBtn.addEventListener('click', async () => {
+            if (confirm('Voulez-vous vraiment désactiver la playlist active et passer en mode aléatoire (Fallback) ?\nToutes les musiques du dossier seront jouées.')) {
+                await setActivePlaylist(null);
+            }
+        });
+    }
+
     if (createPlaylistBtn) {
         createPlaylistBtn.addEventListener('click', () => {
             if (createPlaylistModal) createPlaylistModal.style.display = 'flex';
