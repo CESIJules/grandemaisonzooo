@@ -1599,14 +1599,23 @@ body.menu-open {
   min-width: 30px;
 }
 
-/* Historique de lecture */
-#history-toggle {
+/* Conteneur des boutons Historique & Infos */
+.song-buttons-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 4px;
+  width: 100%;
+}
+
+/* Boutons Historique & Infos (style commun) */
+#history-toggle, #info-toggle {
   display: inline-flex;
   align-items: center;
-  justify-content: flex-start; /* Align Left */
+  justify-content: center;
   gap: 6px;
-  padding: 2px 0;
-  margin-top: 2px;
+  padding: 2px 8px;
   cursor: pointer;
   font-size: 0.7rem;
   color: #aaa;
@@ -1614,24 +1623,24 @@ body.menu-open {
   letter-spacing: 1px;
   transition: color 0.2s;
   user-select: none;
-  width: auto;
 }
 
-#history-toggle:hover {
+#history-toggle:hover, #info-toggle:hover {
   color: #00ff68;
 }
 
-#history-toggle span {
+#history-toggle span, #info-toggle span {
   font-weight: 500;
 }
 
-#history-chevron {
+#history-chevron, #info-chevron {
   font-size: 0.6rem !important;
   transition: transform 0.3s ease;
   opacity: 0.7;
 }
 
-#history-toggle.open #history-chevron {
+#history-toggle.open #history-chevron,
+#info-toggle.open #info-chevron {
   transform: rotate(180deg);
 }
 
@@ -1660,6 +1669,66 @@ body.menu-open {
   opacity: 1;
   visibility: visible;
   transform: translateX(-50%) translateY(0);
+}
+
+/* Dropdown Infos */
+#info-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  min-width: 180px;
+  max-width: 280px;
+  background: rgba(15, 15, 15, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.25s ease;
+  z-index: 100;
+  overflow: hidden;
+}
+
+#info-dropdown.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+#info-content {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+}
+
+.info-item .info-label {
+  font-size: 10px;
+  color: #777;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.info-item .info-value {
+  font-size: 12px;
+  color: #00ff68;
+  font-weight: 700;
+  text-shadow: 0 0 10px rgba(0, 255, 104, 0.3);
 }
 
 #history-list {
@@ -1721,11 +1790,15 @@ body.menu-open {
 }
 
 @media (max-width: 480px) {
-  #history-toggle span {
+  #history-toggle span, #info-toggle span {
     display: none;
   }
   
-  #history-dropdown {
+  .song-buttons-container {
+    gap: 12px;
+  }
+  
+  #history-dropdown, #info-dropdown {
     min-width: 160px;
     max-width: 240px;
     left: 50%;

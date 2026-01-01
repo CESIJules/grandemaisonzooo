@@ -2144,6 +2144,46 @@ document.addEventListener('DOMContentLoaded', () => {
   const historyList = document.getElementById('history-list');
   let historyOpen = false;
 
+  // --- INFOS DU MORCEAU ---
+  const infoToggle = document.getElementById('info-toggle');
+  const infoDropdown = document.getElementById('info-dropdown');
+  const infoBpm = document.getElementById('info-bpm');
+  const infoKey = document.getElementById('info-key');
+  const infoGenre = document.getElementById('info-genre');
+  let infoOpen = false;
+  let allMetadata = null; // Cache des métadonnées
+
+  // Charger toutes les métadonnées une seule fois
+  async function loadAllMetadata() {
+    if (allMetadata) return allMetadata;
+    try {
+      const response = await fetch(`./get_all_metadata.php?nocache=${Date.now()}`);
+      allMetadata = await response.json();
+      return allMetadata;
+    } catch (e) {
+      console.error('Erreur chargement métadonnées:', e);
+      return {};
+    }
+  }
+
+  // Mettre à jour les infos du morceau en cours
+  async function updateSongInfo(filename) {
+    if (!infoBpm || !infoKey || !infoGenre) return;
+    
+    const metadata = await loadAllMetadata();
+    const songMeta = metadata[filename];
+    
+    if (songMeta) {
+      infoBpm.textContent = songMeta.bpm || '--';
+      infoKey.textContent = songMeta.camelot || songMeta.key || '--';
+      infoGenre.textContent = songMeta.genre || '--';
+    } else {
+      infoBpm.textContent = '--';
+      infoKey.textContent = '--';
+      infoGenre.textContent = '--';
+    }
+  }
+
   // Toggle du menu historique
   if (historyToggle && historyDropdown) {
     historyToggle.addEventListener('click', (e) => {
@@ -2151,6 +2191,13 @@ document.addEventListener('DOMContentLoaded', () => {
       historyOpen = !historyOpen;
       historyToggle.classList.toggle('open', historyOpen);
       historyDropdown.classList.toggle('open', historyOpen);
+      
+      // Fermer le dropdown infos si ouvert
+      if (historyOpen && infoOpen) {
+        infoOpen = false;
+        infoToggle.classList.remove('open');
+        infoDropdown.classList.remove('open');
+      }
       
       // Charger l'historique à l'ouverture
       if (historyOpen) {
@@ -2164,6 +2211,37 @@ document.addEventListener('DOMContentLoaded', () => {
         historyOpen = false;
         historyToggle.classList.remove('open');
         historyDropdown.classList.remove('open');
+      }
+    });
+  }
+
+  // Toggle du menu infos
+  if (infoToggle && infoDropdown) {
+    infoToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      infoOpen = !infoOpen;
+      infoToggle.classList.toggle('open', infoOpen);
+      infoDropdown.classList.toggle('open', infoOpen);
+      
+      // Fermer le dropdown historique si ouvert
+      if (infoOpen && historyOpen) {
+        historyOpen = false;
+        historyToggle.classList.remove('open');
+        historyDropdown.classList.remove('open');
+      }
+      
+      // Mettre à jour les infos si on a un morceau en cours
+      if (infoOpen && lastKnownTitle) {
+        updateSongInfo(lastKnownTitle);
+      }
+    });
+    
+    // Fermer le dropdown en cliquant en dehors
+    document.addEventListener('click', (e) => {
+      if (infoOpen && !infoDropdown.contains(e.target) && !infoToggle.contains(e.target)) {
+        infoOpen = false;
+        infoToggle.classList.remove('open');
+        infoDropdown.classList.remove('open');
       }
     });
   }
@@ -2297,6 +2375,7 @@ document.addEventListener('DOMContentLoaded', () => {
               // Mise à jour du titre
               updateTitleUI(title);
               updateCoverUI(rawTitle); // Update cover art
+              updateSongInfo(rawTitle); // Update song info (BPM, Key, Genre)
               lastKnownTitle = rawTitle;
               isFirstTitleLoad = false;
               
