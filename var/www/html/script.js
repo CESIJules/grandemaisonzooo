@@ -1789,7 +1789,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (progressInterval) clearInterval(progressInterval); // Sécurité
         updateProgressBar(); // Mettre à jour immédiatement
         progressInterval = setInterval(updateProgressBar, 250);
-        if (progressInfo) progressInfo.classList.add('visible);
+        if (progressInfo) progressInfo.classList.add('visible');
       }
 
       // Sync PiP state
@@ -2168,47 +2168,483 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- INFO DU MORCEAU ---
-  const infoToggle = document.getElementById('info-toggle');
-  const infoDropdown = document.getElementById('info-dropdown');
-  let infoOpen = false;
-
-  if (infoToggle && infoDropdown) {
-    infoToggle.addEventListener('click', (e) => {
-      e.stopPropagation();
-      infoOpen = !infoOpen;
-      infoToggle.classList.toggle('open', infoOpen);
-      infoDropdown.classList.toggle('open', infoOpen);
-      
-      // Close history if open
-      if (historyOpen) {
-        historyOpen = false;
-        historyToggle.classList.remove('open');
-        historyDropdown.classList.remove('open');
-      }
-    });
-
-    // Close info when clicking outside
-    document.addEventListener('click', (e) => {
-      if (infoOpen && !infoDropdown.contains(e.target) && !infoToggle.contains(e.target)) {
-        infoOpen = false;
-        infoToggle.classList.remove('open');
-        infoDropdown.classList.remove('open');
-      }
-    });
+  // Récupérer l'historique depuis le serveur
+  async function fetchPlayHistory() {
+    if (!historyList) return;
     
-    // Also close info when opening history
-    if (historyToggle) {
-        historyToggle.addEventListener('click', () => {
-            if (infoOpen) {
-                infoOpen = false;
-                infoToggle.classList.remove('open');
-                infoDropdown.classList.remove('open');
-            }
-        });
+    try {
+      const response = await fetch(`./get_play_history.php?limit=3&nocache=${Date.now()}`);
+      const data = await response.json();
+      
+      if (data.success && data.history && data.history.length > 0) {
+        historyList.innerHTML = data.history.map(track => `
+          <div class="history-item">
+            <span class="history-title">${escapeHtml(track.display)}</span>
+            <span class="history-time">${escapeHtml(track.relative_time)}</span>
+          </div>
+        `).join('');
+      } else {
+        historyList.innerHTML = '<div class="history-item"><span class="history-title" style="color:#666;">Aucun historique</span></div>';
+      }
+    } catch (e) {
+      console.error('Erreur historique:', e);
+      historyList.innerHTML = '<div class="history-item"><span class="history-title" style="color:#666;">Erreur de chargement</span></div>';
     }
   }
-  
+
+  // Helper pour échapper le HTML
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function updateCoverUI(filename) {
+      const coverImg = document.getElementById('rcCoverImg');
+      const mainCoverImg = document.getElementById('mainCoverImg');
+      
+      if (!filename) {
+          if (coverImg) coverImg.style.opacity = '0';
+          if (mainCoverImg) mainCoverImg.style.opacity = '0';
+          return;
+      }
+
+      const newSrc = `get_cover.php?file=${encodeURIComponent(filename)}`;
+      
+      // Helper to update an image element
+      const updateImage = (imgElement) => {
+          if (!imgElement) return;
+          if (imgElement.src.includes(encodeURIComponent(filename))) return;
+
+          const tempImg = new Image();
+          tempImg.onload = () => {
+              imgElement.src = newSrc;
+              imgElement.style.display = 'block';
+              requestAnimationFrame(() => {
+                  imgElement.style.opacity = '1';
+              });
+          };
+          tempImg.onerror = () => {
+              imgElement.style.opacity = '0';
+          };
+          tempImg.src = newSrc;
+      };
+
+      updateImage(coverImg);
+      updateImage(mainCoverImg);
+  }
+
+  async function fetchCurrentSong() {
+    // PERFORMANCE: Skip if hidden
+    if (document.hidden) return;
+
+    if (!currentSong) return;
+    try {
+      // Utiliser get_current_track.php comme source de vérité (écrit par Liquidsoap)
+      // Icecast est utilisé uniquement pour le nombre d'auditeurs
+      const [trackResponse, icecastResponse] = await Promise.all([
+        fetch(`./get_current_track.php?nocache=${Date.now()}`),
+        fetch(`https://grandemaisonzoo.com/status-json.xsl?nocache=${Date.now()}`)
+      ]);
+
+      let title = "Aucun morceau en cours";
+      let rawTitle = "";
+      let listeners = 0;
+
+      // Récupérer le nombre d'auditeurs depuis Icecast
+      if (icecastResponse.ok) {
+        const icecastData = await icecastResponse.json();
+        if (icecastData.icestats && icecastData.icestats.source) {
+          const source = Array.isArray(icecastData.icestats.source) 
+            ? icecastData.icestats.source.find(s => s.listenurl.includes('/stream')) 
+            : icecastData.icestats.source;
+          if (source && source.listeners) listeners = source.listeners;
+        }
+      }
+
+      // Récupérer le morceau en cours depuis notre API (source de vérité)
+      if (trackResponse.ok) {
+        const trackData = await trackResponse.json();
+        if (trackData.filename && !trackData.error) {
+          rawTitle = trackData.filename;
+          title = trackData.display_title || rawTitle
+            .replace(/\.[^/.]+$/, "")
+            .replace(/_/g, ' ')
+            .replace(/\s*-\s*/g, ' - ')
+            .toUpperCase();
+          
+          // Synchroniser directement avec les données du serveur
+          if (trackData.duration > 0 && trackData.start_time) {
+            const serverElapsed = trackData.elapsed || (trackData.server_now - trackData.start_time);
+            const bufferDelay = trackData.buffer_delay || 16;
+            
+            // Vérifier si c'est un nouveau morceau ou si on doit juste resync
+            const currentTitle = currentSong.querySelector('.title').textContent;
+            const isNewTrack = (title !== currentTitle);
+            
+            if (isNewTrack || isFirstTitleLoad) {
+              // IMPORTANT: Attendre que l'audio du nouveau morceau soit réellement arrivé
+              // avant de changer le titre (délai de buffer Icecast)
+              if (serverElapsed < bufferDelay && !isFirstTitleLoad) {
+                // Le nouveau morceau a commencé côté serveur mais l'audio n'est pas encore arrivé
+                // On continue avec l'ancien titre et timer, on changera au prochain poll
+                console.log(`Nouveau morceau détecté mais audio pas encore arrivé (${serverElapsed.toFixed(1)}s < ${bufferDelay}s)`);
+                return;
+              }
+              
+              console.log('Changement de morceau:', title);
+              
+              // Mise à jour du titre
+              updateTitleUI(title);
+              updateCoverUI(rawTitle); // Update cover art
+              lastKnownTitle = rawTitle;
+              isFirstTitleLoad = false;
+              
+              // Rafraîchir l'historique si le menu est ouvert
+              if (historyOpen) {
+                fetchPlayHistory();
+              }
+              
+              // Mise à jour de la progression
+              // On soustrait le buffer_delay car c'est le temps réel écoulé pour l'auditeur
+              trackDuration = trackData.duration;
+              const adjustedElapsed = Math.max(0, serverElapsed - bufferDelay);
+              trackStartTime = (Date.now() / 1000) - adjustedElapsed;
+              
+              if (progressInterval) clearInterval(progressInterval);
+              updateProgressBar();
+              progressInterval = setInterval(updateProgressBar, 250);
+              if (progressInfo) progressInfo.classList.add('visible');
+              
+              // Redémarrer l'intervalle de resync
+              if (resyncInterval) clearInterval(resyncInterval);
+              resyncInterval = setInterval(() => {
+                if (!document.hidden && lastKnownTitle) {
+                  resyncProgress(lastKnownTitle);
+                }
+              }, 30000);
+            } else {
+              // Même morceau - vérifier le drift silencieusement
+              const adjustedServerElapsed = Math.max(0, serverElapsed - bufferDelay);
+              const clientElapsed = (Date.now() / 1000) - trackStartTime;
+              const drift = Math.abs(adjustedServerElapsed - clientElapsed);
+              if (drift > 2) {
+                console.log(`Drift de ${drift.toFixed(1)}s détecté, correction...`);
+                trackStartTime = (Date.now() / 1000) - adjustedServerElapsed;
+                trackDuration = trackData.duration;
+              }
+            }
+          }
+        }
+      }
+
+      // Mettre à jour le compteur d'auditeurs
+      const listenerCountEl = document.getElementById('listenerCount');
+      if (listenerCountEl) {
+        listenerCountEl.innerHTML = `<i class="fas fa-user"></i> ${listeners}`;
+      }
+
+    } catch (err) {
+      console.error("Erreur:", err);
+      currentSong.querySelector('.title').textContent = "Infos indisponibles";
+    }
+  }
+
+  // Formulaire de contact
+  const contactForm = document.getElementById('contactForm');
+  const formMessage = document.getElementById('formMessage');
+
+  if (contactForm && formMessage) {
+    contactForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const data = new FormData(form);
+      
+      try {
+        const response = await fetch(form.action, {
+          method: form.method,
+          body: data,
+          headers: { 'Accept': 'application/json' }
+        });
+        
+        if (response.ok) {
+          formMessage.textContent = 'Message envoyé. Vous serez recontacté sous peu.';
+          form.reset();
+          const submitButton = form.querySelector('button[type="submit"]');
+          if (submitButton) submitButton.style.display = 'none';
+          setTimeout(() => {
+            formMessage.textContent = '';
+            if (submitButton) submitButton.style.display = '';
+          }, 5000);
+        } else {
+          formMessage.textContent = 'Erreur lors de l\'envoi';
+        }
+      } catch (error) {
+        formMessage.textContent = 'Erreur réseau';
+      }
+    });
+  }
+
+  // --- Timeline Management ---
+  const timelineContainer = document.querySelector('.timeline-container');
+  const timelineFilters = document.querySelector('.timeline-filters');
+
+  async function renderTimelinePosts(artist = 'Tous') {
+    if (!timelineContainer) return;
+
+    let allArtists = [];
+    try {
+        const artistsResponse = await fetch('get_artists.php');
+        if (artistsResponse.ok) {
+            allArtists = await artistsResponse.json();
+            // Sort by length descending to match longer names first (e.g. "Artist Name" before "Artist")
+            allArtists.sort((a, b) => b.length - a.length);
+        }
+    } catch (e) {
+        console.error("Could not fetch artists for replacement", e);
+    }
+
+    const fetchURL = `./get_posts.php?artist=${encodeURIComponent(artist)}`;
+
+    try {
+      const response = await fetch(fetchURL, { cache: 'no-store' });
+      if (!response.ok) throw new Error(`Erreur du serveur: ${response.statusText}`);
+      let posts = await response.json();
+
+      if (!Array.isArray(posts)) {
+        console.error("Les données reçues ne sont pas un tableau:", posts);
+        posts = [];
+      }
+
+      // Sort Ascending (Oldest -> Newest) so Newest is at the Right (End)
+      posts.sort((a, b) => new Date(a.date) - new Date(b.date));
+      timelineContainer.innerHTML = '';
+
+      if (posts.length === 0) {
+        timelineContainer.innerHTML = '<p style="text-align: center; color: white;">Aucun post sur la timeline pour le moment.</p>';
+        return;
+      }
+
+      posts.forEach((post, index) => {
+        const timelineItem = document.createElement('div');
+        timelineItem.classList.add('timeline-item');
+
+        const contentDiv = document.createElement('div');
+        contentDiv.classList.add('timeline-content');
+        contentDiv.classList.add(index % 2 === 0 ? 'timeline-content-left' : 'timeline-content-right');
+
+        let displayTitle = post.title;
+        let displaySubtitle = post.subtitle;
+
+        // If we have an explicit artist field, use it as the main title
+        if (post.artist) {
+            displayTitle = post.artist.toUpperCase();
+            
+            // Fix for legacy posts: if title equals artist, use subtitle as the project title
+            if (post.title && post.title.trim().toLowerCase() === post.artist.trim().toLowerCase() && post.subtitle) {
+                displaySubtitle = post.subtitle;
+            } else {
+                displaySubtitle = post.title;
+            }
+        } else {
+            // Legacy: Check if title contains artist name
+            if (allArtists.length > 0) {
+                for (const artistName of allArtists) {
+                    const artistRegex = new RegExp(artistName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi');
+                    if (displayTitle) {
+                        displayTitle = displayTitle.replace(artistRegex, artistName.toUpperCase());
+                    }
+                    if (displaySubtitle) {
+                        displaySubtitle = displaySubtitle.replace(artistRegex, artistName.toUpperCase());
+                    }
+                }
+            }
+        }
+
+        // Check if the title is an artist name (case-insensitive comparison)
+        const isArtistTitle = post.artist ? true : allArtists.some(artist => artist.toLowerCase() === post.title.toLowerCase());
+
+        const titleElement = `<h3 class="${isArtistTitle ? 'artist-title' : ''}">${escapeHtml(displayTitle)}</h3>`;
+
+        const subtitleElement = post.link && displaySubtitle
+          ? `<h4><a href="${escapeHtml(post.link)}" target="_blank" rel="noopener noreferrer" class="timeline-subtitle-link">${escapeHtml(displaySubtitle)}</a></h4>`
+          : displaySubtitle
+            ? `<h4>${escapeHtml(displaySubtitle)}</h4>`
+            : '';
+
+        const imageElement = post.image
+          ? (post.link 
+              ? `<a href="${escapeHtml(post.link)}" target="_blank" rel="noopener noreferrer" class="timeline-image-link"><img src="${escapeHtml(post.image)}" alt="${escapeHtml(post.title)}" class="timeline-image"></a>`
+              : `<img src="${escapeHtml(post.image)}" alt="${escapeHtml(post.title)}" class="timeline-image">`)
+          : '';
+
+        contentDiv.innerHTML = `
+          ${titleElement}
+          ${subtitleElement}
+          ${imageElement}
+          <span class="timeline-date">${new Date(post.date).toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+        `;
+
+        // Add 3D Tilt Effect
+        addTiltEffect(contentDiv);
+
+        timelineItem.appendChild(contentDiv);
+        timelineContainer.appendChild(timelineItem);
+      });
+
+    } catch (error) {
+      console.error('Impossible de charger la timeline:', error);
+      timelineContainer.innerHTML = '<p style="text-align: center; color: red;">Erreur: Impossible de charger la timeline.</p>';
+    }
+  }
+
+  // 3D Tilt Effect Function
+  function addTiltEffect(card) {
+    let rafId = null;
+    
+    card.addEventListener('mousemove', (e) => {
+      if (rafId) return; // Throttle
+
+      rafId = requestAnimationFrame(() => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        
+        // Calculate rotation (max 15 degrees)
+        const rotateX = ((y - centerY) / centerY) * -15; 
+        const rotateY = ((x - centerX) / centerX) * 15;
+
+        card.style.setProperty('--rotate-x', `${rotateX}deg`);
+        card.style.setProperty('--rotate-y', `${rotateY}deg`);
+        
+        // Calculate shine position
+        card.style.setProperty('--shine-x', `${(x / rect.width) * 100}%`);
+        card.style.setProperty('--shine-y', `${(y / rect.height) * 100}%`);
+        
+        rafId = null;
+      });
+      
+      // Make movement snappy when following mouse
+      card.style.transition = 'transform 0.1s ease-out, box-shadow 0.4s ease'; 
+    });
+
+    card.addEventListener('mouseleave', () => {
+      // Reset to center
+      card.style.setProperty('--rotate-x', '0deg');
+      card.style.setProperty('--rotate-y', '0deg');
+      card.style.setProperty('--shine-x', '50%');
+      card.style.setProperty('--shine-y', '50%');
+      
+      // Smooth return
+      card.style.transition = 'transform 0.6s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.4s ease';
+    });
+  }
+
+  async function populateFilterButtons() {
+    if (!timelineFilters) return;
+
+    try {
+      const response = await fetch('get_artists.php');
+      if (!response.ok) {
+        throw new Error('Could not fetch artists');
+      }
+      const artists = await response.json();
+
+      timelineFilters.innerHTML = ''; // Clear existing buttons
+
+      // "Tous" button
+      const allButton = document.createElement('button');
+      allButton.className = 'btn filter-btn active';
+      allButton.dataset.artist = 'Tous';
+      allButton.textContent = 'Tous';
+      timelineFilters.appendChild(allButton);
+
+      artists.forEach(artist => {
+        const button = document.createElement('button');
+        button.className = 'btn filter-btn';
+        button.dataset.artist = escapeHtml(artist);
+        button.textContent = artist;
+        timelineFilters.appendChild(button);
+      });
+
+      // Add event listeners to new buttons
+      const filterButtons = document.querySelectorAll('.filter-btn');
+      filterButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          const artist = button.dataset.artist;
+
+          filterButtons.forEach(btn => btn.classList.remove('active'));
+          button.classList.add('active');
+
+          renderTimelinePosts(artist);
+        });
+      });
+
+    } catch (error) {
+      console.error('Failed to populate filter buttons:', error);
+      timelineFilters.innerHTML = '<p style="color: red;">Erreur de chargement des filtres.</p>';
+    }
+  }
+
+  // Initial render
+  populateFilterButtons();
+  renderTimelinePosts();
+
+  function handleArtistTimelineLinks() {
+    const artistTimelineButtons = document.querySelectorAll('.artiste .btn[data-artist]');
+    artistTimelineButtons.forEach(button => {
+      button.addEventListener('click', (e) => {
+        e.preventDefault();
+        const artist = button.dataset.artist;
+        const filterButton = document.querySelector(`.filter-btn[data-artist="${artist}"]`);
+        if (filterButton) {
+          filterButton.click();
+        }
+        
+        const timelineIndex = Array.from(sections).findIndex(s => s.id === 'timeline');
+        if (timelineIndex !== -1) {
+            scrollToSection(timelineIndex);
+        }
+      });
+    });
+  }
+
+  handleArtistTimelineLinks();
+
+  // Intercept all anchor clicks for smooth scrolling (Delegation)
+  document.addEventListener('click', function (e) {
+      if (e.defaultPrevented) return; // Skip if already handled (e.g. by handleArtistTimelineLinks)
+      
+      const anchor = e.target.closest('a[href^="#"]');
+      if (anchor) {
+          const targetId = anchor.getAttribute('href').substring(1);
+          const targetSection = document.getElementById(targetId);
+          if (targetSection) {
+              e.preventDefault();
+              const index = Array.from(sections).findIndex(s => s === targetSection);
+              if (index !== -1) {
+                  scrollToSection(index);
+              }
+          }
+      }
+  });
+
+  // Handle URL parameter for artist filter
+  const urlParams = new URLSearchParams(window.location.search);
+  const artistParam = urlParams.get('artist');
+  if (artistParam) {
+    // We need to wait for the filter buttons to be populated
+    setTimeout(() => {
+      const filterButton = document.querySelector(`.filter-btn[data-artist="${artistParam}"]`);
+      if (filterButton) {
+        filterButton.click();
+        document.querySelector('#timeline').scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 500); // Small delay to ensure buttons are rendered
+  }
+
   // --- Custom Smooth Snap Scrolling (Global Wheel Hijack) ---
   
   // Initialize current section index based on scroll position
