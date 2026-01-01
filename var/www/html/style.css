@@ -752,9 +752,8 @@ body.menu-open {
   top: 0;
   left: 0;
   right: 0;
-  /* NO bottom - let visualizer show behind */
-  height: auto;
-  z-index: 30;
+  bottom: 0; /* Cover full #radio so visualizer can be at bottom */
+  z-index: 5; /* Lower z-index so vinyl shows above */
   display: block;
   pointer-events: none;
 }
@@ -1521,7 +1520,7 @@ body.menu-open {
   height: 80px;
   top: auto;
   transform: none;
-  z-index: 15;
+  z-index: 20;
   pointer-events: none;
   border-radius: 0;
 }
@@ -1581,7 +1580,7 @@ body.menu-open {
 
 .player {
   position: relative;
-  z-index: 10;
+  z-index: 15; /* Above radio-header (5) but below title (25) */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1712,34 +1711,36 @@ body.menu-open {
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between; /* Title left, filters right */
   padding: 0 40px;
-  /* z-index removed to allow mix-blend-mode on children */
+  z-index: 50;
   pointer-events: none;
 }
 
 #timeline h2 { 
   margin: 0;
   font-size: 4.5em;
-  position: absolute;
+  position: relative; /* Not absolute anymore */
   text-align: left;
   pointer-events: none;
-  left: 40px;
-  top: 50%;
-  transform: translateY(-50%);
+  left: 0;
+  top: 0;
+  transform: none;
   mix-blend-mode: difference;
   color: #fff;
   z-index: 10;
   text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+  flex-shrink: 0;
 }
 
 .timeline-filters {
   display: flex;
   gap: 10px;
-  justify-content: center;
+  justify-content: flex-end;
   pointer-events: auto;
   position: relative;
   z-index: 10;
+  flex-wrap: wrap;
 }
 
 .filter-btn.active {
