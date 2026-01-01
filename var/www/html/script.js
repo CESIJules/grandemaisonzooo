@@ -1789,7 +1789,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (progressInterval) clearInterval(progressInterval); // Sécurité
         updateProgressBar(); // Mettre à jour immédiatement
         progressInterval = setInterval(updateProgressBar, 250);
-        if (progressInfo) progressInfo.classList.add('visible);
+        if (progressInfo) progressInfo.classList.add('visible');
       }
 
       // Sync PiP state
