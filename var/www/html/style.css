@@ -771,8 +771,16 @@ body.menu-open {
   z-index: 25;
 }
 
-/* Hide volume and PIP in header - they're in RC */
-.radio-header .volume-container,
+/* Volume button next to RADIO title */
+.radio-header .volume-container {
+  display: flex;
+  position: absolute;
+  top: 20px;
+  left: 280px; /* Position after RADIO title */
+  z-index: 100;
+}
+
+/* Hide PIP in header - it's in RC */
 .radio-header .btn-pip-main {
   display: none;
 }
@@ -1217,11 +1225,11 @@ body.menu-open {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   
-  /* Adaptation longueur */
+  /* Adaptation longueur - flexible width */
   width: auto;
-  max-width: 500px;
+  max-width: min(600px, calc(100vw - 400px)); /* Flexible max-width */
   justify-content: flex-start;
-  overflow: visible;
+  overflow: hidden; /* Hide overflow for long titles */
 
   /* Animation */
   transition: all 0.3s ease;
@@ -1270,7 +1278,10 @@ body.menu-open {
   align-items: flex-start; /* Align Left */
   justify-content: center;
   gap: 2px;
-  min-width: 180px;
+  min-width: 150px;
+  max-width: 100%;
+  overflow: hidden;
+  flex: 1;
 }
 
 #currentSong .song-info {
@@ -1293,6 +1304,11 @@ body.menu-open {
   font-size: 0.9rem;
   text-shadow: 0 0 10px #00a542;
   letter-spacing: 0.3px;
+  /* Allow title to truncate if too long */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }
 
 /* Barre de progression de la radio */
@@ -1514,15 +1530,18 @@ body.menu-open {
 
 #visualizer {
   position: absolute;
-  top: 15px;
-  left: 15px;
-  width: 400px;
-  height: 100px;
+  top: 20px; /* Aligned with RADIO title */
+  left: 30px; /* Same left as RADIO title */
+  width: 250px; /* Width matching RADIO text */
+  height: 70px; /* Height to fit within text bounds */
   bottom: auto;
   transform: none;
   z-index: 20; /* Behind title (25) */
   pointer-events: none;
   border-radius: 0;
+  /* Center vertically with the text */
+  display: flex;
+  align-items: center;
 }
 
 .volume-container {
@@ -2435,8 +2454,11 @@ body.menu-open {
    CONSOLIDATED RESPONSIVE STYLES
    =============================================
    Breakpoints:
+   - 1800px : Full HD+ / 2K transition
+   - 1600px : Full HD / Standard Desktop
    - 1400px : Large Desktop adjustments
    - 1200px : Laptop / Small Desktop
+   - 1024px : Small Laptop / Large Tablet
    - 900px  : Tablet / Large Mobile
    - 768px  : Mobile
    - 480px  : Small Mobile
@@ -2444,18 +2466,14 @@ body.menu-open {
    ============================================= */
 
 /* =========================================
-   LARGE DESKTOP (max-width: 1400px)
+   FULL HD+ / 2K TRANSITION (max-width: 1800px)
+   For screens between 1600px and 2K
    ========================================= */
-@media (max-width: 1400px) {
-  /* Radio Controller - Slightly smaller */
-  .rc-container {
-    min-width: 320px;
-  }
-  
-  /* Timeline */
+@media (max-width: 1800px) {
+  /* --- Timeline Section --- */
   .timeline-header-wrapper {
     top: 12px;
-    padding: 0 95px;
+    padding: 0 90px;
     gap: 10px;
   }
   
@@ -2465,62 +2483,68 @@ body.menu-open {
   
   .timeline-filters .btn {
     padding: 9px 16px;
-    font-size: 0.72rem;
+    font-size: 0.75rem;
   }
   
   .timeline-item {
     width: 260px;
-    margin: 0 25px;
+    margin: 0 35px;
+  }
+  
+  .timeline-content {
+    padding: 18px;
+  }
+  
+  .timeline-item h3 {
+    font-size: 1.2em;
+  }
+  
+  /* --- Radio Section --- */
+  #radio h2 {
+    font-size: 4em;
+  }
+  
+  /* Visualizer aligned with RADIO title */
+  #visualizer {
+    width: 220px;
+    height: 65px;
+  }
+  
+  /* Volume position adjusted for smaller title */
+  .radio-header .volume-container {
+    left: 250px;
+  }
+  
+  #currentSong {
+    max-width: 480px;
+    padding: 8px 14px 8px 8px;
+  }
+  
+  .main-cover {
+    width: 44px;
+    height: 44px;
+  }
+  
+  #vinyl-disc-container {
+    width: 340px;
+    height: 340px;
+  }
+  
+  /* --- Radio Controller --- */
+  .rc-container {
+    min-width: 340px;
   }
 }
 
 /* =========================================
-   LAPTOP & SMALL DESKTOP (max-width: 1200px)
+   FULL HD / STANDARD DESKTOP (max-width: 1600px)
+   Most common resolution - 1920x1080 displays
    ========================================= */
-@media (max-width: 1200px) {
-  /* Radio Section */
-  #radio h2 {
-    top: 18px;
-    left: 20px;
-    font-size: 2.8em;
-  }
-  
-  #visualizer {
-    width: 320px;
-    height: 85px;
-    top: 12px;
-    left: 12px;
-  }
-  
-  #currentSong {
-    top: 18px;
-    max-width: 500px;
-    padding: 7px 12px 7px 7px;
-  }
-  
-  #currentSong .title {
-    font-size: 0.85rem;
-  }
-  
-  .main-cover {
-    width: 42px;
-    height: 42px;
-  }
-  
-  .volume-container {
-    width: 50px;
-    height: 50px;
-  }
-  
-  .volume-ring {
-    width: 50px;
-    height: 50px;
-  }
-  
-  /* Timeline Adjustments */
+@media (max-width: 1600px) {
+  /* --- Timeline Section --- */
   .timeline-header-wrapper {
-    top: 12px;
-    padding: 0 90px;
+    top: 10px;
+    padding: 0 85px;
     gap: 8px;
   }
   
@@ -2534,32 +2558,476 @@ body.menu-open {
   
   .timeline-filters .btn {
     padding: 8px 14px;
-    font-size: 0.7rem;
+    font-size: 0.72rem;
   }
-
+  
   .timeline-item {
-    width: 220px;
-    margin: 0 15px;
-  }
-
-  .timeline-item h3 {
-    font-size: 1em;
+    width: 240px;
+    margin: 0 28px;
   }
   
   .timeline-content {
-    padding: 14px;
+    padding: 16px;
   }
-
-  /* Vinyl Disc */
+  
+  .timeline-item h3 {
+    font-size: 1.15em;
+  }
+  
+  .timeline-item h4 {
+    font-size: 0.8em;
+  }
+  
+  .timeline-item::before {
+    height: 35px;
+  }
+  
+  .timeline-item:nth-child(odd) .timeline-content {
+    margin-bottom: 35px;
+  }
+  
+  .timeline-item:nth-child(even) .timeline-content {
+    margin-top: 35px;
+  }
+  
+  /* --- Radio Section --- */
+  #radio h2 {
+    font-size: 3.5em;
+  }
+  
+  /* Visualizer aligned with RADIO title */
+  #visualizer {
+    width: 200px;
+    height: 60px;
+  }
+  
+  /* Volume position adjusted for smaller title */
+  .radio-header .volume-container {
+    left: 220px;
+    width: 50px;
+    height: 50px;
+  }
+  
+  .radio-header .volume-ring {
+    width: 50px;
+    height: 50px;
+  }
+  
+  #currentSong {
+    top: 18px;
+    max-width: 450px;
+    padding: 7px 12px 7px 7px;
+  }
+  
+  #currentSong .title {
+    font-size: 0.9rem;
+  }
+  
+  .main-cover {
+    width: 42px;
+    height: 42px;
+  }
+  
   #vinyl-disc-container {
-    width: 320px;
-    height: 320px;
+    width: 300px;
+    height: 300px;
   }
   
   #playRadio {
     width: 70px;
     height: 70px;
     font-size: 28px;
+  }
+  
+  .volume-container {
+    width: 55px;
+    height: 55px;
+  }
+  
+  .volume-ring {
+    width: 55px;
+    height: 55px;
+  }
+  
+  /* --- Radio Controller --- */
+  .rc-container {
+    min-width: 320px;
+  }
+  
+  .rc-btn-play,
+  .rc-btn-pip {
+    width: 44px;
+    height: 44px;
+    font-size: 17px;
+  }
+  
+  .rc-cover {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* =========================================
+   LARGE DESKTOP (max-width: 1400px)
+   ========================================= */
+@media (max-width: 1400px) {
+  /* --- Timeline Section --- */
+  .timeline-header-wrapper {
+    top: 10px;
+    padding: 0 80px;
+    gap: 8px;
+  }
+  
+  #timeline h2 {
+    font-size: 2.8em;
+  }
+  
+  .timeline-filters {
+    gap: 5px;
+    max-width: calc(100% - 80px);
+  }
+  
+  .timeline-filters .btn {
+    padding: 7px 12px;
+    font-size: 0.7rem;
+  }
+  
+  .timeline-item {
+    width: 220px;
+    margin: 0 22px;
+  }
+  
+  .timeline-content {
+    padding: 14px;
+    border-radius: 16px;
+  }
+  
+  .timeline-item h3 {
+    font-size: 1.1em;
+  }
+  
+  .timeline-item h4 {
+    font-size: 0.75em;
+    margin-bottom: 10px;
+  }
+  
+  .timeline-item::before {
+    height: 30px;
+  }
+  
+  .timeline-item:nth-child(odd) .timeline-content {
+    margin-bottom: 30px;
+  }
+  
+  .timeline-item:nth-child(even) .timeline-content {
+    margin-top: 30px;
+  }
+  
+  /* --- Radio Section --- */
+  #radio h2 {
+    font-size: 3em;
+  }
+  
+  /* Visualizer aligned with RADIO title */
+  #visualizer {
+    width: 180px;
+    height: 55px;
+  }
+  
+  /* Volume position adjusted for smaller title */
+  .radio-header .volume-container {
+    left: 195px;
+    width: 48px;
+    height: 48px;
+  }
+  
+  .radio-header .volume-ring {
+    width: 48px;
+    height: 48px;
+  }
+  
+  #currentSong {
+    top: 16px;
+    max-width: 420px;
+    padding: 6px 12px 6px 6px;
+    gap: 8px;
+  }
+  
+  #currentSong .title {
+    font-size: 0.85rem;
+  }
+  
+  #currentSong .label {
+    font-size: 0.55rem;
+  }
+  
+  .main-cover {
+    width: 40px;
+    height: 40px;
+  }
+  
+  #vinyl-disc-container {
+    width: 280px;
+    height: 280px;
+  }
+  
+  #playRadio {
+    width: 65px;
+    height: 65px;
+    font-size: 26px;
+  }
+  
+  .volume-container {
+    width: 52px;
+    height: 52px;
+  }
+  
+  .volume-ring {
+    width: 52px;
+    height: 52px;
+  }
+  
+  /* --- Radio Controller --- */
+  .rc-container {
+    min-width: 300px;
+    padding: 6px;
+  }
+  
+  .rc-content {
+    padding: 16px;
+    gap: 10px;
+  }
+  
+  .rc-btn-play,
+  .rc-btn-pip {
+    width: 42px;
+    height: 42px;
+    font-size: 16px;
+  }
+  
+  .rc-cover {
+    width: 42px;
+    height: 42px;
+  }
+  
+  .rc-volume-container {
+    width: 42px;
+    height: 42px;
+  }
+  
+  #rcTitle {
+    font-size: 15px;
+  }
+  
+  #rcArtist {
+    font-size: 12px;
+  }
+}
+
+/* =========================================
+   LAPTOP & SMALL DESKTOP (max-width: 1200px)
+   ========================================= */
+@media (max-width: 1200px) {
+  /* --- Timeline Section --- */
+  .timeline-header-wrapper {
+    top: 8px;
+    padding: 0 75px;
+    gap: 6px;
+  }
+  
+  #timeline h2 {
+    font-size: 2.5em;
+  }
+  
+  .timeline-filters {
+    gap: 4px;
+    max-width: calc(100% - 60px);
+  }
+  
+  .timeline-filters .btn {
+    padding: 6px 10px;
+    font-size: 0.68rem;
+  }
+  
+  .timeline-item {
+    width: 200px;
+    margin: 0 18px;
+  }
+  
+  .timeline-content {
+    padding: 12px;
+    border-radius: 14px;
+  }
+  
+  .timeline-item h3 {
+    font-size: 1em;
+    margin-bottom: 6px;
+  }
+  
+  .timeline-item h4 {
+    font-size: 0.72em;
+    margin-bottom: 8px;
+  }
+  
+  .timeline-item p {
+    font-size: 0.82em;
+    line-height: 1.4;
+  }
+  
+  .timeline-item img {
+    margin-top: 8px;
+  }
+  
+  .timeline-date {
+    font-size: 0.68em;
+    margin-top: 10px;
+  }
+  
+  .timeline-item::before {
+    height: 28px;
+  }
+  
+  .timeline-item:nth-child(odd) .timeline-content {
+    margin-bottom: 28px;
+  }
+  
+  .timeline-item:nth-child(even) .timeline-content {
+    margin-top: 28px;
+  }
+  
+  /* --- Radio Section --- */
+  #radio h2 {
+    top: 18px;
+    left: 20px;
+    font-size: 2.8em;
+  }
+  
+  /* Visualizer aligned with RADIO title */
+  #visualizer {
+    top: 18px;
+    left: 20px;
+    width: 165px;
+    height: 50px;
+  }
+  
+  /* Volume position adjusted for smaller title */
+  .radio-header .volume-container {
+    left: 175px;
+    top: 16px;
+    width: 45px;
+    height: 45px;
+  }
+  
+  .radio-header .volume-ring {
+    width: 45px;
+    height: 45px;
+  }
+  
+  #currentSong {
+    top: 14px;
+    max-width: min(380px, calc(100vw - 300px));
+    padding: 6px 10px 6px 6px;
+    gap: 8px;
+    border-radius: 12px;
+  }
+  
+  #currentSong .title {
+    font-size: 0.8rem;
+  }
+  
+  #currentSong .label {
+    font-size: 0.52rem;
+  }
+  
+  .main-cover {
+    width: 38px;
+    height: 38px;
+    border-radius: 5px;
+  }
+  
+  #progress-info {
+    max-width: 340px;
+    margin-top: 4px;
+  }
+  
+  .song-buttons-container {
+    margin-top: 4px;
+    gap: 10px;
+  }
+  
+  #history-toggle,
+  #info-toggle {
+    font-size: 0.58rem;
+    padding: 3px 6px;
+  }
+  
+  #vinyl-disc-container {
+    width: 260px;
+    height: 260px;
+  }
+  
+  #playRadio {
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+  }
+  
+  .volume-container {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .volume-ring {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .volume-icon-center {
+    font-size: 18px;
+  }
+  
+  /* --- Radio Controller --- */
+  .rc-container {
+    min-width: 280px;
+    bottom: 40px;
+  }
+  
+  .rc-content {
+    padding: 14px;
+    gap: 8px;
+  }
+  
+  .rc-top-row {
+    gap: 12px;
+  }
+  
+  .rc-btn-play,
+  .rc-btn-pip {
+    width: 40px;
+    height: 40px;
+    font-size: 15px;
+  }
+  
+  .rc-cover {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .rc-volume-container {
+    width: 40px;
+    height: 40px;
+  }
+  
+  #rcTitle {
+    font-size: 14px;
+  }
+  
+  #rcArtist {
+    font-size: 11px;
+  }
+  
+  .rc-handle {
+    width: 35px;
   }
 
   /* Playlist Editor Grid */
@@ -2585,7 +3053,178 @@ body.menu-open {
 }
 
 /* =========================================
+   SMALL LAPTOP / LARGE TABLET (max-width: 1024px)
+   ========================================= */
+@media (max-width: 1024px) {
+  /* --- Timeline Section --- */
+  .timeline-header-wrapper {
+    top: 8px;
+    padding: 0 70px;
+    gap: 6px;
+  }
+  
+  #timeline h2 {
+    font-size: 2.2em;
+  }
+  
+  .timeline-filters {
+    gap: 4px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .timeline-filters .btn {
+    padding: 5px 9px;
+    font-size: 0.65rem;
+  }
+  
+  .timeline-item {
+    width: 180px;
+    margin: 0 15px;
+  }
+  
+  .timeline-content {
+    padding: 10px;
+    border-radius: 12px;
+  }
+  
+  .timeline-item h3 {
+    font-size: 0.95em;
+  }
+  
+  .timeline-item h4 {
+    font-size: 0.7em;
+  }
+  
+  .timeline-item p {
+    font-size: 0.78em;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .timeline-item img {
+    max-height: 140px;
+    object-fit: cover;
+  }
+  
+  .timeline-item::before {
+    height: 25px;
+  }
+  
+  .timeline-item:nth-child(odd) .timeline-content {
+    margin-bottom: 25px;
+  }
+  
+  .timeline-item:nth-child(even) .timeline-content {
+    margin-top: 25px;
+  }
+  
+  /* --- Radio Section --- */
+  #radio h2 {
+    font-size: 2.4em;
+    top: 15px;
+    left: 15px;
+  }
+  
+  /* Visualizer aligned with RADIO title */
+  #visualizer {
+    top: 15px;
+    left: 15px;
+    width: 145px;
+    height: 45px;
+  }
+  
+  /* Volume position adjusted for smaller title */
+  .radio-header .volume-container {
+    left: 155px;
+    top: 14px;
+    width: 42px;
+    height: 42px;
+  }
+  
+  .radio-header .volume-ring {
+    width: 42px;
+    height: 42px;
+  }
+  
+  #currentSong {
+    top: 12px;
+    max-width: min(350px, calc(100vw - 260px));
+    padding: 5px 10px 5px 5px;
+  }
+  
+  #currentSong .title {
+    font-size: 0.75rem;
+  }
+  
+  .main-cover {
+    width: 35px;
+    height: 35px;
+  }
+  
+  #vinyl-disc-container {
+    width: 240px;
+    height: 240px;
+  }
+  
+  #playRadio {
+    width: 55px;
+    height: 55px;
+    font-size: 22px;
+  }
+  
+  .volume-container {
+    width: 46px;
+    height: 46px;
+  }
+  
+  .volume-ring {
+    width: 46px;
+    height: 46px;
+  }
+  
+  /* --- Radio Controller --- */
+  .rc-container {
+    min-width: 260px;
+    bottom: 35px;
+  }
+  
+  .rc-content {
+    padding: 12px;
+    gap: 8px;
+  }
+  
+  .rc-btn-play,
+  .rc-btn-pip {
+    width: 38px;
+    height: 38px;
+    font-size: 14px;
+  }
+  
+  .rc-cover {
+    width: 38px;
+    height: 38px;
+  }
+  
+  .rc-volume-container {
+    width: 38px;
+    height: 38px;
+  }
+  
+  #rcTitle {
+    font-size: 13px;
+  }
+  
+  #rcArtist {
+    font-size: 10px;
+  }
+}
+
+/* =========================================
    TABLET & LARGE MOBILE (max-width: 900px)
+   Major layout change: Timeline becomes vertical
    ========================================= */
 @media (max-width: 900px) {
   /* --- Global Layout --- */
@@ -2643,7 +3282,7 @@ body.menu-open {
     letter-spacing: 0.08em;
   }
 
-  /* --- Timeline Section --- */
+  /* --- Timeline Section - VERTICAL LAYOUT --- */
   #timeline {
     height: auto;
     min-height: 100dvh;
@@ -2658,7 +3297,7 @@ body.menu-open {
     top: 0;
     left: 0;
     right: 0;
-    padding: 15px 10px;
+    padding: 12px 15px;
     flex-direction: column;
     gap: 10px;
     height: auto;
@@ -2679,18 +3318,20 @@ body.menu-open {
     font-size: 2em;
     width: 100%;
     margin-bottom: 5px;
+    mix-blend-mode: normal;
   }
 
   .timeline-filters {
     width: 100%;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
+    pointer-events: auto;
   }
   
   .timeline-filters .btn, 
   .timeline-filters button {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     padding: 6px 12px;
     height: auto;
     min-width: auto;
@@ -2698,18 +3339,20 @@ body.menu-open {
 
   .timeline-container {
     margin-top: 0;
-    flex-direction: column-reverse;
+    flex-direction: column;
     align-items: center;
     width: 100%;
     overflow: visible;
     background: none;
     padding-bottom: 100px;
+    padding-left: 15px;
+    padding-right: 15px;
   }
 
   .timeline-item {
-    width: 85%;
-    max-width: 350px;
-    margin: 15px 0;
+    width: 100%;
+    max-width: 400px;
+    margin: 12px 0;
     flex-shrink: 0;
   }
   
@@ -2720,9 +3363,10 @@ body.menu-open {
     bottom: 0;
     left: 50%;
     width: 2px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
     transform: translateX(-50%);
     z-index: 0;
+    display: none; /* Hide vertical line on mobile */
   }
 
   .timeline-item::before,
@@ -2744,14 +3388,43 @@ body.menu-open {
     text-align: center;
     z-index: 2;
     background-color: rgba(20, 20, 20, 0.9);
-    padding: 15px;
-    border-radius: 12px;
+    padding: 16px;
+    border-radius: 14px;
   }
   
-  .timeline-item h3 { font-size: 1.1rem; margin-bottom: 5px; }
-  .timeline-item h4 { font-size: 0.75rem; margin-bottom: 8px; }
-  .timeline-item p { font-size: 0.85rem; line-height: 1.4; }
-  .timeline-image { height: 180px; margin-top: 8px; }
+  .timeline-content:hover {
+    transform: scale(1.02);
+  }
+  
+  .timeline-item h3 { 
+    font-size: 1.1rem; 
+    margin-bottom: 6px; 
+  }
+  
+  .timeline-item h4 { 
+    font-size: 0.75rem; 
+    margin-bottom: 10px; 
+  }
+  
+  .timeline-item p { 
+    font-size: 0.85rem; 
+    line-height: 1.4;
+    display: block;
+    -webkit-line-clamp: unset;
+  }
+  
+  .timeline-item img {
+    max-height: 200px;
+    width: 100%;
+    object-fit: cover;
+    margin-top: 10px;
+    border-radius: 8px;
+  }
+  
+  .timeline-date {
+    margin-top: 12px;
+    font-size: 0.7em;
+  }
 
   /* --- Radio Section --- */
   #radio {
@@ -2780,7 +3453,9 @@ body.menu-open {
     display: none;
   }
 
-  #visualizer {
+  /* Hide visualizer and volume in header on mobile */
+  #visualizer,
+  .radio-header .volume-container {
     display: none;
   }
 
@@ -2795,20 +3470,20 @@ body.menu-open {
   }
 
   #vinyl-disc-container {
-    width: 180px;
-    height: 180px;
+    width: 200px;
+    height: 200px;
   }
 
   #playRadio {
-    width: 45px;
-    height: 45px;
-    font-size: 18px;
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
   }
 
   /* Current Song Info - Mobile: top center, compact */
   #currentSong {
     position: absolute;
-    top: 15px;
+    top: 12px;
     left: 50%;
     right: auto;
     bottom: auto;
@@ -2821,10 +3496,10 @@ body.menu-open {
     flex-direction: row;
     align-items: center;
     justify-content: flex-start;
-    gap: 6px;
-    padding: 6px 10px 6px 6px;
+    gap: 8px;
+    padding: 8px 12px 8px 8px;
     /* Glassmorphism - same as desktop */
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     z-index: 35;
@@ -2836,8 +3511,8 @@ body.menu-open {
   }
   
   .main-cover {
-    width: 36px;
-    height: 36px;
+    width: 38px;
+    height: 38px;
     margin-bottom: 0;
     border-radius: 6px;
     flex-shrink: 0;
@@ -2861,8 +3536,8 @@ body.menu-open {
   }
   
   #currentSong .label {
-    font-size: 0.6rem;
-    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.55rem;
+    color: rgba(255, 255, 255, 0.6);
     display: none; /* Hide label on mobile to save space */
   }
   
@@ -2876,9 +3551,20 @@ body.menu-open {
     max-width: 100%;
   }
 
-  /* Hide progress and buttons on mobile - use RC instead */
-  #progress-info,
-  .song-buttons-container,
+  /* Show progress on tablet */
+  #progress-info {
+    display: flex;
+    max-width: calc(100% - 30px);
+    margin-top: 6px;
+  }
+  
+  /* Hide dropdowns on mobile - use RC instead */
+  .song-buttons-container {
+    display: flex;
+    gap: 15px;
+    margin-top: 6px;
+  }
+  
   #history-dropdown,
   #info-dropdown {
     display: none;
@@ -2889,14 +3575,14 @@ body.menu-open {
     position: relative;
     top: auto;
     right: auto;
-    width: 46px;
-    height: 46px;
+    width: 44px;
+    height: 44px;
     z-index: 40;
   }
   
   .volume-ring {
-    width: 46px;
-    height: 46px;
+    width: 44px;
+    height: 44px;
   }
   
   #mainPipBtn,
@@ -2904,7 +3590,7 @@ body.menu-open {
     display: none;
   }
 
-  /* Radio Controller */
+  /* --- Radio Controller --- */
   .rc-container {
     min-width: unset;
     width: calc(100% - 20px);
@@ -2912,13 +3598,12 @@ body.menu-open {
     right: 10px;
     bottom: 10px;
     border-radius: 12px;
-    padding: 8px;
     background: rgba(10, 10, 10, 0.95);
   }
   
   .rc-content {
-    padding: 8px;
-    gap: 6px;
+    padding: 10px 12px;
+    gap: 8px;
   }
   
   .rc-top-row {
@@ -2934,26 +3619,30 @@ body.menu-open {
   }
   
   #rcTitle { 
-    font-size: 14px; 
+    font-size: 13px; 
     max-width: 100%;
   }
-  #rcArtist { font-size: 11px; }
+  #rcArtist { font-size: 10px; }
   
   .rc-btn-play,
   .rc-btn-pip {
-    width: 42px;
-    height: 42px;
-    font-size: 16px;
+    width: 40px;
+    height: 40px;
+    font-size: 15px;
   }
   
   .rc-cover {
-    width: 42px;
-    height: 42px;
+    width: 40px;
+    height: 40px;
   }
   
   .rc-volume-container {
-    width: 42px;
-    height: 42px;
+    width: 40px;
+    height: 40px;
+  }
+  
+  .rc-handle {
+    width: 32px;
   }
 
   /* --- Artistes Section --- */
@@ -3213,7 +3902,7 @@ body.menu-open {
 @media (max-width: 480px) {
   /* --- Global --- */
   .screen {
-    padding: 50px 12px 70px;
+    padding: 50px 10px 70px;
   }
 
   /* --- Accueil --- */
@@ -3229,95 +3918,166 @@ body.menu-open {
     letter-spacing: 0.05em;
   }
 
-  /* --- Radio --- */
-  #radio {
-    padding-top: 30px;
-    padding-bottom: 100px;
+  /* --- Timeline Section --- */
+  #timeline {
+    padding-top: 0;
   }
   
-  #radio h2 { font-size: 2em; }
-  
-  #vinyl-disc-container { 
-    width: 180px; 
-    height: 180px; 
+  .timeline-header-wrapper {
+    padding: 10px 10px;
+    gap: 8px;
   }
   
-  #playRadio {
-    width: 45px;
-    height: 45px;
-    font-size: 18px;
+  #timeline h2 {
+    font-size: 1.6em;
   }
   
-  #currentSong {
-    padding: 10px 12px;
-    max-width: 95%;
+  .timeline-filters {
     gap: 4px;
   }
   
-  #currentSong .title {
-    font-size: 0.8rem;
+  .timeline-filters .btn {
+    font-size: 0.62rem;
+    padding: 5px 8px;
   }
   
-  #currentSong .label {
-    font-size: 0.6rem;
+  .timeline-container {
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-bottom: 80px;
+  }
+  
+  .timeline-item {
+    width: 100%;
+    max-width: 100%;
+    margin: 10px 0;
+  }
+  
+  .timeline-content {
+    padding: 14px;
+    border-radius: 12px;
+  }
+  
+  .timeline-item h3 {
+    font-size: 1rem;
+    margin-bottom: 5px;
+  }
+  
+  .timeline-item h4 {
+    font-size: 0.7rem;
+    margin-bottom: 8px;
+  }
+  
+  .timeline-item p {
+    font-size: 0.8rem;
+    line-height: 1.35;
+  }
+  
+  .timeline-item img {
+    max-height: 160px;
+    margin-top: 8px;
+  }
+  
+  .timeline-date {
+    font-size: 0.65em;
+    margin-top: 10px;
+  }
+
+  /* --- Radio Section --- */
+  #radio {
+    padding-top: 60px;
+    padding-bottom: 90px;
+  }
+  
+  #vinyl-disc-container { 
+    width: 160px; 
+    height: 160px; 
+  }
+  
+  #playRadio {
+    width: 42px;
+    height: 42px;
+    font-size: 16px;
+  }
+  
+  #currentSong {
+    top: 10px;
+    padding: 6px 10px 6px 6px;
+    max-width: calc(100% - 20px);
+    gap: 6px;
+    border-radius: 10px;
+  }
+  
+  #currentSong .title {
+    font-size: 0.7rem;
   }
   
   .main-cover {
-    width: 40px;
-    height: 40px;
+    width: 34px;
+    height: 34px;
+    border-radius: 5px;
   }
   
-  #progress-info {
-    width: 95%;
-    max-width: none;
-  }
-  
-  #elapsed-time, #remaining-time {
-    font-size: 0.65rem;
-    min-width: 28px;
-  }
-
-  /* --- History/Info toggles --- */
-  #history-toggle span, 
-  #info-toggle span {
+  /* Hide progress and buttons - use RC only */
+  #progress-info,
+  .song-buttons-container {
     display: none;
   }
-  
-  #history-toggle,
-  #info-toggle {
-    padding: 4px 10px;
+
+  /* --- RC Controller --- */
+  .rc-container {
+    bottom: 5px;
+    left: 5px;
+    right: 5px;
+    width: calc(100% - 10px);
+    border-radius: 10px;
   }
   
-  .song-buttons-container {
-    gap: 20px;
+  .rc-content {
+    padding: 8px 10px;
+    gap: 6px;
   }
   
-  #history-dropdown, 
-  #info-dropdown {
-    min-width: 160px;
-    max-width: 95%;
+  .rc-top-row {
+    gap: 8px;
   }
   
-  .history-item {
-    padding: 6px 10px;
+  .rc-btn-play,
+  .rc-btn-pip {
+    width: 34px;
+    height: 34px;
+    font-size: 13px;
   }
   
-  .history-item .history-title {
-    max-width: 120px;
-    font-size: 9px;
+  .rc-cover {
+    width: 34px;
+    height: 34px;
+    border-radius: 5px;
   }
   
-  .info-item {
-    padding: 6px 10px;
-    gap: 10px;
+  .rc-volume-container {
+    width: 34px;
+    height: 34px;
   }
   
-  .info-item .info-label {
-    font-size: 9px;
+  .rc-meta {
+    padding-left: 6px;
   }
   
-  .info-item .info-value {
+  #rcTitle { 
     font-size: 11px;
+    line-height: 1.2;
+  }
+  #rcArtist { 
+    font-size: 9px; 
+  }
+  
+  .rc-handle {
+    width: 28px;
+  }
+  
+  .rc-bottom-row {
+    font-size: 9px;
   }
 
   /* --- Burger Menu --- */
@@ -3355,33 +4115,6 @@ body.menu-open {
   
   .menu-number {
     font-size: 0.7rem;
-  }
-
-  /* --- Timeline --- */
-  #timeline h2 {
-    font-size: 1.6em;
-  }
-  
-  .timeline-item {
-    width: 90%;
-    max-width: none;
-  }
-  
-  .timeline-item h3 {
-    font-size: 1rem;
-  }
-  
-  .timeline-item p {
-    font-size: 0.8rem;
-  }
-  
-  .timeline-image {
-    height: 140px;
-  }
-  
-  .timeline-filters .btn {
-    font-size: 0.65rem;
-    padding: 5px 8px;
   }
 
   /* --- Artistes --- */
@@ -3454,56 +4187,16 @@ body.menu-open {
   input, textarea, select {
     font-size: 16px;
   }
-
-  /* --- RC Controller --- */
-  .rc-container {
-    bottom: 5px;
-    left: 5px;
-    right: 5px;
-    width: calc(100% - 10px);
-    padding: 6px;
-  }
-  
-  .rc-content {
-    padding: 6px;
-    gap: 4px;
-  }
-  
-  .rc-btn-play,
-  .rc-btn-pip,
-  .rc-volume-container {
-    width: 36px;
-    height: 36px;
-    font-size: 14px;
-  }
-  
-  .rc-cover {
-    width: 36px;
-    height: 36px;
-  }
-  
-  .rc-meta {
-    padding-left: 6px;
-  }
-  
-  #rcTitle { font-size: 12px; }
-  #rcArtist { font-size: 10px; }
-  
-  .rc-handle {
-    width: 30px;
-  }
   
   /* --- Volume Container (Radio) --- */
   .volume-container {
-    top: 10px;
-    right: 10px;
-    width: 45px;
-    height: 45px;
+    width: 42px;
+    height: 42px;
   }
   
   .volume-ring {
-    width: 45px;
-    height: 45px;
+    width: 42px;
+    height: 42px;
   }
   
   .volume-icon-center {
@@ -3534,7 +4227,7 @@ body.menu-open {
 @media (max-width: 360px) {
   /* --- Global --- */
   .screen {
-    padding: 45px 10px 65px;
+    padding: 45px 8px 65px;
   }
   
   /* --- Accueil --- */
@@ -3542,55 +4235,170 @@ body.menu-open {
     font-size: clamp(1.5em, 15vw, 2.5em);
   }
 
-  /* --- Radio --- */
-  #radio h2 {
-    font-size: 1.6em;
+  /* --- Timeline Section --- */
+  .timeline-header-wrapper {
+    padding: 8px 8px;
+    gap: 6px;
+  }
+  
+  #timeline h2 {
+    font-size: 1.4em;
+  }
+  
+  .timeline-filters {
+    gap: 3px;
+  }
+  
+  .timeline-filters .btn {
+    font-size: 0.58rem;
+    padding: 4px 6px;
+  }
+  
+  .timeline-container {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  
+  .timeline-item {
+    margin: 8px 0;
+  }
+  
+  .timeline-content {
+    padding: 12px;
+    border-radius: 10px;
+  }
+  
+  .timeline-item h3 {
+    font-size: 0.92rem;
+    margin-bottom: 4px;
+  }
+  
+  .timeline-item h4 {
+    font-size: 0.65rem;
+    margin-bottom: 6px;
+  }
+  
+  .timeline-item p {
+    font-size: 0.75rem;
+    line-height: 1.3;
+  }
+  
+  .timeline-item img {
+    max-height: 130px;
+    margin-top: 6px;
+  }
+  
+  .timeline-date {
+    font-size: 0.6em;
+    margin-top: 8px;
+  }
+
+  /* --- Radio Section --- */
+  #radio {
+    padding-top: 55px;
+    padding-bottom: 85px;
   }
   
   #vinyl-disc-container {
-    width: 160px;
-    height: 160px;
+    width: 140px;
+    height: 140px;
   }
   
   #playRadio {
-    width: 40px;
-    height: 40px;
-    font-size: 16px;
+    width: 38px;
+    height: 38px;
+    font-size: 14px;
   }
   
   #currentSong {
-    padding: 8px 10px;
+    top: 8px;
+    padding: 5px 8px 5px 5px;
+    max-width: calc(100% - 16px);
+    gap: 5px;
+    border-radius: 8px;
   }
   
   #currentSong .title {
-    font-size: 0.75rem;
+    font-size: 0.65rem;
   }
   
   .main-cover {
-    width: 35px;
-    height: 35px;
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+  }
+
+  /* --- RC Controller --- */
+  .rc-container {
+    bottom: 3px;
+    left: 3px;
+    right: 3px;
+    width: calc(100% - 6px);
+    border-radius: 8px;
   }
   
-  /* --- Menu --- */
+  .rc-content {
+    padding: 6px 8px;
+    gap: 4px;
+  }
+  
+  .rc-top-row {
+    gap: 6px;
+  }
+  
+  .rc-btn-play,
+  .rc-btn-pip {
+    width: 30px;
+    height: 30px;
+    font-size: 11px;
+  }
+  
+  .rc-cover {
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+  }
+  
+  .rc-volume-container {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .rc-meta {
+    padding-left: 4px;
+  }
+  
+  #rcTitle { 
+    font-size: 10px;
+    line-height: 1.2;
+  }
+  #rcArtist { 
+    font-size: 8px; 
+  }
+  
+  .rc-handle {
+    width: 24px;
+  }
+  
+  .rc-bottom-row {
+    font-size: 8px;
+  }
+  
+  /* --- Burger Menu --- */
+  .burger {
+    top: 8px;
+    right: 8px;
+    width: 42px;
+    height: 42px;
+    font-size: 16px;
+  }
+  
   .menu-link {
     font-size: clamp(1.2rem, 11vw, 1.8rem);
   }
   
   .menu-item {
     padding: 8px 0;
-  }
-  
-  /* --- Timeline --- */
-  #timeline h2 {
-    font-size: 1.4em;
-  }
-  
-  .timeline-item h3 {
-    font-size: 0.95rem;
-  }
-  
-  .timeline-image {
-    height: 120px;
   }
   
   /* --- Artistes --- */
@@ -3614,18 +4422,20 @@ body.menu-open {
     font-size: 16px;
   }
   
-  /* --- RC Controller --- */
-  .rc-btn-play,
-  .rc-btn-pip,
-  .rc-volume-container,
-  .rc-cover {
-    width: 32px;
-    height: 32px;
-    font-size: 12px;
+  /* --- Volume --- */
+  .volume-container {
+    width: 38px;
+    height: 38px;
   }
   
-  #rcTitle { font-size: 11px; }
-  #rcArtist { font-size: 9px; }
+  .volume-ring {
+    width: 38px;
+    height: 38px;
+  }
+  
+  .volume-icon-center {
+    font-size: 14px;
+  }
 }
 
 /* =========================================
@@ -3818,16 +4628,30 @@ body.menu-open {
     font-size: 1.8em;
   }
   
+  /* Visualizer aligned with RADIO title */
   #visualizer {
-    width: 220px;
-    height: 60px;
-    top: 8px;
-    left: 8px;
+    top: 12px;
+    left: 12px;
+    width: 110px;
+    height: 35px;
+  }
+  
+  /* Volume position adjusted for smaller title */
+  .radio-header .volume-container {
+    left: 115px;
+    top: 10px;
+    width: 40px;
+    height: 40px;
+  }
+  
+  .radio-header .volume-ring {
+    width: 40px;
+    height: 40px;
   }
   
   #currentSong {
     top: 12px;
-    max-width: 450px;
+    max-width: min(450px, calc(100vw - 220px));
     padding: 6px 10px 6px 6px;
     gap: 8px;
   }
