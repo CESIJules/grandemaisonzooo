@@ -1469,14 +1469,14 @@ body.menu-open {
   letter-spacing: 0.5px;
   white-space: nowrap;
 
-  /* Card Style */
-  background-color: rgba(10, 10, 10, 0.85);
-  padding: 12px 20px 12px 12px;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  /* Style Transparent (Old Style) */
+  background-color: rgba(0, 0, 0, 0.4);
+  padding: 10px 20px 10px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
   
   /* Adaptation longueur */
   width: auto;
@@ -1485,7 +1485,7 @@ body.menu-open {
   overflow: visible;
 
   /* Animation de taille */
-  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: all 0.3s ease;
   will-change: transform;
 }
 
@@ -1496,9 +1496,8 @@ body.menu-open {
   overflow: hidden;
   position: relative;
   flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1522,7 +1521,7 @@ body.menu-open {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.3);
   font-size: 24px;
   z-index: 1;
 }
@@ -1532,8 +1531,8 @@ body.menu-open {
   flex-direction: column;
   align-items: flex-start; /* Align Left */
   justify-content: center;
-  gap: 4px;
-  min-width: 200px; /* Ensure minimum width for stability */
+  gap: 2px;
+  min-width: 180px;
 }
 
 #currentSong .song-info {
@@ -1545,15 +1544,16 @@ body.menu-open {
 
 #currentSong .label {
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: #fff; /* Revert to white/bright */
   font-weight: 400;
+  opacity: 0.8;
 }
 
 #currentSong .title {
-  color: #fff;
-  font-weight: 600;
+  color: #00ff68; /* Green Title */
+  font-weight: 700;
   font-size: 1rem;
-  text-shadow: 0 0 20px rgba(0, 255, 104, 0.3);
+  text-shadow: 0 0 15px #00a542;
   letter-spacing: 0.5px;
 }
 
@@ -1577,8 +1577,8 @@ body.menu-open {
 
 #progress-container {
   width: 100%;
-  height: 3px; /* Thinner */
-  background: rgba(255, 255, 255, 0.1);
+  height: 4px; /* Standard height */
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 2px;
   overflow: hidden;
   flex: 1;
@@ -1586,16 +1586,16 @@ body.menu-open {
 
 #progress-bar {
   height: 100%;
-  background: #00ff68;
+  background: #fff; /* White progress */
   width: 0%;
-  box-shadow: 0 0 10px rgba(0, 255, 104, 0.5);
+  box-shadow: none;
   transition: width 0.25s linear;
 }
 
 #elapsed-time, #remaining-time {
   font-family: 'Space Grotesk', monospace;
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.8);
   min-width: 30px;
 }
 
@@ -1605,16 +1605,16 @@ body.menu-open {
   align-items: center;
   justify-content: flex-start; /* Align Left */
   gap: 6px;
-  padding: 4px 0;
+  padding: 2px 0;
   margin-top: 2px;
   cursor: pointer;
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: #aaa;
   text-transform: uppercase;
   letter-spacing: 1px;
   transition: color 0.2s;
   user-select: none;
-  width: auto; /* Auto width */
+  width: auto;
 }
 
 #history-toggle:hover {
@@ -1638,10 +1638,11 @@ body.menu-open {
 #history-dropdown {
   position: absolute;
   top: calc(100% + 8px);
-  left: 0; /* Align left with container */
-  transform: none; /* Remove center transform */
-  width: 100%; /* Match container width */
-  min-width: 260px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  min-width: 200px;
+  max-width: 320px;
   background: rgba(15, 15, 15, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
@@ -1650,7 +1651,7 @@ body.menu-open {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
   opacity: 0;
   visibility: hidden;
-  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: all 0.25s ease;
   z-index: 100;
   overflow: hidden;
 }
@@ -1658,7 +1659,7 @@ body.menu-open {
 #history-dropdown.open {
   opacity: 1;
   visibility: visible;
-  transform: translateY(0);
+  transform: translateX(-50%) translateY(0);
 }
 
 #history-list {
