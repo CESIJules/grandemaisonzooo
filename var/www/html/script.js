@@ -2201,31 +2201,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateCoverUI(filename) {
       const coverImg = document.getElementById('rcCoverImg');
-      if (!coverImg) return;
+      const mainCoverImg = document.getElementById('mainCoverImg');
       
       if (!filename) {
-          coverImg.style.opacity = '0';
+          if (coverImg) coverImg.style.opacity = '0';
+          if (mainCoverImg) mainCoverImg.style.opacity = '0';
           return;
       }
 
       const newSrc = `get_cover.php?file=${encodeURIComponent(filename)}`;
       
-      // Avoid reloading if src is same (ignoring potential query params if needed, but here filename changes)
-      if (coverImg.src.includes(encodeURIComponent(filename))) return;
+      // Helper to update an image element
+      const updateImage = (imgElement) => {
+          if (!imgElement) return;
+          if (imgElement.src.includes(encodeURIComponent(filename))) return;
 
-      // Preload image
-      const tempImg = new Image();
-      tempImg.onload = () => {
-          coverImg.src = newSrc;
-          coverImg.style.display = 'block';
-          requestAnimationFrame(() => {
-              coverImg.style.opacity = '1';
-          });
+          const tempImg = new Image();
+          tempImg.onload = () => {
+              imgElement.src = newSrc;
+              imgElement.style.display = 'block';
+              requestAnimationFrame(() => {
+                  imgElement.style.opacity = '1';
+              });
+          };
+          tempImg.onerror = () => {
+              imgElement.style.opacity = '0';
+          };
+          tempImg.src = newSrc;
       };
-      tempImg.onerror = () => {
-          coverImg.style.opacity = '0';
-      };
-      tempImg.src = newSrc;
+
+      updateImage(coverImg);
+      updateImage(mainCoverImg);
   }
 
   async function fetchCurrentSong() {

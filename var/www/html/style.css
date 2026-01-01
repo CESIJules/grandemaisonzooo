@@ -1462,17 +1462,17 @@ body.menu-open {
   color: #ffffff;
   margin-left: 0;
   display: flex;
-  flex-direction: column;
+  flex-direction: row; /* Changed to row */
   align-items: center;
-  gap: 4px;
+  gap: 15px; /* Increased gap for cover */
   text-transform: uppercase;
   letter-spacing: 1px;
   white-space: nowrap;
 
   /* Style sans blur direct - le blur sera sur un pseudo-element */
   background-color: rgba(0, 0, 0, 0.4);
-  padding: 10px 20px 14px 20px;
-  border-radius: 20px;
+  padding: 10px 20px 10px 10px; /* Adjusted padding */
+  border-radius: 40px; /* More rounded for pill shape */
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
   
@@ -1485,6 +1485,50 @@ body.menu-open {
   /* Animation de taille */
   transition: all 0.3s ease;
   will-change: transform;
+}
+
+.main-cover {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%; /* Circular cover */
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.main-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.3s ease;
+  position: relative;
+  z-index: 2;
+}
+
+.main-cover-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 20px;
+  z-index: 1;
+}
+
+.current-song-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Align text to left */
+  gap: 2px;
 }
 
 #currentSong .song-info {
