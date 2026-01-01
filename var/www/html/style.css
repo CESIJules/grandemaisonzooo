@@ -566,294 +566,12 @@ body.menu-open {
 }
 
 /* ===== BURGER MENU RESPONSIVE ===== */
-@media (max-width: 768px) {
-  .menu-overlay {
-    padding-right: 5vw;
-    justify-content: center;
-  }
-  
-  .menu-content {
-    text-align: center;
-  }
-  
-  .menu-item {
-    justify-content: center;
-    gap: 15px;
-  }
-  
-  .menu-link {
-    font-size: clamp(1.8rem, 8vw, 3rem);
-    letter-spacing: 1px;
-  }
-  
-  .menu-number {
-    font-size: clamp(0.8rem, 2vw, 1rem);
-  }
-  
-  .menu-close {
-    top: 15px;
-    right: 15px;
-    width: 50px;
-    height: 50px;
-  }
-  
-  /* Simplify lines on mobile */
-  .line-v2, .line-v3, .line-v5 {
-    opacity: 0.5;
-  }
-}
-
-@media (max-width: 480px) {
-  .menu-link {
-    font-size: clamp(1.5rem, 10vw, 2.5rem);
-  }
-  
-  .menu-item {
-    margin: 0;
-    padding: 12px 0;
-  }
-}
+/* Moved to consolidated responsive section at end of file */
 
 /* =========================================
-   MOBILE & RESPONSIVE OPTIMIZATIONS
+   FIRST MOBILE RESPONSIVE BLOCK - REMOVED
+   (Consolidated at end of file)
    ========================================= */
-
-@media (max-width: 900px) {
-  /* --- Global Typography & Layout --- */
-  h1 { font-size: clamp(2em, 10vw, 4em) !important; }
-  h2 { font-size: clamp(1.8em, 8vw, 3em) !important; }
-  
-  .screen {
-    padding: 80px 16px 100px;
-    min-height: 100dvh; /* Use dynamic viewport height */
-    height: auto; /* Allow content to grow */
-  }
-
-  /* --- Timeline Section --- */
-  #timeline {
-    height: 100dvh;
-    flex-direction: column;
-    justify-content: flex-start;
-  }
-
-  .timeline-header-wrapper {
-    position: relative;
-    top: 0;
-    left: 0;
-    right: 0;
-    padding: 20px;
-    flex-direction: column;
-    gap: 15px;
-    height: auto;
-    background: transparent;
-    pointer-events: auto;
-  }
-
-  #timeline h2 {
-    position: relative;
-    left: 0;
-    top: 0;
-    transform: none;
-    text-align: center;
-    font-size: 3em;
-    width: 100%;
-  }
-
-  .timeline-filters {
-    width: 100%;
-    flex-wrap: wrap;
-  }
-
-  .timeline-container {
-    margin-top: 10px;
-    align-items: center; /* Center items vertically in the scroll track */
-  }
-
-  .timeline-item {
-    width: 80vw; /* Wider items on mobile */
-    margin: 0 15px;
-  }
-  
-  /* Adjust vertical connector for mobile */
-  .timeline-item::before {
-    height: 100%; /* Full height connector */
-    top: 0;
-    bottom: 0;
-  }
-  
-  .timeline-item:nth-child(odd) .timeline-content,
-  .timeline-item:nth-child(even) .timeline-content {
-    position: relative;
-    top: auto;
-    bottom: auto;
-    margin: 0;
-    transform: none !important; /* Disable 3D tilt on mobile for performance */
-  }
-  
-  .timeline-item:nth-child(odd)::before,
-  .timeline-item:nth-child(even)::before {
-    display: none; /* Hide complex connectors on mobile */
-  }
-
-  /* --- Radio Section --- */
-  #radio {
-    display: flex;
-    flex-direction: column;
-    justify-content: center; /* Center vertically */
-    align-items: center;
-    padding-top: 60px; /* Space for header if needed */
-    overflow: hidden;
-  }
-
-  #radio h2 {
-    position: relative;
-    font-size: 3em;
-    margin-bottom: 20px;
-    text-align: center;
-    z-index: 30;
-  }
-
-  /* Stack elements vertically */
-  #visualizer {
-    position: relative;
-    top: auto;
-    left: auto;
-    transform: none;
-    width: 100%;
-    height: 60px;
-    margin-bottom: 20px;
-  }
-
-  .player {
-    position: relative;
-    width: 100%;
-    height: auto;
-    margin: 20px 0;
-    display: flex;
-    justify-content: center;
-  }
-
-  #vinyl-disc-container {
-    width: 280px; /* Smaller disc */
-    height: 280px;
-  }
-
-  #playRadio {
-    width: 60px;
-    height: 60px;
-    font-size: 24px;
-  }
-
-  /* Move Current Song Info below player */
-  #currentSong {
-    position: relative;
-    left: auto;
-    top: auto;
-    transform: none;
-    margin-top: 20px;
-    width: 90%;
-    max-width: none;
-    flex-direction: column;
-    gap: 10px;
-    padding: 15px;
-  }
-  
-  #currentSong .song-info {
-    flex-wrap: wrap;
-    justify-content: center;
-    text-align: center;
-  }
-
-  #history-dropdown {
-    position: relative;
-    top: auto;
-    left: auto;
-    transform: none;
-    margin-top: 8px;
-    width: 100%;
-    max-width: 100%;
-  }
-  
-  #history-dropdown.open {
-    transform: none;
-  }
-
-  #progress-info {
-    position: relative;
-    top: auto;
-    left: auto;
-    transform: none;
-    width: 100%;
-    margin-top: 10px;
-  }
-
-  /* Hide or reposition volume/pip on mobile main view */
-  .volume-container {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    transform: scale(0.8);
-  }
-  
-  #mainPipBtn {
-    display: none; /* Hide PIP on mobile main view to save space */
-  }
-
-  /* --- Artists Section --- */
-  .artiste {
-    height: auto;
-    min-height: 100dvh;
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr;
-    padding: 0;
-    gap: 0;
-  }
-
-  .artiste-image {
-    height: 50vh;
-    order: 1; /* Image first */
-  }
-
-  .artiste-info {
-    padding: 40px 20px;
-    order: 2; /* Info second */
-    text-align: center;
-    align-items: center;
-  }
-
-  .artiste-info h3 {
-    text-align: center;
-  }
-  
-  .artiste-info .localisation {
-    text-align: center;
-    padding-left: 0;
-  }
-  
-  .artiste-actions, .artiste-socials {
-    justify-content: center;
-    padding-left: 0;
-  }
-
-  /* --- Contact Section --- */
-  #contact form {
-    width: 90%;
-    max-width: none;
-  }
-}
-
-@media (max-width: 480px) {
-  /* Small mobile tweaks */
-  #radio h2 { font-size: 2.5em; }
-  #vinyl-disc-container { width: 240px; height: 240px; }
-  
-  .menu-link { font-size: 2rem; }
-  
-  /* Ensure inputs are large enough to not zoom */
-  input, textarea, select {
-    font-size: 16px !important;
-  }
-}
 
 /* Boutons */
 .btn {
@@ -1772,47 +1490,7 @@ body.menu-open {
   flex-shrink: 0;
 }
 
-/* Responsive historique */
-@media (max-width: 768px) {
-  #history-dropdown {
-    min-width: 180px;
-    max-width: 280px;
-  }
-  
-  .history-item .history-title {
-    max-width: 150px;
-    font-size: 9px;
-  }
-  
-  .history-item .history-time {
-    font-size: 7px;
-  }
-}
-
-@media (max-width: 480px) {
-  #history-toggle span, #info-toggle span {
-    display: none;
-  }
-  
-  .song-buttons-container {
-    gap: 12px;
-  }
-  
-  #history-dropdown, #info-dropdown {
-    min-width: 160px;
-    max-width: 240px;
-    left: 50%;
-  }
-  
-  .history-item {
-    padding: 6px 10px;
-  }
-  
-  .history-item .history-title {
-    max-width: 120px;
-    font-size: 9px;
-  }
-}
+/* Responsive historique - Moved to consolidated section */
 
 #visualizer {
   position: absolute;
@@ -2689,18 +2367,6 @@ body.menu-open {
     margin: 0;
 }
 
-/* Responsive adjustments */
-@media (max-width: 1200px) {
-    .playlist-editor-grid {
-        grid-template-columns: 1fr 1fr;
-        grid-template-rows: 1fr 1fr;
-    }
-    .suggestions-column {
-        grid-column: 1 / -1;
-        grid-row: 2;
-    }
-}
-
 /* Scroll Arrow */
 .scroll-arrow {
   position: fixed;
@@ -2738,125 +2404,152 @@ body.menu-open {
   }
 }
 
+/* =============================================
+   CONSOLIDATED RESPONSIVE STYLES
+   =============================================
+   Breakpoints:
+   - 1400px : Large Desktop adjustments
+   - 1200px : Laptop / Small Desktop
+   - 900px  : Tablet / Large Mobile
+   - 768px  : Mobile
+   - 480px  : Small Mobile
+   - 360px  : Very Small Mobile (iPhone SE, etc.)
+   ============================================= */
+
 /* =========================================
-   LAPTOP RESPONSIVE OPTIMIZATIONS
+   LARGE DESKTOP (max-width: 1400px)
    ========================================= */
-/* Target laptops and standard desktops (up to 1920px width or short screens) */
-@media (min-width: 901px) and (max-width: 1925px), 
-       (min-width: 901px) and (max-height: 950px) {
-  
-  /* Reduce Timeline Title Size & Position */
-  #timeline h2 {
-    font-size: 2.5em; /* Even smaller */
-    left: 20px;
-    top: 45%; /* Move up slightly */
+@media (max-width: 1400px) {
+  /* Radio Controller - Slightly smaller */
+  .rc-container {
+    min-width: 320px;
   }
-
-  /* Reduce Timeline Item Size */
+  
+  /* Timeline Items */
   .timeline-item {
-    width: 220px; /* Narrower */
-    margin: 0 15px; /* Less spacing */
-  }
-
-  /* Reduce Text inside Timeline Items */
-  .timeline-item h3 {
-    font-size: 1em;
-    margin-bottom: 5px;
-  }
-  
-  .timeline-item h4 {
-    font-size: 0.75em;
-    margin-bottom: 8px;
-  }
-
-  .timeline-date {
-    font-size: 0.65em;
-    margin-top: 8px;
-  }
-
-  /* Reduce Filter Buttons Size */
-  .timeline-filters .btn {
-    padding: 6px 14px;
-    font-size: 11px;
-  }
-  
-  .timeline-filters {
-    gap: 5px;
-    margin-bottom: 10px;
-  }
-  
-  /* Adjust header position */
-  .timeline-header-wrapper {
-    top: 10px;
-    padding: 0 20px;
+    width: 280px;
+    margin: 0 30px;
   }
 }
 
 /* =========================================
-   MOBILE & RESPONSIVE OPTIMIZATIONS
+   LAPTOP & SMALL DESKTOP (max-width: 1200px)
    ========================================= */
+@media (max-width: 1200px) {
+  /* Timeline Adjustments */
+  #timeline h2 {
+    font-size: 3em;
+    left: 30px;
+  }
 
+  .timeline-item {
+    width: 250px;
+    margin: 0 20px;
+  }
+
+  .timeline-item h3 {
+    font-size: 1.1em;
+  }
+
+  /* Vinyl Disc */
+  #vinyl-disc-container {
+    width: 350px;
+    height: 350px;
+  }
+
+  /* Playlist Editor Grid */
+  .playlist-editor-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+  }
+  
+  .suggestions-column {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  
+  /* Artiste Section */
+  .artiste-info h3 {
+    font-size: clamp(1.8rem, 6vw, 3rem);
+  }
+  
+  /* Contact */
+  #contact h2 {
+    font-size: 3.5em;
+  }
+}
+
+/* =========================================
+   TABLET & LARGE MOBILE (max-width: 900px)
+   ========================================= */
 @media (max-width: 900px) {
-  /* --- Global Typography & Layout --- */
-  /* Fix Main Title Centering */
+  /* --- Global Layout --- */
+  html, body {
+    overflow: hidden;
+    height: 100%;
+    position: fixed;
+    width: 100%;
+  }
+  
+  main {
+    overflow-y: scroll;
+    height: 100dvh;
+    scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .screen {
+    padding: 60px 16px 80px;
+    min-height: 100dvh;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+  
+  h1 { font-size: clamp(2em, 10vw, 4em); }
+  h2 { font-size: clamp(1.8em, 8vw, 3em); }
+
+  /* --- Accueil Section --- */
+  #accueil {
+    justify-content: center;
+    min-height: 100dvh;
+    padding-top: 0;
+    padding-bottom: 0;
+    scroll-snap-align: start;
+  }
+  
   #accueil h1 {
-    font-size: clamp(2em, 10vw, 4em) !important;
+    font-size: clamp(2em, 12vw, 4em);
     text-align: center;
     align-items: center;
     justify-content: center;
     width: 100%;
   }
   
-  h2 { font-size: clamp(1.8em, 8vw, 3em) !important; }
-  
-  /* Allow main container to scroll naturally on mobile but with Snap */
-  html, body {
-    overflow: hidden !important; /* Lock body, scroll main */
-    height: 100% !important;
-    position: fixed; /* Prevent bounce on iOS */
-    width: 100%;
+  .line-grande {
+    letter-spacing: 0.01em;
   }
   
-  main {
-    overflow-y: scroll !important;
-    height: 100dvh !important;
-    scroll-snap-type: y mandatory !important;
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
+  .line-maison {
+    letter-spacing: 0.08em;
   }
 
-  .screen {
-    padding: 80px 16px 100px;
-    min-height: 100dvh; /* Ensure full screen */
-    height: auto; /* Allow content to grow */
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    scroll-snap-align: start; /* Snap to top of sections */
-    scroll-snap-stop: always; /* Force stop at sections */
-  }
-  
-  /* Fix Accueil Centering */
-  #accueil {
-    justify-content: center !important;
-    min-height: 100dvh !important;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-    scroll-snap-align: start;
-  }
-
-  /* --- Timeline Section (Vertical Mode) --- */
+  /* --- Timeline Section --- */
   #timeline {
-    height: auto; /* Allow scrolling */
+    height: auto;
     min-height: 100dvh;
     flex-direction: column;
     justify-content: flex-start;
-    overflow: visible !important; /* Let the main container handle scroll */
-    padding-top: 0; /* Remove fixed padding, use sticky header */
+    overflow: visible;
+    padding-top: 0;
   }
 
   .timeline-header-wrapper {
-    position: sticky; /* Sticky header */
+    position: sticky;
     top: 0;
     left: 0;
     right: 0;
@@ -2864,7 +2557,7 @@ body.menu-open {
     flex-direction: column;
     gap: 10px;
     height: auto;
-    background: rgba(5, 5, 5, 0.98); /* Almost opaque background */
+    background: rgba(5, 5, 5, 0.98);
     z-index: 100;
     pointer-events: auto;
     border-bottom: 1px solid rgba(255,255,255,0.1);
@@ -2878,7 +2571,7 @@ body.menu-open {
     top: 0;
     transform: none;
     text-align: center;
-    font-size: 2em; /* Smaller title */
+    font-size: 2em;
     width: 100%;
     margin-bottom: 5px;
   }
@@ -2890,33 +2583,31 @@ body.menu-open {
     gap: 8px;
   }
   
-  /* Smaller Filter Buttons */
   .timeline-filters .btn, 
   .timeline-filters button {
-    font-size: 0.75rem !important;
-    padding: 6px 12px !important;
-    height: auto !important;
-    min-width: auto !important;
+    font-size: 0.75rem;
+    padding: 6px 12px;
+    height: auto;
+    min-width: auto;
   }
 
   .timeline-container {
     margin-top: 0;
-    flex-direction: column-reverse; /* Stack items vertically reversedrtically reversed */
+    flex-direction: column-reverse;
     align-items: center;
     width: 100%;
-    overflow: visible; /* Let the section handle scroll */
-    background: none; /* Remove horizontal line */
+    overflow: visible;
+    background: none;
     padding-bottom: 100px;
   }
 
   .timeline-item {
-    width: 85%; /* Slightly narrower */
+    width: 85%;
     max-width: 350px;
-    margin: 15px 0; /* Reduced margin */
+    margin: 15px 0;
     flex-shrink: 0;
   }
   
-  /* Vertical Connector Line for Mobile */
   .timeline-container::before {
     content: '';
     position: absolute;
@@ -2929,7 +2620,6 @@ body.menu-open {
     z-index: 0;
   }
 
-  /* Reset Item Connectors */
   .timeline-item::before,
   .timeline-item::after {
     display: none;
@@ -2939,172 +2629,184 @@ body.menu-open {
   .timeline-content-left,
   .timeline-content-right {
     position: relative;
-    top: auto !important;
-    bottom: auto !important;
-    left: auto !important;
-    right: auto !important;
-    margin: 0 !important;
-    transform: none !important; /* Disable 3D tilt */
+    top: auto;
+    bottom: auto;
+    left: auto;
+    right: auto;
+    margin: 0;
+    transform: none;
     width: 100%;
     text-align: center;
     z-index: 2;
-    background-color: rgba(20, 20, 20, 0.9); /* Darker background */
-    padding: 15px; /* Reduced padding */
+    background-color: rgba(20, 20, 20, 0.9);
+    padding: 15px;
     border-radius: 12px;
   }
   
-  .timeline-item h3 {
-    font-size: 1.1rem;
-    margin-bottom: 5px;
-  }
-  
-  .timeline-item h4 {
-    font-size: 0.75rem;
-    margin-bottom: 8px;
-  }
-  
-  .timeline-item p {
-    font-size: 0.85rem;
-    line-height: 1.4;
-  }
-  
-  .timeline-image {
-    height: 180px; /* Smaller images */
-    margin-top: 8px;
-  }
-  
+  .timeline-item h3 { font-size: 1.1rem; margin-bottom: 5px; }
+  .timeline-item h4 { font-size: 0.75rem; margin-bottom: 8px; }
+  .timeline-item p { font-size: 0.85rem; line-height: 1.4; }
+  .timeline-image { height: 180px; margin-top: 8px; }
+
   /* --- Radio Section --- */
   #radio {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding-top: 60px;
-    padding-bottom: 140px; /* Space for bottom controls */
+    padding-top: 40px;
+    padding-bottom: 120px;
     overflow: hidden;
     position: relative;
   }
   
-  /* Break the header structure to reorder items */
   .radio-header {
-    display: contents !important;
+    display: contents;
   }
 
   #radio h2 {
     position: relative;
-    font-size: 3em;
-    margin-bottom: 20px;
+    font-size: 2.5em;
+    margin-bottom: 15px;
     text-align: center;
     z-index: 30;
     order: 1;
     width: 100%;
   }
 
-  /* Hide Visualizer on Mobile */
   #visualizer {
-    display: none !important;
+    display: none;
   }
 
   .player {
     position: relative;
     width: 100%;
     height: auto;
-    margin: 0 0 20px 0;
+    margin: 0 0 15px 0;
     display: flex;
     justify-content: center;
     order: 2; 
   }
 
   #vinyl-disc-container {
-    width: 240px;
-    height: 240px;
+    width: 220px;
+    height: 220px;
   }
 
   #playRadio {
-    width: 60px;
-    height: 60px;
-    font-size: 24px;
+    width: 55px;
+    height: 55px;
+    font-size: 22px;
   }
 
-  /* Current Song Info - Fixed & Styled */
+  /* Current Song Info */
   #currentSong {
-    position: relative !important;
-    left: auto !important;
-    top: auto !important;
-    right: auto !important;
-    bottom: auto !important;
-    transform: none !important;
-    margin: 0 auto !important;
-    
-    width: auto !important;
-    max-width: 85% !important;
-    height: auto !important;
-    
-    display: flex !important;
+    position: relative;
+    left: auto;
+    top: auto;
+    right: auto;
+    bottom: auto;
+    transform: none;
+    margin: 0 auto;
+    width: auto;
+    max-width: 90%;
+    height: auto;
+    display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    
-    padding: 12px 20px !important;
+    gap: 6px;
+    padding: 12px 16px;
     order: 3;
-    
-    background: rgba(20, 20, 20, 0.85);
+    background: rgba(20, 20, 20, 0.9);
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 12px;
     z-index: 40;
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    white-space: normal;
+  }
+  
+  .main-cover {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 4px;
+  }
+  
+  .current-song-content {
+    align-items: center;
+    min-width: auto;
+    width: 100%;
+  }
+  
+  #currentSong .song-info {
+    flex-wrap: wrap;
+    justify-content: center;
+    text-align: center;
+    flex-direction: column;
+    gap: 2px;
   }
   
   #currentSong .label {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     color: #aaa;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 2px;
   }
   
   #currentSong .title {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     line-height: 1.3;
-    white-space: normal; /* Allow text wrapping */
+    white-space: normal;
     text-align: center;
-    color: #00ff68;
-    text-shadow: 0 0 8px rgba(0, 255, 104, 0.2);
-  }
-  
-  /* Hide progress info inside currentSong if it exists there, 
-     we might want it separate or smaller */
-  #progress-info {
-    order: 4;
-    margin-top: 10px;
-    width: 80%;
   }
 
   #progress-info {
+    order: 4;
+    margin-top: 8px;
+    width: 90%;
+    max-width: 280px;
+  }
+
+  .song-buttons-container {
+    margin-top: 8px;
+    order: 5;
+  }
+
+  #history-dropdown,
+  #info-dropdown {
     position: relative;
     top: auto;
     left: auto;
     transform: none;
+    margin-top: 8px;
     width: 100%;
-    margin-top: 5px;
-    order: 5;
+    max-width: 280px;
+  }
+  
+  #history-dropdown.open,
+  #info-dropdown.open {
+    transform: none;
   }
 
-  /* Volume & PIP Controls */
+  /* Volume & PIP */
   .volume-container {
     position: absolute;
-    top: 20px;
-    right: 20px;
-    transform: scale(0.8);
+    top: 15px;
+    right: 15px;
+    width: 50px;
+    height: 50px;
     z-index: 40;
   }
   
-  #mainPipBtn {
+  .volume-ring {
+    width: 50px;
+    height: 50px;
+  }
+  
+  #mainPipBtn,
+  .btn-pip-main {
     display: none;
   }
 
-  /* --- Radio Controller (Bottom Bar) --- */
+  /* Radio Controller */
   .rc-container {
     min-width: unset;
     width: calc(100% - 20px);
@@ -3112,30 +2814,74 @@ body.menu-open {
     right: 10px;
     bottom: 10px;
     border-radius: 12px;
-    padding: 10px;
-    background: rgba(10, 10, 10, 0.95); /* More opaque */
+    padding: 8px;
+    background: rgba(10, 10, 10, 0.95);
   }
   
   .rc-content {
-    padding: 10px;
-    gap: 8px;
+    padding: 8px;
+    gap: 6px;
   }
   
   .rc-top-row {
     justify-content: space-between;
+    gap: 10px;
   }
   
   .rc-meta {
     text-align: left;
-    padding-left: 10px;
+    padding-left: 8px;
+    flex: 1;
+    min-width: 0;
+  }
+  
+  #rcTitle { 
+    font-size: 14px; 
+    max-width: 100%;
+  }
+  #rcArtist { font-size: 11px; }
+  
+  .rc-btn-play,
+  .rc-btn-pip {
+    width: 42px;
+    height: 42px;
+    font-size: 16px;
+  }
+  
+  .rc-cover {
+    width: 42px;
+    height: 42px;
+  }
+  
+  .rc-volume-container {
+    width: 42px;
+    height: 42px;
   }
 
   /* --- Artistes Section --- */
+  #artistes {
+    padding: 60px 16px 30px;
+    min-height: auto;
+  }
+  
+  #artistes h2 {
+    font-size: 2.5em;
+  }
+  
+  .artistes-nav {
+    gap: 10px;
+  }
+  
+  .artistes-nav .btn {
+    font-size: 14px;
+    padding: 8px 16px;
+  }
+
   .artiste {
     height: auto;
     min-height: 100dvh;
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto; /* Image then text */
+    grid-template-rows: auto auto;
     padding: 0;
     gap: 0;
     display: flex;
@@ -3143,24 +2889,25 @@ body.menu-open {
   }
 
   .artiste-image {
-    height: 40vh; /* Reduce image height */
+    height: 40vh;
+    min-height: 250px;
     width: 100%;
     order: 1;
   }
 
   .artiste-info {
-    padding: 30px 20px 80px; /* Extra bottom padding */
+    padding: 25px 20px 100px;
     order: 2;
     text-align: center;
     align-items: center;
     width: 100%;
+    padding-left: 20px;
   }
 
-  /* Fix Artist Name Overflow */
   .artiste-info h3 {
     text-align: center;
-    font-size: clamp(2rem, 10vw, 3rem); /* Reduced max size */
-    word-break: break-word; /* Break long words like SHOREBREAK */
+    font-size: clamp(1.8rem, 10vw, 2.5rem);
+    word-break: break-word;
     hyphens: auto;
     line-height: 1.1;
   }
@@ -3168,32 +2915,886 @@ body.menu-open {
   .artiste-info .localisation {
     text-align: center;
     padding-left: 0;
-    margin-top: 10px;
+    margin-top: 8px;
+    font-size: 1rem;
   }
   
-  .artiste-actions, .artiste-socials {
+  .artiste-actions {
     justify-content: center;
     padding-left: 0;
-    margin-top: 15px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  
+  .artiste-actions .btn {
+    font-size: 12px;
+    padding: 10px 16px;
+  }
+  
+  .artiste-socials {
+    justify-content: center;
+    padding-left: 0;
+    margin-top: 12px;
   }
 
   /* --- Contact Section --- */
+  #contact {
+    padding: 60px 16px;
+    min-height: 100dvh;
+  }
+  
+  #contact h2 {
+    font-size: 2.5em;
+    margin-bottom: 20px;
+  }
+  
   #contact form {
-    width: 90%;
+    width: 100%;
     max-width: none;
+  }
+  
+  .contact-form input,
+  .contact-form textarea {
+    max-width: none;
+    padding: 14px;
+    width: 100%;
+  }
+  
+  .contact-form .btn {
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  .social-links {
+    gap: 15px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+  
+  .social-btn {
+    width: 45px;
+    height: 45px;
+    font-size: 20px;
+  }
+
+  /* --- Burger Menu --- */
+  .burger {
+    top: 15px;
+    right: 15px;
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+  }
+  
+  /* --- Loading Screen --- */
+  .marquee-item {
+    font-size: 6vw;
+  }
+  
+  /* --- Scroll Arrow --- */
+  .scroll-arrow {
+    bottom: 80px;
+    font-size: 20px;
   }
 }
 
+/* =========================================
+   MOBILE (max-width: 768px)
+   ========================================= */
+@media (max-width: 768px) {
+  /* --- Burger Menu --- */
+  .menu-overlay {
+    padding-right: 5vw;
+    justify-content: center;
+  }
+  
+  .menu-content {
+    text-align: center;
+    width: 100%;
+    padding: 0 20px;
+  }
+  
+  .menu-item {
+    justify-content: center;
+    gap: 15px;
+  }
+  
+  .menu-link {
+    font-size: clamp(1.8rem, 8vw, 3rem);
+    letter-spacing: 1px;
+  }
+  
+  .menu-number {
+    font-size: clamp(0.8rem, 2vw, 1rem);
+  }
+  
+  .menu-close {
+    top: 15px;
+    right: 15px;
+    width: 50px;
+    height: 50px;
+  }
+  
+  .menu-login-link {
+    top: 85px;
+    width: 50px;
+    height: 50px;
+  }
+  
+  .line-v2, .line-v3, .line-v5 {
+    opacity: 0.5;
+  }
+
+  /* --- History/Info Dropdowns --- */
+  #history-dropdown,
+  #info-dropdown {
+    min-width: 180px;
+    max-width: 280px;
+  }
+  
+  .history-item .history-title {
+    max-width: 150px;
+    font-size: 9px;
+  }
+  
+  .history-item .history-time {
+    font-size: 7px;
+  }
+  
+  /* --- Timeline --- */
+  .timeline-filters .btn {
+    font-size: 0.7rem;
+    padding: 5px 10px;
+  }
+  
+  .timeline-image {
+    height: 150px;
+  }
+  
+  /* --- Terminal Overlay (Intro) --- */
+  .terminal-content {
+    flex-direction: column;
+  }
+  
+  .terminal-left {
+    width: 100%;
+    height: 60%;
+    padding: 15px;
+  }
+  
+  .terminal-right {
+    width: 100%;
+    height: 40%;
+  }
+  
+  .history-line {
+    font-size: 1rem;
+  }
+  
+  .prompt {
+    font-size: 1rem;
+  }
+  
+  #terminalInput {
+    font-size: 1rem;
+  }
+  
+  #ghostText {
+    font-size: 1rem;
+  }
+  
+  #asciiS {
+    font-size: 10px;
+    line-height: 10px;
+  }
+}
+
+/* =========================================
+   SMALL MOBILE (max-width: 480px)
+   ========================================= */
 @media (max-width: 480px) {
-  /* Small mobile tweaks */
-  #radio h2 { font-size: 2.5em; }
-  #vinyl-disc-container { width: 220px; height: 220px; }
+  /* --- Global --- */
+  .screen {
+    padding: 50px 12px 70px;
+  }
+
+  /* --- Accueil --- */
+  #accueil h1 {
+    font-size: clamp(1.8em, 14vw, 3em);
+  }
   
-  .menu-link { font-size: 2rem; }
+  .line-grande {
+    letter-spacing: 0;
+  }
   
-  /* Ensure inputs are large enough to not zoom */
+  .line-maison {
+    letter-spacing: 0.05em;
+  }
+
+  /* --- Radio --- */
+  #radio {
+    padding-top: 30px;
+    padding-bottom: 100px;
+  }
+  
+  #radio h2 { font-size: 2em; }
+  
+  #vinyl-disc-container { 
+    width: 180px; 
+    height: 180px; 
+  }
+  
+  #playRadio {
+    width: 45px;
+    height: 45px;
+    font-size: 18px;
+  }
+  
+  #currentSong {
+    padding: 10px 12px;
+    max-width: 95%;
+    gap: 4px;
+  }
+  
+  #currentSong .title {
+    font-size: 0.8rem;
+  }
+  
+  #currentSong .label {
+    font-size: 0.6rem;
+  }
+  
+  .main-cover {
+    width: 40px;
+    height: 40px;
+  }
+  
+  #progress-info {
+    width: 95%;
+    max-width: none;
+  }
+  
+  #elapsed-time, #remaining-time {
+    font-size: 0.65rem;
+    min-width: 28px;
+  }
+
+  /* --- History/Info toggles --- */
+  #history-toggle span, 
+  #info-toggle span {
+    display: none;
+  }
+  
+  #history-toggle,
+  #info-toggle {
+    padding: 4px 10px;
+  }
+  
+  .song-buttons-container {
+    gap: 20px;
+  }
+  
+  #history-dropdown, 
+  #info-dropdown {
+    min-width: 160px;
+    max-width: 95%;
+  }
+  
+  .history-item {
+    padding: 6px 10px;
+  }
+  
+  .history-item .history-title {
+    max-width: 120px;
+    font-size: 9px;
+  }
+  
+  .info-item {
+    padding: 6px 10px;
+    gap: 10px;
+  }
+  
+  .info-item .info-label {
+    font-size: 9px;
+  }
+  
+  .info-item .info-value {
+    font-size: 11px;
+  }
+
+  /* --- Burger Menu --- */
+  .burger {
+    top: 10px;
+    right: 10px;
+    width: 45px;
+    height: 45px;
+    font-size: 18px;
+  }
+  
+  .menu-close {
+    top: 10px;
+    right: 10px;
+    width: 45px;
+    height: 45px;
+  }
+  
+  .menu-login-link {
+    top: 70px;
+    right: 10px;
+    width: 45px;
+    height: 45px;
+    font-size: 1.2rem;
+  }
+  
+  .menu-link {
+    font-size: clamp(1.4rem, 10vw, 2.2rem);
+  }
+  
+  .menu-item {
+    margin: 0;
+    padding: 10px 0;
+  }
+  
+  .menu-number {
+    font-size: 0.7rem;
+  }
+
+  /* --- Timeline --- */
+  #timeline h2 {
+    font-size: 1.6em;
+  }
+  
+  .timeline-item {
+    width: 90%;
+    max-width: none;
+  }
+  
+  .timeline-item h3 {
+    font-size: 1rem;
+  }
+  
+  .timeline-item p {
+    font-size: 0.8rem;
+  }
+  
+  .timeline-image {
+    height: 140px;
+  }
+  
+  .timeline-filters .btn {
+    font-size: 0.65rem;
+    padding: 5px 8px;
+  }
+
+  /* --- Artistes --- */
+  #artistes {
+    padding: 50px 12px 20px;
+  }
+  
+  #artistes h2 {
+    font-size: 2em;
+  }
+  
+  .artistes-nav .btn {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+  
+  .artiste-image {
+    height: 35vh;
+    min-height: 200px;
+  }
+  
+  .artiste-info {
+    padding: 20px 15px 90px;
+  }
+  
+  .artiste-info h3 {
+    font-size: clamp(1.4rem, 12vw, 2rem);
+  }
+  
+  .artiste-info .localisation {
+    font-size: 0.9rem;
+  }
+  
+  .artiste-actions .btn {
+    font-size: 11px;
+    padding: 8px 14px;
+  }
+  
+  .artiste-socials a {
+    font-size: 20px;
+  }
+
+  /* --- Contact --- */
+  #contact {
+    padding: 50px 12px;
+  }
+  
+  #contact h2 {
+    font-size: 1.8em;
+  }
+  
+  .contact-form input,
+  .contact-form textarea {
+    padding: 12px;
+    font-size: 16px;
+  }
+  
+  .contact-form .btn {
+    padding: 12px 20px;
+    font-size: 13px;
+  }
+  
+  .social-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+
+  /* --- Forms - Prevent zoom on iOS --- */
   input, textarea, select {
-    font-size: 16px !important;
+    font-size: 16px;
+  }
+
+  /* --- RC Controller --- */
+  .rc-container {
+    bottom: 5px;
+    left: 5px;
+    right: 5px;
+    width: calc(100% - 10px);
+    padding: 6px;
+  }
+  
+  .rc-content {
+    padding: 6px;
+    gap: 4px;
+  }
+  
+  .rc-btn-play,
+  .rc-btn-pip,
+  .rc-volume-container {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+  
+  .rc-cover {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .rc-meta {
+    padding-left: 6px;
+  }
+  
+  #rcTitle { font-size: 12px; }
+  #rcArtist { font-size: 10px; }
+  
+  .rc-handle {
+    width: 30px;
+  }
+  
+  /* --- Volume Container (Radio) --- */
+  .volume-container {
+    top: 10px;
+    right: 10px;
+    width: 45px;
+    height: 45px;
+  }
+  
+  .volume-ring {
+    width: 45px;
+    height: 45px;
+  }
+  
+  .volume-icon-center {
+    font-size: 16px;
+  }
+  
+  /* --- Loading Screen --- */
+  .marquee-item {
+    font-size: 8vw;
+  }
+  
+  #terminalLoading {
+    font-size: 3rem;
+    gap: 8px;
+  }
+  
+  /* --- Scroll Arrow --- */
+  .scroll-arrow {
+    bottom: 70px;
+    font-size: 18px;
+  }
+}
+
+/* =========================================
+   VERY SMALL MOBILE (max-width: 360px)
+   iPhone SE, Galaxy S8, etc.
+   ========================================= */
+@media (max-width: 360px) {
+  /* --- Global --- */
+  .screen {
+    padding: 45px 10px 65px;
+  }
+  
+  /* --- Accueil --- */
+  #accueil h1 {
+    font-size: clamp(1.5em, 15vw, 2.5em);
+  }
+
+  /* --- Radio --- */
+  #radio h2 {
+    font-size: 1.6em;
+  }
+  
+  #vinyl-disc-container {
+    width: 160px;
+    height: 160px;
+  }
+  
+  #playRadio {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+  
+  #currentSong {
+    padding: 8px 10px;
+  }
+  
+  #currentSong .title {
+    font-size: 0.75rem;
+  }
+  
+  .main-cover {
+    width: 35px;
+    height: 35px;
+  }
+  
+  /* --- Menu --- */
+  .menu-link {
+    font-size: clamp(1.2rem, 11vw, 1.8rem);
+  }
+  
+  .menu-item {
+    padding: 8px 0;
+  }
+  
+  /* --- Timeline --- */
+  #timeline h2 {
+    font-size: 1.4em;
+  }
+  
+  .timeline-item h3 {
+    font-size: 0.95rem;
+  }
+  
+  .timeline-image {
+    height: 120px;
+  }
+  
+  /* --- Artistes --- */
+  .artiste-image {
+    height: 30vh;
+    min-height: 180px;
+  }
+  
+  .artiste-info h3 {
+    font-size: clamp(1.2rem, 13vw, 1.8rem);
+  }
+  
+  /* --- Contact --- */
+  #contact h2 {
+    font-size: 1.6em;
+  }
+  
+  .social-btn {
+    width: 38px;
+    height: 38px;
+    font-size: 16px;
+  }
+  
+  /* --- RC Controller --- */
+  .rc-btn-play,
+  .rc-btn-pip,
+  .rc-volume-container,
+  .rc-cover {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+  
+  #rcTitle { font-size: 11px; }
+  #rcArtist { font-size: 9px; }
+}
+
+/* =========================================
+   LANDSCAPE MOBILE (max-height: 500px) AND (orientation: landscape)
+   For phones rotated horizontally
+   ========================================= */
+@media (max-height: 500px) and (orientation: landscape) {
+  /* --- Global --- */
+  .screen {
+    padding: 20px 20px 60px;
+    min-height: auto;
+    scroll-snap-align: none;
+  }
+  
+  main {
+    scroll-snap-type: none;
+  }
+  
+  /* --- Accueil --- */
+  #accueil {
+    min-height: 100vh;
+    padding: 20px;
+  }
+  
+  #accueil h1 {
+    font-size: clamp(1.5em, 8vh, 2.5em);
+  }
+  
+  /* --- Radio --- */
+  #radio {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+  }
+  
+  #radio h2 {
+    width: 100%;
+    font-size: 1.5em;
+    margin-bottom: 10px;
+  }
+  
+  #vinyl-disc-container {
+    width: 120px;
+    height: 120px;
+  }
+  
+  #playRadio {
+    width: 35px;
+    height: 35px;
+    font-size: 14px;
+  }
+  
+  #currentSong {
+    max-width: 300px;
+    padding: 8px 12px;
+  }
+  
+  .main-cover {
+    width: 35px;
+    height: 35px;
+  }
+  
+  #progress-info {
+    width: 200px;
+  }
+  
+  .song-buttons-container {
+    margin-top: 5px;
+  }
+  
+  /* --- Timeline --- */
+  #timeline {
+    min-height: auto;
+  }
+  
+  .timeline-header-wrapper {
+    padding: 10px;
+  }
+  
+  #timeline h2 {
+    font-size: 1.5em;
+  }
+  
+  .timeline-item {
+    margin: 10px 0;
+  }
+  
+  .timeline-image {
+    height: 100px;
+  }
+  
+  /* --- Artistes --- */
+  .artiste {
+    flex-direction: row;
+    min-height: auto;
+    height: auto;
+  }
+  
+  .artiste-image {
+    width: 40%;
+    height: 60vh;
+    min-height: 200px;
+  }
+  
+  .artiste-info {
+    width: 60%;
+    padding: 20px;
+  }
+  
+  .artiste-info h3 {
+    font-size: clamp(1.2rem, 5vh, 2rem);
+  }
+  
+  /* --- Contact --- */
+  #contact {
+    padding: 30px 20px;
+  }
+  
+  #contact h2 {
+    font-size: 1.5em;
+  }
+  
+  /* --- RC Controller --- */
+  .rc-container {
+    bottom: 5px;
+    max-width: 400px;
+    left: 50%;
+    transform: translateX(-50%);
+    right: auto;
+  }
+  
+  /* --- Burger --- */
+  .burger {
+    top: 10px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+  
+  /* --- Volume --- */
+  .volume-container {
+    top: 10px;
+    right: 60px;
+    width: 40px;
+    height: 40px;
+  }
+  
+  /* --- Menu Overlay --- */
+  .menu-link {
+    font-size: clamp(1rem, 5vh, 1.5rem);
+  }
+  
+  .menu-item {
+    padding: 5px 0;
+  }
+}
+
+/* =========================================
+   SHORT SCREENS / LAPTOPS (max-height: 700px) AND (min-width: 901px)
+   For laptops with short displays
+   ========================================= */
+@media (max-height: 700px) and (min-width: 901px) {
+  /* --- Radio --- */
+  #vinyl-disc-container {
+    width: 280px;
+    height: 280px;
+  }
+  
+  #playRadio {
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+  }
+  
+  /* --- Timeline --- */
+  #timeline h2 {
+    font-size: 2.5em;
+  }
+  
+  .timeline-item {
+    width: 220px;
+    margin: 0 20px;
+  }
+  
+  .timeline-image {
+    height: 180px;
+  }
+  
+  /* --- Artiste --- */
+  .artiste-info h3 {
+    font-size: clamp(1.5rem, 5vw, 2.5rem);
+  }
+}
+
+/* =========================================
+   HIGH DPI / RETINA DISPLAYS
+   ========================================= */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  /* Sharper borders for high DPI screens */
+  .btn,
+  .burger,
+  .menu-close,
+  .social-btn,
+  .volume-container,
+  #currentSong,
+  .timeline-content,
+  .rc-container {
+    border-width: 0.5px;
+  }
+}
+
+/* =========================================
+   REDUCED MOTION PREFERENCE
+   For users who prefer reduced motion
+   ========================================= */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  main {
+    scroll-snap-type: none;
+  }
+  
+  .timeline-content:hover {
+    transform: scale(1.02);
+  }
+  
+  #vinyl-disc.playing {
+    animation: none;
+  }
+}
+
+/* =========================================
+   PRINT STYLES
+   ========================================= */
+@media print {
+  .burger,
+  .menu-overlay,
+  .rc-container,
+  #visualizer,
+  .volume-container,
+  #noiseCanvas,
+  #asciiBg,
+  .scroll-arrow,
+  #terminalOverlay,
+  #loadingScreen {
+    display: none !important;
+  }
+  
+  body {
+    background: #fff;
+    color: #000;
+  }
+  
+  .screen {
+    min-height: auto;
+    page-break-inside: avoid;
   }
 }
 
