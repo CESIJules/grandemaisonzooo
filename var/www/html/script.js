@@ -1789,10 +1789,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (progressInterval) clearInterval(progressInterval); // Sécurité
         updateProgressBar(); // Mettre à jour immédiatement
         progressInterval = setInterval(updateProgressBar, 250);
-        if (progressInfo) progressInfo.classList.add('visible');
+        if (progressInfo) progressInfo.classList.add('visible);
       }
 
       // Sync PiP state
+     
       if (pipVideo && pipVideo.paused) {
           pipVideo.play().catch(e => console.log("PiP auto-play blocked", e));
       }
@@ -2198,6 +2199,35 @@ document.addEventListener('DOMContentLoaded', () => {
     return div.innerHTML;
   }
 
+  function updateCoverUI(filename) {
+      const coverImg = document.getElementById('rcCoverImg');
+      if (!coverImg) return;
+      
+      if (!filename) {
+          coverImg.style.opacity = '0';
+          return;
+      }
+
+      const newSrc = `get_cover.php?file=${encodeURIComponent(filename)}`;
+      
+      // Avoid reloading if src is same (ignoring potential query params if needed, but here filename changes)
+      if (coverImg.src.includes(encodeURIComponent(filename))) return;
+
+      // Preload image
+      const tempImg = new Image();
+      tempImg.onload = () => {
+          coverImg.src = newSrc;
+          coverImg.style.display = 'block';
+          requestAnimationFrame(() => {
+              coverImg.style.opacity = '1';
+          });
+      };
+      tempImg.onerror = () => {
+          coverImg.style.opacity = '0';
+      };
+      tempImg.src = newSrc;
+  }
+
   async function fetchCurrentSong() {
     // PERFORMANCE: Skip if hidden
     if (document.hidden) return;
@@ -2260,6 +2290,7 @@ document.addEventListener('DOMContentLoaded', () => {
               
               // Mise à jour du titre
               updateTitleUI(title);
+              updateCoverUI(rawTitle); // Update cover art
               lastKnownTitle = rawTitle;
               isFirstTitleLoad = false;
               
@@ -3023,21 +3054,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const REQUIRED_CLICKS = 5;
 
     secretS.addEventListener('click', (e) => {
-        e.stopPropagation(); // Prevent other click handlers
-        const currentTime = new Date().getTime();
+      e.stopPropagation(); // Prevent other click handlers
+      const currentTime = new Date().getTime();
 
-        if (currentTime - lastClickTime > CLICK_TIMEOUT) {
-            clickCount = 1;
-        } else {
-            clickCount++;
-        }
+      if (currentTime - lastClickTime > CLICK_TIMEOUT) {
+        clickCount = 1;
+      } else {
+        clickCount++;
+      }
 
-        lastClickTime = currentTime;
+      lastClickTime = currentTime;
 
-        if (clickCount >= REQUIRED_CLICKS) {
-            activateTerminal();
-            clickCount = 0;
-        }
+      if (clickCount >= REQUIRED_CLICKS) {
+        activateTerminal();
+        clickCount = 0;
+      }
     });
 
     // --- ASCII S Animation Logic ---
@@ -3076,9 +3107,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const cssWidth = cols * charWidth;
             const cssHeight = rows * charHeight;
             
-            asciiCanvas.style.width = `${cssWidth}px`;
-            asciiCanvas.style.height = `${cssHeight}px`;
-            
+            asciiCanvas.style.width = `${width}px`;
+            asciiCanvas.style.height = `${height}px`;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
             // Actual Size (Scaled)
             asciiCanvas.width = cssWidth * dpr;
             asciiCanvas.height = cssHeight * dpr;
