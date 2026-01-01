@@ -776,7 +776,7 @@ body.menu-open {
   display: flex;
   position: absolute;
   top: 20px;
-  left: 280px; /* Position after RADIO title */
+  left: 360px; /* Position after RADIO title - Adjusted to not overlap */
   z-index: 100;
 }
 
@@ -2512,7 +2512,7 @@ body.menu-open {
   
   /* Volume position adjusted for smaller title */
   .radio-header .volume-container {
-    left: 250px;
+    left: 320px;
   }
   
   #currentSong {
@@ -2562,7 +2562,7 @@ body.menu-open {
   }
   
   .timeline-item {
-    width: 240px;
+    width: 220px;
     margin: 0 28px;
   }
   
@@ -2603,7 +2603,7 @@ body.menu-open {
   
   /* Volume position adjusted for smaller title */
   .radio-header .volume-container {
-    left: 220px;
+    left: 320px;
     width: 50px;
     height: 50px;
   }
@@ -2693,7 +2693,7 @@ body.menu-open {
   }
   
   .timeline-item {
-    width: 220px;
+    width: 190px;
     margin: 0 22px;
   }
   
@@ -2736,7 +2736,7 @@ body.menu-open {
   
   /* Volume position adjusted for smaller title */
   .radio-header .volume-container {
-    left: 195px;
+    left: 280px;
     width: 48px;
     height: 48px;
   }
@@ -2850,7 +2850,7 @@ body.menu-open {
   }
   
   .timeline-item {
-    width: 200px;
+    width: 170px;
     margin: 0 18px;
   }
   
@@ -2912,7 +2912,7 @@ body.menu-open {
   
   /* Volume position adjusted for smaller title */
   .radio-header .volume-container {
-    left: 175px;
+    left: 250px;
     top: 16px;
     width: 45px;
     height: 45px;
@@ -4018,8 +4018,14 @@ body.menu-open {
     border-radius: 5px;
   }
   
-  /* Hide progress and buttons - use RC only */
-  #progress-info,
+  /* Show progress info on mobile */
+  #progress-info {
+    display: flex;
+    margin-top: 4px;
+    width: 100%;
+  }
+  
+  /* Hide buttons only */
   .song-buttons-container {
     display: none;
   }
@@ -4215,8 +4221,10 @@ body.menu-open {
   
   /* --- Scroll Arrow --- */
   .scroll-arrow {
-    bottom: 70px;
+    bottom: 130px; /* Moved up to avoid RC container overlap */
     font-size: 18px;
+    z-index: 1001; /* Ensure it's above RC container */
+    pointer-events: auto;
   }
 }
 
