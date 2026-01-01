@@ -749,17 +749,25 @@ body.menu-open {
 /* Radio Header - Title only, positioned absolutely */
 .radio-header {
   position: absolute;
-  top: 25px;
-  left: 25px;
-  right: auto;
+  top: 0;
+  left: 0;
+  right: 0;
   bottom: auto;
   z-index: 30;
   display: block;
   pointer-events: none;
+  /* Don't constrain absolute children - let them position relative to #radio */
 }
 
 .radio-header > * {
   pointer-events: auto;
+}
+
+/* Title RADIO - top left */
+#radio h2 {
+  position: absolute;
+  top: 25px;
+  left: 25px;
 }
 
 /* Hide volume and PIP in header - they're in RC */
@@ -1171,7 +1179,6 @@ body.menu-open {
 #radio h2 {
   font-size: 4.5em;
   margin: 0;
-  position: relative;
   line-height: 1;
   z-index: 20;
   mix-blend-mode: difference;
@@ -1179,10 +1186,10 @@ body.menu-open {
   text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
 }
 
-/* Current Song - Fixed at top center */
+/* Current Song - Fixed at top center of #radio */
 #currentSong {
   position: absolute;
-  top: 25px;
+  top: 20px;
   left: 50%;
   transform: translateX(-50%);
   bottom: auto;
@@ -2448,18 +2455,15 @@ body.menu-open {
    ========================================= */
 @media (max-width: 1200px) {
   /* Radio Section */
-  .radio-header {
+  #radio h2 {
     top: 20px;
     left: 20px;
-  }
-  
-  #radio h2 {
     font-size: 3.5em;
   }
   
   #currentSong {
-    top: 20px;
-    max-width: 400px;
+    top: 18px;
+    max-width: 420px;
     padding: 7px 12px 7px 7px;
   }
   
@@ -2714,15 +2718,17 @@ body.menu-open {
   
   .radio-header {
     position: absolute;
-    top: 15px;
-    left: 15px;
-    right: auto;
+    top: 0;
+    left: 0;
+    right: 0;
     display: block;
     z-index: 30;
   }
 
   #radio h2 {
-    position: relative;
+    position: absolute;
+    top: 15px;
+    left: 15px;
     font-size: 1.6em;
     margin: 0;
     text-align: left;
@@ -2764,7 +2770,7 @@ body.menu-open {
     transform: translateX(-50%);
     margin: 0;
     width: auto;
-    max-width: calc(100% - 120px);
+    max-width: calc(100% - 100px);
     height: auto;
     display: flex;
     flex-direction: row;
@@ -3613,13 +3619,16 @@ body.menu-open {
   
   .radio-header {
     position: absolute;
-    top: 10px;
-    left: 10px;
-    right: auto;
+    top: 0;
+    left: 0;
+    right: 0;
     display: block;
   }
   
   #radio h2 {
+    position: absolute;
+    top: 10px;
+    left: 10px;
     font-size: 1.3em;
   }
   
@@ -3759,17 +3768,14 @@ body.menu-open {
     padding-bottom: 40px;
   }
   
-  .radio-header {
-    top: 15px;
-    left: 15px;
-  }
-  
   #radio h2 {
+    top: 12px;
+    left: 15px;
     font-size: 2.2em;
   }
   
   #currentSong {
-    top: 15px;
+    top: 12px;
     max-width: 420px;
     padding: 6px 10px 6px 6px;
     gap: 8px;
