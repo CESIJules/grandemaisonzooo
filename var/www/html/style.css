@@ -776,7 +776,7 @@ body.menu-open {
   display: flex;
   position: absolute;
   top: 20px;
-  left: 420px; /* Position after RADIO title - Moved further right */
+  left: 360px; /* Position after RADIO title - Adjusted to not overlap */
   z-index: 100;
 }
 
@@ -1229,7 +1229,7 @@ body.menu-open {
   width: auto;
   max-width: min(600px, calc(100vw - 400px)); /* Flexible max-width */
   justify-content: flex-start;
-  /* overflow: hidden;  REMOVED to allow dropdowns to show */
+  overflow: hidden; /* Hide overflow for long titles */
 
   /* Animation */
   transition: all 0.3s ease;
@@ -1280,7 +1280,7 @@ body.menu-open {
   gap: 2px;
   min-width: 150px;
   max-width: 100%;
-  /* overflow: hidden; REMOVED to allow dropdowns */
+  overflow: hidden;
   flex: 1;
 }
 
@@ -1289,7 +1289,6 @@ body.menu-open {
   align-items: center;
   gap: 6px;
   width: 100%;
-  overflow: hidden; /* Keep overflow hidden here for title truncation */
 }
 
 #currentSong .label {
@@ -1795,7 +1794,7 @@ body.menu-open {
 .timeline-item { 
   position: relative;
   flex-shrink: 0;
-  width: 260px; /* Reduced from 300px */
+  width: 300px;
   margin: 0 40px;
   z-index: 2;
 }
@@ -2604,7 +2603,7 @@ body.menu-open {
   
   /* Volume position adjusted for smaller title */
   .radio-header .volume-container {
-    left: 380px;
+    left: 320px;
     width: 50px;
     height: 50px;
   }
@@ -2737,7 +2736,7 @@ body.menu-open {
   
   /* Volume position adjusted for smaller title */
   .radio-header .volume-container {
-    left: 340px;
+    left: 280px;
     width: 48px;
     height: 48px;
   }
@@ -2913,7 +2912,7 @@ body.menu-open {
   
   /* Volume position adjusted for smaller title */
   .radio-header .volume-container {
-    left: 300px;
+    left: 250px;
     top: 16px;
     width: 45px;
     height: 45px;
