@@ -1705,7 +1705,7 @@ body.menu-open {
 
 .timeline-header-wrapper {
   position: absolute;
-  top: 20px;
+  top: 15px;
   left: 0;
   right: 0;
   display: flex;
@@ -1713,14 +1713,14 @@ body.menu-open {
   align-items: center;
   justify-content: flex-start;
   padding: 0 100px; /* Space for burger on right */
-  z-index: 50;
+  z-index: 100; /* Above timeline cards */
   pointer-events: none;
-  gap: 15px;
+  gap: 10px;
 }
 
 #timeline h2 { 
   margin: 0;
-  font-size: 4.5em;
+  font-size: 4em;
   position: relative;
   text-align: center;
   pointer-events: none;
@@ -1728,17 +1728,23 @@ body.menu-open {
   color: #fff;
   z-index: 10;
   text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+  line-height: 1;
 }
 
 .timeline-filters {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   justify-content: center;
   pointer-events: auto;
   position: relative;
   z-index: 10;
   flex-wrap: wrap;
-  max-width: 100%;
+  max-width: calc(100% - 40px); /* Prevent overflow */
+}
+
+.timeline-filters .btn {
+  padding: 8px 16px;
+  font-size: 0.75rem;
 }
 
 .filter-btn.active {
@@ -2446,10 +2452,25 @@ body.menu-open {
     min-width: 320px;
   }
   
-  /* Timeline Items */
+  /* Timeline */
+  .timeline-header-wrapper {
+    top: 12px;
+    padding: 0 95px;
+    gap: 10px;
+  }
+  
+  #timeline h2 {
+    font-size: 3.5em;
+  }
+  
+  .timeline-filters .btn {
+    padding: 9px 16px;
+    font-size: 0.72rem;
+  }
+  
   .timeline-item {
-    width: 280px;
-    margin: 0 30px;
+    width: 260px;
+    margin: 0 25px;
   }
 }
 
@@ -2498,10 +2519,9 @@ body.menu-open {
   
   /* Timeline Adjustments */
   .timeline-header-wrapper {
-    padding: 15px 90px; /* Space for burger */
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
+    top: 12px;
+    padding: 0 90px;
+    gap: 8px;
   }
   
   #timeline h2 {
@@ -2509,26 +2529,25 @@ body.menu-open {
   }
   
   .timeline-filters {
-    gap: 8px;
-    justify-content: center;
+    gap: 6px;
   }
   
   .timeline-filters .btn {
-    padding: 10px 18px;
-    font-size: 0.75rem;
+    padding: 8px 14px;
+    font-size: 0.7rem;
   }
 
   .timeline-item {
-    width: 230px;
-    margin: 0 18px;
+    width: 220px;
+    margin: 0 15px;
   }
 
   .timeline-item h3 {
-    font-size: 1.05em;
+    font-size: 1em;
   }
   
   .timeline-content {
-    padding: 15px;
+    padding: 14px;
   }
 
   /* Vinyl Disc */
