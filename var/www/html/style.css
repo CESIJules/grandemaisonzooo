@@ -1599,14 +1599,23 @@ body.menu-open {
   min-width: 30px;
 }
 
+/* Controls Row */
+.player-controls-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Center buttons */
+  gap: 16px;
+  width: 100%;
+  margin-top: 4px;
+}
+
 /* Historique de lecture */
-#history-toggle {
+#history-toggle, #info-toggle {
   display: inline-flex;
   align-items: center;
-  justify-content: flex-start; /* Align Left */
+  justify-content: center;
   gap: 6px;
   padding: 2px 0;
-  margin-top: 2px;
   cursor: pointer;
   font-size: 0.7rem;
   color: #aaa;
@@ -1614,14 +1623,13 @@ body.menu-open {
   letter-spacing: 1px;
   transition: color 0.2s;
   user-select: none;
-  width: auto;
 }
 
-#history-toggle:hover {
+#history-toggle:hover, #info-toggle:hover {
   color: #00ff68;
 }
 
-#history-toggle span {
+#history-toggle span, #info-toggle span {
   font-weight: 500;
 }
 
@@ -1635,7 +1643,8 @@ body.menu-open {
   transform: rotate(180deg);
 }
 
-#history-dropdown {
+/* Dropdowns Common */
+#history-dropdown, #info-dropdown {
   position: absolute;
   top: calc(100% + 8px);
   left: 50%;
@@ -1649,17 +1658,52 @@ body.menu-open {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  
   opacity: 0;
   visibility: hidden;
-  transition: all 0.25s ease;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
   z-index: 100;
+  padding: 0;
   overflow: hidden;
 }
 
-#history-dropdown.open {
+#history-dropdown.open, #info-dropdown.open {
   opacity: 1;
   visibility: visible;
-  transform: translateX(-50%) translateY(0);
+  top: calc(100% + 12px);
+}
+
+/* Info Dropdown Specifics */
+#info-dropdown {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  gap: 8px;
+  min-width: 160px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.info-item .label {
+  color: #888;
+  font-weight: 500;
+}
+
+.info-item .value {
+  color: #fff;
+  font-family: 'Space Grotesk', monospace;
+  font-weight: 600;
 }
 
 #history-list {

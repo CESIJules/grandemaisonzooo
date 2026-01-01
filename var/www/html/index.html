@@ -282,15 +282,37 @@
                 </div>
                 <span id="remaining-time">0:00</span>
               </div>
-              <!-- Historique de lecture -->
-              <div id="history-toggle" title="Voir l'historique">
-                <span>HISTORIQUE</span>
-                <i class="fas fa-chevron-down" id="history-chevron"></i>
+              <!-- Controls Row: History & Info -->
+              <div class="player-controls-bottom">
+                <div id="history-toggle" title="Voir l'historique">
+                  <span>HISTORIQUE</span>
+                  <i class="fas fa-chevron-down" id="history-chevron"></i>
+                </div>
+                <div id="info-toggle" title="Infos du morceau">
+                  <span>INFOS</span>
+                  <i class="fas fa-info-circle"></i>
+                </div>
               </div>
             </div>
+            
+            <!-- Dropdowns -->
             <div id="history-dropdown">
               <div id="history-list">
                 <!-- Rempli dynamiquement -->
+              </div>
+            </div>
+            <div id="info-dropdown">
+              <div class="info-item">
+                <span class="label">BPM</span>
+                <span class="value" id="info-bpm">--</span>
+              </div>
+              <div class="info-item">
+                <span class="label">KEY</span>
+                <span class="value" id="info-key">--</span>
+              </div>
+              <div class="info-item">
+                <span class="label">GENRE</span>
+                <span class="value" id="info-genre">--</span>
               </div>
             </div>
           </div>
