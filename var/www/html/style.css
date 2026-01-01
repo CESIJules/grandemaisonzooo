@@ -746,15 +746,34 @@ body.menu-open {
   90% { transform: translate(-10%, 10%); }
 }
 
+/* Radio Header - Flex container for title, controls, and currentSong */
 .radio-header {
   position: absolute;
-  top: 30px;
-  left: 30px;
-  width: calc(100% - 60px);
-  /* z-index removed to allow mix-blend-mode on children */
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: flex-start;
   gap: 15px;
+  padding: 30px;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.radio-header > * {
+  pointer-events: auto;
+}
+
+/* Left group: Title RADIO */
+.radio-header h2 {
+  flex-shrink: 0;
+}
+
+/* Push currentSong to the right */
+#currentSong {
+  margin-left: auto;
 }
 
 /* Circular Volume Control */
@@ -1161,50 +1180,51 @@ body.menu-open {
   font-size: 4.5em;
   margin: 0;
   position: relative;
+  top: auto;
+  left: auto;
   line-height: 1;
-  /* opacity: 0.5; Removed to fix grey text issue */
   z-index: 20;
   mix-blend-mode: difference;
   color: #ffffff;
   text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
 }
 
+/* Current Song - Flex item, pushed to right by margin-left: auto (see .radio-header) */
 #currentSong {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 20;
+  position: relative;
+  top: auto;
+  right: auto;
+  left: auto;
+  transform: none;
+  z-index: 25;
   font-family: 'Lexend', sans-serif;
   font-size: 1rem;
   color: #ffffff;
-  margin-left: 0;
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   white-space: nowrap;
 
-  /* Style Transparent (Old Style) */
-  background-color: rgba(0, 0, 0, 0.4);
-  padding: 10px 20px 10px 10px;
-  border-radius: 20px;
+  /* Style Transparent */
+  background-color: rgba(0, 0, 0, 0.6);
+  padding: 10px 16px 10px 10px;
+  border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   
   /* Adaptation longueur */
   width: auto;
-  max-width: 90vw;
+  max-width: 450px;
   justify-content: flex-start;
   overflow: visible;
 
-  /* Animation de taille */
+  /* Animation */
   transition: all 0.3s ease;
-  will-change: transform;
 }
 
 .main-cover {
@@ -2436,6 +2456,39 @@ body.menu-open {
    LAPTOP & SMALL DESKTOP (max-width: 1200px)
    ========================================= */
 @media (max-width: 1200px) {
+  /* Radio Section */
+  .radio-header {
+    padding: 20px;
+  }
+  
+  #radio h2 {
+    font-size: 3.5em;
+  }
+  
+  #currentSong {
+    max-width: 380px;
+    padding: 8px 14px 8px 8px;
+  }
+  
+  #currentSong .title {
+    font-size: 0.85rem;
+  }
+  
+  .main-cover {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .volume-container {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .volume-ring {
+    width: 50px;
+    height: 50px;
+  }
+  
   /* Timeline Adjustments */
   #timeline h2 {
     font-size: 3em;
@@ -2453,8 +2506,14 @@ body.menu-open {
 
   /* Vinyl Disc */
   #vinyl-disc-container {
-    width: 350px;
-    height: 350px;
+    width: 320px;
+    height: 320px;
+  }
+  
+  #playRadio {
+    width: 70px;
+    height: 70px;
+    font-size: 28px;
   }
 
   /* Playlist Editor Grid */
@@ -2652,25 +2711,37 @@ body.menu-open {
   #radio {
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
-    padding-top: 40px;
+    padding-top: 20px;
     padding-bottom: 120px;
     overflow: hidden;
     position: relative;
   }
   
   .radio-header {
-    display: contents;
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+    width: 100%;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    z-index: 30;
+    box-sizing: border-box;
   }
 
   #radio h2 {
     position: relative;
-    font-size: 2.5em;
-    margin-bottom: 15px;
+    top: auto;
+    left: auto;
+    font-size: 2em;
+    margin: 0;
     text-align: center;
     z-index: 30;
-    order: 1;
     width: 100%;
   }
 
@@ -2682,24 +2753,23 @@ body.menu-open {
     position: relative;
     width: 100%;
     height: auto;
-    margin: 0 0 15px 0;
+    margin: 15px 0;
     display: flex;
     justify-content: center;
-    order: 2; 
   }
 
   #vinyl-disc-container {
-    width: 220px;
-    height: 220px;
+    width: 200px;
+    height: 200px;
   }
 
   #playRadio {
-    width: 55px;
-    height: 55px;
-    font-size: 22px;
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
   }
 
-  /* Current Song Info */
+  /* Current Song Info - Mobile Layout */
   #currentSong {
     position: relative;
     left: auto;
@@ -2709,27 +2779,27 @@ body.menu-open {
     transform: none;
     margin: 0 auto;
     width: auto;
-    max-width: 90%;
+    max-width: 92%;
     height: auto;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 8px;
     padding: 12px 16px;
-    order: 3;
-    background: rgba(20, 20, 20, 0.9);
+    background: rgba(15, 15, 15, 0.95);
     border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 12px;
+    border-radius: 16px;
     z-index: 40;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.4);
     white-space: normal;
   }
   
   .main-cover {
-    width: 48px;
-    height: 48px;
-    margin-bottom: 4px;
+    width: 56px;
+    height: 56px;
+    margin-bottom: 0;
+    border-radius: 10px;
   }
   
   .current-song-content {
@@ -2743,31 +2813,37 @@ body.menu-open {
     justify-content: center;
     text-align: center;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
   }
   
   #currentSong .label {
     font-size: 0.65rem;
-    color: #aaa;
+    color: #888;
   }
   
   #currentSong .title {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     line-height: 1.3;
     white-space: normal;
     text-align: center;
+    word-break: break-word;
   }
 
   #progress-info {
-    order: 4;
-    margin-top: 8px;
-    width: 90%;
-    max-width: 280px;
+    margin-top: 6px;
+    width: 100%;
+    max-width: 300px;
   }
 
   .song-buttons-container {
-    margin-top: 8px;
-    order: 5;
+    margin-top: 10px;
+    gap: 24px;
+  }
+  
+  #history-toggle,
+  #info-toggle {
+    font-size: 0.75rem;
+    padding: 4px 10px;
   }
 
   #history-dropdown,
@@ -2776,9 +2852,9 @@ body.menu-open {
     top: auto;
     left: auto;
     transform: none;
-    margin-top: 8px;
+    margin-top: 10px;
     width: 100%;
-    max-width: 280px;
+    max-width: 300px;
   }
   
   #history-dropdown.open,
@@ -2788,17 +2864,17 @@ body.menu-open {
 
   /* Volume & PIP */
   .volume-container {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    width: 50px;
-    height: 50px;
+    position: relative;
+    top: auto;
+    right: auto;
+    width: 46px;
+    height: 46px;
     z-index: 40;
   }
   
   .volume-ring {
-    width: 50px;
-    height: 50px;
+    width: 46px;
+    height: 46px;
   }
   
   #mainPipBtn,
@@ -3561,15 +3637,31 @@ body.menu-open {
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 15px;
+  }
+  
+  .radio-header {
+    position: relative;
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
     align-items: center;
-    gap: 20px;
-    padding: 20px;
+    padding: 10px 15px;
+    gap: 10px;
   }
   
   #radio h2 {
-    width: 100%;
     font-size: 1.5em;
-    margin-bottom: 10px;
+    width: auto;
+  }
+  
+  #currentSong {
+    max-width: 300px;
+    padding: 8px 12px;
+    flex-direction: row;
+    gap: 8px;
   }
   
   #vinyl-disc-container {
@@ -3583,18 +3675,13 @@ body.menu-open {
     font-size: 14px;
   }
   
-  #currentSong {
-    max-width: 300px;
-    padding: 8px 12px;
-  }
-  
   .main-cover {
     width: 35px;
     height: 35px;
   }
   
   #progress-info {
-    width: 200px;
+    width: 150px;
   }
   
   .song-buttons-container {
@@ -3691,19 +3778,76 @@ body.menu-open {
 
 /* =========================================
    SHORT SCREENS / LAPTOPS (max-height: 700px) AND (min-width: 901px)
-   For laptops with short displays
+   For laptops with short displays like MacBook Pro
    ========================================= */
 @media (max-height: 700px) and (min-width: 901px) {
-  /* --- Radio --- */
+  /* --- Radio Section --- */
+  #radio {
+    padding-top: 10px;
+    padding-bottom: 60px;
+  }
+  
+  .radio-header {
+    padding: 15px 20px;
+  }
+  
+  #radio h2 {
+    font-size: 2.5em;
+  }
+  
+  #currentSong {
+    max-width: 350px;
+    padding: 6px 12px 6px 6px;
+    gap: 8px;
+  }
+  
+  #currentSong .title {
+    font-size: 0.8rem;
+  }
+  
+  #currentSong .label {
+    font-size: 0.65rem;
+  }
+  
+  .main-cover {
+    width: 40px;
+    height: 40px;
+  }
+  
+  #progress-info {
+    margin-top: 2px;
+  }
+  
+  .song-buttons-container {
+    margin-top: 4px;
+    gap: 12px;
+  }
+  
+  #history-toggle,
+  #info-toggle {
+    font-size: 0.6rem;
+    padding: 2px 6px;
+  }
+  
   #vinyl-disc-container {
-    width: 280px;
-    height: 280px;
+    width: 200px;
+    height: 200px;
   }
   
   #playRadio {
-    width: 60px;
-    height: 60px;
-    font-size: 24px;
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+  }
+  
+  .volume-container {
+    width: 45px;
+    height: 45px;
+  }
+  
+  .volume-ring {
+    width: 45px;
+    height: 45px;
   }
   
   /* --- Timeline --- */
@@ -3717,12 +3861,20 @@ body.menu-open {
   }
   
   .timeline-image {
-    height: 180px;
+    height: 160px;
   }
   
   /* --- Artiste --- */
   .artiste-info h3 {
     font-size: clamp(1.5rem, 5vw, 2.5rem);
+  }
+  
+  /* --- Burger --- */
+  .burger {
+    width: 50px;
+    height: 50px;
+    top: 15px;
+    right: 15px;
   }
 }
 
