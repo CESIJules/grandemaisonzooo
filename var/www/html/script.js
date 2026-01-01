@@ -2159,6 +2159,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const response = await fetch(`./get_all_metadata.php?nocache=${Date.now()}`);
       allMetadata = await response.json();
+      console.log('Métadonnées chargées:', Object.keys(allMetadata).length, 'morceaux');
       return allMetadata;
     } catch (e) {
       console.error('Erreur chargement métadonnées:', e);
@@ -2171,7 +2172,34 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!infoBpm || !infoKey || !infoGenre) return;
     
     const metadata = await loadAllMetadata();
-    const songMeta = metadata[filename];
+    
+    // Essayer plusieurs variantes de clé pour trouver les métadonnées
+    let songMeta = metadata[filename];
+    
+    if (!songMeta) {
+      // Essayer sans le chemin (juste le nom du fichier)
+      const baseName = filename.split('/').pop();
+      songMeta = metadata[baseName];
+    }
+    
+    if (!songMeta) {
+      // Essayer sans l'extension
+      const withoutExt = filename.replace(/\.[^/.]+$/, '');
+      songMeta = metadata[withoutExt];
+    }
+    
+    if (!songMeta) {
+      // Recherche partielle dans les clés
+      const lowerFilename = filename.toLowerCase();
+      for (const key of Object.keys(metadata)) {
+        if (key.toLowerCase().includes(lowerFilename) || lowerFilename.includes(key.toLowerCase())) {
+          songMeta = metadata[key];
+          break;
+        }
+      }
+    }
+    
+    console.log('Recherche métadonnées pour:', filename, '→', songMeta ? 'trouvé' : 'non trouvé');
     
     if (songMeta) {
       infoBpm.textContent = songMeta.bpm || '--';
