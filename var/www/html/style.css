@@ -762,12 +762,12 @@ body.menu-open {
   pointer-events: auto;
 }
 
-/* Title RADIO - bottom left on desktop, above visualizer */
+/* Title RADIO - top left on desktop, visualizer behind */
 #radio h2 {
   position: absolute;
-  bottom: 115px; /* Above visualizer (80px height + 20px bottom + 15px gap) */
+  top: 20px;
   left: 30px;
-  top: auto;
+  bottom: auto;
   z-index: 25;
 }
 
@@ -1514,13 +1514,13 @@ body.menu-open {
 
 #visualizer {
   position: absolute;
-  bottom: 20px;
-  left: 20px;
-  width: 350px;
-  height: 80px;
-  top: auto;
+  top: 15px;
+  left: 15px;
+  width: 400px;
+  height: 100px;
+  bottom: auto;
   transform: none;
-  z-index: 20;
+  z-index: 20; /* Behind title (25) */
   pointer-events: none;
   border-radius: 0;
 }
@@ -1709,38 +1709,36 @@ body.menu-open {
   left: 0;
   right: 0;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between; /* Title left, filters right */
-  padding: 0 40px;
+  justify-content: flex-start;
+  padding: 0 100px; /* Space for burger on right */
   z-index: 50;
   pointer-events: none;
+  gap: 15px;
 }
 
 #timeline h2 { 
   margin: 0;
   font-size: 4.5em;
-  position: relative; /* Not absolute anymore */
-  text-align: left;
+  position: relative;
+  text-align: center;
   pointer-events: none;
-  left: 0;
-  top: 0;
-  transform: none;
   mix-blend-mode: difference;
   color: #fff;
   z-index: 10;
   text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
-  flex-shrink: 0;
 }
 
 .timeline-filters {
   display: flex;
   gap: 10px;
-  justify-content: flex-end;
+  justify-content: center;
   pointer-events: auto;
   position: relative;
   z-index: 10;
   flex-wrap: wrap;
+  max-width: 100%;
 }
 
 .filter-btn.active {
@@ -2461,16 +2459,16 @@ body.menu-open {
 @media (max-width: 1200px) {
   /* Radio Section */
   #radio h2 {
-    bottom: 100px; /* Above visualizer */
-    left: 25px;
+    top: 18px;
+    left: 20px;
     font-size: 2.8em;
   }
   
   #visualizer {
-    width: 280px;
-    height: 70px;
-    bottom: 15px;
-    left: 15px;
+    width: 320px;
+    height: 85px;
+    top: 12px;
+    left: 12px;
   }
   
   #currentSong {
@@ -2500,24 +2498,24 @@ body.menu-open {
   
   /* Timeline Adjustments */
   .timeline-header-wrapper {
-    padding: 15px 25px;
-    flex-direction: row;
+    padding: 15px 90px; /* Space for burger */
+    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
+    gap: 12px;
   }
   
   #timeline h2 {
-    position: relative;
-    left: 0;
-    top: 0;
-    transform: none;
-    font-size: 2.5em;
-    margin: 0;
+    font-size: 3em;
   }
   
   .timeline-filters {
-    position: relative;
-    gap: 10px;
+    gap: 8px;
+    justify-content: center;
+  }
+  
+  .timeline-filters .btn {
+    padding: 10px 18px;
+    font-size: 0.75rem;
   }
 
   .timeline-item {
@@ -3796,16 +3794,16 @@ body.menu-open {
   }
   
   #radio h2 {
-    bottom: 85px; /* Above visualizer */
-    left: 15px;
+    top: 12px;
+    left: 12px;
     font-size: 1.8em;
   }
   
   #visualizer {
     width: 220px;
     height: 60px;
-    bottom: 12px;
-    left: 12px;
+    top: 8px;
+    left: 8px;
   }
   
   #currentSong {
@@ -3870,30 +3868,25 @@ body.menu-open {
   }
   
   .timeline-header-wrapper {
-    padding: 10px 20px;
-    flex-direction: row;
+    padding: 10px 80px; /* Space for burger */
+    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
-    gap: 15px;
+    gap: 10px;
   }
   
   #timeline h2 {
-    position: relative;
-    left: 0;
-    top: 0;
-    transform: none;
     font-size: 2em;
-    margin: 0;
   }
   
   .timeline-filters {
-    position: relative;
-    gap: 8px;
+    gap: 6px;
+    justify-content: center;
+    flex-wrap: wrap;
   }
   
   .timeline-filters .btn {
-    padding: 6px 12px;
-    font-size: 0.7rem;
+    padding: 5px 10px;
+    font-size: 0.65rem;
   }
   
   .timeline-item {
