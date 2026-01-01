@@ -16,31 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   recomputeSectionBounds();
 
-  // --- Scroll Arrow Logic (Moved to top) ---
-  const scrollArrow = document.getElementById('scrollArrow');
-
-  function updateScrollArrowVisibility() {
-      if (!scrollArrow) return;
-      // Hide on last section
-      if (currentSectionIndex >= sections.length - 1) {
-          scrollArrow.classList.add('hidden');
-      } else {
-          scrollArrow.classList.remove('hidden');
-      }
-  }
-
-  if (scrollArrow) {
-      scrollArrow.addEventListener('click', () => {
-          if (isNavigating) return;
-          if (currentSectionIndex < sections.length - 1) {
-              scrollToSection(currentSectionIndex + 1);
-          }
-      });
-  }
-  
-  // Initial check
-  updateScrollArrowVisibility();
-
   // --- Dynamic Artists Loading ---
   function escapeHtml(text) {
     if (!text) return text;
@@ -1972,102 +1947,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const CACHE_KEY = 'radio_current_song';
   const CACHE_DURATION = 5000; // 5 seconds
   
-  async function fetchCurrentSong() {
-      try {
-          const [icecastResponse, trackResponse] = await Promise.all([
-              fetch('https://grandemaisonzoo.com/status-json.xsl'),
-              fetch('get_current_track.php')
-          ]);
-
-          let title = "Aucun morceau en cours";
-          let rawTitle = "";
-          let listeners = 0;
-
-          // Récupérer le nombre d'auditeurs depuis Icecast
-          if (icecastResponse.ok) {
-              const icecastData = await icecastResponse.json();
-              if (icecastData.icestats && icecastData.icestats.source) {
-                  const source = Array.isArray(icecastData.icestats.source) 
-                      ? icecastData.icestats.source.find(s => s.listenurl.includes('/stream')) 
-                      : icecastData.icestats.source;
-                  if (source && source.listeners) listeners = source.listeners;
-              }
-          }
-
-          // Récupérer le morceau en cours depuis notre API (source de vérité)
-          if (trackResponse.ok) {
-              const trackData = await trackResponse.json();
-              if (trackData.filename && !trackData.error) {
-                  rawTitle = trackData.filename;
-                  title = trackData.display_title || rawTitle
-                      .replace(/\.[^/.]+$/, "")
-                      .replace(/_/g, ' ')
-                      .replace(/\s*-\s*/g, ' - ')
-                      .toUpperCase();
-                  
-                  // Synchroniser directement avec les données du serveur
-                  if (trackData.duration > 0 && trackData.start_time) {
-                      const serverElapsed = trackData.elapsed || (trackData.server_now - trackData.start_time);
-                      const bufferDelay = trackData.buffer_delay || 16;
-                      
-                      // Vérifier si c'est un nouveau morceau ou si on doit juste resync
-                      const currentTitleEl = document.querySelector('#currentSong .title');
-                      const currentTitle = currentTitleEl ? currentTitleEl.textContent : "";
-                      const isNewTrack = (title !== currentTitle);
-                      
-                      if (isNewTrack || isFirstTitleLoad) {
-                          // IMPORTANT: Attendre que l'audio du nouveau morceau soit réellement arrivé
-                          // avant de changer le titre (délai de buffer Icecast)
-                          if (serverElapsed < bufferDelay && !isFirstTitleLoad) {
-                              // Le nouveau morceau a commencé côté serveur mais l'audio n'est pas encore arrivé
-                              // On continue avec l'ancien titre et timer, on changera au prochain poll
-                              console.log(`Nouveau morceau détecté mais audio pas encore arrivé (${serverElapsed.toFixed(1)}s < ${bufferDelay}s)`);
-                              return;
-                          }
-                          
-                          console.log('Changement de morceau:', title);
-                          
-                          // Mise à jour du titre
-                          updateTitleUI(title);
-                          updateCoverUI(rawTitle); // Update cover art
-                          if (typeof updateInfoUI === 'function') updateInfoUI(rawTitle); // Update metadata info
-                          lastKnownTitle = rawTitle;
-                          isFirstTitleLoad = false;
-                          
-                          // Rafraîchir l'historique si le menu est ouvert
-                          if (historyOpen) {
-                              fetchPlayHistory();
-                          }
-                          
-                          // Mise à jour de la progression
-                          // On soustrait le buffer_delay car c'est le temps réel écoulé pour l'auditeur
-                          trackDuration = trackData.duration;
-                          const adjustedElapsed = Math.max(0, serverElapsed - bufferDelay);
-                          trackStartTime = (Date.now() / 1000) - adjustedElapsed;
-                          
-                          if (progressInterval) clearInterval(progressInterval);
-                          updateProgressBar();
-                          progressInterval = setInterval(updateProgressBar, 250);
-                          if (progressInfo) progressInfo.classList.add('visible');
-                          
-                          // Redémarrer l'intervalle de resync
-                          if (resyncInterval) clearInterval(resyncInterval);
-                      }
-                  }
-              }
-          }
-
-          // Update Listeners UI
-          const listenerCountEl = document.getElementById('listenerCount');
-          if (listenerCountEl) {
-              listenerCountEl.textContent = `${listeners} auditeur${listeners > 1 ? 's' : ''}`;
-          }
-
-      } catch (e) {
-          console.error("Error fetching song info:", e);
-      }
-  }
-
   function getCachedSong() {
       try {
           const cached = localStorage.getItem(CACHE_KEY);
@@ -2210,7 +2089,7 @@ document.addEventListener('DOMContentLoaded', () => {
         progressInterval = setInterval(updateProgressBar, 250);
         if (progressInfo) progressInfo.classList.add('visible');
         
-        // Démarrer/redémarrer l'intervalle de resync
+        // Démarrer/redémarrer l'intervalle de resynchronisation (toutes les 30 secondes)
         if (resyncInterval) clearInterval(resyncInterval);
         resyncInterval = setInterval(() => {
           if (!document.hidden && lastKnownTitle) {
@@ -2393,6 +2272,31 @@ document.addEventListener('DOMContentLoaded', () => {
           if (typeof updateScrollArrowVisibility === 'function') updateScrollArrowVisibility();
       });
   }
+
+  // --- Scroll Arrow Logic ---
+  const scrollArrow = document.getElementById('scrollArrow');
+
+  function updateScrollArrowVisibility() {
+      if (!scrollArrow) return;
+      // Hide on last section
+      if (currentSectionIndex >= sections.length - 1) {
+          scrollArrow.classList.add('hidden');
+      } else {
+          scrollArrow.classList.remove('hidden');
+      }
+  }
+
+  if (scrollArrow) {
+      scrollArrow.addEventListener('click', () => {
+          if (isNavigating) return;
+          if (currentSectionIndex < sections.length - 1) {
+              scrollToSection(currentSectionIndex + 1);
+          }
+      });
+  }
+  
+  // Initial check
+  updateScrollArrowVisibility();
 
   // --- Scroll & Layout Recalculation on Resize ---
   let resizeTimer;
