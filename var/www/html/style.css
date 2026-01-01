@@ -746,7 +746,7 @@ body.menu-open {
   90% { transform: translate(-10%, 10%); }
 }
 
-/* Radio Header - Flex container for title, controls, and currentSong */
+/* Radio Header - Title and controls at top */
 .radio-header {
   position: absolute;
   top: 0;
@@ -754,10 +754,9 @@ body.menu-open {
   right: 0;
   z-index: 30;
   display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-  gap: 15px;
-  padding: 30px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 25px 30px;
   pointer-events: none;
   box-sizing: border-box;
 }
@@ -766,14 +765,10 @@ body.menu-open {
   pointer-events: auto;
 }
 
-/* Left group: Title RADIO */
-.radio-header h2 {
+/* Volume and PIP buttons group */
+.radio-header .volume-container,
+.radio-header .btn-pip-main {
   flex-shrink: 0;
-}
-
-/* Push currentSong to the right */
-#currentSong {
-  margin-left: auto;
 }
 
 /* Circular Volume Control */
@@ -1180,8 +1175,6 @@ body.menu-open {
   font-size: 4.5em;
   margin: 0;
   position: relative;
-  top: auto;
-  left: auto;
   line-height: 1;
   z-index: 20;
   mix-blend-mode: difference;
@@ -1189,13 +1182,14 @@ body.menu-open {
   text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
 }
 
-/* Current Song - Flex item, pushed to right by margin-left: auto (see .radio-header) */
+/* Current Song - Fixed at bottom center */
 #currentSong {
-  position: relative;
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
   top: auto;
   right: auto;
-  left: auto;
-  transform: none;
   z-index: 25;
   font-family: 'Lexend', sans-serif;
   font-size: 1rem;
@@ -2713,36 +2707,33 @@ body.menu-open {
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
-    padding-top: 20px;
-    padding-bottom: 120px;
+    padding-top: 70px;
+    padding-bottom: 180px;
     overflow: hidden;
     position: relative;
   }
   
   .radio-header {
-    position: relative;
-    top: auto;
-    left: auto;
-    right: auto;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
     width: 100%;
-    padding: 15px;
+    padding: 15px 20px;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 15px;
+    justify-content: space-between;
     z-index: 30;
     box-sizing: border-box;
   }
 
   #radio h2 {
     position: relative;
-    top: auto;
-    left: auto;
-    font-size: 2em;
+    font-size: 1.8em;
     margin: 0;
-    text-align: center;
+    text-align: left;
     z-index: 30;
-    width: 100%;
   }
 
   #visualizer {
@@ -2753,9 +2744,11 @@ body.menu-open {
     position: relative;
     width: 100%;
     height: auto;
-    margin: 15px 0;
+    margin: 0;
     display: flex;
     justify-content: center;
+    align-items: center;
+    flex: 1;
   }
 
   #vinyl-disc-container {
@@ -2771,13 +2764,13 @@ body.menu-open {
 
   /* Current Song Info - Mobile Layout */
   #currentSong {
-    position: relative;
-    left: auto;
+    position: absolute;
+    left: 50%;
     top: auto;
     right: auto;
-    bottom: auto;
-    transform: none;
-    margin: 0 auto;
+    bottom: 20px;
+    transform: translateX(-50%);
+    margin: 0;
     width: auto;
     max-width: 92%;
     height: auto;
@@ -3634,16 +3627,18 @@ body.menu-open {
   
   /* --- Radio --- */
   #radio {
-    flex-direction: row;
-    flex-wrap: wrap;
+    flex-direction: column;
     justify-content: center;
-    align-items: flex-start;
-    gap: 15px;
-    padding: 15px;
+    align-items: center;
+    gap: 10px;
+    padding: 60px 15px 100px;
   }
   
   .radio-header {
-    position: relative;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
     width: 100%;
     flex-direction: row;
     justify-content: space-between;
@@ -3654,11 +3649,14 @@ body.menu-open {
   
   #radio h2 {
     font-size: 1.5em;
-    width: auto;
   }
   
   #currentSong {
-    max-width: 300px;
+    position: absolute;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 90%;
     padding: 8px 12px;
     flex-direction: row;
     gap: 8px;
@@ -3784,11 +3782,11 @@ body.menu-open {
   /* --- Radio Section --- */
   #radio {
     padding-top: 10px;
-    padding-bottom: 60px;
+    padding-bottom: 120px;
   }
   
   .radio-header {
-    padding: 15px 20px;
+    padding: 12px 20px;
   }
   
   #radio h2 {
@@ -3796,7 +3794,8 @@ body.menu-open {
   }
   
   #currentSong {
-    max-width: 350px;
+    bottom: 20px;
+    max-width: 400px;
     padding: 6px 12px 6px 6px;
     gap: 8px;
   }
