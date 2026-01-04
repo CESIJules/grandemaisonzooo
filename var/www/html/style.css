@@ -2450,24 +2450,13 @@ body.menu-open {
   }
 }
 
-/* =============================================
-   CONSOLIDATED RESPONSIVE STYLES
-   =============================================
-   Breakpoints:
-   - 1800px : Full HD+ / 2K transition
-   - 1600px : Full HD / Standard Desktop
-   - 1400px : Large Desktop adjustments
-   - 1200px : Laptop / Small Desktop
-   - 1024px : Small Laptop / Large Tablet
-   - 900px  : Tablet / Large Mobile
-   - 768px  : Mobile
-   - 480px  : Small Mobile
-   - 360px  : Very Small Mobile (iPhone SE, etc.)
-   ============================================= */
+/* =========================================
+   FIXED RESOLUTIONS & BREAKPOINTS
+   Simplified structure for stability
+   ========================================= */
 
 /* =========================================
    FULL HD+ / 2K TRANSITION (max-width: 1800px)
-   For screens between 1600px and 2K
    ========================================= */
 @media (max-width: 1800px) {
   /* --- Timeline Section --- */
@@ -2510,10 +2499,10 @@ body.menu-open {
     height: 65px;
   }
   
-  /* Volume position adjusted for smaller title */
+  /* Volume position - Fixed Resolution 1800px */
   .radio-header .volume-container {
-    left: 360px;
-    top: 28px;
+    left: 420px; /* Increased spacing */
+    top: 38px;   /* Aligned with text bottom */
   }
   
   #currentSong {
@@ -2539,7 +2528,6 @@ body.menu-open {
 
 /* =========================================
    FULL HD / STANDARD DESKTOP (max-width: 1600px)
-   Most common resolution - 1920x1080 displays
    ========================================= */
 @media (max-width: 1600px) {
   /* --- Timeline Section --- */
@@ -2602,10 +2590,10 @@ body.menu-open {
     height: 60px;
   }
   
-  /* Volume position adjusted for smaller title */
+  /* Volume position - Fixed Resolution 1600px */
   .radio-header .volume-container {
-    left: 360px;
-    top: 36px;
+    left: 380px; /* Increased spacing */
+    top: 36px;   /* Aligned with text bottom */
     width: 40px;
     height: 40px;
   }
@@ -2736,10 +2724,10 @@ body.menu-open {
     height: 55px;
   }
   
-  /* Volume position adjusted for smaller title */
+  /* Volume position - Fixed Resolution 1400px */
   .radio-header .volume-container {
-    left: 320px;
-    top: 30px;
+    left: 340px; /* Increased spacing */
+    top: 30px;   /* Aligned with text bottom */
     width: 38px;
     height: 38px;
   }
@@ -2913,10 +2901,10 @@ body.menu-open {
     height: 50px;
   }
   
-  /* Volume position adjusted for smaller title */
+  /* Volume position - Fixed Resolution 1200px */
   .radio-header .volume-container {
-    left: 290px;
-    top: 27px;
+    left: 300px; /* Increased spacing */
+    top: 27px;   /* Aligned with text bottom */
     width: 36px;
     height: 36px;
   }
