@@ -769,7 +769,7 @@ body.menu-open {
   left: 30px;
   display: flex;
   align-items: center;
-  gap: 15px; /* Reduced from 30px */
+  gap: 8px; /* Reduced from 15px */
   z-index: 25;
   pointer-events: none;
 }
@@ -784,7 +784,7 @@ body.menu-open {
   top: auto;
   left: auto;
   margin: 0;
-  padding-right: 10px; /* Prevent italic overlap */
+  padding-right: 25px; /* Increased to prevent italic overlap */
   z-index: 2;
 }
 
@@ -2604,13 +2604,13 @@ body.menu-open {
   
   /* Volume position - Fixed Resolution 1600px */
   .radio-header .volume-container {
-    width: 40px;
-    height: 40px;
+    width: 34px;
+    height: 34px;
   }
   
   .radio-header .volume-ring {
-    width: 40px;
-    height: 40px;
+    width: 34px;
+    height: 34px;
   }
   
   #currentSong {
