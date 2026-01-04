@@ -775,8 +775,8 @@ body.menu-open {
 .radio-header .volume-container {
   display: flex;
   position: absolute;
-  top: 20px;
-  left: 360px; /* Position after RADIO title - Adjusted to not overlap */
+  top: 44px; /* Aligned with bottom of RADIO text */
+  left: 340px; /* Position after RADIO title - Adjusted to not overlap */
   z-index: 100;
 }
 
@@ -788,8 +788,8 @@ body.menu-open {
 /* Circular Volume Control */
 .volume-container {
   position: relative;
-  width: 60px;
-  height: 60px;
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -822,8 +822,8 @@ body.menu-open {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 60px;
-  height: 60px;
+  width: 48px;
+  height: 48px;
   opacity: 0;
   transition: opacity 0.3s ease;
   pointer-events: none; /* Clicks pass through to container */
@@ -835,7 +835,7 @@ body.menu-open {
 }
 
 .volume-icon-center {
-  font-size: 20px;
+  font-size: 16px;
   color: #fff;
   z-index: 2;
   pointer-events: none;
