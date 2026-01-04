@@ -776,7 +776,7 @@ body.menu-open {
   display: flex;
   position: absolute;
   top: 44px; /* Aligned with bottom of RADIO text */
-  left: 340px; /* Position after RADIO title - Adjusted to not overlap */
+  left: 400px; /* Position after RADIO title - Adjusted to not overlap */
   z-index: 100;
 }
 
@@ -2512,7 +2512,8 @@ body.menu-open {
   
   /* Volume position adjusted for smaller title */
   .radio-header .volume-container {
-    left: 320px;
+    left: 360px;
+    top: 28px;
   }
   
   #currentSong {
@@ -2603,14 +2604,15 @@ body.menu-open {
   
   /* Volume position adjusted for smaller title */
   .radio-header .volume-container {
-    left: 320px;
-    width: 50px;
-    height: 50px;
+    left: 360px;
+    top: 36px;
+    width: 40px;
+    height: 40px;
   }
   
   .radio-header .volume-ring {
-    width: 50px;
-    height: 50px;
+    width: 40px;
+    height: 40px;
   }
   
   #currentSong {
@@ -2736,14 +2738,15 @@ body.menu-open {
   
   /* Volume position adjusted for smaller title */
   .radio-header .volume-container {
-    left: 280px;
-    width: 48px;
-    height: 48px;
+    left: 320px;
+    top: 30px;
+    width: 38px;
+    height: 38px;
   }
   
   .radio-header .volume-ring {
-    width: 48px;
-    height: 48px;
+    width: 38px;
+    height: 38px;
   }
   
   #currentSong {
@@ -2912,15 +2915,15 @@ body.menu-open {
   
   /* Volume position adjusted for smaller title */
   .radio-header .volume-container {
-    left: 250px;
-    top: 16px;
-    width: 45px;
-    height: 45px;
+    left: 290px;
+    top: 27px;
+    width: 36px;
+    height: 36px;
   }
   
   .radio-header .volume-ring {
-    width: 45px;
-    height: 45px;
+    width: 36px;
+    height: 36px;
   }
   
   #currentSong {
