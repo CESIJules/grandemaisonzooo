@@ -777,8 +777,8 @@ body.menu-open {
   display: flex;
   position: absolute;
   top: 20px;
-  /* Position dynamically based on visualizer width using CSS calc */
-  left: calc(30px + clamp(150px, 15vw, 250px) + 15px);
+  /* Position to the right of RADIO text - approx 320px for large screens */
+  left: 320px;
   z-index: 100;
 }
 
@@ -1798,8 +1798,8 @@ body.menu-open {
 .timeline-item { 
   position: relative;
   flex-shrink: 0;
-  width: clamp(200px, 20vw, 300px);
-  margin: 0 clamp(20px, 3vw, 40px);
+  width: clamp(180px, 15vw, 260px);
+  margin: 0 clamp(15px, 2vw, 30px);
   z-index: 2;
 }
 
@@ -1847,8 +1847,8 @@ body.menu-open {
   left: 0;
   width: 100%;
   background-color: transparent;
-  padding: 20px;
-  border-radius: 20px;
+  padding: clamp(12px, 1.5vw, 18px);
+  border-radius: 16px;
   text-align: center;
   border: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(3px);
@@ -1897,34 +1897,34 @@ body.menu-open {
 
 .timeline-item:nth-child(odd) .timeline-content {
   bottom: 50%;
-  margin-bottom: clamp(25px, 4vh, 40px);
+  margin-bottom: clamp(20px, 3vh, 32px);
 }
 
 .timeline-item:nth-child(even) .timeline-content {
   top: 50%;
-  margin-top: clamp(25px, 4vh, 40px);
+  margin-top: clamp(20px, 3vh, 32px);
 }
 
 .timeline-item h3 { 
   color: #fff;
-  margin: 0 0 8px;
-  font-size: 1.3em;
+  margin: 0 0 6px;
+  font-size: clamp(1em, 1.2vw, 1.2em);
 }
 
 .timeline-item h4 { 
   font-family: 'Outfit', sans-serif;
   color: #999;
-  margin: 0 0 12px;
-  font-size: 0.85em;
+  margin: 0 0 8px;
+  font-size: clamp(0.7em, 0.9vw, 0.85em);
   text-transform: uppercase;
   letter-spacing: 1px;
 }
 
 .timeline-item p { 
   color: #ccc;
-  font-size: 0.9em;
-  line-height: 1.5;
-  margin-bottom: 10px;
+  font-size: clamp(0.78em, 0.95vw, 0.9em);
+  line-height: 1.4;
+  margin-bottom: 8px;
   max-width: 100%;
   text-align: center;
 }
@@ -2134,7 +2134,7 @@ body.menu-open {
 /* Custom timeline image style */
 .timeline-image {
   width: 100%;
-  height: clamp(150px, 25vh, 300px); /* Responsive height */
+  height: clamp(120px, 18vh, 220px); /* Reduced responsive height */
   object-fit: cover; /* Crop to fit */
   object-position: center; /* Center the image */
   border-radius: 12px;
@@ -2507,7 +2507,8 @@ body.menu-open {
   }
   
   .radio-header .volume-container {
-    left: calc(30px + 200px + 15px);
+    /* Position relative to RADIO title width at this breakpoint */
+    left: 280px;
   }
   
   #visualizer {
@@ -2578,7 +2579,8 @@ body.menu-open {
   }
   
   .radio-header .volume-container {
-    left: calc(30px + 180px + 15px);
+    /* Position relative to RADIO title width at this breakpoint */
+    left: 250px;
     width: 42px;
     height: 42px;
   }
@@ -2701,7 +2703,8 @@ body.menu-open {
   }
   
   .radio-header .volume-container {
-    left: calc(20px + 160px + 15px);
+    /* Position relative to RADIO title */
+    left: 220px;
     top: 15px;
     transform: none;
     width: 40px;
@@ -2864,7 +2867,8 @@ body.menu-open {
   }
   
   .radio-header .volume-container {
-    left: calc(15px + 145px + 12px);
+    /* Position relative to RADIO title */
+    left: 195px;
     top: 12px;
     transform: none;
     width: 38px;
@@ -3118,8 +3122,9 @@ body.menu-open {
   }
   
   .timeline-item img {
-    max-height: 200px;
     width: 100%;
+    aspect-ratio: 1 / 1; /* Force square images */
+    max-height: none; /* Remove max-height constraint */
     object-fit: cover;
     margin-top: 10px;
     border-radius: 8px;
@@ -3295,24 +3300,9 @@ body.menu-open {
   }
 
   /* --- Radio Controller --- */
+  /* Hide RC completely on mobile - takes too much space */
   .rc-container {
-    min-width: unset;
-    width: calc(100% - 20px);
-    left: 10px;
-    right: 10px;
-    bottom: 10px;
-    border-radius: 12px;
-    background: rgba(10, 10, 10, 0.95);
-  }
-  
-  /* Disable docked mode on mobile */
-  .rc-container.docked {
-    transform: none !important;
-  }
-  
-  .rc-content {
-    padding: 10px 12px;
-    gap: 8px;
+    display: none !important;
   }
   
   .rc-top-row {
@@ -4354,9 +4344,10 @@ body.menu-open {
   
   /* Volume position adjusted for smaller title */
   .radio-header .volume-container {
-    left: calc(12px + 110px + 10px);
-    top: 50%;
-    transform: translateY(-50%);
+    /* Position relative to RADIO title on short screens */
+    left: 145px;
+    top: 12px;
+    transform: none;
     width: 36px;
     height: 36px;
   }
