@@ -1795,7 +1795,7 @@ body.menu-open {
   scrollbar-width: none;
   /* Infinite line */
   background: linear-gradient(#555, #555) repeat-x left 50% / 1px 2px local;
-  will-change: scroll-position;
+  /* will-change: scroll-position; Removed to prevent stacking context trap */
 }
 
 .timeline-container::-webkit-scrollbar { display: none; }
@@ -1805,7 +1805,7 @@ body.menu-open {
   flex-shrink: 0;
   width: clamp(184px, 16.1vw, 276px);
   margin: 0 clamp(20px, 3vw, 40px);
-  z-index: 2;
+  /* z-index: 2; Removed to allow hover pop-over */
   pointer-events: none; /* Prevent hover on the column itself */
 }
 
@@ -1879,12 +1879,18 @@ body.menu-open {
               border-color 0.4s ease;
 }
 
-.timeline-content:hover {
-  transform: perspective(1000px) scale(1.05) translateY(-5px) rotateX(var(--rotate-x)) rotateY(var(--rotate-y));
-  box-shadow: 0 30px 50px rgba(0, 0, 0, 0.9), 0 0 25px rgba(255, 255, 255, 0.15);
-  background-color: rgba(35, 35, 35, 0.8);
-  border-color: rgba(255, 255, 255, 0.4);
-  z-index: 10;
+@media (hover: hover) {
+  .timeline-content:hover {
+    transform: perspective(1000px) scale(1.05) translateY(-5px) rotateX(var(--rotate-x)) rotateY(var(--rotate-y));
+    box-shadow: 0 30px 50px rgba(0, 0, 0, 0.9), 0 0 25px rgba(255, 255, 255, 0.15);
+    background-color: rgba(35, 35, 35, 0.8);
+    border-color: rgba(255, 255, 255, 0.4);
+    z-index: 200; /* Ensure it pops over everything including header */
+  }
+
+  .timeline-content:hover::after {
+    opacity: 1;
+  }
 }
 
 /* Shine Effect */
@@ -1899,10 +1905,6 @@ body.menu-open {
   pointer-events: none;
   z-index: 11;
   mix-blend-mode: overlay;
-}
-
-.timeline-content:hover::after {
-  opacity: 1;
 }
 
 .timeline-item:nth-child(odd) .timeline-content {

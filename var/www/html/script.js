@@ -2609,6 +2609,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 3D Tilt Effect Function
   function addTiltEffect(card) {
+    // Disable on touch devices
+    if (window.matchMedia('(hover: none)').matches) return;
+
     let rafId = null;
     
     card.addEventListener('mousemove', (e) => {
