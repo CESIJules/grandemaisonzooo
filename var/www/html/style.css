@@ -1762,7 +1762,7 @@ body.menu-open {
   display: flex;
   gap: 8px;
   justify-content: center;
-  pointer-events: auto;
+  pointer-events: none;
   position: relative;
   z-index: 10;
   flex-wrap: wrap;
@@ -1772,6 +1772,7 @@ body.menu-open {
 .timeline-filters .btn {
   padding: 8px 16px;
   font-size: 0.75rem;
+  pointer-events: auto;
 }
 
 .filter-btn.active {
