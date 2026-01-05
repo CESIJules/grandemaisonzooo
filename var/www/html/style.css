@@ -3746,14 +3746,14 @@ body.menu-open {
   }
   
   #vinyl-disc-container { 
-    width: 160px; 
-    height: 160px; 
+    width: 208px; 
+    height: 208px; 
   }
   
   #playRadio {
-    width: 42px;
-    height: 42px;
-    font-size: 16px;
+    width: 55px;
+    height: 55px;
+    font-size: 21px;
   }
   
   #currentSong {
@@ -3765,12 +3765,12 @@ body.menu-open {
   }
   
   #currentSong .title {
-    font-size: 0.7rem;
+    font-size: 0.91rem;
   }
   
   .main-cover {
-    width: 34px;
-    height: 34px;
+    width: 44px;
+    height: 44px;
     border-radius: 5px;
   }
   
@@ -3779,6 +3779,10 @@ body.menu-open {
     display: flex;
     margin-top: 4px;
     width: 100%;
+  }
+
+  #elapsed-time, #remaining-time {
+    font-size: 0.91rem;
   }
   
   /* Hide buttons only */
