@@ -1243,8 +1243,8 @@ body.menu-open {
 }
 
 .main-cover {
-  width: 46px;
-  height: 46px;
+  width: 64px;
+  height: 64px;
   border-radius: 6px;
   overflow: hidden;
   position: relative;
@@ -1539,7 +1539,7 @@ body.menu-open {
   position: absolute;
   top: 20px; /* Aligned with RADIO title */
   left: 30px; /* Same left as RADIO title */
-  width: clamp(150px, 15vw, 250px); /* Responsive width */
+  width: clamp(300px, 30vw, 500px); /* Responsive width */
   height: clamp(45px, 5vw, 70px); /* Responsive height */
   bottom: auto;
   transform: none;
@@ -1802,7 +1802,7 @@ body.menu-open {
 .timeline-item { 
   position: relative;
   flex-shrink: 0;
-  width: clamp(160px, 14vw, 240px);
+  width: clamp(184px, 16.1vw, 276px);
   margin: 0 clamp(20px, 3vw, 40px);
   z-index: 2;
 }
@@ -1873,7 +1873,7 @@ body.menu-open {
               border-color 0.4s ease;
 }
 
-.timeline-content:hover {
+.timeline-item:hover .timeline-content {
   transform: perspective(1000px) scale(1.05) translateY(-5px) rotateX(var(--rotate-x)) rotateY(var(--rotate-y));
   box-shadow: 0 30px 50px rgba(0, 0, 0, 0.9), 0 0 25px rgba(255, 255, 255, 0.15);
   background-color: rgba(35, 35, 35, 0.8);
@@ -1895,7 +1895,7 @@ body.menu-open {
   mix-blend-mode: overlay;
 }
 
-.timeline-content:hover::after {
+.timeline-item:hover .timeline-content::after {
   opacity: 1;
 }
 
@@ -2154,8 +2154,8 @@ body.menu-open {
 
 #vinyl-disc-container {
   position: relative;
-  width: clamp(200px, 30vw, 400px);
-  height: clamp(200px, 30vw, 400px);
+  width: clamp(230px, 34.5vw, 460px);
+  height: clamp(230px, 34.5vw, 460px);
   display: flex;
   align-items: center;
   justify-content: center;
