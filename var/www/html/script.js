@@ -97,11 +97,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // Setup Glitch Effects for loaded artists
+      /*
       artists.forEach(artist => {
           if (artist.glitchName) {
               setupGlitchEffect(`${artist.id}Title`, artist.glitchName, artist.name.toUpperCase());
           }
       });
+      */
       
     } catch (error) {
       console.error('Error loading artists:', error);
