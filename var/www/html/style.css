@@ -23,7 +23,7 @@ img, video, iframe {
   height: auto;
 }
 
-html, body { height: 100%; margin: 0; }
+html, body { height: 100%; margin: 0; overscroll-behavior: none; }
 body {
   font-family: 'Space Grotesk', sans-serif;
   background: #050505;
@@ -1865,12 +1865,14 @@ body.menu-open {
               border-color 0.4s ease;
 }
 
-.timeline-content:hover {
-  transform: perspective(1000px) scale(1.05) translateY(-5px) rotateX(var(--rotate-x)) rotateY(var(--rotate-y));
-  box-shadow: 0 30px 50px rgba(0, 0, 0, 0.9), 0 0 25px rgba(255, 255, 255, 0.15);
-  background-color: rgba(35, 35, 35, 0.8);
-  border-color: rgba(255, 255, 255, 0.4);
-  z-index: 10;
+@media (hover: hover) {
+  .timeline-content:hover {
+    transform: perspective(1000px) scale(1.05) translateY(-5px) rotateX(var(--rotate-x)) rotateY(var(--rotate-y));
+    box-shadow: 0 30px 50px rgba(0, 0, 0, 0.9), 0 0 25px rgba(255, 255, 255, 0.15);
+    background-color: rgba(35, 35, 35, 0.8);
+    border-color: rgba(255, 255, 255, 0.4);
+    z-index: 10;
+  }
 }
 
 /* Shine Effect */
@@ -1885,8 +1887,10 @@ body.menu-open {
   pointer-events: none;
   z-index: 11;
   mix-blend-mode: overlay;
-}
-
+@media (hover: hover) {
+  .timeline-content:hover::after {
+    opacity: 1;
+  }
 .timeline-content:hover::after {
   opacity: 1;
 }
@@ -3832,11 +3836,11 @@ body.menu-open {
   
   .history-item .history-title {
     max-width: 150px;
-    font-size: 9px;
+    font-size: 12px;
   }
   
   .history-item .history-time {
-    font-size: 7px;
+    font-size: 10px;
   }
   
   /* --- Timeline --- */
@@ -4023,7 +4027,7 @@ body.menu-open {
 
   /* --- RC Controller --- */
   .rc-container {
-    bottom: 5px;
+    bottom: calc(5px + env(safe-area-inset-bottom));
     left: 5px;
     right: 5px;
     width: calc(100% - 10px);
@@ -4041,20 +4045,20 @@ body.menu-open {
   
   .rc-btn-play,
   .rc-btn-pip {
-    width: 34px;
-    height: 34px;
-    font-size: 13px;
+    width: 44px;
+    height: 44px;
+    font-size: 16px;
   }
   
   .rc-cover {
-    width: 34px;
-    height: 34px;
+    width: 44px;
+    height: 44px;
     border-radius: 5px;
   }
   
   .rc-volume-container {
-    width: 34px;
-    height: 34px;
+    width: 44px;
+    height: 44px;
   }
   
   .rc-meta {
@@ -4079,7 +4083,7 @@ body.menu-open {
 
   /* --- Burger Menu --- */
   .burger {
-    top: 10px;
+    top: max(10px, env(safe-area-inset-top));
     right: 10px;
     width: 45px;
     height: 45px;
