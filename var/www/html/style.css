@@ -1873,7 +1873,7 @@ body.menu-open {
               border-color 0.4s ease;
 }
 
-.timeline-item:hover .timeline-content {
+.timeline-content:hover {
   transform: perspective(1000px) scale(1.05) translateY(-5px) rotateX(var(--rotate-x)) rotateY(var(--rotate-y));
   box-shadow: 0 30px 50px rgba(0, 0, 0, 0.9), 0 0 25px rgba(255, 255, 255, 0.15);
   background-color: rgba(35, 35, 35, 0.8);
@@ -1895,7 +1895,7 @@ body.menu-open {
   mix-blend-mode: overlay;
 }
 
-.timeline-item:hover .timeline-content::after {
+.timeline-content:hover::after {
   opacity: 1;
 }
 
@@ -4576,6 +4576,17 @@ body.menu-open {
     height: 50px;
     top: 15px;
     right: 15px;
+  }
+}
+
+/* =========================================
+   LARGE SCREENS (1920x1080 and up)
+   ========================================= */
+@media screen and (min-width: 1920px) {
+  /* Increase timeline filters size by 10% */
+  .timeline-filters .btn {
+    font-size: 0.825rem; /* 0.75rem * 1.1 */
+    padding: 9px 18px; /* 8px * 1.1, 16px * 1.1 */
   }
 }
 
