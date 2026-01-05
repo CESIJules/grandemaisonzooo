@@ -60,7 +60,20 @@ try {
         }
 
         if (!file_exists($upload_dir)) {
-            mkdir($upload_dir, 0755, true);
+            if (!mkdir($upload_dir, 0777, true)) {
+                http_response_code(500);
+                echo json_encode(['status' => 'error', 'message' => 'Impossible de créer le dossier uploads. Vérifiez les permissions du dossier parent.']);
+                exit;
+            }
+        }
+
+        if (!is_writable($upload_dir)) {
+            if (!@chmod($upload_dir, 0777)) {
+                $perms = substr(sprintf('%o', fileperms($upload_dir)), -4);
+                http_response_code(500);
+                echo json_encode(['status' => 'error', 'message' => "Le dossier uploads n'est pas accessible en écriture (Permissions: $perms). Veuillez exécuter: chmod 777 $upload_dir"]);
+                exit;
+            }
         }
 
         $tmp_name = $_FILES['image']['tmp_name'];
@@ -117,6 +130,13 @@ try {
     }
 
     array_unshift($timeline, $new_post);
+
+    if (file_exists($file_path) && !is_writable($file_path)) {
+        if (!@chmod($file_path, 0666)) {
+            $perms = substr(sprintf('%o', fileperms($file_path)), -4);
+            throw new Exception("Le fichier timeline.json n'est pas accessible en écriture (Permissions: $perms). Veuillez exécuter: chmod 666 $file_path");
+        }
+    }
 
     $write_result = file_put_contents($file_path, json_encode($timeline, JSON_PRETTY_PRINT), LOCK_EX);
     if ($write_result === false) {

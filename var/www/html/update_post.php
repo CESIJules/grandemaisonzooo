@@ -99,8 +99,17 @@ if (isset($_FILES['image']) && $_FILES['image']['error'] !== UPLOAD_ERR_NO_FILE)
     }
 
     $upload_dir = __DIR__ . '/uploads/';
-    if (!is_dir($upload_dir)) {
-        mkdir($upload_dir, 0777, true);
+    if (!file_exists($upload_dir)) {
+        if (!mkdir($upload_dir, 0777, true)) {
+            send_json_error('Impossible de créer le dossier uploads.');
+        }
+    }
+
+    if (!is_writable($upload_dir)) {
+        if (!@chmod($upload_dir, 0777)) {
+            $perms = substr(sprintf('%o', fileperms($upload_dir)), -4);
+            send_json_error("Le dossier uploads n'est pas accessible en écriture (Permissions: $perms).");
+        }
     }
 
     $image_name = basename($_FILES['image']['name']);
@@ -134,6 +143,13 @@ if (isset($posts[$post_index]['content'])) {
         }
     }
     unset($posts[$post_index]['content']);
+}
+
+if (file_exists($file_path) && !is_writable($file_path)) {
+    if (!@chmod($file_path, 0666)) {
+        $perms = substr(sprintf('%o', fileperms($file_path)), -4);
+        send_json_error("Le fichier timeline.json n'est pas accessible en écriture (Permissions: $perms). Veuillez exécuter: chmod 666 $file_path");
+    }
 }
 
 // Write updated data back to the file
