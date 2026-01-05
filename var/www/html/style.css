@@ -2478,8 +2478,8 @@ body.menu-open {
   }
   
   .timeline-item {
-    width: 240px;
-    margin: 0 30px;
+    width: 220px;
+    margin: 0 45px;
   }
   
   .timeline-content {
@@ -2510,10 +2510,6 @@ body.menu-open {
     font-size: 28px;
   }
   
-  .radio-header .volume-container {
-    /* Inherits calc() from base - just adjust size if needed */
-  }
-  
   #visualizer {
     width: 200px;
     height: 60px;
@@ -2540,8 +2536,8 @@ body.menu-open {
   }
   
   .timeline-item {
-    width: 200px;
-    margin: 0 25px;
+    width: 190px;
+    margin: 0 40px;
   }
   
   .timeline-content {
@@ -2646,8 +2642,8 @@ body.menu-open {
   }
   
   .timeline-item {
-    width: 180px;
-    margin: 0 20px;
+    width: 165px;
+    margin: 0 35px;
   }
   
   .timeline-content {
@@ -2808,8 +2804,8 @@ body.menu-open {
   }
   
   .timeline-item {
-    width: 170px;
-    margin: 0 15px;
+    width: 150px;
+    margin: 0 30px;
   }
   
   .timeline-content {
@@ -2962,6 +2958,12 @@ body.menu-open {
     scroll-snap-stop: always;
   }
   
+  /* Override padding for artiste sections on mobile */
+  .screen.artiste {
+    padding: 0 !important;
+    gap: 0;
+  }
+  
   h1 { font-size: clamp(2em, 10vw, 4em); }
   h2 { font-size: clamp(1.8em, 8vw, 3em); }
 
@@ -3062,7 +3064,7 @@ body.menu-open {
   .timeline-item {
     width: 100%;
     max-width: 400px;
-    margin: 0; /* Use gap instead of margin */
+    margin: 0 !important; /* Force no margin - use gap */
     flex-shrink: 0;
   }
   
@@ -3379,10 +3381,21 @@ body.menu-open {
   }
 
   .artiste-image {
-    height: 40vh;
-    min-height: 250px;
+    height: 45vh;
+    min-height: 280px;
     width: 100%;
     order: 1;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .artiste-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    margin: 0;
+    padding: 0;
+    display: block;
   }
 
   .artiste-info {
@@ -3492,6 +3505,12 @@ body.menu-open {
    MOBILE (max-width: 768px)
    ========================================= */
 @media (max-width: 768px) {
+  /* --- Artiste override --- */
+  .screen.artiste {
+    padding: 0 !important;
+    gap: 0;
+  }
+  
   /* --- Burger Menu --- */
   .menu-overlay {
     padding-right: 5vw;
@@ -3609,6 +3628,11 @@ body.menu-open {
   .screen {
     padding: 50px 10px 70px;
   }
+  
+  .screen.artiste {
+    padding: 0 !important;
+    gap: 0;
+  }
 
   /* --- Accueil --- */
   #accueil h1 {
@@ -3656,7 +3680,7 @@ body.menu-open {
   .timeline-item {
     width: 100%;
     max-width: 100%;
-    margin: 0;
+    margin: 0 !important;
   }
   
   .timeline-content {
@@ -3851,6 +3875,16 @@ body.menu-open {
   .artiste-image {
     height: 35vh;
     min-height: 200px;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .artiste-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
   
   .artiste-info {
@@ -3949,6 +3983,11 @@ body.menu-open {
     padding: 45px 8px 65px;
   }
   
+  .screen.artiste {
+    padding: 0 !important;
+    gap: 0;
+  }
+  
   /* --- Accueil --- */
   #accueil h1 {
     font-size: clamp(1.5em, 15vw, 2.5em);
@@ -3980,7 +4019,7 @@ body.menu-open {
   }
   
   .timeline-item {
-    margin: 0;
+    margin: 0 !important;
   }
   
   .timeline-content {
@@ -4130,6 +4169,16 @@ body.menu-open {
   .artiste-image {
     height: 30vh;
     min-height: 180px;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .artiste-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
   
   .artiste-info h3 {
