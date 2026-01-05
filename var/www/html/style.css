@@ -4580,6 +4580,70 @@ body.menu-open {
 }
 
 /* =========================================
+   MAC / LAPTOP 1440x900
+   ========================================= */
+@media screen and (max-width: 1440px) {
+  /* --- Radio Section --- */
+  /* Reduce player size by 15% */
+  .btn-play {
+    width: 89px; /* 105 * 0.85 */
+    height: 89px;
+    font-size: 36px; /* Reduced from 42px */
+  }
+  
+  /* Center the radar */
+  #visualizer {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  
+  /* Reduce RADIO text size by 25% without touching position */
+  #radio h2 {
+    font-size: clamp(1.5em, 3.75vw, 3.375em);
+  }
+
+  /* --- Timeline Section --- */
+  /* Reduce global timeline size by 25% */
+  .timeline-item {
+    width: clamp(138px, 12vw, 207px);
+    margin: 0 clamp(15px, 2.25vw, 30px);
+  }
+  
+  .timeline-content {
+    padding: clamp(9px, 1.1vw, 13.5px);
+  }
+  
+  .timeline-item:nth-child(odd) .timeline-content {
+    margin-bottom: clamp(15px, 2.25vh, 24px);
+  }
+
+  .timeline-item:nth-child(even) .timeline-content {
+    margin-top: clamp(15px, 2.25vh, 24px);
+  }
+  
+  .timeline-item::before {
+     height: clamp(19px, 3vh, 30px);
+  }
+  
+  .timeline-item h3 { 
+    font-size: clamp(0.75em, 0.9vw, 0.9em);
+  }
+
+  .timeline-item h4 { 
+    font-size: clamp(0.525em, 0.675vw, 0.64em);
+  }
+
+  .timeline-item p { 
+    font-size: clamp(0.585em, 0.71vw, 0.675em);
+  }
+
+  /* Reduce TIMELINE text size by 25% */
+  #timeline h2 {
+    font-size: clamp(1.875em, 3.75vw, 3.375em);
+  }
+}
+
+/* =========================================
    HIGH DPI / RETINA DISPLAYS
    ========================================= */
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
