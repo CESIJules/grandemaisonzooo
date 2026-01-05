@@ -2041,7 +2041,7 @@ body.menu-open {
 
 .artiste-info h3 { 
   margin: 0; 
-  font-size: clamp(2rem, 8vw, 4rem); /* Fluid font size */
+  font-size: clamp(1.6rem, 6.4vw, 3.2rem); /* Reduced by 20% */
   line-height: 0.9;
   color: #fff;
   white-space: normal; /* Allow wrapping */
@@ -2780,7 +2780,7 @@ body.menu-open {
   
   /* Artiste */
   .artiste-info h3 {
-    font-size: clamp(1.8rem, 6vw, 3rem);
+    font-size: clamp(1.4rem, 4.8vw, 2.4rem);
   }
   
   /* Contact */
@@ -3426,7 +3426,7 @@ body.menu-open {
 
   .artiste-info h3 {
     text-align: center;
-    font-size: clamp(1.8rem, 10vw, 2.5rem);
+    font-size: clamp(1.4rem, 8vw, 2rem);
     word-break: break-word;
     hyphens: auto;
     line-height: 1.1;
@@ -3923,7 +3923,7 @@ body.menu-open {
   }
   
   .artiste-info h3 {
-    font-size: clamp(1.4rem, 12vw, 2rem);
+    font-size: clamp(1.1rem, 9.6vw, 1.6rem);
   }
   
   .artiste-info .localisation {
@@ -4225,7 +4225,7 @@ body.menu-open {
   }
   
   .artiste-info h3 {
-    font-size: clamp(1.2rem, 13vw, 1.8rem);
+    font-size: clamp(1rem, 10.4vw, 1.4rem);
   }
   
   /* --- Contact --- */
@@ -4384,7 +4384,7 @@ body.menu-open {
   }
   
   .artiste-info h3 {
-    font-size: clamp(1.2rem, 5vh, 2rem);
+    font-size: clamp(1rem, 4vh, 1.6rem);
   }
   
   /* --- Contact --- */
@@ -4573,7 +4573,7 @@ body.menu-open {
   
   /* --- Artiste --- */
   .artiste-info h3 {
-    font-size: clamp(1.5rem, 5vw, 2.5rem);
+    font-size: clamp(1.2rem, 4vw, 2rem);
   }
   
   /* --- Burger --- */
