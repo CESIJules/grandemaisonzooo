@@ -4645,15 +4645,15 @@ body.menu-open {
     font-size: clamp(0.585em, 0.71vw, 0.675em);
   }
 
-  /* Reduce TIMELINE text size by 25% */
+  /* Reduce TIMELINE text size even more to avoid overlap with centered filters */
   #timeline h2 {
-    font-size: clamp(1.875em, 3.75vw, 3.375em);
+    font-size: clamp(1.5em, 2.5vw, 2.2em);
   }
 
-  /* Fix overlap: Move filters to the right */
+  /* Center filters as requested */
   .timeline-header-wrapper {
-    justify-content: flex-end;
-    padding-right: 120px; /* Space for burger menu */
+    justify-content: center;
+    padding-right: 0;
   }
 }
 
