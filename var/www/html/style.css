@@ -4602,6 +4602,14 @@ body.menu-open {
     font-size: clamp(1.5em, 3.75vw, 3.375em);
   }
 
+  /* Re-align volume button with smaller text */
+  .radio-header .volume-container {
+    /* Adjust top to center with new text height */
+    top: calc(20px + (min(3.75vw, 3.375em) - 48px) / 2);
+    /* Adjust left to follow the text width */
+    left: calc(30px + min(3.75vw, 3.375em) * 5.5 + 20px);
+  }
+
   /* --- Timeline Section --- */
   /* Reduce global timeline size by 25% */
   .timeline-item {
@@ -4640,6 +4648,12 @@ body.menu-open {
   /* Reduce TIMELINE text size by 25% */
   #timeline h2 {
     font-size: clamp(1.875em, 3.75vw, 3.375em);
+  }
+
+  /* Fix overlap: Move filters to the right */
+  .timeline-header-wrapper {
+    justify-content: flex-end;
+    padding-right: 120px; /* Space for burger menu */
   }
 }
 
