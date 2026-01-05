@@ -776,9 +776,9 @@ body.menu-open {
 .radio-header .volume-container {
   display: flex;
   position: absolute;
-  top: 20px;
-  /* Position to the right of RADIO text - approx 320px for large screens */
-  left: 320px;
+  top: 28px;
+  /* Position to the right of RADIO text - title width + margin */
+  left: 400px;
   z-index: 100;
 }
 
@@ -2508,7 +2508,7 @@ body.menu-open {
   
   .radio-header .volume-container {
     /* Position relative to RADIO title width at this breakpoint */
-    left: 280px;
+    left: 380px;
   }
   
   #visualizer {
@@ -2580,7 +2580,7 @@ body.menu-open {
   
   .radio-header .volume-container {
     /* Position relative to RADIO title width at this breakpoint */
-    left: 250px;
+    left: 340px;
     width: 42px;
     height: 42px;
   }
@@ -2704,8 +2704,8 @@ body.menu-open {
   
   .radio-header .volume-container {
     /* Position relative to RADIO title */
-    left: 220px;
-    top: 15px;
+    left: 295px;
+    top: 20px;
     transform: none;
     width: 40px;
     height: 40px;
@@ -2868,8 +2868,8 @@ body.menu-open {
   
   .radio-header .volume-container {
     /* Position relative to RADIO title */
-    left: 195px;
-    top: 12px;
+    left: 250px;
+    top: 18px;
     transform: none;
     width: 38px;
     height: 38px;
@@ -3121,11 +3121,14 @@ body.menu-open {
     -webkit-line-clamp: unset;
   }
   
-  .timeline-item img {
+  .timeline-item img,
+  .timeline-item .timeline-image {
     width: 100%;
     aspect-ratio: 1 / 1; /* Force square images */
-    max-height: none; /* Remove max-height constraint */
+    height: auto !important; /* Override any height constraints */
+    max-height: none !important; /* Remove max-height constraint */
     object-fit: cover;
+    object-position: center;
     margin-top: 10px;
     border-radius: 8px;
   }
@@ -3553,8 +3556,10 @@ body.menu-open {
     padding: 5px 10px;
   }
   
-  .timeline-image {
-    height: 150px;
+  .timeline-image,
+  .timeline-item img {
+    height: auto !important;
+    aspect-ratio: 1 / 1;
   }
   
   /* --- Terminal Overlay (Intro) --- */
@@ -3672,8 +3677,13 @@ body.menu-open {
     line-height: 1.35;
   }
   
-  .timeline-item img {
-    max-height: 160px;
+  .timeline-item img,
+  .timeline-item .timeline-image {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    height: auto !important;
+    max-height: none !important;
+    object-fit: cover;
     margin-top: 8px;
   }
   
@@ -3990,8 +4000,13 @@ body.menu-open {
     line-height: 1.3;
   }
   
-  .timeline-item img {
-    max-height: 130px;
+  .timeline-item img,
+  .timeline-item .timeline-image {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    height: auto !important;
+    max-height: none !important;
+    object-fit: cover;
     margin-top: 6px;
   }
   
@@ -4247,8 +4262,12 @@ body.menu-open {
     margin: 10px 0;
   }
   
-  .timeline-image {
-    height: 100px;
+  .timeline-image,
+  .timeline-item img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    height: auto !important;
+    object-fit: cover;
   }
   
   /* --- Artistes --- */
