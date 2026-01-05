@@ -1821,6 +1821,7 @@ body.menu-open {
   top: 50%;
   transform: translate(-50%, -50%);
   box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+  pointer-events: none;
 }
 
 /* Vertical Connector */
@@ -1832,6 +1833,7 @@ body.menu-open {
   left: 50%;
   transform: translateX(-50%);
   z-index: 1;
+  pointer-events: none;
 }
 
 .timeline-item:nth-child(odd)::before {
@@ -1848,6 +1850,7 @@ body.menu-open {
 .timeline-content-left,
 .timeline-content-right { 
   position: absolute;
+  z-index: 5;
   left: 0;
   width: 100%;
   background-color: transparent;
