@@ -769,7 +769,7 @@ body.menu-open {
   left: 30px;
   bottom: auto;
   z-index: 25;
-  font-size: clamp(1.7em, 4.25vw, 3.8em);
+  font-size: clamp(2em, 5vw, 4.5em);
   line-height: 1;
 }
 
@@ -780,9 +780,9 @@ body.menu-open {
   position: absolute;
   /* Vertically center with RADIO title: top + (title height - volume height) / 2 */
   /* Title line-height: 1, so height ≈ font-size. Volume = 48px */
-  top: calc(20px + (min(4.25vw, 3.8em) - 48px) / 2);
+  top: calc(20px + (min(5vw, 4.5em) - 48px) / 2);
   /* Position to right of RADIO text */
-  left: calc(30px + min(4.25vw, 3.8em) * 5.5 + 20px);
+  left: calc(30px + min(5vw, 4.5em) * 5.5 + 20px);
   z-index: 100;
 }
 
@@ -1213,7 +1213,7 @@ body.menu-open {
   right: auto;
   z-index: 35;
   font-family: 'Lexend', sans-serif;
-  font-size: 0.85rem;
+  font-size: 1rem;
   color: #ffffff;
   display: flex;
   flex-direction: row;
@@ -1243,8 +1243,8 @@ body.menu-open {
 }
 
 .main-cover {
-  width: 54px;
-  height: 54px;
+  width: 64px;
+  height: 64px;
   border-radius: 6px;
   overflow: hidden;
   position: relative;
@@ -1308,7 +1308,7 @@ body.menu-open {
 #currentSong .title {
   color: #00ff68;
   font-weight: 700;
-  font-size: 0.76rem;
+  font-size: 0.9rem;
   text-shadow: 0 0 10px #00a542;
   letter-spacing: 0.3px;
   /* Allow title to truncate if too long */
@@ -1355,7 +1355,7 @@ body.menu-open {
 
 #elapsed-time, #remaining-time {
   font-family: 'Space Grotesk', monospace;
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   color: rgba(255, 255, 255, 0.8);
   min-width: 30px;
 }
@@ -1539,7 +1539,7 @@ body.menu-open {
   position: absolute;
   top: 20px; /* Aligned with RADIO title */
   left: 30px; /* Same left as RADIO title */
-  width: calc(min(4.25vw, 3.8em) * 5.3); /* Match text width */
+  width: calc(min(5vw, 4.5em) * 5.3); /* Match text width */
   height: clamp(45px, 5vw, 70px); /* Responsive height */
   bottom: auto;
   transform: none;
@@ -1749,7 +1749,7 @@ body.menu-open {
   top: 50%;
   transform: translateY(-50%);
   margin: 0;
-  font-size: clamp(2.1em, 4.25vw, 3.8em);
+  font-size: clamp(2.5em, 5vw, 4.5em);
   line-height: 1;
   pointer-events: none;
   mix-blend-mode: difference;
