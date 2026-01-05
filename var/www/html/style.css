@@ -3104,6 +3104,17 @@ body.menu-open {
     border-radius: 14px;
   }
   
+  /* Reset nth-child margins from desktop zigzag layout */
+  .timeline-item:nth-child(odd) .timeline-content,
+  .timeline-item:nth-child(even) .timeline-content {
+    position: relative;
+    top: auto;
+    bottom: auto;
+    margin: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+  
   .timeline-content:hover {
     transform: scale(1.02);
   }
@@ -3683,6 +3694,16 @@ body.menu-open {
     margin: 0 !important;
   }
   
+  /* Reset nth-child margins */
+  .timeline-item:nth-child(odd) .timeline-content,
+  .timeline-item:nth-child(even) .timeline-content {
+    margin: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    top: auto;
+    bottom: auto;
+  }
+  
   .timeline-content {
     padding: 14px;
     border-radius: 12px;
@@ -4020,6 +4041,14 @@ body.menu-open {
   
   .timeline-item {
     margin: 0 !important;
+  }
+  
+  /* Reset nth-child margins */
+  .timeline-item:nth-child(odd) .timeline-content,
+  .timeline-item:nth-child(even) .timeline-content {
+    margin: 0 !important;
+    top: auto;
+    bottom: auto;
   }
   
   .timeline-content {
