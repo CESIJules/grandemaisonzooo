@@ -777,8 +777,9 @@ body.menu-open {
   display: flex;
   position: absolute;
   top: 28px;
-  /* Position to the right of RADIO text - title width + margin */
-  left: 400px;
+  /* Position dynamically based on viewport: title starts at 30px, 
+     RADIO text width ≈ 5.5 * font-size, font-size = clamp(2em, 5vw, 4.5em) */
+  left: calc(30px + min(5vw, 4.5em) * 5.5 + 15px);
   z-index: 100;
 }
 
@@ -2507,8 +2508,7 @@ body.menu-open {
   }
   
   .radio-header .volume-container {
-    /* Position relative to RADIO title width at this breakpoint */
-    left: 380px;
+    /* Inherits calc() from base - just adjust size if needed */
   }
   
   #visualizer {
@@ -2579,8 +2579,7 @@ body.menu-open {
   }
   
   .radio-header .volume-container {
-    /* Position relative to RADIO title width at this breakpoint */
-    left: 340px;
+    /* Inherits calc() from base */
     width: 42px;
     height: 42px;
   }
@@ -2703,8 +2702,7 @@ body.menu-open {
   }
   
   .radio-header .volume-container {
-    /* Position relative to RADIO title */
-    left: 295px;
+    /* Inherits calc() from base */
     top: 20px;
     transform: none;
     width: 40px;
@@ -2867,8 +2865,7 @@ body.menu-open {
   }
   
   .radio-header .volume-container {
-    /* Position relative to RADIO title */
-    left: 250px;
+    /* Inherits calc() from base */
     top: 18px;
     transform: none;
     width: 38px;
@@ -3055,13 +3052,19 @@ body.menu-open {
     padding-bottom: 100px;
     padding-left: 15px;
     padding-right: 15px;
+    position: relative;
+    gap: 0; /* Use margin on items for consistent spacing */
   }
 
   .timeline-item {
     width: 100%;
     max-width: 400px;
-    margin: 12px 0;
+    margin: 24px 0;
     flex-shrink: 0;
+  }
+  
+  .timeline-item:first-child {
+    margin-top: 10px;
   }
   
   .timeline-container::before {
@@ -3071,10 +3074,10 @@ body.menu-open {
     bottom: 0;
     left: 50%;
     width: 2px;
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.15);
     transform: translateX(-50%);
     z-index: 0;
-    display: none; /* Hide vertical line on mobile */
+    display: block; /* Show vertical line on mobile */
   }
 
   .timeline-item::before,
@@ -3349,7 +3352,7 @@ body.menu-open {
 
   /* --- Artistes Section --- */
   #artistes {
-    padding: 60px 16px 30px;
+    padding: 0 0 30px 0;
     min-height: auto;
   }
   
@@ -3654,7 +3657,11 @@ body.menu-open {
   .timeline-item {
     width: 100%;
     max-width: 100%;
-    margin: 10px 0;
+    margin: 24px 0;
+  }
+  
+  .timeline-item:first-child {
+    margin-top: 10px;
   }
   
   .timeline-content {
@@ -3834,7 +3841,7 @@ body.menu-open {
 
   /* --- Artistes --- */
   #artistes {
-    padding: 50px 12px 20px;
+    padding: 0 0 20px 0;
   }
   
   #artistes h2 {
@@ -3977,7 +3984,11 @@ body.menu-open {
   }
   
   .timeline-item {
-    margin: 8px 0;
+    margin: 24px 0;
+  }
+  
+  .timeline-item:first-child {
+    margin-top: 10px;
   }
   
   .timeline-content {
