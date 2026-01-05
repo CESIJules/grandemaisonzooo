@@ -9,8 +9,8 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     exit;
 }
 
-$file_path = 'timeline.json';
-$upload_dir = 'uploads/';
+$file_path = __DIR__ . '/timeline.json';
+$upload_dir = __DIR__ . '/uploads/';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -88,9 +88,11 @@ try {
         $destination = $upload_dir . $new_filename;
 
         if (move_uploaded_file($tmp_name, $destination)) {
-            $image_path = $destination;
+            // On stocke le chemin relatif pour l'accès web
+            $image_path = 'uploads/' . $new_filename;
         } else {
-            throw new Exception('Impossible de déplacer le fichier téléchargé.');
+            $error = error_get_last();
+            throw new Exception('Impossible de déplacer le fichier téléchargé. ' . ($error['message'] ?? ''));
         }
     }
 

@@ -98,7 +98,7 @@ if (isset($_FILES['image']) && $_FILES['image']['error'] !== UPLOAD_ERR_NO_FILE)
         send_json_error($errorMessage);
     }
 
-    $upload_dir = 'uploads/';
+    $upload_dir = __DIR__ . '/uploads/';
     if (!is_dir($upload_dir)) {
         mkdir($upload_dir, 0777, true);
     }
@@ -107,6 +107,7 @@ if (isset($_FILES['image']) && $_FILES['image']['error'] !== UPLOAD_ERR_NO_FILE)
     $image_ext = strtolower(pathinfo($image_name, PATHINFO_EXTENSION));
     $new_image_name = 'post_' . $postId . '_' . time() . '.' . $image_ext;
     $target_file = $upload_dir . $new_image_name;
+    $image_path = 'uploads/' . $new_image_name;
 
     // Basic validation
     $allowed_types = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
@@ -117,9 +118,10 @@ if (isset($_FILES['image']) && $_FILES['image']['error'] !== UPLOAD_ERR_NO_FILE)
     if (move_uploaded_file($_FILES['image']['tmp_name'], $target_file)) {
         // If there was an old image, you might want to delete it here
         // For simplicity, we are not deleting the old one in this script.
-        $posts[$post_index]['image'] = $target_file;
+        $posts[$post_index]['image'] = $image_path;
     } else {
-        send_json_error('Erreur lors du téléchargement de l\'image.');
+        $error = error_get_last();
+        send_json_error('Erreur lors du téléchargement de l\'image: ' . ($error['message'] ?? 'Raison inconnue'));
     }
 }
 
