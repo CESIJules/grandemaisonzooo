@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$file_path = 'timeline.json';
+$file_path = __DIR__ . '/timeline.json';
 
 try {
     // 2. Récupérer l'ID du post à supprimer
@@ -86,6 +86,13 @@ try {
 
     // Re-indexer le tableau pour éviter les clés discontinues après array_filter
     $updated_timeline = array_values($updated_timeline);
+
+    if (file_exists($file_path) && !is_writable($file_path)) {
+        if (!@chmod($file_path, 0666)) {
+            $perms = substr(sprintf('%o', fileperms($file_path)), -4);
+            throw new Exception("Le fichier timeline.json n'est pas accessible en écriture (Permissions: $perms). Veuillez exécuter: chmod 666 $file_path");
+        }
+    }
 
     // 5. Réécrire le fichier JSON mis à jour
     $write_result = file_put_contents($file_path, json_encode($updated_timeline, JSON_PRETTY_PRINT), LOCK_EX);
