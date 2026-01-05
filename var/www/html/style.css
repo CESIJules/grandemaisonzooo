@@ -1539,7 +1539,7 @@ body.menu-open {
   position: absolute;
   top: 20px; /* Aligned with RADIO title */
   left: 30px; /* Same left as RADIO title */
-  width: clamp(300px, 30vw, 500px); /* Responsive width */
+  width: calc(min(5vw, 4.5em) * 5.3); /* Match text width */
   height: clamp(45px, 5vw, 70px); /* Responsive height */
   bottom: auto;
   transform: none;
