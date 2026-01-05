@@ -2592,10 +2592,8 @@ document.addEventListener('DOMContentLoaded', () => {
           <span class="timeline-date">${new Date(post.date).toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
         `;
 
-        // Add 3D Tilt Effect (Desktop only)
-        if (window.matchMedia("(hover: hover)").matches) {
-            addTiltEffect(contentDiv);
-        }
+        // Add 3D Tilt Effect
+        addTiltEffect(contentDiv);
 
         timelineItem.appendChild(contentDiv);
         timelineContainer.appendChild(timelineItem);
