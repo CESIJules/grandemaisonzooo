@@ -2798,32 +2798,15 @@ document.addEventListener('DOMContentLoaded', () => {
       // Handle Timeline Entry Position (Right-to-Left Flow)
       const targetSection = sections[index];
       if (targetSection && targetSection.id === 'timeline' && timelineContainer) {
-          const isMobile = window.innerWidth <= 768;
-
           if (index > currentSectionIndex) {
-              // Coming from above (scrolling down)
-              if (isMobile) {
-                  // Mobile (row-reverse): Newest is at Left (0)
-                  timelineContainer.scrollLeft = 0;
-                  timelineTargetScroll = 0;
-              } else {
-                  // Desktop (row): Newest is at Right (End)
-                  const maxScroll = timelineContainer.scrollWidth - timelineContainer.clientWidth;
-                  timelineContainer.scrollLeft = maxScroll;
-                  timelineTargetScroll = maxScroll;
-              }
+              // Coming from above (scrolling down) -> Start at Right (End)
+              const maxScroll = timelineContainer.scrollWidth - timelineContainer.clientWidth;
+              timelineContainer.scrollLeft = maxScroll;
+              timelineTargetScroll = maxScroll;
           } else if (index < currentSectionIndex) {
-              // Coming from below (scrolling up)
-              if (isMobile) {
-                  // Mobile (row-reverse): Oldest is at Right (End)
-                  const maxScroll = timelineContainer.scrollWidth - timelineContainer.clientWidth;
-                  timelineContainer.scrollLeft = maxScroll;
-                  timelineTargetScroll = maxScroll;
-              } else {
-                  // Desktop (row): Oldest is at Left (Start)
-                  timelineContainer.scrollLeft = 0;
-                  timelineTargetScroll = 0;
-              }
+              // Coming from below (scrolling up) -> Start at Left (Start)
+              timelineContainer.scrollLeft = 0;
+              timelineTargetScroll = 0;
           }
       }
 

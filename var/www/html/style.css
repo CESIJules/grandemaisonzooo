@@ -3590,10 +3590,6 @@ body.menu-open {
   }
   
   /* --- Timeline --- */
-  .timeline-container {
-    flex-direction: row-reverse;
-  }
-
   .timeline-filters .btn {
     font-size: 0.7rem;
     padding: 5px 10px;
