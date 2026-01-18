@@ -75,9 +75,23 @@ if (!in_array($file_extension, $allowed_types)) {
 */
 
 if (move_uploaded_file($_FILES["image"]["tmp_name"], $target_file)) {
+    // Ensure the uploaded file is readable
+    @chmod($target_file, 0644);
+    echo json_encode(['status' => 'success', 'filepath' => $relative_path]);
+} elseif (copy($_FILES["image"]["tmp_name"], $target_file)) {
+    // Fallback if move_uploaded_file fails (e.g. across streams/perms issues)
+    unlink($_FILES["image"]["tmp_name"]);
+    @chmod($target_file, 0644);
     echo json_encode(['status' => 'success', 'filepath' => $relative_path]);
 } else {
     $error = error_get_last();
-    echo json_encode(['status' => 'error', 'message' => 'Failed to move uploaded file: ' . ($error['message'] ?? 'Unknown error')]);
+    // Try to get more details on why it failed
+    $permInfo = is_writable($target_dir) ? 'Writable' : 'Not Writable';
+    $owner = function_exists('posix_getpwuid') ? posix_getpwuid(fileowner($target_dir))['name'] : 'unknown';
+    
+    echo json_encode([
+        'status' => 'error', 
+        'message' => 'Failed to move/copy file. Dir: ' . $target_dir . ' (' . $permInfo . ', Owner: ' . $owner . '). PHP Error: ' . ($error['message'] ?? 'None')
+    ]);
 }
 ?>
