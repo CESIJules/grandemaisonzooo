@@ -29,11 +29,17 @@ if ($_FILES['image']['error'] !== UPLOAD_ERR_OK) {
     exit;
 }
 
-$target_dir = __DIR__ . "/images/";
+// CHANGED: Use uploads/artists/ instead of images/ to avoid permission issues with root-owned static folders
+$target_dir = __DIR__ . "/uploads/artists/";
 if (!file_exists($target_dir)) {
-    // Utilisation de permissions plus restrictives (0755)
-    if (!mkdir($target_dir, 0755, true)) {
-        echo json_encode(['status' => 'error', 'message' => 'Failed to create images directory']);
+    // Attempt to create with 0777 (widest permissions) to ensure writability
+    if (!mkdir($target_dir, 0777, true)) {
+        // Fallback: If creation fails, check if parent uploads exists and is writable
+        if (!file_exists(__DIR__ . "/uploads/")) {
+             echo json_encode(['status' => 'error', 'message' => 'Failed to create uploads/artists directory. neither uploads directory exists.']);
+             exit;
+        }
+        echo json_encode(['status' => 'error', 'message' => 'Failed to create uploads/artists directory. Check permissions on uploads folder.']);
         exit;
     }
 }
@@ -62,7 +68,7 @@ if (!array_key_exists($mime_type, $allowed_mimes)) {
 $safe_extension = $allowed_mimes[$mime_type];
 $new_filename = uniqid('artist_') . '.' . $safe_extension;
 $target_file = $target_dir . $new_filename;
-$relative_path = "images/" . $new_filename;
+$relative_path = "uploads/artists/" . $new_filename;
 
 // (Suppression de la vérification d'extension obsolète car nous utilisons le type MIME)
 /*
