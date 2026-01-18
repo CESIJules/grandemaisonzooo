@@ -1742,8 +1742,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('editingArtistId').value = '';
         document.getElementById('currentArtistImage').value = '';
         artistImagePreview.innerHTML = '';
-        cancelArtistEditBtn.style.display = 'none';
-        adminArtistForm.querySelector('button[type="submit"]').innerHTML = '<i class="fas fa-plus"></i> Enregistrer l\'artiste';
+        if (cancelArtistEditBtn) cancelArtistEditBtn.style.display = 'none';
+        const submitBtn = adminArtistForm.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.innerHTML = '<i class="fas fa-plus"></i> Enregistrer l\'artiste';
     }
 
     // Event Listeners
