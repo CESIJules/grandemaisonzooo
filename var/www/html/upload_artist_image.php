@@ -39,16 +39,8 @@ if (!file_exists($target_dir)) {
 }
 
 // Ensure writable
-/*
-if (!is_writable($target_dir)) {
-    // Tentative de correction des permissions (0755 au lieu de 0777)
-    @chmod($target_dir, 0755);
-    if (!is_writable($target_dir)) {
-        echo json_encode(['status' => 'error', 'message' => 'Images directory is not writable. Check permissions for: ' . $target_dir]);
-        exit;
-    }
-}
-*/
+// Tentative de correction des permissions a 0777 pour éviter les erreurs sous Windows/Linux
+@chmod($target_dir, 0777);
 
 // Vérification du type MIME réel
 $finfo = new finfo(FILEINFO_MIME_TYPE);
