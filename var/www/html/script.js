@@ -32,9 +32,32 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!container) return;
 
     try {
-      const response = await fetch('get_artist_profiles.php');
-      if (!response.ok) throw new Error('Failed to load artists');
-      const artists = await response.json();
+      const [artistsResponse, postsResponse] = await Promise.all([
+        fetch('get_artist_profiles.php'),
+        fetch('./get_posts.php?artist=Tous').catch(() => null)
+      ]);
+      if (!artistsResponse.ok) throw new Error('Failed to load artists');
+      const artists = await artistsResponse.json();
+
+      // Build latest release map per artist (case-insensitive)
+      let latestReleases = {};
+      if (postsResponse && postsResponse.ok) {
+        try {
+          const posts = await postsResponse.json();
+          if (Array.isArray(posts)) {
+            posts.forEach(post => {
+              if (!post.artist) return;
+              const key = post.artist.trim().toUpperCase();
+              const postDate = new Date(post.date);
+              if (!latestReleases[key] || postDate > new Date(latestReleases[key].date)) {
+                latestReleases[key] = post;
+              }
+            });
+          }
+        } catch (e) {
+          console.error('Could not parse timeline for latest releases', e);
+        }
+      }
 
       if (!artists || artists.length === 0) return;
 
@@ -57,6 +80,19 @@ document.addEventListener('DOMContentLoaded', () => {
         // Alternate layout: even index -> image right (default), odd index -> image left
         const isImageLeft = index % 2 !== 0;
         
+        // Find latest release for this artist
+        const release = latestReleases[artist.name.trim().toUpperCase()];
+        const releaseCardHtml = release ? `
+          <a href="${escapeHtml(release.link || '#')}" target="_blank" rel="noopener noreferrer" class="latest-release-card">
+            ${release.image ? `<img src="${escapeHtml(release.image)}" alt="${escapeHtml(release.title)}" loading="lazy" decoding="async" />` : ''}
+            <div class="latest-release-info">
+              <span class="latest-release-label">Dernière sortie</span>
+              <span class="latest-release-title">${escapeHtml(release.subtitle || release.title)}</span>
+              <span class="latest-release-date">${new Date(release.date).toLocaleDateString('fr-FR', { year: 'numeric', month: 'short' })}</span>
+            </div>
+          </a>
+        ` : '';
+        
         const imageHtml = `
           <div class="artiste-image">
             <img src="${escapeHtml(artist.image)}" alt="${escapeHtml(artist.name)}" loading="lazy" decoding="async" />
@@ -76,6 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <a href="${escapeHtml(artist.instagramLink)}" target="_blank"><i class="fab fa-instagram"></i></a>
               <a href="#contact"><i class="fas fa-envelope"></i></a>
             </div>
+            ${releaseCardHtml}
           </div>
         `;
 
@@ -2533,8 +2570,14 @@ document.addEventListener('DOMContentLoaded', () => {
         posts = [];
       }
 
-      // Sort Ascending (Oldest -> Newest) so Newest is at the Right (End)
+      // Sort Ascending (Oldest -> Newest) so Newest is at the Right (End) on desktop
       posts.sort((a, b) => new Date(a.date) - new Date(b.date));
+      
+      // On mobile (vertical timeline), reverse to show newest first at top
+      if (window.innerWidth <= 900) {
+        posts.reverse();
+      }
+      
       timelineContainer.innerHTML = '';
 
       if (posts.length === 0) {

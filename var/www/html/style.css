@@ -765,24 +765,24 @@ body.menu-open {
 /* Title RADIO - top left on desktop, visualizer behind */
 #radio h2 {
   position: absolute;
-  top: 20px;
-  left: 30px;
+  top: clamp(12px, 2vw, 20px);
+  left: clamp(15px, 2.5vw, 30px);
   bottom: auto;
   z-index: 25;
   font-size: clamp(2em, 5vw, 4.5em);
   line-height: 1;
 }
 
-/* Volume button next to RADIO title */
+/* Volume button next to visualizer */
 .radio-header .volume-container {
   display: flex;
   align-items: center;
   position: absolute;
-  /* Vertically center with RADIO title */
-  top: calc(20px + (clamp(2em, 5vw, 4.5em) - 48px) / 2);
-  /* Position to right of RADIO text (5 chars) */
-  left: calc(30px + clamp(2em, 5vw, 4.5em) * 5 + 30px);
+  top: clamp(12px, 2vw, 20px);
+  left: calc(clamp(15px, 2.5vw, 30px) + clamp(130px, 15vw, 220px) + clamp(10px, 1.5vw, 20px));
   z-index: 100;
+  width: clamp(36px, 3.5vw, 48px);
+  height: clamp(36px, 3.5vw, 48px);
 }
 
 /* Hide PIP in header - it's in RC */
@@ -827,8 +827,8 @@ body.menu-open {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 48px;
-  height: 48px;
+  width: 100%;
+  height: 100%;
   opacity: 0;
   transition: opacity 0.3s ease;
   pointer-events: none; /* Clicks pass through to container */
@@ -1535,16 +1535,15 @@ body.menu-open {
 
 #visualizer {
   position: absolute;
-  top: 20px; /* Aligned with RADIO title */
-  left: 30px; /* Same left as RADIO title */
-  width: calc(min(5vw, 4.5em) * 5.3); /* Match text width */
-  height: clamp(45px, 5vw, 70px); /* Responsive height */
+  top: clamp(12px, 2vw, 20px);
+  left: clamp(15px, 2.5vw, 30px);
+  width: clamp(130px, 15vw, 220px);
+  height: clamp(40px, 4.5vw, 70px);
   bottom: auto;
   transform: none;
-  z-index: 20; /* Behind title (25) */
+  z-index: 20;
   pointer-events: none;
   border-radius: 0;
-  /* Center vertically with the text */
   display: flex;
   align-items: center;
 }
@@ -2097,6 +2096,69 @@ body.menu-open {
 .artiste-socials a { color: #eee; font-size: 24px; transition: color 0.3s; }
 .artiste-socials a:hover { color: #2b2b2bcf; }
 
+/* Latest release card */
+.latest-release-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 16px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  background: rgba(255, 255, 255, 0.04);
+  text-decoration: none;
+  color: #fff;
+  transition: background 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+  max-width: 340px;
+}
+
+.latest-release-card:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.latest-release-card img {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.latest-release-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.latest-release-label {
+  font-family: 'Lexend', sans-serif;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #888;
+}
+
+.latest-release-title {
+  font-family: 'Lexend', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.latest-release-date {
+  font-family: 'Lexend', sans-serif;
+  font-size: 0.7rem;
+  color: #999;
+}
+
 /* Colonne droite: image */
 .artiste {
   padding: 0;              /* supprime le padding autour de la section */
@@ -2539,11 +2601,6 @@ body.menu-open {
     font-size: 28px;
   }
   
-  #visualizer {
-    width: 200px;
-    height: 60px;
-  }
-  
   /* RC Container */
   .rc-container {
     min-width: 320px;
@@ -2604,22 +2661,6 @@ body.menu-open {
     width: 65px;
     height: 65px;
     font-size: 26px;
-  }
-  
-  .radio-header .volume-container {
-    /* Inherits calc() from base */
-    width: 42px;
-    height: 42px;
-  }
-  
-  .radio-header .volume-ring {
-    width: 42px;
-    height: 42px;
-  }
-  
-  #visualizer {
-    width: 180px;
-    height: 55px;
   }
   
   #currentSong {
@@ -2713,11 +2754,6 @@ body.menu-open {
   }
   
   /* Radio */
-  #radio h2 {
-    top: 15px;
-    left: 20px;
-  }
-  
   #vinyl-disc-container {
     width: 260px;
     height: 260px;
@@ -2727,26 +2763,6 @@ body.menu-open {
     width: 60px;
     height: 60px;
     font-size: 24px;
-  }
-  
-  .radio-header .volume-container {
-    /* Inherits calc() from base */
-    top: 20px;
-    transform: none;
-    width: 40px;
-    height: 40px;
-  }
-  
-  .radio-header .volume-ring {
-    width: 40px;
-    height: 40px;
-  }
-  
-  #visualizer {
-    top: 15px;
-    left: 20px;
-    width: 160px;
-    height: 50px;
   }
   
   #currentSong {
@@ -2885,11 +2901,6 @@ body.menu-open {
   }
   
   /* Radio */
-  #radio h2 {
-    top: 12px;
-    left: 15px;
-  }
-  
   #vinyl-disc-container {
     width: 240px;
     height: 240px;
@@ -2899,26 +2910,6 @@ body.menu-open {
     width: 55px;
     height: 55px;
     font-size: 22px;
-  }
-  
-  .radio-header .volume-container {
-    /* Inherits calc() from base */
-    top: 18px;
-    transform: none;
-    width: 38px;
-    height: 38px;
-  }
-  
-  .radio-header .volume-ring {
-    width: 38px;
-    height: 38px;
-  }
-  
-  #visualizer {
-    top: 12px;
-    left: 15px;
-    width: 145px;
-    height: 45px;
   }
   
   #currentSong {
@@ -3545,6 +3536,11 @@ body.menu-open {
     margin-top: 12px;
   }
 
+  .latest-release-card {
+    max-width: 280px;
+    align-self: center;
+  }
+
   /* --- Contact Section --- */
   #contact {
     padding: clamp(40px, 8vh, 60px) 16px;
@@ -4031,6 +4027,21 @@ body.menu-open {
   
   .artiste-socials a {
     font-size: 20px;
+  }
+
+  .latest-release-card {
+    max-width: 100%;
+    gap: 10px;
+    padding: 8px 12px;
+  }
+
+  .latest-release-card img {
+    width: 48px;
+    height: 48px;
+  }
+
+  .latest-release-title {
+    font-size: 0.8rem;
   }
 
   /* --- Contact --- */
@@ -4552,27 +4563,17 @@ body.menu-open {
     left: 12px;
   }
   
-  /* Visualizer aligned with RADIO title */
+  /* Visualizer & volume: smaller on short screens */
   #visualizer {
     top: 12px;
     left: 12px;
-    width: 110px;
+    width: clamp(100px, 12vw, 140px);
     height: 35px;
   }
   
-  /* Volume position adjusted for smaller title */
   .radio-header .volume-container {
-    /* Position relative to RADIO title on short screens */
-    left: 145px;
     top: 12px;
-    transform: none;
-    width: 36px;
-    height: 36px;
-  }
-  
-  .radio-header .volume-ring {
-    width: 36px;
-    height: 36px;
+    left: calc(12px + clamp(100px, 12vw, 140px) + 12px);
   }
   
   #currentSong {
@@ -4712,25 +4713,6 @@ body.menu-open {
     font-size: 36px; /* Reduced from 42px */
   }
   
-  /* Center the radar */
-  #visualizer {
-    left: 50%;
-    transform: translateX(-50%);
-  }
-  
-  /* Reduce RADIO text size by 25% without touching position */
-  #radio h2 {
-    font-size: clamp(1.5em, 3.75vw, 3.375em);
-  }
-
-  /* Re-align volume button with smaller text */
-  .radio-header .volume-container {
-    /* Adjust top to center with new text height */
-    top: calc(20px + (min(3.75vw, 3.375em) - 48px) / 2);
-    /* Adjust left to follow the text width */
-    left: calc(30px + min(3.75vw, 3.375em) * 5.5 + 20px);
-  }
-
   /* --- Timeline Section --- */
   /* Reduce global timeline size by 25% */
   .timeline-item {
