@@ -2181,6 +2181,7 @@ body.menu-open {
   object-position: center;
   border-radius: 0;
   display: block;          /* supprime les espaces blancs éventuels */
+  mix-blend-mode: lighten;
 }
 
 /* Barre de progression de la radio */
