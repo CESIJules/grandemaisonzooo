@@ -1,4 +1,4 @@
-/* Base */
+﻿/* Base */
 
 @font-face {
   font-family: SyneGMZExtraBold;
@@ -2171,18 +2171,33 @@ body.menu-open {
 
 .artiste-image {
   width: 100%;
-  height: 100vh;           /* occupe toute la hauteur de l’écran */
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
 }
 
 .artiste-image img {
   width: 100%;
   height: 100%;
-  object-fit: cover;       /* l’image couvre toute la zone */
+  object-fit: cover;
   object-position: center;
   border-radius: 0;
-  display: block;          /* supprime les espaces blancs éventuels */
+  display: block;
   mix-blend-mode: lighten;
-  filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.5));
+  position: relative;
+  z-index: 1;
+}
+
+.artiste-image img.glow-layer {
+  position: absolute;
+  inset: -20px;
+  width: calc(100% + 40px);
+  height: calc(100% + 40px);
+  filter: blur(20px) brightness(1.4);
+  opacity: 0.5;
+  z-index: 0;
+  mix-blend-mode: lighten;
+  pointer-events: none;
 }
 
 /* Barre de progression de la radio */
