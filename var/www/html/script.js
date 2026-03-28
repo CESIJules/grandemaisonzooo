@@ -362,51 +362,9 @@ document.addEventListener('DOMContentLoaded', () => {
       isIntroActive = true;
       document.body.classList.add('no-scroll');
 
-      if (!marqueeContent) {
-          playIntro();
-          return;
-      }
-
-      // Generate Marquee Text (6 copies)
-      marqueeContent.innerHTML = '';
-      for(let i=0; i<6; i++) {
-          const span = document.createElement('span');
-          span.className = 'marquee-item';
-          span.innerHTML = `GRANDEMAISON <span class="marquee-separator">|</span> LOADING 0%`;
-          marqueeContent.appendChild(span);
-      }
-
-      const xhr = new XMLHttpRequest();
-      xhr.open('GET', 'vid/landing.mp4', true);
-      xhr.responseType = 'blob';
-
-      xhr.onprogress = (e) => {
-          if (e.lengthComputable) {
-              const percent = Math.round((e.loaded / e.total) * 100);
-              updateLoaderText(percent);
-          }
-      };
-
-      xhr.onload = () => {
-          if (xhr.status === 200) {
-              const blob = xhr.response;
-              const url = URL.createObjectURL(blob);
-              landingVideo.src = url;
-              
-              updateLoaderText(100);
-              setTimeout(finishLoading, 500);
-          } else {
-              console.error("Video load failed, status:", xhr.status);
-              finishLoading();
-          }
-      };
-      
-      xhr.onerror = () => {
-          console.error("Video load error");
-          finishLoading();
-      };
-
-      xhr.send();
+      // Skip loading screen, go straight to video
+      if (loadingScreen) loadingScreen.style.display = 'none';
+      playIntro();
   }
 
   if (landingVideo && videoOverlay && backgroundVideo) {
