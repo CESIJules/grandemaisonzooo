@@ -107,10 +107,10 @@ document.addEventListener('DOMContentLoaded', () => {
               <a href="${escapeHtml(artist.listenLink)}" target="_blank" class="btn">Écouter</a>
               <a href="${escapeHtml(artist.watchLink)}" target="_blank" class="btn">Regarder</a>
               <a href="#timeline" data-artist="${escapeHtml(artist.name)}" class="btn">Timeline</a>
-            </div>
-            <div class="artiste-socials">
-              <a href="${escapeHtml(artist.instagramLink)}" target="_blank"><i class="fab fa-instagram"></i></a>
-              <a href="#contact"><i class="fas fa-envelope"></i></a>
+              <div class="artiste-socials">
+                <a href="${escapeHtml(artist.instagramLink)}" target="_blank"><i class="fab fa-instagram"></i></a>
+                <a href="#contact"><i class="fas fa-envelope"></i></a>
+              </div>
             </div>
             ${releaseCardHtml}
           </div>

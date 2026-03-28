@@ -778,11 +778,12 @@ body.menu-open {
   display: flex;
   align-items: center;
   position: absolute;
-  top: clamp(12px, 2vw, 20px);
-  left: calc(clamp(15px, 2.5vw, 30px) + clamp(130px, 15vw, 220px) + clamp(10px, 1.5vw, 20px));
+  /* Vertically center with visualizer */
+  top: calc(clamp(14px, 2vw, 22px) + clamp(50px, 5.5vw, 80px) / 2 - clamp(40px, 4vw, 54px) / 2);
+  left: calc(clamp(15px, 2.5vw, 30px) + clamp(160px, 18vw, 280px) + clamp(10px, 1.5vw, 20px));
   z-index: 100;
-  width: clamp(36px, 3.5vw, 48px);
-  height: clamp(36px, 3.5vw, 48px);
+  width: clamp(40px, 4vw, 54px);
+  height: clamp(40px, 4vw, 54px);
 }
 
 /* Hide PIP in header - it's in RC */
@@ -1535,10 +1536,10 @@ body.menu-open {
 
 #visualizer {
   position: absolute;
-  top: clamp(12px, 2vw, 20px);
+  top: clamp(14px, 2vw, 22px);
   left: clamp(15px, 2.5vw, 30px);
-  width: clamp(130px, 15vw, 220px);
-  height: clamp(40px, 4.5vw, 70px);
+  width: clamp(160px, 18vw, 280px);
+  height: clamp(50px, 5.5vw, 80px);
   bottom: auto;
   transform: none;
   z-index: 20;
@@ -2091,9 +2092,9 @@ body.menu-open {
   padding-left: 3px;
 }
 
-.artiste-actions { display: flex; flex-wrap: wrap; gap: 12px; padding-left: 4px;}
-.artiste-socials { display: flex; gap: 14px; margin-top: 12px; padding-left: 5px;}
-.artiste-socials a { color: #eee; font-size: 24px; transition: color 0.3s; }
+.artiste-actions { display: flex; flex-wrap: wrap; gap: 12px; padding-left: 4px; align-items: center;}
+.artiste-socials { display: flex; gap: 14px; align-items: center; margin-left: 4px;}
+.artiste-socials a { color: #eee; font-size: 22px; transition: color 0.3s; display: flex; align-items: center; }
 .artiste-socials a:hover { color: #2b2b2bcf; }
 
 /* Latest release card */
@@ -2101,23 +2102,26 @@ body.menu-open {
   display: flex;
   align-items: center;
   gap: 14px;
-  margin-top: 16px;
+  margin-top: 6px;
   padding: 10px 14px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  background: transparent;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
   text-decoration: none;
   color: #fff;
-  transition: background 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+  transition: background 0.3s ease, border-color 0.3s ease, transform 0.3s ease,
+              box-shadow 0.3s ease;
   max-width: 340px;
 }
 
 .latest-release-card:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(35, 35, 35, 0.8);
+  border-color: rgba(255, 255, 255, 0.4);
   transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.9), 0 0 15px rgba(255, 255, 255, 0.15);
 }
 
 .latest-release-card img {
@@ -3117,7 +3121,7 @@ body.menu-open {
 
   .timeline-item {
     width: 100%;
-    max-width: 400px;
+    max-width: 500px;
     margin: 0 !important; /* Force no margin - use gap */
     flex-shrink: 0;
   }
@@ -3154,7 +3158,7 @@ body.menu-open {
     text-align: center;
     z-index: 2;
     background-color: rgba(20, 20, 20, 0.9);
-    padding: 16px;
+    padding: 20px;
     border-radius: 14px;
   }
   
@@ -3174,17 +3178,17 @@ body.menu-open {
   }
   
   .timeline-item h3 { 
-    font-size: 1.1rem; 
+    font-size: 1.2rem; 
     margin-bottom: 6px; 
   }
   
   .timeline-item h4 { 
-    font-size: 0.75rem; 
+    font-size: 0.85rem; 
     margin-bottom: 10px; 
   }
   
   .timeline-item p { 
-    font-size: 0.85rem; 
+    font-size: 0.9rem; 
     line-height: 1.4;
     display: block;
     -webkit-line-clamp: unset;
@@ -3533,11 +3537,11 @@ body.menu-open {
   .artiste-socials {
     justify-content: center;
     padding-left: 0;
-    margin-top: 12px;
+    margin-left: 0;
   }
 
   .latest-release-card {
-    max-width: 280px;
+    max-width: 320px;
     align-self: center;
   }
 
@@ -4567,13 +4571,15 @@ body.menu-open {
   #visualizer {
     top: 12px;
     left: 12px;
-    width: clamp(100px, 12vw, 140px);
-    height: 35px;
+    width: clamp(110px, 14vw, 160px);
+    height: 40px;
   }
   
   .radio-header .volume-container {
-    top: 12px;
-    left: calc(12px + clamp(100px, 12vw, 140px) + 12px);
+    top: calc(12px + 40px / 2 - clamp(36px, 3.5vw, 44px) / 2);
+    left: calc(12px + clamp(110px, 14vw, 160px) + 12px);
+    width: clamp(36px, 3.5vw, 44px);
+    height: clamp(36px, 3.5vw, 44px);
   }
   
   #currentSong {
