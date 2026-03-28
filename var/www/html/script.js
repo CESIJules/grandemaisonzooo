@@ -95,7 +95,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const imageHtml = `
           <div class="artiste-image">
-            <img class="glow-layer" src="${escapeHtml(artist.image)}" alt="" loading="lazy" decoding="async" aria-hidden="true" />
             <img src="${escapeHtml(artist.image)}" alt="${escapeHtml(artist.name)}" loading="lazy" decoding="async" />
           </div>
         `;
