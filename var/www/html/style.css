@@ -208,7 +208,7 @@ main { -ms-overflow-style: none; scrollbar-width: none; }
 /* Sections plein écran */
 .screen {
   min-height: 100vh;
-  padding: 80px 24px 150px;
+  padding: clamp(40px, 8vh, 80px) clamp(12px, 3vw, 24px) clamp(60px, 12vh, 150px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -778,11 +778,10 @@ body.menu-open {
   display: flex;
   align-items: center;
   position: absolute;
-  /* Vertically center with RADIO title: top + (title height - volume height) / 2 */
-  /* Title line-height: 1, so height ≈ font-size. Volume = 48px */
-  top: calc(20px + (min(5vw, 4.5em) - 48px) / 2);
-  /* Position to right of RADIO text */
-  left: calc(30px + min(5vw, 4.5em) * 5.5 + 20px);
+  /* Vertically center with RADIO title */
+  top: calc(20px + (clamp(2em, 5vw, 4.5em) - 48px) / 2);
+  /* Position to right of RADIO text (5 chars) */
+  left: calc(30px + clamp(2em, 5vw, 4.5em) * 5 + 30px);
   z-index: 100;
 }
 
@@ -855,9 +854,8 @@ body.menu-open {
 /* Radio Controller (RC) */
 .rc-container {
   position: fixed;
-  bottom: 20px;
+  bottom: 50px;
   right: 20px;
-  bottom: 50px; /* Slightly higher */
   z-index: 1000;
   display: flex;
   align-items: stretch;
@@ -1234,7 +1232,7 @@ body.menu-open {
   
   /* Adaptation longueur - flexible width */
   width: auto;
-  max-width: min(600px, calc(100vw - 400px)); /* Flexible max-width */
+  max-width: clamp(200px, calc(100vw - 400px), 600px); /* Safe minimum for small screens */
   justify-content: flex-start;
   overflow: visible; /* Allow dropdowns to show */
 
@@ -1727,6 +1725,29 @@ body.menu-open {
   overflow: hidden;
   position: relative;
   height: 100vh;
+}
+
+/* Scroll fade indicators on left/right edges (desktop only) */
+#timeline::before,
+#timeline::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: clamp(30px, 4vw, 60px);
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+#timeline::before {
+  left: 0;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.7), transparent);
+}
+
+#timeline::after {
+  right: 0;
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.7), transparent);
 }
 
 .timeline-header-wrapper {
@@ -2602,7 +2623,7 @@ body.menu-open {
   }
   
   #currentSong {
-    max-width: min(500px, calc(100vw - 350px));
+    max-width: clamp(200px, calc(100vw - 350px), 500px);
   }
   
   .main-cover {
@@ -2650,8 +2671,8 @@ body.menu-open {
   }
   
   .timeline-item {
-    width: 165px;
-    margin: 0 35px;
+    width: clamp(155px, 15vw, 180px);
+    margin: 0 clamp(20px, 2.5vw, 35px);
   }
   
   .timeline-content {
@@ -2730,7 +2751,7 @@ body.menu-open {
   
   #currentSong {
     top: 14px;
-    max-width: min(420px, calc(100vw - 300px));
+    max-width: clamp(180px, calc(100vw - 300px), 420px);
     padding: 6px 12px 6px 6px;
     gap: 8px;
   }
@@ -2785,6 +2806,15 @@ body.menu-open {
     font-size: clamp(1.4rem, 4.8vw, 2.4rem);
   }
   
+  .artiste {
+    grid-template-columns: 2fr 3fr;
+    gap: 0;
+  }
+  
+  .artiste-info {
+    padding-left: 20px;
+  }
+  
   /* Contact */
   #contact h2 {
     font-size: 3em;
@@ -2812,7 +2842,7 @@ body.menu-open {
   }
   
   .timeline-item {
-    width: 150px;
+    width: clamp(160px, 18vw, 200px);
     margin: 0 30px;
   }
   
@@ -2893,7 +2923,7 @@ body.menu-open {
   
   #currentSong {
     top: 12px;
-    max-width: min(380px, calc(100vw - 260px));
+    max-width: clamp(160px, calc(100vw - 260px), 380px);
     padding: 5px 10px 5px 5px;
   }
   
@@ -2932,6 +2962,25 @@ body.menu-open {
   #rcArtist {
     font-size: 10px;
   }
+  
+  /* Artiste - prepare transition to single column */
+  .artiste {
+    grid-template-columns: 2fr 3fr;
+    gap: 0;
+  }
+  
+  .artiste-info {
+    padding-left: 15px;
+    padding-right: 10px;
+  }
+  
+  .artiste-info h3 {
+    font-size: clamp(1.2rem, 3.5vw, 2rem);
+  }
+  
+  .artiste-info .localisation {
+    font-size: 14px;
+  }
 }
 
 /* =========================================
@@ -2956,7 +3005,7 @@ body.menu-open {
   }
 
   .screen {
-    padding: 60px 16px 80px;
+    padding: clamp(40px, 8vh, 60px) 16px clamp(60px, 10vh, 80px);
     min-height: 100dvh;
     height: auto;
     display: flex;
@@ -3008,6 +3057,12 @@ body.menu-open {
     justify-content: flex-start;
     overflow: visible;
     padding-top: 0;
+  }
+  
+  /* Hide horizontal scroll indicators on mobile */
+  #timeline::before,
+  #timeline::after {
+    display: none;
   }
 
   .timeline-header-wrapper {
@@ -3167,8 +3222,8 @@ body.menu-open {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding-top: 70px;
-    padding-bottom: 60px;
+    padding-top: clamp(50px, 10vh, 70px);
+    padding-bottom: clamp(40px, 8vh, 60px);
     overflow: hidden;
     position: relative;
   }
@@ -3326,9 +3381,40 @@ body.menu-open {
   }
 
   /* --- Radio Controller --- */
-  /* Hide RC completely on mobile - takes too much space */
+  /* Hidden by default on mobile, slides up when radio plays */
   .rc-container {
-    display: none !important;
+    display: flex !important;
+    position: fixed;
+    bottom: -120px;
+    left: 10px;
+    right: 10px;
+    width: calc(100% - 20px);
+    max-width: 500px;
+    margin: 0 auto;
+    opacity: 0;
+    pointer-events: none;
+    transform: none !important;
+    transition: bottom 0.4s cubic-bezier(0.23, 1, 0.32, 1),
+                opacity 0.3s ease;
+    border-radius: 14px;
+    z-index: 1000;
+  }
+  
+  /* Slide up when radio is playing */
+  .rc-container.rc-mobile-visible {
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    opacity: 1;
+    pointer-events: auto;
+  }
+  
+  /* Override docked state on mobile */
+  .rc-container.docked {
+    transform: none !important;
+  }
+  
+  /* Hide handle on mobile - not needed */
+  .rc-handle {
+    display: none;
   }
   
   .rc-top-row {
@@ -3400,8 +3486,8 @@ body.menu-open {
   }
 
   .artiste-image {
-    height: 45vh;
-    min-height: 280px;
+    height: clamp(35vh, 42vh, 50vh);
+    min-height: 220px;
     width: 100%;
     order: 1;
     margin: 0;
@@ -3461,8 +3547,9 @@ body.menu-open {
 
   /* --- Contact Section --- */
   #contact {
-    padding: 60px 16px;
+    padding: clamp(40px, 8vh, 60px) 16px;
     min-height: 100dvh;
+    box-sizing: border-box;
   }
   
   #contact h2 {
@@ -3533,6 +3620,7 @@ body.menu-open {
   /* --- Burger Menu --- */
   .menu-overlay {
     padding-right: 5vw;
+    padding-left: 5vw;
     justify-content: center;
   }
   
@@ -3645,7 +3733,7 @@ body.menu-open {
 @media (max-width: 480px) {
   /* --- Global --- */
   .screen {
-    padding: 50px 10px 70px;
+    padding: clamp(35px, 7vh, 50px) 10px clamp(50px, 10vh, 70px);
   }
   
   .screen.artiste {
@@ -3800,11 +3888,15 @@ body.menu-open {
 
   /* --- RC Controller --- */
   .rc-container {
-    bottom: 5px;
     left: 5px;
     right: 5px;
     width: calc(100% - 10px);
+    max-width: none;
     border-radius: 10px;
+  }
+  
+  .rc-container.rc-mobile-visible {
+    bottom: 5px;
   }
   
   .rc-content {
@@ -3999,7 +4091,7 @@ body.menu-open {
   
   /* --- Scroll Arrow --- */
   .scroll-arrow {
-    bottom: 130px; /* Moved up to avoid RC container overlap */
+    bottom: calc(130px + env(safe-area-inset-bottom, 0px));
     font-size: 18px;
     z-index: 1001; /* Ensure it's above RC container */
     pointer-events: auto;
@@ -4013,7 +4105,7 @@ body.menu-open {
 @media (max-width: 360px) {
   /* --- Global --- */
   .screen {
-    padding: 45px 8px 65px;
+    padding: clamp(30px, 6vh, 45px) 8px clamp(40px, 8vh, 65px);
   }
   
   .screen.artiste {
@@ -4139,11 +4231,15 @@ body.menu-open {
 
   /* --- RC Controller --- */
   .rc-container {
-    bottom: 3px;
     left: 3px;
     right: 3px;
     width: calc(100% - 6px);
+    max-width: none;
     border-radius: 8px;
+  }
+  
+  .rc-container.rc-mobile-visible {
+    bottom: 3px;
   }
   
   .rc-content {
@@ -4264,7 +4360,7 @@ body.menu-open {
 @media (max-height: 500px) and (orientation: landscape) {
   /* --- Global --- */
   .screen {
-    padding: 20px 20px 60px;
+    padding: 20px 20px 40px;
     min-height: auto;
     scroll-snap-align: none;
   }
@@ -4276,11 +4372,11 @@ body.menu-open {
   /* --- Accueil --- */
   #accueil {
     min-height: 100vh;
-    padding: 20px;
+    padding: 15px;
   }
   
   #accueil h1 {
-    font-size: clamp(1.5em, 8vh, 2.5em);
+    font-size: clamp(1.2em, 8vh, 2em);
   }
   
   /* --- Radio --- */
@@ -4288,7 +4384,7 @@ body.menu-open {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 55px 15px 40px;
+    padding: clamp(35px, 10vh, 55px) 15px clamp(25px, 8vh, 40px);
   }
   
   .radio-header {
@@ -4318,14 +4414,14 @@ body.menu-open {
   }
   
   #vinyl-disc-container {
-    width: 100px;
-    height: 100px;
+    width: clamp(80px, 25vh, 120px);
+    height: clamp(80px, 25vh, 120px);
   }
   
   #playRadio {
-    width: 30px;
-    height: 30px;
-    font-size: 12px;
+    width: clamp(24px, 8vh, 35px);
+    height: clamp(24px, 8vh, 35px);
+    font-size: clamp(10px, 3vh, 14px);
   }
   
   .main-cover {
@@ -4345,6 +4441,12 @@ body.menu-open {
   /* --- Timeline --- */
   #timeline {
     min-height: auto;
+  }
+  
+  /* Hide scroll indicators in landscape */
+  #timeline::before,
+  #timeline::after {
+    display: none;
   }
   
   .timeline-header-wrapper {

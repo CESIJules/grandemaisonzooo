@@ -1840,6 +1840,10 @@ document.addEventListener('DOMContentLoaded', () => {
                  if (vinylDiscContainer) vinylDiscContainer.classList.add('playing');
                  radarStartTime = Date.now();
               }
+              // Show RC on mobile when playing
+              if (rcContainer && window.innerWidth <= 900) {
+                rcContainer.classList.add('rc-mobile-visible');
+              }
               updateVolumeButtonPosition();
             }).catch(err => {
               // Playback failed
@@ -1852,6 +1856,10 @@ document.addEventListener('DOMContentLoaded', () => {
           playBtn.innerHTML = '<i class="fas fa-play"></i>';
           if (vinylDisc) vinylDisc.classList.remove('playing');
           if (vinylDiscContainer) vinylDiscContainer.classList.remove('playing');
+          // Hide RC on mobile when paused
+          if (rcContainer && window.innerWidth <= 900) {
+            rcContainer.classList.remove('rc-mobile-visible');
+          }
           updateVolumeButtonPosition();
         }
       } catch (err) {
@@ -2878,7 +2886,17 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('resize', () => {
     // Debounce resize event
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(recalculateLayout, 250); // Recalculate 250ms after last resize
+    resizeTimer = setTimeout(() => {
+      recalculateLayout();
+      // Sync RC mobile visibility on resize
+      if (rcContainer && audio) {
+        if (window.innerWidth <= 900 && !audio.paused) {
+          rcContainer.classList.add('rc-mobile-visible');
+        } else if (window.innerWidth > 900) {
+          rcContainer.classList.remove('rc-mobile-visible');
+        }
+      }
+    }, 250);
   });
 
   // Global Wheel Handler
