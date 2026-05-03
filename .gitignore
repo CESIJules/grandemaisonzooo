@@ -54,7 +54,7 @@
 !/var/www/frontend/tsconfig.json
 !/var/www/frontend/next.config.ts
 !/var/www/frontend/eslint.config.mjs
-!/var/www/frontend/proxy.ts
+!/var/www/frontend/middleware.ts
 !/var/www/frontend/.gitignore
 
 # Exclure les artefacts générés et secrets

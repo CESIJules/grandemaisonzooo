@@ -2,12 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getIronSession } from "iron-session";
 import { sessionOptions } from "@/lib/session";
 import type { SessionData } from "@/types";
-import { cookies } from "next/headers";
 
 // Routes protected by admin role
 const ADMIN_PATHS = /^\/admin(\/|$)/;
 
-export async function proxy(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   if (!ADMIN_PATHS.test(pathname)) {
@@ -15,8 +14,7 @@ export async function proxy(req: NextRequest) {
   }
 
   try {
-    const cookieStore = await cookies();
-    const session = await getIronSession<SessionData>(cookieStore, sessionOptions);
+    const session = await getIronSession<SessionData>(req.cookies, sessionOptions);
 
     if (!session.logged_in || session.role !== "admin") {
       const loginUrl = new URL("/login", req.url);
