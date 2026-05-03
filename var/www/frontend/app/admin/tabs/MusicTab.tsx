@@ -61,40 +61,70 @@ export default function MusicTab() {
       <h2 className={styles.tabTitle}>Musique</h2>
 
       <div className={styles.grid2}>
-        <section className={styles.card}>
-          <h3 className={styles.cardTitle}>Upload fichier</h3>
-          <input type="file" accept=".mp3,.wav,.flac,.ogg,.aac,.m4a" onChange={handleUpload} className={styles.fileInput} />
-          {uploadStatus && <p className={styles.dim}>{uploadStatus}</p>}
-        </section>
+        <div className="card">
+          <p style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--text-secondary)", margin: "0 0 1rem" }}>Upload fichier</p>
+          <label style={{ display: "flex", flexDirection: "column", gap: "0.5rem", cursor: "pointer" }}>
+            <div style={{ border: "2px dashed rgba(255,255,255,0.15)", borderRadius: "10px", padding: "1.5rem", textAlign: "center", transition: "border-color 0.2s" }}>
+              <i className="fas fa-upload" style={{ fontSize: "1.5rem", opacity: 0.5, display: "block", marginBottom: "0.5rem" }} />
+              <span style={{ fontSize: "0.85rem", opacity: 0.6 }}>Cliquer pour choisir un fichier audio</span>
+            </div>
+            <input type="file" accept=".mp3,.wav,.flac,.ogg,.aac,.m4a" onChange={handleUpload} style={{ display: "none" }} />
+          </label>
+          {uploadStatus && (
+            <p style={{ margin: "0.5rem 0 0", fontSize: "0.85rem", color: uploadStatus.includes("succès") ? "#4ade80" : "var(--text-secondary)" }}>
+              {uploadStatus}
+            </p>
+          )}
+        </div>
 
-        <section className={styles.card}>
-          <h3 className={styles.cardTitle}>Télécharger YouTube</h3>
+        <div className="card">
+          <p style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--text-secondary)", margin: "0 0 1rem" }}>Télécharger YouTube</p>
           <div className={styles.row}>
             <input
               type="url"
-              placeholder="URL YouTube"
+              placeholder="https://youtube.com/watch?v=..."
               value={youtubeUrl}
               onChange={(e) => setYoutubeUrl(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleYoutube()}
               className={styles.inputField}
             />
-            <button className={styles.btn} onClick={handleYoutube} disabled={dlLoading}>
-              {dlLoading ? "..." : <i className="fas fa-download" />}
+          </div>
+          <div style={{ marginTop: "0.75rem" }}>
+            <button className="btn btn-primary" onClick={handleYoutube} disabled={dlLoading} style={{ width: "100%" }}>
+              {dlLoading ? <><i className="fas fa-spinner fa-spin" /> Téléchargement…</> : <><i className="fas fa-download" /> Télécharger</>}
             </button>
           </div>
-        </section>
+        </div>
       </div>
 
-      <section className={styles.card}>
-        <h3 className={styles.cardTitle}>Bibliothèque ({files.length})</h3>
-        {loading ? <p className={styles.dim}>Chargement...</p> : (
+      <div className="card">
+        <div className={styles.rowBetween} style={{ marginBottom: "1rem" }}>
+          <h3 style={{ margin: 0, fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--text-secondary)" }}>
+            Bibliothèque ({files.length})
+          </h3>
+          <button className={styles.btnSm} onClick={loadFiles}>
+            <i className="fas fa-sync" /> Actualiser
+          </button>
+        </div>
+        {loading ? (
+          <p style={{ opacity: 0.4, fontSize: "0.9rem", textAlign: "center", padding: "2rem" }}>Chargement…</p>
+        ) : (
           <div className={styles.tableWrap}>
             <table className={styles.table}>
-              <thead><tr><th>Fichier</th><th></th></tr></thead>
+              <thead><tr><th>Fichier</th><th style={{ textAlign: "right" }}>Action</th></tr></thead>
               <tbody>
+                {files.length === 0 && (
+                  <tr><td colSpan={2} style={{ textAlign: "center", opacity: 0.4, padding: "2rem" }}>Aucun fichier</td></tr>
+                )}
                 {files.map((f) => (
                   <tr key={f}>
-                    <td>{f}</td>
                     <td>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                        <i className="fas fa-music" style={{ opacity: 0.3, fontSize: "0.85rem" }} />
+                        <span style={{ fontSize: "0.875rem" }}>{f}</span>
+                      </div>
+                    </td>
+                    <td style={{ textAlign: "right" }}>
                       <button className={styles.btnDanger} onClick={() => handleDelete(f)}>
                         <i className="fas fa-trash" />
                       </button>
@@ -105,7 +135,7 @@ export default function MusicTab() {
             </table>
           </div>
         )}
-      </section>
+      </div>
     </div>
   );
 }

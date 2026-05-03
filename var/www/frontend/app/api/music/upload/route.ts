@@ -7,6 +7,23 @@ import { PATHS } from "@/lib/paths";
 const ALLOWED_AUDIO_EXT = new Set([".mp3", ".wav", ".flac", ".ogg", ".aac", ".m4a"]);
 const MAX_SIZE_BYTES = 200 * 1024 * 1024; // 200 MB
 
+// Magic bytes per format (first 4 bytes hex)
+const AUDIO_MAGIC: Record<string, (hex: string) => boolean> = {
+  ".mp3": (h) => h.startsWith("fff") || h.startsWith("id33") || h.startsWith("494433"), // ID3 tag or MPEG sync
+  ".wav": (h) => h.startsWith("52494646"), // RIFF
+  ".flac": (h) => h.startsWith("664c6143"), // fLaC
+  ".ogg": (h) => h.startsWith("4f676753"), // OggS
+  ".aac": (h) => h.startsWith("fff") || h.startsWith("4d346120"),
+  ".m4a": (h) => h.slice(8, 16) === "6674797066", // ftyp (offset 4)
+};
+
+function validateAudioMagicBytes(buf: Buffer, ext: string): boolean {
+  const hex = buf.slice(0, 6).toString("hex");
+  const check = AUDIO_MAGIC[ext];
+  if (!check) return false;
+  return check(hex);
+}
+
 export async function POST(req: NextRequest) {
   try {
     await requireAdmin();
@@ -50,6 +67,14 @@ export async function POST(req: NextRequest) {
   }
 
   const buf = Buffer.from(await file.arrayBuffer());
+
+  if (!validateAudioMagicBytes(buf, ext)) {
+    return NextResponse.json(
+      { status: "error", message: "Le fichier ne correspond pas au format audio attendu." },
+      { status: 400 }
+    );
+  }
+
   fs.writeFileSync(destPath, buf);
 
   return NextResponse.json({

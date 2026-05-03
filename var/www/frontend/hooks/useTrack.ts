@@ -12,35 +12,71 @@ export interface TrackData {
   server_now: number;
 }
 
+/**
+ * useTrack — subscribes to /api/track/stream (SSE) for real-time track updates.
+ * Falls back to polling /api/track/current if SSE is unavailable (e.g. iOS, proxies).
+ */
 export function useTrack(pollInterval = 10000) {
   const [track, setTrack] = useState<TrackData | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const fetchedAt = useRef<number>(0);
   const fetchedElapsed = useRef<number>(0);
+  const esRef = useRef<EventSource | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const applyTrackData = useCallback((data: TrackData) => {
+    setTrack(data);
+    fetchedAt.current = Date.now();
+    fetchedElapsed.current = data.elapsed ?? 0;
+    setElapsed(data.elapsed ?? 0);
+  }, []);
 
   const fetchTrack = useCallback(async () => {
     try {
       const res = await fetch("/api/track/current");
       if (!res.ok) return;
       const data = await res.json();
-      if (data.filename) {
-        setTrack(data);
-        fetchedAt.current = Date.now();
-        fetchedElapsed.current = data.elapsed;
-        setElapsed(data.elapsed);
-      }
+      if (data.filename) applyTrackData(data);
     } catch {
       // silent fail — radio may be offline
     }
-  }, []);
+  }, [applyTrackData]);
 
   useEffect(() => {
-    fetchTrack();
-    const interval = setInterval(fetchTrack, pollInterval);
-    return () => clearInterval(interval);
-  }, [fetchTrack, pollInterval]);
+    // Try SSE first
+    if (typeof EventSource !== "undefined") {
+      const es = new EventSource("/api/track/stream");
+      esRef.current = es;
 
-  // Smooth elapsed counter between polls
+      es.onmessage = (ev) => {
+        try {
+          const data: TrackData = JSON.parse(ev.data);
+          if (data.filename) applyTrackData(data);
+        } catch {
+          // malformed — ignore
+        }
+      };
+
+      es.onerror = () => {
+        // SSE failed — fall back to polling
+        es.close();
+        esRef.current = null;
+        fetchTrack();
+        pollRef.current = setInterval(fetchTrack, pollInterval);
+      };
+    } else {
+      // No EventSource support — use polling
+      fetchTrack();
+      pollRef.current = setInterval(fetchTrack, pollInterval);
+    }
+
+    return () => {
+      esRef.current?.close();
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, [fetchTrack, applyTrackData, pollInterval]);
+
+  // Smooth elapsed counter between server updates
   useEffect(() => {
     const ticker = setInterval(() => {
       const now = Date.now();
@@ -52,3 +88,4 @@ export function useTrack(pollInterval = 10000) {
 
   return { track, elapsed };
 }
+

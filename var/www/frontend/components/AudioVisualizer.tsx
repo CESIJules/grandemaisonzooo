@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 
 interface VisualizerProps {
   audioRef: React.RefObject<HTMLAudioElement | null>;
@@ -10,7 +10,7 @@ interface VisualizerProps {
   className?: string;
 }
 
-export default function AudioVisualizer({
+export default memo(function AudioVisualizer({
   audioRef,
   playing,
   width = 300,
@@ -78,4 +78,4 @@ export default function AudioVisualizer({
       className={className}
     />
   );
-}
+});

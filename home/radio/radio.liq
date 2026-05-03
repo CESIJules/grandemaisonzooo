@@ -26,8 +26,10 @@ def set_title_artist(m) =
     end
   
   # --- ANALYTICS HOOK ---
-  # Appel robuste via curl (plus fiable que http.get)
-  cmd = "curl -s -o /dev/null 'http://127.0.0.1/scripts/log_track.php?artist=" ^ url.encode(result.artist) ^ "&title=" ^ url.encode(result.title) ^ "'"
+  # Appel vers le backend Next.js (port 3000)
+  token = getenv("LIQUIDSOAP_TOKEN")
+  json_body = '{"artist":"' ^ url.encode(result.artist) ^ '","title":"' ^ url.encode(result.title) ^ '","filename":"' ^ url.encode(filename) ^ '"}'
+  cmd = "curl -s -o /dev/null -X POST -H 'Content-Type: application/json' -H 'Authorization: Bearer " ^ token ^ "' -d '" ^ json_body ^ "' 'http://127.0.0.1:3000/api/track/log'"
   ignore(process.run(cmd))
   # ----------------------
 

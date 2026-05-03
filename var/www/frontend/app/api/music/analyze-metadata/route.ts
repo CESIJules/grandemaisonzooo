@@ -62,9 +62,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ status: "success", data: pyData });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Erreur analyse";
+    console.error("[music/analyze-metadata]", err);
     return NextResponse.json(
-      { status: "error", message: msg, debug: msg },
+      { status: "error", message: "Erreur lors de l'analyse des métadonnées." },
       { status: 500 }
     );
   }

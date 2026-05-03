@@ -4,6 +4,7 @@ import VideoOverlay from "./_components/VideoOverlay";
 import RadioController from "./_components/RadioController";
 import MenuOverlay from "./_components/MenuOverlay";
 import RadioSection from "./_components/RadioSection";
+import VstSection from "./_components/VstSection";
 import ContactSection from "./_components/ContactSection";
 import TerminalOverlay from "./_components/TerminalOverlay";
 
@@ -41,6 +42,7 @@ export default function HomePage() {
           <div className="timeline-container"></div>
         </section>
         <RadioSection />
+        <VstSection />
         <ContactSection />
       </main>
       <TerminalOverlay />

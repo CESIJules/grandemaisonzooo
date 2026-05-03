@@ -30,42 +30,55 @@ export default function AnalyticsTab() {
     fetchAll();
   }, []);
 
-  if (loading) return <div className={styles.loading}>Chargement...</div>;
+  if (loading) return (
+    <div className={styles.tab}>
+      <h2 className={styles.tabTitle}>Analytics</h2>
+      <p className={styles.loading}>Chargement…</p>
+    </div>
+  );
 
   return (
     <div className={styles.tab}>
       <h2 className={styles.tabTitle}>Analytics</h2>
 
       <div className={styles.grid2}>
-        <section className={styles.card}>
-          <h3 className={styles.cardTitle}>Top Artistes (30j)</h3>
+        <div className="card">
+          <p style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--text-secondary)", margin: "0 0 1rem" }}>
+            <i className="fas fa-trophy" style={{ marginRight: 6 }} />Top Artistes (30j)
+          </p>
           <ol className={styles.rankList}>
+            {topArtists.length === 0 && <li style={{ opacity: 0.4, fontSize: "0.85rem", padding: "0.5rem" }}>Pas de données</li>}
             {topArtists.map((a, i) => (
               <li key={i} className={styles.rankItem}>
                 <span className={styles.rank}>{i + 1}</span>
                 <span className={styles.rankName}>{a.artist}</span>
-                <span className={styles.rankCount}>{a.count}</span>
+                <span className={styles.rankCount}>{a.count} plays</span>
               </li>
             ))}
           </ol>
-        </section>
+        </div>
 
-        <section className={styles.card}>
-          <h3 className={styles.cardTitle}>Top Titres (30j)</h3>
+        <div className="card">
+          <p style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--text-secondary)", margin: "0 0 1rem" }}>
+            <i className="fas fa-fire" style={{ marginRight: 6 }} />Top Titres (30j)
+          </p>
           <ol className={styles.rankList}>
+            {topTracks.length === 0 && <li style={{ opacity: 0.4, fontSize: "0.85rem", padding: "0.5rem" }}>Pas de données</li>}
             {topTracks.map((t, i) => (
               <li key={i} className={styles.rankItem}>
                 <span className={styles.rank}>{i + 1}</span>
-                <span className={styles.rankName}>{t.title} — {t.artist}</span>
-                <span className={styles.rankCount}>{t.count}</span>
+                <span className={styles.rankName}>{t.title}{t.artist ? ` — ${t.artist}` : ""}</span>
+                <span className={styles.rankCount}>{t.count} plays</span>
               </li>
             ))}
           </ol>
-        </section>
+        </div>
       </div>
 
-      <section className={styles.card}>
-        <h3 className={styles.cardTitle}>Historique récent</h3>
+      <div className="card">
+        <p style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--text-secondary)", margin: "0 0 1rem" }}>
+          <i className="fas fa-history" style={{ marginRight: 6 }} />Historique récent
+        </p>
         <div className={styles.tableWrap}>
           <table className={styles.table}>
             <thead>
@@ -77,18 +90,26 @@ export default function AnalyticsTab() {
               </tr>
             </thead>
             <tbody>
+              {history.length === 0 && (
+                <tr><td colSpan={4} style={{ textAlign: "center", opacity: 0.4, padding: "2rem" }}>Aucun historique</td></tr>
+              )}
               {history.map((row) => (
                 <tr key={row.id}>
-                  <td>{row.timestamp}</td>
-                  <td>{row.artist}</td>
+                  <td className={styles.dim} style={{ fontSize: "0.8rem", whiteSpace: "nowrap" }}>{row.timestamp}</td>
+                  <td style={{ fontWeight: 500 }}>{row.artist}</td>
                   <td>{row.title}</td>
-                  <td>{row.listeners_start}</td>
+                  <td>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", fontSize: "0.85rem" }}>
+                      <i className="fas fa-headphones" style={{ opacity: 0.4, fontSize: "0.75rem" }} />
+                      {row.listeners_start}
+                    </span>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </section>
+      </div>
     </div>
   );
 }

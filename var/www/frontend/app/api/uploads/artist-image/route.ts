@@ -7,6 +7,22 @@ const ALLOWED_IMAGE_EXT = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp"]);
 const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
 const UPLOADS_DIR = "/var/www/html/uploads/artists";
 
+// Magic bytes per image format
+const IMAGE_MAGIC: Record<string, (h: string) => boolean> = {
+  ".jpg": (h) => h.startsWith("ffd8ff"),
+  ".jpeg": (h) => h.startsWith("ffd8ff"),
+  ".png": (h) => h.startsWith("89504e47"),
+  ".gif": (h) => h.startsWith("474946383"),  // GIF87a or GIF89a
+  ".webp": (h) => h.slice(8, 16) === "57454250", // RIFF....WEBP (offset 8)
+};
+
+function validateImageMagicBytes(buf: Buffer, ext: string): boolean {
+  const hex = buf.slice(0, 6).toString("hex");
+  const check = IMAGE_MAGIC[ext];
+  if (!check) return false;
+  return check(hex);
+}
+
 export async function POST(req: NextRequest) {
   try {
     await requireAuth();
@@ -58,6 +74,14 @@ export async function POST(req: NextRequest) {
   }
 
   const buf = Buffer.from(await file.arrayBuffer());
+
+  if (!validateImageMagicBytes(buf, ext)) {
+    return NextResponse.json(
+      { status: "error", message: "Le fichier ne correspond pas au format image attendu." },
+      { status: 400 }
+    );
+  }
+
   fs.writeFileSync(destPath, buf);
 
   return NextResponse.json({

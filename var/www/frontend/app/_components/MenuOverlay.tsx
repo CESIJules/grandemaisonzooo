@@ -33,8 +33,12 @@ export default function MenuOverlay() {
             <span className="menu-number">04</span>
           </li>
           <li className="menu-item" data-index="4">
-            <a href="#contact" className="menu-link">CONTACT</a>
+            <a href="#vst" className="menu-link">VST</a>
             <span className="menu-number">05</span>
+          </li>
+          <li className="menu-item" data-index="5">
+            <a href="#contact" className="menu-link">CONTACT</a>
+            <span className="menu-number">06</span>
           </li>
         </ul>
       </div>

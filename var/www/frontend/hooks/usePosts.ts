@@ -14,7 +14,9 @@ export function usePosts(artist?: string) {
         : "/api/posts";
       const res = await fetch(url);
       const data = await res.json();
-      if (data.status === "success") setPosts(data.data);
+      // API returns either a raw array or { status, data }
+      if (Array.isArray(data)) setPosts(data);
+      else if (data.status === "success") setPosts(data.data);
     } finally {
       setLoading(false);
     }

@@ -21,10 +21,8 @@ const nextConfig: NextConfig = {
           source: "/vid/:path*",
           destination: "https://grandemaisonzoo.com/vid/:path*",
         },
-        {
-          source: "/uploads/:path*",
-          destination: "https://grandemaisonzoo.com/uploads/:path*",
-        },
+        // /uploads/ is handled by app/uploads/[...path]/route.ts in dev
+        // (serves local files first, then redirects to prod as fallback)
         {
           source: "/covers/:path*",
           destination: "https://grandemaisonzoo.com/covers/:path*",

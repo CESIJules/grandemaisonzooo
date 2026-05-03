@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     const post = addPost({ title, date, artist, link, image });
     return NextResponse.json({ status: "success", message: "Post ajouté.", data: post }, { status: 201 });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Erreur inconnue";
-    return NextResponse.json({ status: "error", message: msg }, { status: 500 });
+    console.error("[posts]", err);
+    return NextResponse.json({ status: "error", message: "Une erreur interne est survenue." }, { status: 500 });
   }
 }

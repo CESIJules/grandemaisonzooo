@@ -31,8 +31,18 @@ function initTables(db: Database.Database): void {
       title TEXT,
       listeners_start INTEGER
     );
+    CREATE TABLE IF NOT EXISTS audit_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      timestamp DATETIME NOT NULL,
+      user TEXT NOT NULL,
+      action TEXT NOT NULL,
+      target TEXT,
+      ip TEXT
+    );
     CREATE INDEX IF NOT EXISTS idx_audience_time ON audience_logs(timestamp);
     CREATE INDEX IF NOT EXISTS idx_history_time ON play_history(timestamp);
+    CREATE INDEX IF NOT EXISTS idx_audit_time ON audit_log(timestamp);
+    CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_log(user);
   `);
 }
 
@@ -125,4 +135,81 @@ export function getTopTracks(
        GROUP BY artist, title ORDER BY plays DESC LIMIT ?`
     )
     .all(limit) as { artist: string; title: string; plays: number }[];
+}
+
+// =========================================
+// Audit log
+// =========================================
+export interface AuditLogRow {
+  id: number;
+  timestamp: string;
+  user: string;
+  action: string;
+  target: string | null;
+  ip: string | null;
+}
+
+export function writeAuditLog(
+  user: string,
+  action: string,
+  target?: string,
+  ip?: string
+): void {
+  const db = getDb();
+  const now = new Date()
+    .toLocaleString("sv-SE", { timeZone: "Europe/Paris" })
+    .replace("T", " ");
+  db.prepare(
+    "INSERT INTO audit_log (timestamp, user, action, target, ip) VALUES (?, ?, ?, ?, ?)"
+  ).run(now, user, action, target ?? null, ip ?? null);
+}
+
+export function getAuditLog(
+  limit = 100,
+  offset = 0,
+  filterUser?: string
+): AuditLogRow[] {
+  const db = getDb();
+  if (filterUser) {
+    return db
+      .prepare(
+        "SELECT * FROM audit_log WHERE user = ? ORDER BY timestamp DESC LIMIT ? OFFSET ?"
+      )
+      .all(filterUser, limit, offset) as AuditLogRow[];
+  }
+  return db
+    .prepare("SELECT * FROM audit_log ORDER BY timestamp DESC LIMIT ? OFFSET ?")
+    .all(limit, offset) as AuditLogRow[];
+}
+
+export function getAuditLogCount(filterUser?: string): number {
+  const db = getDb();
+  const row = filterUser
+    ? (db
+        .prepare("SELECT COUNT(*) as c FROM audit_log WHERE user = ?")
+        .get(filterUser) as { c: number })
+    : (db.prepare("SELECT COUNT(*) as c FROM audit_log").get() as { c: number });
+  return row?.c ?? 0;
+}
+
+// =========================================
+// Data retention (called from /api/health)
+// =========================================
+export function pruneOldData(): { audiencePruned: number; historyPruned: number } {
+  const db = getDb();
+  const audienceResult = db
+    .prepare("DELETE FROM audience_logs WHERE timestamp < datetime('now', '-90 days')")
+    .run();
+  const historyResult = db
+    .prepare("DELETE FROM play_history WHERE timestamp < datetime('now', '-365 days')")
+    .run();
+  return {
+    audiencePruned: audienceResult.changes,
+    historyPruned: historyResult.changes,
+  };
+}
+
+// Expose raw db for direct queries (analytics route)
+export function rawDb(): Database.Database {
+  return getDb();
 }

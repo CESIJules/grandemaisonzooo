@@ -12,8 +12,8 @@ export async function PUT(req: NextRequest, { params }: Params) {
   }
 
   const { name } = await params;
-  const { songs, newName } = await req.json();
-  const result = updatePlaylist(decodeURIComponent(name), songs, newName);
+  const { songs, newName, schedule } = await req.json();
+  const result = updatePlaylist(decodeURIComponent(name), songs, newName, schedule);
   return NextResponse.json(result, { status: result.status === "error" ? 404 : 200 });
 }
 

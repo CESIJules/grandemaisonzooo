@@ -22,9 +22,9 @@ export async function PUT(req: NextRequest) {
       message: "Profils artistes sauvegardés.",
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Erreur inconnue";
+    console.error("[artists/profiles]", err);
     return NextResponse.json(
-      { status: "error", message: msg },
+      { status: "error", message: "Une erreur interne est survenue." },
       { status: 500 }
     );
   }

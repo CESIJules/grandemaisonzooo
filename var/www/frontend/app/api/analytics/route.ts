@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import Database from "better-sqlite3";
-import { PATHS } from "@/lib/paths";
-
-function rawDb(): Database.Database {
-  return new Database(PATHS.ANALYTICS_DB, { readonly: true });
-}
+import { rawDb } from "@/lib/db";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -110,9 +105,9 @@ export async function GET(req: NextRequest) {
         );
     }
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Erreur inconnue";
+    console.error("[analytics]", err);
     return NextResponse.json(
-      { status: "error", message: msg },
+      { status: "error", message: "Une erreur interne est survenue." },
       { status: 500 }
     );
   }

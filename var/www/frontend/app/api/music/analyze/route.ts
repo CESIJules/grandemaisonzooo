@@ -49,9 +49,9 @@ export async function POST(req: NextRequest) {
       stderr,
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Erreur inconnue";
+    console.error("[music/analyze]", err);
     return NextResponse.json(
-      { status: "error", message: `Erreur analyse: ${msg}` },
+      { status: "error", message: "Erreur lors de l'analyse audio." },
       { status: 500 }
     );
   }

@@ -1,3 +1,4 @@
+import { memo } from "react";
 import type { ArtistProfile } from "@/types";
 import styles from "./ArtistCard.module.css";
 
@@ -5,7 +6,7 @@ interface Props {
   profile: ArtistProfile;
 }
 
-export default function ArtistCard({ profile }: Props) {
+const ArtistCard = memo(function ArtistCard({ profile }: Props) {
   const { name, glitchName, location, image, listenLink, watchLink, instagramLink } = profile;
 
   return (
@@ -72,4 +73,6 @@ export default function ArtistCard({ profile }: Props) {
       </div>
     </article>
   );
-}
+});
+
+export default ArtistCard;

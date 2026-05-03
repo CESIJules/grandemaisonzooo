@@ -36,9 +36,9 @@ export async function POST(req: NextRequest) {
       stderr,
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Erreur inconnue";
+    console.error("[music/download/youtube]", err);
     return NextResponse.json(
-      { status: "error", message: `Erreur yt-dlp: ${msg}` },
+      { status: "error", message: "Erreur lors du téléchargement YouTube." },
       { status: 500 }
     );
   }

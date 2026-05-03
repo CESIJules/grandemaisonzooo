@@ -17,9 +17,9 @@ export async function POST() {
       telnet_response: response,
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Erreur inconnue";
+    console.error("[track/skip]", err);
     return NextResponse.json(
-      { status: "error", message: `Impossible de se connecter à Liquidsoap: ${msg}` },
+      { status: "error", message: "Impossible de se connecter à Liquidsoap." },
       { status: 500 }
     );
   }

@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     const statusCode = result.status === "success" ? 201 : 409;
     return NextResponse.json(result, { status: statusCode });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Erreur inconnue";
-    return NextResponse.json({ status: "error", message: msg }, { status: 500 });
+    console.error("[playlists]", err);
+    return NextResponse.json({ status: "error", message: "Une erreur interne est survenue." }, { status: 500 });
   }
 }

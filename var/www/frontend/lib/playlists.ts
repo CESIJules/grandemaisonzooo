@@ -57,7 +57,8 @@ export function createPlaylist(
 export function updatePlaylist(
   name: string,
   newSongs: string[],
-  newName?: string
+  newName?: string,
+  schedule?: { enabled: boolean; day: number; hour: number } | null
 ): ApiResponse {
   const data = getPlaylistData();
   const idx = data.playlists.findIndex((p) => p.name === name);
@@ -76,6 +77,9 @@ export function updatePlaylist(
   }
 
   playlist.songs = newSongs;
+  if (schedule !== undefined) {
+    playlist.schedule = schedule === null ? undefined : schedule;
+  }
   savePlaylistData(data);
   return { status: "success", message: "Playlist mise à jour." };
 }

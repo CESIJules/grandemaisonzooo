@@ -37,6 +37,10 @@ export interface ArtistProfile {
     date?: string;
     link?: string;
   };
+  // Sources pour la synchronisation automatique des sorties
+  soundcloudUsername?: string;
+  youtubeChannelId?: string;
+  deezerArtistId?: string;
 }
 
 // =========================================
@@ -98,6 +102,12 @@ export interface PlaylistSong {
   path?: string;
 }
 
+export interface PlaylistSchedule {
+  enabled: boolean;
+  day: number;   // 0=dimanche, 1=lundi … 6=samedi
+  hour: number;  // 0-23
+}
+
 export interface Playlist {
   name: string;
   songs: string[];
@@ -105,6 +115,7 @@ export interface Playlist {
   color: string;
   icon: string;
   cover: string;
+  schedule?: PlaylistSchedule;
 }
 
 export interface PlaylistData {
@@ -135,6 +146,21 @@ export interface MusicMetadata {
   size?: number;
   bpm?: number;
   key?: string;
+}
+
+// =========================================
+// VST PLUGINS
+// =========================================
+export interface Vst {
+  id: number;
+  name: string;
+  description: string;
+  screenshots: string[];           // relative paths like /uploads/vst_xxx.png or external URLs
+  screenshotPositions?: string[];  // object-position per screenshot, e.g. "50% 20%"
+  downloadUrl: string;             // external URL or /uploads/vst_xxx.zip
+  downloadFilename?: string;       // original filename shown to browser on download
+  releaseDate: string;             // YYYY-MM-DD
+  version?: string;
 }
 
 // =========================================

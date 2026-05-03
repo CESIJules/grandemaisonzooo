@@ -12,7 +12,9 @@ export function useArtists() {
       setLoading(true);
       const res = await fetch("/api/artists/profiles");
       const data = await res.json();
-      if (data.status === "success") setArtists(data.data);
+      // API returns either a raw array or { status, data }
+      if (Array.isArray(data)) setArtists(data);
+      else if (data.status === "success") setArtists(data.data);
       else setError(data.message);
     } catch {
       setError("Erreur de chargement des artistes.");

@@ -12,6 +12,9 @@ export const PATHS = {
   TIMELINE_JSON: `${ROOT}/var/www/frontend/data/timeline.json`,
   PLAYLIST_JSON: `${ROOT}/var/www/frontend/data/playlist.json`,
 
+  // VST plugins data
+  VSTS_JSON: `${ROOT}/var/www/frontend/data/vsts.json`,
+
   // Analytics DB
   ANALYTICS_DB: `${ROOT}/var/www/data/analytics.db`,
 

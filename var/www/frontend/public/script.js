@@ -1234,8 +1234,8 @@
     let running = true;
 
     // Grid configuration
-    // Smaller spacing = more points = more "screen" look
-    const spacing = 11; 
+    // Larger spacing = fewer points = faster
+    const spacing = 14; 
     const dotRadius = 1.5;
     
     let cols = 0;
@@ -1326,7 +1326,7 @@
         let amplitude = 0.5;
         let frequency = 1.0;
         let maxValue = 0;  // Used for normalizing result to 0.0 - 1.0
-        for(let i=0; i<3; i++) {
+        for(let i=0; i<2; i++) {  // 2 octaves instead of 3 — halves noise cost
             total += noise3(x * frequency, y * frequency, z * frequency) * amplitude;
             maxValue += amplitude;
             amplitude *= 0.5;
@@ -1366,11 +1366,17 @@
     resize();
 
     let time = 0;
-    
-    function frame() {
+    let lastAsciiFrame = 0;
+    const ASCII_FPS = 24;
+    const ASCII_FRAME_MS = 1000 / ASCII_FPS;
+
+    function frame(now) {
       if (!running) return;
       requestAnimationFrame(frame);
       if (document.hidden) return;
+      // Throttle to ~24fps — background is subtle, nobody notices
+      if (now - lastAsciiFrame < ASCII_FRAME_MS) return;
+      lastAsciiFrame = now;
 
       // Clear
       ctx.clearRect(0, 0, width, height);
@@ -1423,10 +1429,6 @@
               // Remap: (n - threshold) * gain
               let density = (n - 0.35) * 2.5;
 
-              // Add "Grain" (Temporal Noise)
-              // Reduced significantly to avoid eye strain (0.02 instead of 0.15)
-              density += (Math.random() - 0.5) * 0.02;
-
               if (density < 0) density = 0;
               if (density > 1) density = 1;
               
@@ -1447,32 +1449,17 @@
                   drawX += pX * depthFactor;
                   drawY += pY * depthFactor;
 
+                  // shadowBlur is deliberately omitted — it's a major canvas2D perf killer
                   ctx.beginPath();
-                  // Draw slightly smaller, sharper points for a more "pixel" look
                   ctx.arc(drawX, drawY, dotRadius * 0.9, 0, Math.PI * 2);
-                  
+
                   if (isGreen) {
-                      // Foreground Layer (High Parallax)
-                      // Bright white/silver for a "stardust" look
                       ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-                      
-                      // Subtle glow for the densest points
-                      if (density > 0.85) {
-                          ctx.shadowBlur = 3;
-                          ctx.shadowColor = 'rgba(255, 255, 255, 0.4)';
-                      } else {
-                          ctx.shadowBlur = 0;
-                      }
                   } else {
-                      // Background Layer (Low Parallax)
-                      // Grey, fading out based on density
-                      // Softer alpha fade (* 4.5) for less harshness
                       const alpha = Math.min(1, (density - ditherMap[idx]) * 4.5);
-                      // Use a cool grey
                       ctx.fillStyle = `rgba(180, 184, 190, ${alpha * 0.5})`;
-                      ctx.shadowBlur = 0;
                   }
-                  
+
                   ctx.fill();
               }
               

@@ -43,9 +43,9 @@ export async function POST(req: NextRequest) {
       stderr,
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Erreur inconnue";
+    console.error("[music/download/spotify]", err);
     return NextResponse.json(
-      { status: "error", message: `Erreur spotdl: ${msg}` },
+      { status: "error", message: "Erreur lors du téléchargement Spotify." },
       { status: 500 }
     );
   }

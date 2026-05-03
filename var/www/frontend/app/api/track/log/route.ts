@@ -4,7 +4,21 @@ import fs from "fs";
 import { PATHS } from "@/lib/paths";
 
 export async function POST(req: NextRequest) {
-  const { artist, title, filename, listeners } = await req.json();
+  // Auth : Authorization: Bearer $LIQUIDSOAP_TOKEN
+  const token = process.env.LIQUIDSOAP_TOKEN;
+  if (token) {
+    const auth = req.headers.get("authorization");
+    const bearer = auth?.startsWith("Bearer ") ? auth.slice(7) : null;
+    if (bearer !== token) {
+      return NextResponse.json(
+        { status: "error", message: "Non autorisé." },
+        { status: 401 }
+      );
+    }
+  }
+
+  const body = await req.json().catch(() => null);
+  const { artist, title, filename, listeners } = body ?? {};
 
   if (!artist || !title) {
     return NextResponse.json(
@@ -21,7 +35,11 @@ export async function POST(req: NextRequest) {
       filename: String(filename),
       start_time: Math.floor(Date.now() / 1000),
     };
-    fs.writeFileSync(PATHS.TRACK_INFO_TMP, JSON.stringify(trackInfo));
+    try {
+      fs.writeFileSync(PATHS.TRACK_INFO_TMP, JSON.stringify(trackInfo));
+    } catch (err) {
+      console.error("[track/log] Impossible d'écrire track_info_tmp:", err);
+    }
   }
 
   logTrack(String(artist), String(title), isNaN(listenersNum) ? 0 : listenersNum);

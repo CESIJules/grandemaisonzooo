@@ -5,6 +5,7 @@ import {
   Post,
   PlaylistData,
   UsersJson,
+  Vst,
 } from "@/types";
 import { PATHS } from "./paths";
 
@@ -140,4 +141,45 @@ export function getDurationCache(): Record<string, number> {
 
 export function saveDurationCache(cache: Record<string, number>): void {
   writeJson(PATHS.DURATION_CACHE_TMP, cache);
+}
+
+// =========================================
+// VST Plugins
+// =========================================
+function ensureVstsFile(): void {
+  if (!fs.existsSync(PATHS.VSTS_JSON)) writeJson(PATHS.VSTS_JSON, []);
+}
+
+export function getVsts(): Vst[] {
+  ensureVstsFile();
+  return readJson<Vst[]>(PATHS.VSTS_JSON);
+}
+
+export function saveVsts(vsts: Vst[]): void {
+  writeJson(PATHS.VSTS_JSON, vsts);
+}
+
+export function addVst(vst: Omit<Vst, "id">): Vst {
+  const vsts = getVsts();
+  const newVst: Vst = { ...vst, id: Date.now() };
+  vsts.unshift(newVst);
+  saveVsts(vsts);
+  return newVst;
+}
+
+export function updateVst(id: number, updates: Partial<Omit<Vst, "id">>): Vst | null {
+  const vsts = getVsts();
+  const idx = vsts.findIndex((v) => v.id === id);
+  if (idx === -1) return null;
+  vsts[idx] = { ...vsts[idx], ...updates, id };
+  saveVsts(vsts);
+  return vsts[idx];
+}
+
+export function deleteVst(id: number): boolean {
+  const vsts = getVsts();
+  const filtered = vsts.filter((v) => v.id !== id);
+  if (filtered.length === vsts.length) return false;
+  saveVsts(filtered);
+  return true;
 }

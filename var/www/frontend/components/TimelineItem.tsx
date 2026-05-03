@@ -1,3 +1,4 @@
+import { memo } from "react";
 import type { Post } from "@/types";
 import styles from "./TimelineItem.module.css";
 
@@ -5,7 +6,7 @@ interface Props {
   post: Post;
 }
 
-export default function TimelineItem({ post }: Props) {
+const TimelineItem = memo(function TimelineItem({ post }: Props) {
   const { title, subtitle, date, artist, link, image } = post;
 
   const content = (
@@ -33,4 +34,6 @@ export default function TimelineItem({ post }: Props) {
   }
 
   return <div className={styles.wrapper}>{content}</div>;
-}
+});
+
+export default TimelineItem;

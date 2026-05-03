@@ -28,9 +28,9 @@ export async function GET(req: NextRequest) {
     const metadata = await getAudioMetadata(filePath);
     return NextResponse.json({ status: "success", data: metadata });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Erreur inconnue";
+    console.error("[music/metadata]", err);
     return NextResponse.json(
-      { status: "error", message: `Erreur ffprobe: ${msg}` },
+      { status: "error", message: "Erreur lors de la lecture des métadonnées." },
       { status: 500 }
     );
   }
