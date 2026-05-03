@@ -34,6 +34,10 @@
 # Whitelister les fichiers source (tout sauf les artefacts de build/runtime)
 !/var/www/frontend/app/
 !/var/www/frontend/app/**
+!/var/www/frontend/hooks/
+!/var/www/frontend/hooks/**
+!/var/www/frontend/components/
+!/var/www/frontend/components/**
 !/var/www/frontend/lib/
 !/var/www/frontend/lib/**
 !/var/www/frontend/types/

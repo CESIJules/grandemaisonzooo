@@ -1,0 +1,126 @@
+.player {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.vinyl {
+    position: relative;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50%, #1a1a2e 0%, #0d0d1a 60%);
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+}
+
+.vinyl[data-playing="true"] {
+    animation: spin 4s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.playBtn {
+    position: relative;
+    z-index: 2;
+    background: var(--color-accent);
+    color: #000;
+    border: none;
+    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    font-size: 1.25rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.playBtn:hover {
+    transform: scale(1.1);
+}
+
+.playBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.meta {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    opacity: 0.6;
+}
+
+.title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    font-family: var(--font-display);
+}
+
+.artist {
+    font-size: 0.9rem;
+    opacity: 0.7;
+}
+
+.error {
+    font-size: 0.8rem;
+    color: #ff4444;
+}
+
+.progress {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    opacity: 0.7;
+    width: 280px;
+}
+
+.progressBar {
+    flex: 1;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progressFill {
+    height: 100%;
+    background: var(--color-accent);
+    border-radius: 2px;
+    transition: width 0.5s linear;
+}
+
+.visualizer {
+    opacity: 0.7;
+}
+
+.volumeRow {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    opacity: 0.6;
+}
+
+.volumeSlider {
+    width: 100px;
+    accent-color: var(--color-accent);
+}

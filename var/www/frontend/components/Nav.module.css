@@ -1,0 +1,111 @@
+.burger {
+    position: fixed;
+    top: 1.25rem;
+    left: 1.25rem;
+    z-index: 200;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    transition: opacity 0.2s;
+}
+
+.burger:hover {
+    opacity: 0.7;
+}
+
+.overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    background: rgba(5, 5, 15, 0.97);
+    backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+}
+
+.overlay.open {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.close {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.15s;
+}
+
+.close:hover {
+    opacity: 1;
+}
+
+.list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    text-align: center;
+}
+
+.item {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.3s ease calc(var(--i) * 0.06s),
+        transform 0.3s ease calc(var(--i) * 0.06s);
+}
+
+.open .item {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.link {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 6vw, 4rem);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #fff;
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+.link:hover {
+    color: var(--color-accent);
+}
+
+.num {
+    display: block;
+    font-size: 0.7rem;
+    opacity: 0.3;
+    letter-spacing: 0.2em;
+    margin-top: 0.1rem;
+}
+
+.loginLink {
+    position: absolute;
+    bottom: 2rem;
+    right: 2rem;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 1.5rem;
+    transition: color 0.15s;
+}
+
+.loginLink:hover {
+    color: rgba(255, 255, 255, 0.7);
+}
