@@ -23,11 +23,40 @@
 /var/www/html/vid/
 /var/www/html/uploads/**
 !/var/www/html/uploads/.gitkeep
-!/var/www/html/images/.gitkeep
 /var/www/html/music_metadata.json
 /var/www/html/track_info.json
-/var/www/html/artists_profiles.json
 /var/www/html/introboucle_old.mp4
+
+# ---- Frontend Next.js ----
+!/var/www/frontend/
+/var/www/frontend/**
+
+# Whitelister les fichiers source (tout sauf les artefacts de build/runtime)
+!/var/www/frontend/app/
+!/var/www/frontend/app/**
+!/var/www/frontend/lib/
+!/var/www/frontend/lib/**
+!/var/www/frontend/types/
+!/var/www/frontend/types/**
+!/var/www/frontend/public/
+!/var/www/frontend/public/**
+!/var/www/frontend/data/
+!/var/www/frontend/data/artists.json
+!/var/www/frontend/data/timeline.json
+# artists_profiles.json contient des données live, pas tracké
+/var/www/frontend/data/artists_profiles.json
+!/var/www/frontend/package.json
+!/var/www/frontend/package-lock.json
+!/var/www/frontend/tsconfig.json
+!/var/www/frontend/next.config.ts
+!/var/www/frontend/eslint.config.mjs
+!/var/www/frontend/proxy.ts
+!/var/www/frontend/.gitignore
+
+# Exclure les artefacts générés et secrets
+/var/www/frontend/.next/
+/var/www/frontend/node_modules/
+/var/www/frontend/.env*.local
 
 ############# /home #############
 !/home/
@@ -64,6 +93,7 @@
 /etc/systemd/system/liquidsoap.service.d/*
 !/etc/systemd/system/liquidsoap.service.d/**
 !/etc/systemd/system/icecast2.service
+!/etc/systemd/system/gmz-frontend.service
 
 # ---- icecast2 ----
 !/etc/icecast2/

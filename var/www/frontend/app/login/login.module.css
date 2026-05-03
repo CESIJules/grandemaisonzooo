@@ -1,0 +1,117 @@
+.page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: var(--color-bg);
+}
+
+.card {
+    width: 100%;
+    max-width: 380px;
+    background: var(--color-surface);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.title {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-align: center;
+    margin: 0;
+}
+
+.subtitle {
+    text-align: center;
+    font-size: 0.85rem;
+    opacity: 0.5;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin: 0;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.7;
+}
+
+.input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #fff;
+    border-radius: 6px;
+    padding: 0.65rem 0.9rem;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.input:focus {
+    border-color: var(--color-accent);
+}
+
+.input:disabled {
+    opacity: 0.5;
+}
+
+.error {
+    font-size: 0.8rem;
+    color: #ff4444;
+    text-align: center;
+    margin: 0;
+}
+
+.btn {
+    background: var(--color-accent);
+    color: #000;
+    border: none;
+    border-radius: 6px;
+    padding: 0.75rem;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-top: 0.25rem;
+    transition: opacity 0.15s;
+}
+
+.btn:hover {
+    opacity: 0.85;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.back {
+    text-align: center;
+    font-size: 0.8rem;
+    opacity: 0.4;
+    text-decoration: none;
+    color: inherit;
+    transition: opacity 0.15s;
+}
+
+.back:hover {
+    opacity: 0.8;
+}
