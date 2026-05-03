@@ -30,7 +30,9 @@ export async function loginUser(
   if (!key) return null;
 
   const user = users[key];
-  const valid = await bcrypt.compare(password, user.password_hash);
+  // Normalize PHP bcrypt prefix $2y$ → $2b$ (functionally identical, bcryptjs only accepts $2b$)
+  const hash = user.password_hash.replace(/^\$2y\$/, "$2b$");
+  const valid = await bcrypt.compare(password, hash);
   if (!valid) return null;
 
   return {
