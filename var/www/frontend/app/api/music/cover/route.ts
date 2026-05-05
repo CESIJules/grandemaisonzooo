@@ -35,27 +35,33 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  // Extract cover to a temp file (pipe:1 corrupts binary data via execFile)
+  const tmpFile = path.join("/tmp", `cover_${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`);
   try {
-    const { stdout } = await execFileAsync("ffmpeg", [
-      "-i",
-      filePath,
+    await execFileAsync("ffmpeg", [
+      "-i", filePath,
       "-an",
-      "-vcodec",
-      "copy",
-      "-f",
-      "image2pipe",
-      "pipe:1",
+      "-vcodec", "copy",
+      "-update", "1",
+      "-frames:v", "1",
+      tmpFile,
+      "-y",
     ]);
 
-    const buf = Buffer.from(stdout, "binary");
+    const buf = fs.readFileSync(tmpFile);
     return new NextResponse(buf, {
       status: 200,
-      headers: { "Content-Type": "image/jpeg" },
+      headers: {
+        "Content-Type": "image/jpeg",
+        "Cache-Control": "public, max-age=86400",
+      },
     });
   } catch {
     return NextResponse.json(
       { status: "error", message: "Pas de couverture dans ce fichier" },
       { status: 404 }
     );
+  } finally {
+    try { fs.unlinkSync(tmpFile); } catch { /* ignore */ }
   }
 }

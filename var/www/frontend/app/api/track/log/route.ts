@@ -20,7 +20,15 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const { artist, title, filename, listeners } = body ?? {};
 
-  if (!artist || !title) {
+  // Liquidsoap url.encode() uses + for spaces — decode before storing
+  const urlDecode = (s: unknown) =>
+    decodeURIComponent(String(s ?? "").replace(/\+/g, " ")).trim();
+
+  const decodedFilename = filename ? urlDecode(filename) : null;
+  const decodedArtist   = urlDecode(artist);
+  const decodedTitle    = urlDecode(title);
+
+  if (!decodedArtist || !decodedTitle) {
     return NextResponse.json(
       { status: "error", message: "artist et title requis" },
       { status: 400 }
@@ -30,9 +38,9 @@ export async function POST(req: NextRequest) {
   const listenersNum = typeof listeners === "number" ? listeners : parseInt(listeners ?? "0", 10);
 
   // Write track info to tmp for get_current_track
-  if (filename) {
+  if (decodedFilename) {
     const trackInfo = {
-      filename: String(filename),
+      filename: decodedFilename,
       start_time: Math.floor(Date.now() / 1000),
     };
     try {
@@ -42,7 +50,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  logTrack(String(artist), String(title), isNaN(listenersNum) ? 0 : listenersNum);
+  logTrack(decodedArtist, decodedTitle, isNaN(listenersNum) ? 0 : listenersNum);
 
   return NextResponse.json({ status: "success", message: "Track enregistré." });
 }

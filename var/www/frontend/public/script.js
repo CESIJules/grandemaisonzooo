@@ -2312,20 +2312,18 @@
       // Helper to update an image element
       const updateImage = (imgElement) => {
           if (!imgElement) return;
-          if (imgElement.src.includes(encodeURIComponent(filename))) return;
+          // Use getAttribute to compare the literal src attribute, not the resolved URL
+          if (imgElement.getAttribute('src') === newSrc && parseFloat(imgElement.style.opacity) > 0) return;
 
-          const tempImg = new Image();
-          tempImg.onload = () => {
-              imgElement.src = newSrc;
-              imgElement.style.display = 'block';
-              requestAnimationFrame(() => {
-                  imgElement.style.opacity = '1';
-              });
+          imgElement.style.opacity = '0';
+          imgElement.onload = () => {
+              imgElement.style.opacity = '1';
           };
-          tempImg.onerror = () => {
+          imgElement.onerror = () => {
               imgElement.style.opacity = '0';
+              imgElement.removeAttribute('src');
           };
-          tempImg.src = newSrc;
+          imgElement.setAttribute('src', newSrc);
       };
 
       updateImage(coverImg);

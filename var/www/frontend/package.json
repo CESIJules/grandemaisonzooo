@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "rsync -a --delete .next/static/ .next/standalone/.next/static/ && rsync -a --delete public/ .next/standalone/public/",
     "start": "next start",
     "lint": "eslint"
   },
