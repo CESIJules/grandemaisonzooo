@@ -605,12 +605,7 @@
       const H = visualizerCanvas.height;
       if (W === 0 || H === 0) return;
       ctx.clearRect(0, 0, W, H);
-      const gradient = ctx.createLinearGradient(0, 0, W, 0);
-      gradient.addColorStop(0, 'rgba(238,238,238,0)');
-      gradient.addColorStop(0.2, 'rgba(238,238,238,0.5)');
-      gradient.addColorStop(0.8, 'rgba(238,238,238,0.5)');
-      gradient.addColorStop(1, 'rgba(238,238,238,0)');
-      ctx.strokeStyle = gradient;
+      ctx.strokeStyle = 'rgba(238,238,238,0.5)';
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(0, H / 2);

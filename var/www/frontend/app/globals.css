@@ -282,8 +282,8 @@ p {
     /* Glassmorphism Style */
     background-color: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.15);
-    -webkit-backdrop-filter: blur(6px);
-    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
     color: #eee;
 
@@ -598,8 +598,8 @@ body.menu-open {
     z-index: 1;
     text-align: right;
     background: rgba(15, 15, 15, 0.4);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 16px;
     padding: 30px 40px;
@@ -689,8 +689,8 @@ body.menu-open {
     /* Glassmorphism Style */
     background-color: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.15);
-    -webkit-backdrop-filter: blur(6px);
-    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
     color: #eee;
 
@@ -747,8 +747,8 @@ body.menu-open {
     /* Glassmorphism Style */
     background-color: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.15);
-    -webkit-backdrop-filter: blur(6px);
-    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
 
     color: #fff;
@@ -786,8 +786,8 @@ body.menu-open {
     /* Glassmorphism Style */
     background-color: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.15);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
 
     color: #eee;
@@ -953,8 +953,8 @@ body.menu-open {
     /* Glassmorphism Style */
     background-color: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.15);
-    -webkit-backdrop-filter: blur(6px);
-    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
     border-radius: 50%;
 
@@ -1010,8 +1010,8 @@ body.menu-open {
     align-items: stretch;
 
     background-color: rgba(10, 10, 10, 0.6);
-    -webkit-backdrop-filter: blur(8px);
-    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
     border: 1px solid rgba(255, 255, 255, 0.15);
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
 
@@ -1101,8 +1101,8 @@ body.menu-open {
 .rc-btn-play {
     background-color: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.15);
-    -webkit-backdrop-filter: blur(8px);
-    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
     border-radius: 50%;
     width: 46px;
     height: 46px;
@@ -1399,9 +1399,9 @@ body.menu-open {
     padding: 8px 14px 8px 8px;
     border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, 0.15);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
-    -webkit-backdrop-filter: blur(8px);
-    backdrop-filter: blur(8px);
 
     /* Adaptation longueur - flexible width */
     width: auto;
