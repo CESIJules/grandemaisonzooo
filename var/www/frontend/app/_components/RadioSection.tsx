@@ -30,9 +30,7 @@ export default function RadioSection() {
           </div>
           <input type="hidden" id="volumeControl" defaultValue="1" />
         </div>
-        <button id="mainPipBtn" className="btn-pip-main" title="Mini Lecteur">
-          <i className="fas fa-external-link-alt"></i>
-        </button>
+
         <div id="currentSong">
           <div id="mainCover" className="main-cover">
             <img id="mainCoverImg" src={undefined} alt="Cover" style={{ opacity: 0 }} />

@@ -590,6 +590,38 @@
       }
   };
 
+  // Idle visualizer: simple static line before the user presses play
+  (function startIdleVisualizer() {
+    if (!visualizerCanvas) return;
+    const ctx = visualizerCanvas.getContext('2d');
+    function resize() {
+      const w = visualizerCanvas.offsetWidth;
+      const h = visualizerCanvas.offsetHeight;
+      if (w > 0 && h > 0) { visualizerCanvas.width = w; visualizerCanvas.height = h; drawLine(); }
+    }
+    function drawLine() {
+      if (visualizerInitialized) return;
+      const W = visualizerCanvas.width;
+      const H = visualizerCanvas.height;
+      if (W === 0 || H === 0) return;
+      ctx.clearRect(0, 0, W, H);
+      const gradient = ctx.createLinearGradient(0, 0, W, 0);
+      gradient.addColorStop(0, 'rgba(238,238,238,0)');
+      gradient.addColorStop(0.2, 'rgba(238,238,238,0.5)');
+      gradient.addColorStop(0.8, 'rgba(238,238,238,0.5)');
+      gradient.addColorStop(1, 'rgba(238,238,238,0)');
+      ctx.strokeStyle = gradient;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, H / 2);
+      ctx.lineTo(W, H / 2);
+      ctx.stroke();
+    }
+    resize();
+    window.addEventListener('resize', resize);
+    drawLine();
+  })();
+
   function setupVisualizer() {
     if (visualizerInitialized) return;
     

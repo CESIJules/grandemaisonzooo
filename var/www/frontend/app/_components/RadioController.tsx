@@ -37,9 +37,7 @@ export default function RadioController() {
               <i className="fas fa-volume-up" id="rcVolumeIcon"></i>
             </div>
           </div>
-          <button id="rcPipBtn" className="rc-btn-pip" title="Mini Lecteur">
-            <i className="fas fa-external-link-alt"></i>
-          </button>
+
           <div id="rcCover" className="rc-cover">
             <img id="rcCoverImg" src={undefined} alt="Cover" style={{ opacity: 0 }} />
             <div className="rc-cover-placeholder">
