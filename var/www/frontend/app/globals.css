@@ -692,7 +692,7 @@ body.menu-open {
     -webkit-backdrop-filter: blur(2px);
     backdrop-filter: blur(2px);
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
-    color: #eee; 
+    color: #eee;
 
     padding: 12px 24px;
     border-radius: 20px;
@@ -2071,13 +2071,13 @@ body.menu-open {
     left: 0;
     width: 100%;
     pointer-events: auto;
-    background-color: rgba(255, 255, 255, 0.04);
+    background-color: #0000;
     padding: clamp(12px, 1.5vw, 18px);
     border-radius: 16px;
     text-align: center;
     border: 1px solid rgba(255, 255, 255, 0.12);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
 
     /* 3D Tilt Setup */
@@ -2334,9 +2334,9 @@ body.menu-open {
     padding: 10px 14px;
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.15);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-    background: rgba(255, 255, 255, 0.04);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+    background: #0000;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
     text-decoration: none;
     color: #fff;
