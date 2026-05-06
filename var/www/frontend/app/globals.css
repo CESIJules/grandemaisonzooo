@@ -280,10 +280,10 @@ p {
     padding: 0;
 
     /* Glassmorphism Style */
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: #0000;
     border: 1px solid rgba(255, 255, 255, 0.15);
-    -webkit-backdrop-filter: blur(3px);
-    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
     color: #eee;
 
@@ -597,9 +597,9 @@ body.menu-open {
     position: relative;
     z-index: 1;
     text-align: right;
-    background: rgba(15, 15, 15, 0.4);
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
+    background: #0000;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 16px;
     padding: 30px 40px;
@@ -687,12 +687,12 @@ body.menu-open {
     text-transform: uppercase;
 
     /* Glassmorphism Style */
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: #0000;
     border: 1px solid rgba(255, 255, 255, 0.15);
-    -webkit-backdrop-filter: blur(3px);
-    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
-    color: #eee;
+    color: #eee; 
 
     padding: 12px 24px;
     border-radius: 20px;
@@ -745,10 +745,10 @@ body.menu-open {
     border-radius: 4px;
 
     /* Glassmorphism Style */
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: #0000;
     border: 1px solid rgba(255, 255, 255, 0.15);
-    -webkit-backdrop-filter: blur(3px);
-    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
 
     color: #fff;
@@ -784,10 +784,10 @@ body.menu-open {
     text-decoration: none;
 
     /* Glassmorphism Style */
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: #0000;
     border: 1px solid rgba(255, 255, 255, 0.15);
-    -webkit-backdrop-filter: blur(3px);
-    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
 
     color: #eee;
@@ -951,10 +951,10 @@ body.menu-open {
     -webkit-tap-highlight-color: transparent;
 
     /* Glassmorphism Style */
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: #0000;
     border: 1px solid rgba(255, 255, 255, 0.15);
-    -webkit-backdrop-filter: blur(3px);
-    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
     border-radius: 50%;
 
@@ -1009,9 +1009,9 @@ body.menu-open {
     display: flex;
     align-items: stretch;
 
-    background-color: rgba(10, 10, 10, 0.6);
-    -webkit-backdrop-filter: blur(4px);
-    backdrop-filter: blur(4px);
+    background-color: #0000;
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
     border: 1px solid rgba(255, 255, 255, 0.15);
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
 
@@ -1099,10 +1099,10 @@ body.menu-open {
 }
 
 .rc-btn-play {
-    background-color: rgba(255, 255, 255, 0.08);
+    background-color: #0000;
     border: 1px solid rgba(255, 255, 255, 0.15);
-    -webkit-backdrop-filter: blur(4px);
-    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
     border-radius: 50%;
     width: 46px;
     height: 46px;
@@ -1200,10 +1200,10 @@ body.menu-open {
     -webkit-tap-highlight-color: transparent;
 
     /* Glassmorphism Style (Unified) */
-    background-color: transparent;
+    background-color: #0000;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
     border-radius: 50%;
 
@@ -1395,12 +1395,12 @@ body.menu-open {
     white-space: nowrap;
 
     /* Glassmorphism Style */
-    background-color: rgba(0, 0, 0, 0.45);
+    background-color: #0000;
     padding: 8px 14px 8px 8px;
     border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, 0.15);
-    -webkit-backdrop-filter: blur(4px);
-    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
 
     /* Adaptation longueur - flexible width */
@@ -3566,13 +3566,13 @@ body.menu-open {
         gap: 8px;
         padding: 8px 12px 8px 8px;
         /* Glassmorphism - same as desktop */
-        background: rgba(0, 0, 0, 0.6);
+        background: #0000;
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 12px;
         z-index: 35;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
         white-space: nowrap;
         overflow: hidden;
     }
