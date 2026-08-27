@@ -3077,25 +3077,29 @@
     const p = getGlobeParams();
     if (!p) return;
     const { W, H, R, cx, cy } = p;
-    const T = GLOBE_TILT;
 
-    // Orbit sur l'équateur exact du globe (pas de décalage vertical)
-    const orbit_rx = R * 1.08;              // légèrement à l'extérieur de la surface
-    const orbit_ry = orbit_rx * Math.sin(T); // projection de l'équateur avec le tilt
-    const cy_orbit = cy;                     // centre = centre du globe
+    // Interpolation des angles de tilt avec le scroll (identique à drawGlobe)
+    const T  = GLOBE_TILT  + globeScrollT * (0.08 - GLOBE_TILT);
+    const Tz = GLOBE_TILT_Z + globeScrollT * (0.12 - GLOBE_TILT_Z);
 
-    // Cartes un peu plus petites, centre toujours plus grand
-    const itemW = Math.min(160, Math.max(120, W * 0.105));
+    // Rayon orbital légèrement au-dessus de la surface du globe
+    const orbitR = R * 1.14;
+
+    // Dimensions adaptatives des cartes
+    const itemW = Math.min(170, Math.max(125, W * 0.108));
     const itemH = itemW * 1.55;
 
-    // 30° par slot, affiche offsets -4 à +4 (4 derriere, 4 devant + centre)
-    const SLOT_ANGLE = Math.PI / 6;  // 30°
+    // Angle d'espacement des cartes sur l'orbite (~32.7°)
+    const SLOT_ANGLE = Math.PI / 5.5;
     const MAX_OFFSET = 4.5;
+
+    // Degrés de tilt pour les rotations 3D en CSS
+    const Tz_deg = Tz * 180 / Math.PI;
+    const Tx_deg = T * 180 / Math.PI * 0.32; // inclinaison arrière subtile suivant le globe
 
     for (let i = 0; i < N; i++) {
       const item = globeItems[i];
 
-      // Pas de wrapping — offset brut, les bords de la timeline finissent proprement
       const offset = i - globeOrbitCurrent;
 
       if (Math.abs(offset) > MAX_OFFSET) {
@@ -3109,45 +3113,55 @@
 
       item.style.visibility = 'visible';
 
-      const phi = Math.PI / 2 - offset * SLOT_ANGLE;
+      // ── Position 3D exacte sur l'orbite équatoriale du globe ──
+      const angle = offset * SLOT_ANGLE;
+      const x3 = orbitR * Math.sin(angle);
+      const y3 = 0;
+      const z3 = orbitR * Math.cos(angle);
 
-      const sx = cx       + orbit_rx * Math.cos(phi);
-      const sy = cy_orbit - orbit_ry * Math.sin(phi);
+      // Projection 3D -> 2D avec tilt T (identique à project() dans drawGlobe)
+      const dx = x3;
+      const dy = -y3 * Math.cos(T) - z3 * Math.sin(T);
+      const depth = -y3 * Math.sin(T) + z3 * Math.cos(T);
 
-      // depth: +1 = plein avant, -1 = plein arrière
-      const depth = Math.sin(phi);
-      const t     = (depth + 1) / 2;  // [0,1]
+      // Rotation 2D Tz (correspondant à ctx.rotate(Tz)) + zoomScale
+      const sx_unscaled = cx + (dx * Math.cos(Tz) - dy * Math.sin(Tz));
+      const sy_unscaled = cy + (dx * Math.sin(Tz) + dy * Math.cos(Tz));
 
-      const isBehind = depth < 0;
+      const sx = cx + (sx_unscaled - cx) * globeZoomScale;
+      const sy = cy + (sy_unscaled - cy) * globeZoomScale;
 
-      // Scale: centre un peu plus grand, transition douce (pas fisheye agressif)
-      const scale   = isBehind
-        ? 0.38 - Math.abs(depth) * 0.12          // arrière: 0.38 → 0.26
-        : 0.50 + t * 0.62;                       // avant:   0.50 → 1.12
+      // Profondeur normalisée : +1.0 plein devant, 0 sur les côtés, -1.0 derrière
+      const zNorm = z3 / orbitR;
+      const isBehind = zNorm < -0.05;
 
-      // Opacité: cartes arrière bien visibles mais dimmées
-      const opacity = isBehind
-        ? 0.30 - Math.abs(depth) * 0.15          // arrière: 0.30 → 0.15
-        : 0.40 + t * 0.60;                       // avant: 0.40 → 1.00
+      // ── Courbes réalistes basées sur Math.tanh ──
+      // 1. Rotation yaw 3D (tanh lisse l'angle, évitant l'effet papier plat ou inversion brutale)
+      const rotateY = Math.tanh(offset * 0.48) * 66.0;
 
-      // Blur léger pour les cartes arrière
-      const blur = isBehind
-        ? (Math.abs(depth) * 3.0).toFixed(1)
+      // 2. Échelle (tanh crée un focus doux sur la carte active et une transition fluide)
+      const distNorm = Math.tanh(Math.abs(offset) * 0.72);
+      const scale = (0.34 + 0.76 * (1.0 - distNorm * 0.70)) * Math.max(0.01, globeZoomScale);
+
+      // 3. Opacité (dégradé organique avec tanh suivant la profondeur)
+      const opacity = Math.min(1, Math.max(0, 0.20 + 0.80 * ((1.0 + Math.tanh(1.8 * zNorm)) / 2.0)));
+
+      // 4. Flou progressif pour les cartes passant derrière le globe
+      const blur = zNorm < 0.05
+        ? (Math.tanh(Math.max(0, -zNorm) * 2.5) * 4.0).toFixed(1)
         : '0';
 
-      // z-index: arrière < canvas (z=8) < avant
+      // 5. Z-Index hiérarchisé (carte centrale au sommet, cartes arrières < canvas z:8)
       const zIdx = isBehind
-        ? Math.max(1, Math.round(4 - Math.abs(depth) * 3))   // 1–4
-        : Math.round(10 + t * 10);                           // 10–20
-
-      const rotateY = offset * (SLOT_ANGLE * 180 / Math.PI);
+        ? Math.max(1, Math.round(5 - Math.abs(offset)))
+        : Math.round(10 + (1 - distNorm) * 15);
 
       const tx = Math.round(sx - itemW / 2);
       const ty = Math.round(sy - itemH / 2);
 
       item.style.width           = `${itemW}px`;
       item.style.margin          = '0';
-      item.style.transform       = `translate(${tx}px, ${ty}px) perspective(1200px) rotateY(${rotateY.toFixed(2)}deg) scale(${scale.toFixed(3)})`;
+      item.style.transform       = `translate(${tx}px, ${ty}px) perspective(1100px) rotateZ(${Tz_deg.toFixed(2)}deg) rotateX(${Tx_deg.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale(${scale.toFixed(3)})`;
       item.style.transformOrigin = 'center center';
       item.style.opacity         = opacity.toFixed(2);
       item.style.filter          = blur !== '0' ? `blur(${blur}px)` : '';
