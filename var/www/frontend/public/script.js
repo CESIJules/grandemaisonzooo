@@ -193,8 +193,8 @@
   let globeRotation     = 0;
   let globeRafActive    = false;
   let globeItems        = [];
-  const GLOBE_TILT      = -0.32; // forward tilt ~-18.3° (north pole in front, equator passing through center)
-  const GLOBE_TILT_Z    = -0.22; // subtle leftward canvas tilt ~-12.6°
+  const GLOBE_TILT      = 0.55; // backward tilt ~31°
+  const GLOBE_TILT_Z    = -0.28; // leftward canvas tilt ~-16°
 
   // Radio / globe transition state
   let globeScrollT      = 0;   // 0 = timeline, 1 = radio (interpolated)
@@ -2872,9 +2872,9 @@
     // Scale up on radio section (globeScrollT = 0..1)
     const baseR = Math.min(W * 0.32, H * 0.42);
     const R = baseR * (1.0 + globeScrollT * 0.55);
-    // Center shifts slightly down on radio; adjusted slightly up so front equator sits centered
+    // Center shifts slightly down on radio
     const cx = W / 2;
-    const cy = (H / 2 - H * 0.04) + globeScrollT * H * 0.08;
+    const cy = H / 2 + globeScrollT * H * 0.08;
     return { W, H, R, cx, cy };
   }
 
@@ -2899,11 +2899,11 @@
     ctx.scale(globeZoomScale, globeZoomScale);
     ctx.translate(-cx, -cy);
 
-    // Interpolate tilt with scroll (T: -0.32 -> 0.08, Tz: -0.22 -> 0.12)
+    // Interpolate tilt with scroll (T: 0.55 -> 0.08, Tz: -0.28 -> 0.12)
     const T  = GLOBE_TILT  + globeScrollT * (0.08 - GLOBE_TILT);
     const Tz = GLOBE_TILT_Z + globeScrollT * (0.12 - GLOBE_TILT_Z);
 
-    // Utility: 3D -> 2D projection
+    // Utility: 3D -> 2D projection (south-at-front)
     function project(x3, y3, z3) {
       const sx = cx + x3;
       const sy = cy - y3 * Math.cos(T) - z3 * Math.sin(T);
