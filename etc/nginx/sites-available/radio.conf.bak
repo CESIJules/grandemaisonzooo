@@ -1,0 +1,242 @@
+# ============================================
+# Serveur interne (localhost uniquement)
+# Pour les appels de Liquidsoap vers les scripts PHP
+# ============================================
+server {
+    listen 127.0.0.1:80;
+    server_name localhost;
+    
+    root /var/www/html;
+    index index.php index.html;
+    
+    # PHP uniquement - pas besoin du reste pour les appels internes
+    location ~ \.php$ {
+        include fastcgi_params;
+        fastcgi_pass unix:/var/run/php/php-fpm.sock;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+}
+
+# ============================================
+# Serveur principal (HTTPS) — Proxy vers Next.js
+# ============================================
+server {
+    listen 443 ssl http2;
+    server_name grandemaisonzoo.com www.grandemaisonzoo.com;
+
+    ssl_certificate /etc/letsencrypt/live/grandemaisonzoo.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/grandemaisonzoo.com/privkey.pem;
+
+    # Augmentation de la taille maximale d'upload (audio/zip pour les prods en vente)
+    # 2G permet les STEMS .rar/.wav lourds — au-delà, passer par stockage externe
+    client_max_body_size 2G;
+
+    # Protection contre les attaques automatisées
+    include /etc/nginx/snippets/security-rules.conf;
+
+    limit_conn addr 200;
+
+    # ── Security Headers ────────────────────────────────────────────────────────
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://kit.fontawesome.com https://ka-f.fontawesome.com https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://ka-f.fontawesome.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; media-src 'self' https://grandemaisonzoo.com; connect-src 'self' https://grandemaisonzoo.com; frame-ancestors 'self';" always;
+    # ────────────────────────────────────────────────────────────────────────────
+
+    # Gzip Compression
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+    gzip_min_length 1000;
+
+	location /gme/ {
+	    alias /var/www/html/gme/;
+	    add_header Access-Control-Allow-Origin *;
+	    try_files $uri =404;
+	}
+
+    # Fichiers uploadés (images des posts, artistes) — servis directement par nginx
+    location /uploads/ {
+        alias /var/www/html/uploads/;
+        expires 30d;
+        add_header Cache-Control "public, no-transform";
+        try_files $uri =404;
+    }
+
+    # Covers de playlists — servis directement par nginx
+    location /covers/ {
+        alias /var/www/html/covers/;
+        expires 30d;
+        add_header Cache-Control "public, no-transform";
+        try_files $uri =404;
+    }
+
+    # Vidéos — servis directement par nginx (fichiers lourds)
+    location /vid/ {
+        alias /var/www/html/vid/;
+        expires 30d;
+        add_header Cache-Control "public, no-transform";
+        try_files $uri =404;
+    }
+
+    # Images statiques — servis directement par nginx
+    location /images/ {
+        alias /var/www/html/images/;
+        expires 30d;
+        add_header Cache-Control "public, no-transform";
+        try_files $uri =404;
+    }
+
+    # Fichiers statiques Next.js — cache long (hashes dans les noms)
+    location /_next/static/ {
+        alias /var/www/frontend/.next/standalone/.next/static/;
+        expires max;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # Flux Icecast proxifié en HTTPS
+    location /stream {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header Connection "";
+        proxy_buffering off;
+        add_header Access-Control-Allow-Origin *;
+        add_header Cache-Control no-cache;
+    }
+
+    # Proxy pour le statut JSON d'Icecast
+    location /status-json.xsl {
+        proxy_pass http://127.0.0.1:8000/status-json.xsl;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header 'Cache-Control' 'no-cache';
+    }
+
+    # Room45 — site PHP séparé servi directement par PHP-FPM
+    location ^~ /room45/ {
+        alias /var/www/html/room45/;
+        index index.php;
+        # Réécriture des URLs sans extension (ex: /room45/a01 → /room45/a01.php)
+        rewrite ^(/room45/[^/.]+)$ $1.php last;
+        try_files $uri $uri/ /room45/index.php$is_args$args;
+
+        location ~ \.php$ {
+            include fastcgi_params;
+            fastcgi_pass unix:/var/run/php/php-fpm.sock;
+            fastcgi_index index.php;
+            fastcgi_param SCRIPT_FILENAME /var/www/html$fastcgi_script_name;
+            fastcgi_param DOCUMENT_ROOT /var/www/html/room45;
+        }
+    }
+
+    location = /room45 {
+        return 301 /room45/;
+    }
+
+    # OverlayBox — WebSocket Socket.io proxifié en WSS
+    location /overlay/ {
+        proxy_pass http://127.0.0.1:4000/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_read_timeout 86400s;
+        proxy_send_timeout 86400s;
+        proxy_buffering off;
+    }
+
+    # OverlayBox — fichiers statiques (version.json, installeurs)
+    location /overlaybox/ {
+        alias /var/www/html/overlaybox/;
+        expires 1m;
+        add_header Cache-Control "no-cache";
+        add_header Access-Control-Allow-Origin "*";
+        try_files $uri =404;
+    }
+
+
+
+
+    # ─── OHARA APPLICATION ───────────────────────────────────────────────────────
+    # Subrequest for auth verification
+    location = /ohara-auth-gate {
+        internal;
+        proxy_pass http://127.0.0.1:5100/api/auth/validate-artist;
+        proxy_pass_request_body off;
+        proxy_set_header Content-Length "";
+        proxy_set_header X-Original-URI $request_uri;
+        proxy_set_header Authorization $http_authorization;
+    }
+
+    # API endpoints of Ohara
+    location /ohara/api/ {
+        auth_request /ohara-auth-gate;
+        proxy_pass http://127.0.0.1:5100/api/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # WebSocket for real-time collaboration in Ohara
+    location /ohara/ws {
+        auth_request /ohara-auth-gate;
+        proxy_pass http://127.0.0.1:5100/ws;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 86400s;
+        proxy_send_timeout 86400s;
+    }
+
+    # Static files of Ohara client
+    location /ohara {
+        auth_request /ohara-auth-gate;
+        alias /var/www/ohara/dist/client/;
+        index index.html;
+        try_files $uri $uri/ /ohara/index.html;
+    }
+    # ────────────────────────────────────────────────────────────────────────────
+
+    # Tout le reste → Next.js (port 3000)
+
+    # Tout le reste → Next.js (port 3000)
+
+    # Tout le reste → Next.js (port 3000)
+    location / {
+        limit_req zone=general_limit burst=100 nodelay;
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+
+        # Gros uploads (shop /api/shop/products avec STEMS .rar/.wav) :
+        # stream direct vers Next.js sans bufferiser sur disque, timeouts longs.
+        proxy_request_buffering off;
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+    }
+}
+
+
+

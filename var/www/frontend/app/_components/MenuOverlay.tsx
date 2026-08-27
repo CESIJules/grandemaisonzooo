@@ -1,3 +1,5 @@
+import InstallButton from "./InstallButton";
+
 export default function MenuOverlay() {
   return (
     <nav id="menu" className="menu-overlay" aria-hidden="true">
@@ -33,7 +35,7 @@ export default function MenuOverlay() {
             <span className="menu-number">04</span>
           </li>
           <li className="menu-item" data-index="4">
-            <a href="#vst" className="menu-link">VST</a>
+            <a href="#boutique" className="menu-link">BOUTIQUE</a>
             <span className="menu-number">05</span>
           </li>
           <li className="menu-item" data-index="5">
@@ -41,10 +43,17 @@ export default function MenuOverlay() {
             <span className="menu-number">06</span>
           </li>
         </ul>
+        <ul className="menu-legal-list">
+          <li><a href="/legal/mentions-legales">Mentions légales</a></li>
+          <li><a href="/legal/cgv">CGV</a></li>
+          <li><a href="/legal/confidentialite">Confidentialité</a></li>
+          <li><a href="/legal/remboursement">Remboursement</a></li>
+        </ul>
       </div>
       <a href="/login" className="menu-login-link" aria-label="Connexion Artiste">
         <i className="fas fa-circle-user"></i>
       </a>
+      <InstallButton />
     </nav>
   );
 }

@@ -1,0 +1,83 @@
+# ──────────────────────────────────────────────────────────────
+# Nginx reverse proxy for AIO License Server
+# ──────────────────────────────────────────────────────────────
+#
+# INSTALLATION:
+#   1. Copy this file to /etc/nginx/sites-available/license-server
+#   2. Create symlink: sudo ln -s /etc/nginx/sites-available/license-server /etc/nginx/sites-enabled/
+#   3. Test config: sudo nginx -t
+#   4. Reload: sudo systemctl reload nginx
+#
+# HTTPS (Let's Encrypt):
+#   5. sudo apt install certbot python3-certbot-nginx
+#   6. sudo certbot --nginx -d YOUR_DOMAIN_HERE
+#      (or use IP-based cert if no domain)
+#
+# If no domain, use self-signed cert for testers:
+#   sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+#     -keyout /etc/ssl/private/aio-selfsigned.key \
+#     -out /etc/ssl/certs/aio-selfsigned.crt
+# ──────────────────────────────────────────────────────────────
+
+server {
+    listen 80;
+    server_name _;
+
+    # Redirect HTTP → HTTPS
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name _;
+
+    # ── SSL (update paths after certbot or self-signed) ────────
+    # For Let's Encrypt:
+    #   ssl_certificate /etc/letsencrypt/live/YOUR_DOMAIN/fullchain.pem;
+    #   ssl_certificate_key /etc/letsencrypt/live/YOUR_DOMAIN/privkey.pem;
+    #
+    # For self-signed:
+    ssl_certificate /etc/ssl/certs/aio-selfsigned.crt;
+    ssl_certificate_key /etc/ssl/private/aio-selfsigned.key;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+
+    # ── Security Headers ───────────────────────────────────────
+    add_header X-Frame-Options DENY always;
+    add_header X-Content-Type-Options nosniff always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+    # ── Reverse Proxy → License Server (port 3001) ─────────────
+    location /api/ {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Timeouts
+        proxy_connect_timeout 10s;
+        proxy_read_timeout 30s;
+        proxy_send_timeout 30s;
+    }
+
+    # ── Auto-Update files ──────────────────────────────────────
+    location /updates/ {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Allow large update downloads
+        proxy_read_timeout 300s;
+        client_max_body_size 600M;
+    }
+
+    # ── Deny everything else ────────────────────────────────────
+    location / {
+        return 404;
+    }
+}

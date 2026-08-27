@@ -109,3 +109,48 @@
 .loginLink:hover {
     color: rgba(255, 255, 255, 0.7);
 }
+
+.installWrap {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.installBtn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: none;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.55);
+    font-family: var(--font-display);
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+}
+
+.installBtn:hover,
+.installBtn:focus-visible {
+    color: rgba(255, 255, 255, 0.9);
+    border-color: rgba(255, 255, 255, 0.5);
+    outline: none;
+}
+
+.iosHint {
+    font-size: 0.68rem;
+    color: rgba(255, 255, 255, 0.45);
+    text-align: center;
+    max-width: 240px;
+    line-height: 1.5;
+    margin: 0;
+}

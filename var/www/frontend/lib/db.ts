@@ -11,6 +11,7 @@ function getDb(): Database.Database {
     fs.mkdirSync(path.dirname(PATHS.ANALYTICS_DB), { recursive: true });
     _db = new Database(PATHS.ANALYTICS_DB);
     _db.pragma("journal_mode = WAL");
+    _db.pragma("foreign_keys = ON");
     initTables(_db);
   }
   return _db;
@@ -43,7 +44,98 @@ function initTables(db: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_history_time ON play_history(timestamp);
     CREATE INDEX IF NOT EXISTS idx_audit_time ON audit_log(timestamp);
     CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_log(user);
+
+    -- ─── SHOP ────────────────────────────────────────────────────────
+    CREATE TABLE IF NOT EXISTS products (
+      id TEXT PRIMARY KEY,
+      artist_id TEXT NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT,
+      cover_url TEXT,
+      preview_audio_url TEXT,
+      bpm INTEGER,
+      music_key TEXT,
+      status TEXT NOT NULL DEFAULT 'draft',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS product_tiers (
+      id TEXT PRIMARY KEY,
+      product_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      price_cents INTEGER NOT NULL,
+      license_type TEXT,
+      file_path TEXT,
+      file_name TEXT,
+      is_exclusive INTEGER NOT NULL DEFAULT 0,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+    );
+    CREATE TABLE IF NOT EXISTS orders (
+      id TEXT PRIMARY KEY,
+      stripe_session_id TEXT UNIQUE,
+      stripe_payment_intent TEXT,
+      buyer_email TEXT,
+      amount_total_cents INTEGER NOT NULL DEFAULT 0,
+      currency TEXT NOT NULL DEFAULT 'eur',
+      status TEXT NOT NULL DEFAULT 'pending',
+      created_at TEXT NOT NULL,
+      paid_at TEXT
+    );
+    CREATE TABLE IF NOT EXISTS order_items (
+      id TEXT PRIMARY KEY,
+      order_id TEXT NOT NULL,
+      product_id TEXT,
+      tier_id TEXT,
+      product_title TEXT NOT NULL,
+      tier_name TEXT NOT NULL,
+      artist_id TEXT NOT NULL,
+      price_cents INTEGER NOT NULL,
+      artist_share_cents INTEGER NOT NULL,
+      platform_fee_cents INTEGER NOT NULL,
+      FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+    );
+    CREATE TABLE IF NOT EXISTS download_tokens (
+      token TEXT PRIMARY KEY,
+      order_item_id TEXT NOT NULL,
+      expires_at TEXT NOT NULL,
+      max_downloads INTEGER NOT NULL DEFAULT 5,
+      download_count INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY (order_item_id) REFERENCES order_items(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_products_artist ON products(artist_id);
+    CREATE INDEX IF NOT EXISTS idx_products_status ON products(status);
+    CREATE INDEX IF NOT EXISTS idx_tiers_product ON product_tiers(product_id);
+    CREATE INDEX IF NOT EXISTS idx_items_order ON order_items(order_id);
+    CREATE INDEX IF NOT EXISTS idx_items_artist ON order_items(artist_id);
+
+    -- ─── DISCOUNT CODES ──────────────────────────────────────────────
+    CREATE TABLE IF NOT EXISTS discount_codes (
+      id TEXT PRIMARY KEY,
+      code TEXT NOT NULL COLLATE NOCASE,
+      type TEXT NOT NULL,                      -- 'percent' | 'fixed'
+      value INTEGER NOT NULL,                  -- percent: 25  | fixed: cents (e.g. 500 = 5€)
+      artist_id TEXT,                          -- NULL = global, else restrict to this artist
+      max_uses INTEGER,                        -- NULL = unlimited
+      used_count INTEGER NOT NULL DEFAULT 0,
+      expires_at TEXT,                         -- ISO 'YYYY-MM-DD HH:MM:SS' or NULL = no expiry
+      enabled INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_discount_codes_code ON discount_codes(code);
+    CREATE INDEX IF NOT EXISTS idx_discount_codes_artist ON discount_codes(artist_id);
   `);
+
+  // Idempotent ALTERs for orders (add discount tracking)
+  for (const alter of [
+    "ALTER TABLE orders ADD COLUMN discount_code TEXT",
+    "ALTER TABLE orders ADD COLUMN discount_amount_cents INTEGER NOT NULL DEFAULT 0",
+    "ALTER TABLE order_items ADD COLUMN original_price_cents INTEGER",
+  ]) {
+    try { db.exec(alter); } catch { /* column already exists — ignore */ }
+  }
 }
 
 // =========================================

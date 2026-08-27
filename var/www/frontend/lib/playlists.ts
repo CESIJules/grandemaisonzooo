@@ -57,8 +57,7 @@ export function createPlaylist(
 export function updatePlaylist(
   name: string,
   newSongs: string[],
-  newName?: string,
-  schedule?: { enabled: boolean; day: number; hour: number } | null
+  newName?: string
 ): ApiResponse {
   const data = getPlaylistData();
   const idx = data.playlists.findIndex((p) => p.name === name);
@@ -77,9 +76,6 @@ export function updatePlaylist(
   }
 
   playlist.songs = newSongs;
-  if (schedule !== undefined) {
-    playlist.schedule = schedule === null ? undefined : schedule;
-  }
   savePlaylistData(data);
   return { status: "success", message: "Playlist mise à jour." };
 }
@@ -125,9 +121,11 @@ export function setActivePlaylist(name: string | null): ApiResponse {
 
 function updateLivePlaylistSymlink(target: string | null): void {
   const link = PATHS.LIVE_PLAYLIST_LINK;
+  // When no playlist is active, fall back to the fallback directory (all music)
+  const resolved = target ?? PATHS.FALLBACK_DIR;
   try {
     if (fs.existsSync(link)) fs.unlinkSync(link);
-    if (target) fs.symlinkSync(target, link);
+    fs.symlinkSync(resolved, link);
   } catch {
     // Symlink operations may fail in dev/Windows environments — non-fatal
   }

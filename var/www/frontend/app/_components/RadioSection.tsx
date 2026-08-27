@@ -1,35 +1,29 @@
 export default function RadioSection() {
   return (
     <section id="radio" className="screen">
-      <div className="radio-header">
-        <canvas id="visualizer"></canvas>
-        <div className="volume-container" id="circularVolume">
-          <svg className="volume-ring" width="60" height="60" viewBox="0 0 60 60">
-            <circle
-              className="ring-bg"
-              cx="30" cy="30" r="26"
-              strokeWidth="4" fill="none"
-              stroke="rgba(255,255,255,0.2)"
-              strokeLinecap="round"
-              strokeDasharray="122.52 163.36"
-              transform="rotate(135 30 30)"
-            />
-            <circle
-              className="ring-progress"
-              cx="30" cy="30" r="26"
-              strokeWidth="4" fill="none"
-              stroke="#fff"
-              strokeLinecap="round"
-              strokeDasharray="122.52 163.36"
-              strokeDashoffset="122.52"
-              transform="rotate(135 30 30)"
-            />
-          </svg>
-          <div className="volume-icon-center">
-            <i className="fas fa-volume-up" id="volumeIcon"></i>
-          </div>
-          <input type="hidden" id="volumeControl" defaultValue="1" />
+      <audio id="radioPlayer" crossOrigin="anonymous">
+        <source src="https://grandemaisonzoo.com/stream" type="audio/mpeg" />
+      </audio>
+
+      {/* Volume control (top right) */}
+      <div className="volume-container" id="circularVolume">
+        <svg className="volume-ring" width="60" height="60" viewBox="0 0 60 60">
+          <circle className="ring-bg" cx="30" cy="30" r="26" strokeWidth="4" fill="none"
+            stroke="rgba(255,255,255,0.2)" strokeLinecap="round"
+            strokeDasharray="122.52 163.36" transform="rotate(135 30 30)" />
+          <circle className="ring-progress" cx="30" cy="30" r="26" strokeWidth="4" fill="none"
+            stroke="#fff" strokeLinecap="round"
+            strokeDasharray="122.52 163.36" strokeDashoffset="122.52"
+            transform="rotate(135 30 30)" />
+        </svg>
+        <div className="volume-icon-center">
+          <i className="fas fa-volume-up" id="volumeIcon"></i>
         </div>
+        <input type="hidden" id="volumeControl" defaultValue="1" />
+      </div>
+
+      {/* Radio player panel — floats over the globe */}
+      <div className="radio-panel">
 
         <div id="currentSong">
           <div id="mainCover" className="main-cover">
@@ -81,26 +75,18 @@ export default function RadioSection() {
             </div>
           </div>
         </div>
-      </div>
-      <audio id="radioPlayer" crossOrigin="anonymous">
-        <source src="https://grandemaisonzoo.com/stream" type="audio/mpeg" />
-      </audio>
-      <div className="player">
-        <div id="vinyl-disc-container">
-          <div id="vinyl-disc">
-            <canvas id="radarPoints"></canvas>
-          </div>
-          <button
-            id="playRadio"
-            data-src="https://grandemaisonzoo.com/stream"
-            className="btn-play"
-          >
+
+        {/* Controls row: play | visualizer | listener count */}
+        <div className="radio-controls-row">
+          <button id="playRadio" data-src="https://grandemaisonzoo.com/stream" className="btn-play">
             <i className="fas fa-play"></i>
           </button>
+          <canvas id="visualizer" className="radio-visualizer"></canvas>
+          <div id="listenerCount" className="listeners"></div>
         </div>
       </div>
+
       <div id="radioStatus" className="status"></div>
-      <div id="listenerCount" className="listeners"></div>
     </section>
   );
 }

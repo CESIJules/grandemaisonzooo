@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useArtists } from "@/hooks/useArtists";
+import { useAuth } from "@/hooks/useAuth";
 import type { ArtistProfile } from "@/types";
 import styles from "./tab.module.css";
 import { ArtistCardSkeleton } from "@/components/Skeleton";
@@ -12,16 +13,45 @@ const FIELD_LABELS: Record<string, string> = {
   listenLink: "Lien écouter (Spotify…)",
   watchLink: "Lien regarder (YouTube…)",
   instagramLink: "Instagram",
-  soundcloudUsername: "SoundCloud username",
+  soundcloudUserId: "SoundCloud User ID (numérique)",
   youtubeChannelId: "YouTube channel ID",
   deezerArtistId: "Deezer artist ID",
 };
 
+const EMPTY_PROFILE: ArtistProfile = {
+  id: "",
+  name: "",
+  glitchName: "",
+  location: "",
+  listenLink: "",
+  watchLink: "",
+  instagramLink: "",
+  soundcloudUserId: "",
+  youtubeChannelId: "",
+  deezerArtistId: "",
+};
+
+function slugify(name: string): string {
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "")
+    .slice(0, 32) || `artist_${Date.now()}`;
+}
+
 export default function ArtistsTab() {
   const { artists, loading, refresh } = useArtists();
+  const { isAdmin, isArtist, auth } = useAuth();
   const [editing, setEditing] = useState<ArtistProfile | null>(null);
+  const [isNew, setIsNew] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
+
+  // Artists can only see and manage their own profile
+  const visibleArtists = isArtist
+    ? artists.filter((a) => a.id === auth?.artist_id)
+    : artists;
 
   async function saveAll(updated: ArtistProfile[]) {
     setSaving(true);
@@ -33,12 +63,35 @@ export default function ArtistsTab() {
     });
     const data = await res.json();
     setSaving(false);
-    if (data.status === "success") { setEditing(null); refresh(); }
+    if (data.status === "success") { setEditing(null); setIsNew(false); refresh(); }
     else setSaveMsg(data.message);
   }
 
   function saveEdit(updated: ArtistProfile) {
     saveAll(artists.map((a) => (a.id === updated.id ? updated : a)));
+  }
+
+  function saveNew(profile: ArtistProfile) {
+    const id = slugify(profile.name) || `artist_${Date.now()}`;
+    const finalId = artists.some((a) => a.id === id) ? `${id}_${Date.now()}` : id;
+    const newProfile: ArtistProfile = { ...profile, id: finalId };
+    // Strip empty string optional fields
+    (Object.keys(newProfile) as (keyof ArtistProfile)[]).forEach((k) => {
+      if (k !== "id" && k !== "name" && newProfile[k] === "") delete newProfile[k];
+    });
+    saveAll([...artists, newProfile]);
+  }
+
+  function startNew() {
+    setIsNew(true);
+    setEditing({ ...EMPTY_PROFILE });
+    setSaveMsg(null);
+  }
+
+  function cancelEdit() {
+    setEditing(null);
+    setIsNew(false);
+    setSaveMsg(null);
   }
 
   if (loading) return (
@@ -50,16 +103,18 @@ export default function ArtistsTab() {
     </div>
   );
 
-  /* ─── EDIT VIEW ─────────────────────── */
+  /* ─── EDIT / CREATE VIEW ────────────── */
   if (editing) {
     return (
       <div className={styles.tab}>
         <div className={styles.rowBetween}>
           <div className={styles.row}>
-            <button className="btn btn-secondary" onClick={() => setEditing(null)}>
+            <button className="btn btn-secondary" onClick={cancelEdit}>
               <i className="fas fa-arrow-left" /> Retour
             </button>
-            <h2 className={styles.tabTitle}>Modifier {editing.name}</h2>
+            <h2 className={styles.tabTitle}>
+              {isNew ? "Nouvel artiste" : `Modifier ${editing.name}`}
+            </h2>
           </div>
           <div className={styles.row}>
             {saving && <span style={{ opacity: 0.5, fontSize: "0.85rem" }}>Sauvegarde…</span>}
@@ -72,10 +127,11 @@ export default function ArtistsTab() {
           </p>
           <ArtistForm
             profile={editing}
-            onSave={saveEdit}
+            onSave={isNew ? saveNew : saveEdit}
             saving={saving}
-            onCancel={() => setEditing(null)}
+            onCancel={cancelEdit}
             saveMsg={saveMsg}
+            isNew={isNew}
           />
         </div>
       </div>
@@ -85,7 +141,14 @@ export default function ArtistsTab() {
   /* ─── LIST VIEW ─────────────────────── */
   return (
     <div className={styles.tab}>
-      <h2 className={styles.tabTitle}>Artistes</h2>
+      <div className={styles.rowBetween}>
+        <h2 className={styles.tabTitle}>{isArtist ? "Mon profil" : "Artistes"}</h2>
+        {isAdmin && (
+          <button className="btn btn-primary" onClick={startNew}>
+            <i className="fas fa-plus" /> Nouvel artiste
+          </button>
+        )}
+      </div>
 
       <div className="card">
         <div className={styles.tableWrap}>
@@ -99,12 +162,12 @@ export default function ArtistsTab() {
               </tr>
             </thead>
             <tbody>
-              {artists.length === 0 && (
+              {visibleArtists.length === 0 && (
                 <tr>
                   <td colSpan={4} style={{ textAlign: "center", opacity: 0.4, padding: "2rem" }}>Aucun artiste</td>
                 </tr>
               )}
-              {artists.map((a) => (
+              {visibleArtists.map((a) => (
                 <tr key={a.id}>
                   <td>
                     <div style={{ fontWeight: 600 }}>{a.name}</div>
@@ -113,7 +176,7 @@ export default function ArtistsTab() {
                   <td className={styles.dim}>{a.location ?? "—"}</td>
                   <td className={styles.dim} style={{ fontSize: "0.78rem", fontFamily: "monospace" }}>{a.id}</td>
                   <td style={{ textAlign: "right" }}>
-                    <button className={styles.btnSm} onClick={() => setEditing({ ...a })}>
+                    <button className={styles.btnSm} onClick={() => { setIsNew(false); setSaveMsg(null); setEditing({ ...a }); }}>
                       <i className="fas fa-edit" /> Modifier
                     </button>
                   </td>
@@ -133,12 +196,14 @@ function ArtistForm({
   saving,
   onCancel,
   saveMsg,
+  isNew = false,
 }: {
   profile: ArtistProfile;
   onSave: (p: ArtistProfile) => void;
   saving: boolean;
   onCancel: () => void;
   saveMsg: string | null;
+  isNew?: boolean;
 }) {
   const [form, setForm] = useState({ ...profile });
 
@@ -166,13 +231,13 @@ function ArtistForm({
           Sources auto — sync sorties
         </p>
         <div className="form-grid">
-          {(["soundcloudUsername", "youtubeChannelId", "deezerArtistId"] as const).map((k) => (
+          {(["soundcloudUserId", "youtubeChannelId", "deezerArtistId"] as const).map((k) => (
             <div key={k} className="form-group">
               <label>{FIELD_LABELS[k]}</label>
               <input
                 value={(form[k] as string | undefined) ?? ""}
                 onChange={(e) => set(k, e.target.value)}
-                placeholder={k === "soundcloudUsername" ? "monartiste" : k === "youtubeChannelId" ? "UCxxxxx" : "123456"}
+                placeholder={k === "soundcloudUserId" ? "monartiste" : k === "youtubeChannelId" ? "UCxxxxx" : "123456"}
               />
             </div>
           ))}
@@ -183,8 +248,13 @@ function ArtistForm({
 
       <div className="form-actions">
         <button className="btn btn-secondary" onClick={onCancel}>Annuler</button>
-        <button className="btn btn-primary" onClick={() => onSave(form)} disabled={saving}>
-          <i className="fas fa-save" /> {saving ? "Sauvegarde…" : "Sauvegarder"}
+        <button
+          className="btn btn-primary"
+          onClick={() => onSave(form)}
+          disabled={saving || !form.name.trim()}
+        >
+          <i className={`fas fa-${isNew ? "plus" : "save"}`} />
+          {" "}{saving ? "Sauvegarde…" : isNew ? "Créer l'artiste" : "Sauvegarder"}
         </button>
       </div>
     </>

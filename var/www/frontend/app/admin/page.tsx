@@ -11,8 +11,11 @@ const PlaylistsTab = dynamic(() => import("./tabs/PlaylistsTab"));
 const RadioTab     = dynamic(() => import("./tabs/RadioTab"));
 const AuditTab     = dynamic(() => import("./tabs/AuditTab"));
 const VstTab       = dynamic(() => import("./tabs/VstTab"));
+const ShopTab      = dynamic(() => import("./tabs/ShopTab"));
+const DiscountsTab = dynamic(() => import("./tabs/DiscountsTab"));
+const UsersTab     = dynamic(() => import("./tabs/UsersTab"));
 
-type Section = "timeline" | "analytics" | "artists" | "music" | "playlists" | "radio" | "audit" | "vst";
+type Section = "timeline" | "analytics" | "artists" | "music" | "playlists" | "radio" | "audit" | "vst" | "shop" | "discounts" | "users";
 
 interface AuthUser { logged_in: boolean; user_id: string; role: string; artist_id?: string }
 
@@ -25,6 +28,9 @@ const NAV_ITEMS: { id: Section; icon: string; label: string; adminOnly?: boolean
   { id: "radio",     icon: "fa-broadcast-tower", label: "Radio", adminOnly: true },
   { id: "audit",     icon: "fa-clipboard-list",  label: "Audit",  adminOnly: true },
   { id: "vst",       icon: "fa-plug",            label: "VST",    adminOnly: true },
+  { id: "shop",      icon: "fa-store",           label: "Boutique" },
+  { id: "discounts", icon: "fa-tags",            label: "Codes promo" },
+  { id: "users",     icon: "fa-user-shield",     label: "Utilisateurs", adminOnly: true },
 ];
 
 export const dynamic_ = "force-dynamic"; // prevent static generation for admin page
@@ -37,17 +43,33 @@ export default function AdminPage() {
 
   // Auth check on mount
   useEffect(() => {
-    fetch("/api/auth/check")
+    fetch("/api/auth/check", { cache: "no-store" })
       .then((r) => r.json())
       .then((data: AuthUser) => {
-        if (!data.logged_in) { window.location.href = "/login"; return; }
+        if (!data.logged_in) { window.location.replace("/login"); return; }
         setUser(data);
         setAuthChecked(true);
       })
-      .catch(() => { window.location.href = "/login"; });
+      .catch(() => { window.location.replace("/login"); });
   }, []);
 
-  function logout() { window.location.href = "/api/auth/logout"; }
+  // Force full reload if the page is restored from BFCache (e.g. browser Back after logout)
+  useEffect(() => {
+    function onPageShow(e: PageTransitionEvent) {
+      if (e.persisted) window.location.reload();
+    }
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
+
+  // Land back on the Boutique tab after a Stripe Connect redirect (?shop=...)
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.search.includes("shop=")) {
+      setSection("shop");
+    }
+  }, []);
+
+  function logout() { window.location.replace("/api/auth/logout"); }
 
   function navigate(s: Section) {
     setSection(s);
@@ -125,6 +147,9 @@ export default function AdminPage() {
         {section === "radio"     && <RadioTab />}
         {section === "audit"     && <AuditTab />}
         {section === "vst"       && <VstTab />}
+        {section === "shop"      && <ShopTab />}
+        {section === "discounts" && <DiscountsTab />}
+        {section === "users"     && <UsersTab />}
       </main>
     </div>
   );

@@ -612,6 +612,37 @@ body.menu-open {
     padding: 0;
 }
 
+/* Menu legal sub-list (small links under main menu) */
+.menu-legal-list {
+    list-style: none;
+    margin: 32px 0 0;
+    padding: 24px 0 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px 18px;
+}
+
+.menu-legal-list li {
+    margin: 0;
+}
+
+.menu-legal-list a {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.45);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.menu-legal-list a:hover {
+    color: #00ff68;
+}
+
 /* Menu item */
 .menu-item {
     display: flex;
@@ -823,11 +854,46 @@ body.menu-open {
 /* Radio Section */
 #radio {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-end;
     padding-top: 0;
+    padding-bottom: clamp(40px, 6vh, 80px);
     position: relative;
     overflow: hidden;
+    background: transparent;
+}
+
+/* Radio player panel — glass card floating over the globe */
+.radio-panel {
+    position: relative;
+    z-index: 20;
+    width: min(580px, 92vw);
+    background: rgba(5, 5, 5, 0.72);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 20px;
+    padding: clamp(20px, 3vw, 32px) clamp(18px, 3vw, 30px);
+    box-shadow: 0 0 60px rgba(0, 0, 0, 0.7), 0 0 30px rgba(0, 255, 80, 0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.radio-visualizer {
+    width: 100%;
+    height: clamp(36px, 5vh, 56px);
+    display: block;
+    opacity: 0.7;
+}
+
+.radio-play-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    padding-top: 4px;
 }
 
 #noiseCanvas {
@@ -919,17 +985,12 @@ body.menu-open {
     line-height: 1;
 }
 
-/* Volume button next to visualizer */
-.radio-header .volume-container {
-    display: flex;
-    align-items: center;
+/* Volume button — absolute top-left of the radio section (not overlapping burger) */
+#radio .volume-container {
     position: absolute;
-    /* Vertically center with visualizer */
-    top: calc(clamp(14px, 2vw, 22px) + clamp(50px, 5.5vw, 80px) / 2 - clamp(40px, 4vw, 54px) / 2);
-    left: calc(clamp(15px, 2.5vw, 30px) + clamp(160px, 18vw, 280px) + clamp(10px, 1.5vw, 20px));
-    z-index: 100;
-    width: clamp(40px, 4vw, 54px);
-    height: clamp(40px, 4vw, 54px);
+    top: clamp(14px, 2vw, 22px);
+    left: clamp(14px, 2vw, 22px);
+    z-index: 30;
 }
 
 /* Hide PIP in header - it's in RC */
@@ -1912,6 +1973,8 @@ body.menu-open {
     overflow: hidden;
     position: relative;
     height: 100vh;
+    background: transparent;
+    z-index: 1;
 }
 
 /* Scroll fade indicators on left/right edges (desktop only) */
@@ -1947,10 +2010,7 @@ body.menu-open {
     justify-content: center;
     padding: 0;
     z-index: 100;
-    /* Above timeline cards */
     pointer-events: none !important;
-    height: 4.5em;
-    /* Match title height for vertical alignment */
 }
 
 #timeline h2 {
@@ -1977,7 +2037,8 @@ body.menu-open {
     z-index: 10;
     flex-wrap: wrap;
     max-width: calc(100% - 40px);
-    /* Prevent overflow */
+    opacity: 0;
+    /* hidden until globe entrance completes */
 }
 
 .timeline-filters .btn {
@@ -1995,79 +2056,41 @@ body.menu-open {
 }
 
 .timeline-container {
-    position: relative;
-    width: 100%;
-    flex: 1;
-    overflow-x: auto;
-    overflow-y: hidden;
-    display: flex;
-    align-items: stretch;
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-    /* Infinite line */
-    background: linear-gradient(#555, #555) repeat-x left 50% / 1px 2px local;
-    /* will-change: scroll-position; Removed to prevent stacking context trap */
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    opacity: 0;
+    /* hidden until globe entrance completes */
 }
 
-.timeline-container::-webkit-scrollbar {
-    display: none;
+/* Globe canvas — fixed, covers the full viewport (timeline + radio) */
+#globeCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 8;
+    /* entre les cartes arrière (z<8) et avant (z>8) */
+    pointer-events: none;
+    opacity: 0;
+    transform-origin: 50% 50%;
+    /* No CSS transition — zoom animation is handled by JS RAF */
 }
 
 .timeline-item {
-    position: relative;
-    flex-shrink: 0;
-    width: clamp(184px, 16.1vw, 276px);
-    margin: 0 clamp(20px, 3vw, 40px);
-    /* z-index: 2; Removed to allow hover pop-over */
-    pointer-events: none;
-    /* Prevent hover on the column itself */
-}
-
-/* The Cursor (Trait) */
-.timeline-item::after {
-    content: '';
     position: absolute;
-    width: 2px;
-    height: 24px;
-    background-color: #fff;
-    border: none;
-    border-radius: 0;
-    z-index: 3;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+    left: 0;
+    top: 0;
     pointer-events: none;
-}
-
-/* Vertical Connector */
-.timeline-item::before {
-    content: '';
-    position: absolute;
-    width: 2px;
-    background-color: #555;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1;
-    pointer-events: none;
-}
-
-.timeline-item:nth-child(odd)::before {
-    bottom: 50%;
-    height: clamp(25px, 4vh, 40px);
-}
-
-.timeline-item:nth-child(even)::before {
-    top: 50%;
-    height: clamp(25px, 4vh, 40px);
+    will-change: transform;
 }
 
 .timeline-content,
 .timeline-content-left,
 .timeline-content-right {
-    position: absolute;
+    position: relative;
     z-index: 5;
-    left: 0;
     width: 100%;
     pointer-events: auto;
     background-color: #0000;
@@ -2077,7 +2100,9 @@ body.menu-open {
     border: 1px solid rgba(255, 255, 255, 0.12);
     -webkit-backdrop-filter: blur(2px);
     backdrop-filter: blur(2px);
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.8),
+        inset 6px 0 14px rgba(0, 0, 0, 0.55),
+        inset -6px 0 14px rgba(0, 0, 0, 0.55);
 
     /* 3D Tilt Setup */
     transform-style: preserve-3d;
@@ -2125,14 +2150,31 @@ body.menu-open {
     mix-blend-mode: overlay;
 }
 
-.timeline-item:nth-child(odd) .timeline-content {
-    bottom: 50%;
-    margin-bottom: clamp(20px, 3vh, 32px);
+/* Globe orbit — no stagger positioning needed */
+
+/* Back face of timeline card (shown when behind the globe) */
+.timeline-back-face {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    text-align: center;
+    background: linear-gradient(160deg, #111 0%, #0a0a0a 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.6);
+    pointer-events: none;
 }
 
-.timeline-item:nth-child(even) .timeline-content {
-    top: 50%;
-    margin-top: clamp(20px, 3vh, 32px);
+.timeline-back-face span {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.5rem;
+    color: rgba(255, 255, 255, 0.22);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    word-break: break-word;
 }
 
 .timeline-item h3 {
@@ -3335,6 +3377,22 @@ body.menu-open {
         display: none;
     }
 
+    /* Hide globe canvas on mobile */
+    #globeCanvas {
+        display: none;
+    }
+
+    /* Radio panel full-width on mobile */
+    .radio-panel {
+        width: 95vw;
+        border-radius: 14px;
+    }
+
+    #radio {
+        align-items: center;
+        padding-bottom: 20px;
+    }
+
     .timeline-header-wrapper {
         position: sticky;
         top: 0;
@@ -3381,6 +3439,9 @@ body.menu-open {
     }
 
     .timeline-container {
+        position: relative;
+        inset: auto;
+        display: flex;
         margin-top: 0;
         flex-direction: column;
         align-items: center;
@@ -3390,12 +3451,14 @@ body.menu-open {
         padding-bottom: 100px;
         padding-left: 15px;
         padding-right: 15px;
-        position: relative;
         gap: 24px;
         /* Consistent spacing between items */
     }
 
     .timeline-item {
+        position: relative;
+        left: auto;
+        top: auto;
         width: 100%;
         max-width: 500px;
         margin: 0 !important;
@@ -5352,4 +5415,61 @@ body.no-scroll main {
     text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
     transform-origin: center;
     display: inline-block;
+}
+
+/* ── Radio panel: layout fixes ─────────────────────────────────────────────── */
+
+/* Song info: in-flow (not absolutely positioned) inside the panel */
+.radio-panel #currentSong {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-shadow: none;
+    border: none;
+    background: transparent;
+    padding: 0;
+}
+
+/* Controls row: play button | visualizer | listener count */
+.radio-controls-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding-top: 4px;
+}
+
+/* Play button — smaller inline version */
+.radio-controls-row #playRadio {
+    width: 52px !important;
+    height: 52px !important;
+    font-size: 22px !important;
+    flex-shrink: 0;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255, 255, 255, 0.25) !important;
+    background: transparent !important;
+    backdrop-filter: none;
+    z-index: auto;
+}
+
+/* Visualizer — fills the row between play and listeners */
+.radio-controls-row .radio-visualizer {
+    flex: 1;
+    height: clamp(32px, 4vh, 48px);
+    min-width: 0;
+}
+
+/* Listener count — inline, no absolute positioning */
+.radio-controls-row .listeners {
+    position: relative !important;
+    bottom: auto !important;
+    left: auto !important;
+    z-index: auto !important;
+    flex-shrink: 0;
+    white-space: nowrap;
+    font-size: 0.85em;
+    color: rgba(255, 255, 255, 0.55);
 }

@@ -1,0 +1,951 @@
+/* ================================================================
+ * BoutiqueSection — constellation navigation + sub-views
+ * Palette : #050505 bg · #00ff68 accent · Syne / Space Grotesk
+ * ================================================================ */
+
+/* ── Section root ──────────────────────────────────────────────── */
+.section {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  padding: 0;
+  /* No background: the site's fixed asciiBg dot-cloud shows through */
+}
+
+/* ── Constellation canvas overlay ────────────────────────────── */
+/* Sits above the fixed asciiBg (z-index: -1) but below the nav nodes (z: 1) */
+.constellationBg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ── View wrapper (animated transitions) ──────────────────────── */
+.viewWrap {
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.32s ease, transform 0.32s ease;
+}
+
+.phaseLeave {
+  opacity: 0;
+  transform: translateY(-18px) scale(0.98);
+  pointer-events: none;
+}
+
+.phaseEnter {
+  opacity: 0;
+  transform: translateY(14px) scale(0.99);
+}
+
+/* ── Shared typographic elements ──────────────────────────────── */
+.title {
+  font-family: 'SyneGMZExtraBold', 'Syne', sans-serif;
+  font-size: clamp(3rem, 7vw, 5.5rem);
+  font-weight: 800;
+  letter-spacing: -3px;
+  line-height: 1;
+  margin: 0;
+  color: #f5f5f5;
+  mix-blend-mode: difference;
+}
+
+.subtitle {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.32);
+  margin: 0;
+}
+
+.accentCount {
+  font-weight: 700;
+  color: #00ff68;
+  letter-spacing: 0.02em;
+}
+
+/* ── CONSTELLATION view ─────────────────────────────────────────── */
+.constellation {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding: clamp(28px, 4.5vh, 52px) 0 0;
+  box-sizing: border-box;
+}
+
+.constellationHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Blinking cursor */
+.cursor {
+  display: inline-block;
+  color: #00ff68;
+  animation: blink 1.1s step-end infinite;
+  margin-left: 2px;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+/* SVG container */
+.svgWrap {
+  width: 100%;
+  max-width: 1100px;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1rem 2rem;
+  box-sizing: border-box;
+}
+
+.svg {
+  width: 100%;
+  height: 100%;
+  max-height: 62vh;
+  overflow: visible;
+}
+
+/* ── Constellation lines & secondary stars ────────────────────── */
+
+/* Lines connecting stars in the constellation */
+.constLine {
+  stroke: rgba(255, 255, 255, 0.15);
+  stroke-width: 0.75;
+  stroke-linecap: round;
+}
+
+/* Relay stars: intermediate nodes along the constellation lines */
+.relayStar {
+  animation: relayPulse 3.8s ease-in-out infinite;
+}
+@keyframes relayPulse {
+  0%, 100% { opacity: 0.42; }
+  50%       { opacity: 0.72; }
+}
+
+/* Isolated tiny sparkles around the constellation */
+.sparkleStar {
+  animation: sparkleFade 5.2s ease-in-out infinite;
+}
+@keyframes sparkleFade {
+  0%, 100% { opacity: 0.15; }
+  50%       { opacity: 0.48; }
+}
+
+/* ── Category node components ──────────────────────────────────── */
+.catNode {
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+.catNode:focus { outline: none; }
+.catNodeLocked { cursor: default; opacity: 0.38; }
+
+/* Outer pulsing ring */
+.ringOuter {
+  fill: none;
+  stroke: rgba(0, 255, 104, 0.12);
+  stroke-width: 1;
+  animation: pulseRing 2.8s ease-in-out infinite;
+}
+.ringOuterHov {
+  fill: none;
+  stroke: rgba(0, 255, 104, 0.35);
+  stroke-width: 1.5;
+  animation: pulseRingFast 1.4s ease-in-out infinite;
+}
+
+@keyframes pulseRing {
+  0%, 100% { stroke-width: 1;   r: 22; opacity: 0.5; }
+  50%       { stroke-width: 0.5; r: 30; opacity: 0;   }
+}
+@keyframes pulseRingFast {
+  0%, 100% { stroke-width: 2;   r: 24; opacity: 0.7; }
+  50%       { stroke-width: 0.5; r: 34; opacity: 0;   }
+}
+
+/* Inner glow ring */
+.ringInner {
+  fill: rgba(0, 255, 104, 0.06);
+  stroke: rgba(0, 255, 104, 0.25);
+  stroke-width: 0.8;
+}
+.ringInnerHov {
+  fill: rgba(0, 255, 104, 0.14);
+  stroke: rgba(0, 255, 104, 0.7);
+  stroke-width: 1.2;
+}
+.ringLockedInner {
+  fill: rgba(255, 255, 255, 0.03);
+  stroke: rgba(255, 255, 255, 0.12);
+  stroke-width: 0.7;
+}
+
+/* Core star dot */
+.star {
+  fill: #00ff68;
+  transition: r 0.2s ease;
+}
+.catNodeHovered .star {
+  r: 8;
+}
+.starLocked { fill: rgba(255, 255, 255, 0.35); }
+
+/* 4-point cross spikes */
+.spike {
+  stroke: rgba(0, 255, 104, 0.4);
+  stroke-width: 0.7;
+  stroke-linecap: round;
+  transition: stroke-opacity 0.2s ease;
+}
+.spikeHov {
+  stroke: rgba(0, 255, 104, 0.9);
+  stroke-width: 1.1;
+  stroke-linecap: round;
+}
+
+/* Labels */
+.labelCat {
+  font-family: 'SyneGMZExtraBold', 'Syne', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  fill: rgba(255, 255, 255, 0.7);
+  letter-spacing: 2px;
+  transition: fill 0.2s ease;
+}
+.labelHov {
+  font-family: 'SyneGMZExtraBold', 'Syne', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  fill: #00ff68;
+  letter-spacing: 2px;
+}
+.labelLocked {
+  font-family: 'SyneGMZExtraBold', 'Syne', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  fill: rgba(255, 255, 255, 0.25);
+  letter-spacing: 2px;
+}
+.labelSub {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 9px;
+  letter-spacing: 2.5px;
+  fill: rgba(255, 255, 255, 0.3);
+  text-transform: uppercase;
+}
+.hintText {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 9px;
+  letter-spacing: 2px;
+  fill: #00ff68;
+  text-transform: uppercase;
+  opacity: 0.85;
+  animation: fadeInUp 0.2s ease forwards;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 0.85; transform: translateY(0); }
+}
+
+/* ── Sub-views (shared layout) ─────────────────────────────────── */
+.subView {
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: clamp(28px, 4.5vh, 52px) clamp(1rem, 3vw, 2.5rem) 0;
+  box-sizing: border-box;
+  gap: 0;
+}
+
+.subViewHeader {
+  width: 100%;
+  max-width: 1080px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+}
+
+.subViewTitle {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+/* ── Back button ───────────────────────────────────────────────── */
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s ease, letter-spacing 0.2s ease;
+  align-self: flex-start;
+}
+.backBtn:hover {
+  color: #f5f5f5;
+  letter-spacing: 0.32em;
+}
+
+/* ── PRODS — artist grid ────────────────────────────────────────── */
+.artistsScrollArea {
+  width: 100%;
+  max-width: 1080px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 6px 6px 40px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 14px, #000 calc(100% - 32px), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 14px, #000 calc(100% - 32px), transparent 100%);
+}
+.artistsScrollArea::-webkit-scrollbar { display: none; }
+
+.artistsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.25rem;
+}
+
+.artistCard {
+  display: flex;
+  flex-direction: column;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 16px;
+  overflow: hidden;
+  text-align: left;
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.artistCard:hover {
+  transform: translateY(-5px);
+}
+.artistCard:focus-visible {
+  outline: 2px solid #00ff68;
+  outline-offset: 3px;
+}
+
+.artistCardMedia {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.artistImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.artistCard:hover .artistImg {
+  transform: scale(1.06);
+}
+
+.artistImgPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(0,255,104,0.06) 0%, rgba(255,255,255,0.02) 100%);
+}
+.artistImgPlaceholder span {
+  font-family: 'SyneGMZExtraBold', 'Syne', sans-serif;
+  font-size: clamp(3rem, 6vw, 5rem);
+  font-weight: 800;
+  color: rgba(0, 255, 104, 0.3);
+  letter-spacing: -3px;
+  line-height: 1;
+}
+
+.artistCardOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top,
+    rgba(5, 5, 5, 0.7) 0%,
+    rgba(5, 5, 5, 0.1) 50%,
+    transparent 100%
+  );
+  transition: background 0.3s ease;
+}
+.artistCard:hover .artistCardOverlay {
+  background: linear-gradient(to top,
+    rgba(5, 5, 5, 0.5) 0%,
+    transparent 60%
+  );
+}
+
+.artistProdBadge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #002b14;
+  background: #00ff68;
+  border-radius: 999px;
+  padding: 4px 9px;
+}
+
+.artistCardBody {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0.25rem 0.25rem;
+  gap: 0.5rem;
+}
+
+.artistName {
+  font-family: 'SyneGMZBold', 'Syne', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f5f5f5;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.artistArrow {
+  font-size: 1rem;
+  color: #00ff68;
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  flex-shrink: 0;
+}
+.artistCard:hover .artistArrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ── PRODS — product grid ───────────────────────────────────────── */
+.prodsScrollArea {
+  width: 100%;
+  max-width: 1080px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 6px 6px 40px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 14px, #000 calc(100% - 32px), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 14px, #000 calc(100% - 32px), transparent 100%);
+}
+.prodsScrollArea::-webkit-scrollbar { display: none; }
+
+.prodsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.25rem;
+}
+
+/* Product card */
+.prodCard {
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.022);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  text-decoration: none;
+  color: inherit;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 12px 32px rgba(0,0,0,0.3);
+  transition: border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+}
+.prodCard:hover {
+  border-color: rgba(0, 255, 104, 0.25);
+  transform: translateY(-4px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08),
+              0 20px 50px rgba(0,0,0,0.5),
+              0 0 20px rgba(0,255,104,0.06);
+}
+
+.prodCoverWrap {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.4);
+}
+.prodCover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.prodCard:hover .prodCover { transform: scale(1.04); }
+
+.prodCoverPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.6rem;
+  color: rgba(255, 255, 255, 0.1);
+}
+
+.prodFormatTag {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.7);
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: rgba(0,0,0,0.45);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.prodPriceTag {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #002b14;
+  background: #00ff68;
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+
+.prodBody {
+  padding: 0.85rem 1rem 1.05rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.prodName {
+  font-family: 'SyneGMZBold', 'Syne', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f5f5f5;
+  letter-spacing: -0.02em;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.prodSpecs {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+}
+
+.prodSpecDot {
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.25);
+}
+
+/* ── VST view toolbar ───────────────────────────────────────────── */
+.vstConsole {
+  width: 100%;
+  max-width: 1080px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  flex-wrap: wrap;
+}
+
+.vstCount {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.vstCountLabel {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+}
+
+.vstSearch {
+  flex: 1;
+  min-width: 180px;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+  color: rgba(255,255,255,0.4);
+  font-size: 0.7rem;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.vstSearch:focus-within {
+  border-color: rgba(0,255,104,0.3);
+  background: rgba(0,255,104,0.04);
+  color: rgba(255,255,255,0.7);
+}
+
+.vstSearchInput {
+  background: none;
+  border: none;
+  outline: none;
+  color: inherit;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  flex: 1;
+}
+.vstSearchInput::placeholder { color: rgba(255,255,255,0.25); }
+
+.vstClear {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(255,255,255,0.35);
+  padding: 0;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+.vstClear:hover { color: #f5f5f5; }
+
+.vstSortBtns {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.sortBtn {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 999px;
+  color: rgba(255,255,255,0.4);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.8rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+.sortBtn:hover { border-color: rgba(255,255,255,0.25); color: #f5f5f5; }
+.sortActive {
+  border-color: #00ff68 !important;
+  color: #00ff68 !important;
+  background: rgba(0,255,104,0.06) !important;
+}
+
+/* ── VST scroll area & grid ─────────────────────────────────────── */
+.vstScrollArea {
+  width: 100%;
+  max-width: 1080px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 6px 6px 40px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 14px, #000 calc(100% - 32px), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 14px, #000 calc(100% - 32px), transparent 100%);
+}
+.vstScrollArea::-webkit-scrollbar { display: none; }
+
+.vstGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+/* ── VST card ───────────────────────────────────────────────────── */
+.vstCard {
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.022);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 12px 32px rgba(0,0,0,0.3);
+  transition: border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+}
+.vstCard:hover {
+  border-color: rgba(0,255,104,0.2);
+  transform: translateY(-4px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08),
+              0 20px 50px rgba(0,0,0,0.5),
+              0 0 16px rgba(0,255,104,0.05);
+}
+
+.vstMedia {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: rgba(0,0,0,0.45);
+}
+.vstShot {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.vstCard:hover .vstShot { transform: scale(1.04); }
+
+.vstMediaEmpty {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: rgba(255,255,255,0.08);
+}
+
+.vstFmtBadge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.7);
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 999px;
+  padding: 3px 8px;
+  background: rgba(0,0,0,0.5);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.vstNum {
+  position: absolute;
+  bottom: 10px;
+  right: 12px;
+  font-family: 'SyneGMZExtraBold', 'Syne', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: rgba(255,255,255,0.06);
+  letter-spacing: -2px;
+  line-height: 1;
+}
+
+.vstBody {
+  padding: 1rem 1.1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 1;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.vstHead {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.vstType {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #00ff68;
+}
+.vstRule {
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.06);
+}
+
+.vstName {
+  font-family: 'SyneGMZBold', 'Syne', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #f5f5f5;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+.vstDesc {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.45);
+  line-height: 1.55;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.vstFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 0.5rem;
+  gap: 0.5rem;
+}
+.vstMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.vstMetaItem {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.3);
+}
+.vstSep {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  display: inline-block;
+}
+
+.vstDl {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #00ff68;
+  text-decoration: none;
+  border: 1px solid rgba(0,255,104,0.3);
+  border-radius: 999px;
+  padding: 0.4rem 0.9rem;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  white-space: nowrap;
+}
+.vstDl:hover {
+  background: rgba(0,255,104,0.12);
+  border-color: rgba(0,255,104,0.6);
+}
+.vstDlLocked {
+  color: rgba(255,255,255,0.25) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+  cursor: default;
+}
+.vstDlLocked:hover {
+  background: none !important;
+}
+
+/* ── Empty state ────────────────────────────────────────────────── */
+.emptyMsg {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.25);
+  text-align: center;
+  margin-top: 4rem;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .svg { max-height: 52vh; }
+
+  .artistsGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .prodsGrid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 0.85rem;
+  }
+
+  .vstGrid {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+
+  .vstConsole { flex-wrap: wrap; }
+  .vstSearch { min-width: 140px; }
+  .vstSortBtns { width: 100%; }
+
+  .title {
+    font-size: clamp(2.5rem, 10vw, 4rem);
+    letter-spacing: -2px;
+  }
+}
+
+@media (max-width: 400px) {
+  .artistsGrid { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+  .svg { max-height: 44vh; }
+}

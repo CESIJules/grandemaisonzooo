@@ -28,7 +28,11 @@ server {
 	index index.php index.html index.htm index.nginx-debian.html;
 
 	server_name _;
-
+        location /gm-editor/ {
+                alias /var/www/html/gm-editor/;
+                add_header Access-Control-Allow-Origin *;
+                try_files $uri =404;
+        }
 	location / {
 		try_files $uri $uri/ =404;
 	}
@@ -51,14 +55,13 @@ server {
 	# concurs with nginx's one
 	#
 	#location ~ /\.ht {
-	#	deny all;
-	#}
+
+
 }
 
 # Virtual Host configuration for example.com
 #
-# You can move that to a different file under sites-available/ and symlink that
-# to sites-enabled/ to enable it.
+# You can move that to a different file under sites-available/ and symlink that# to sites-enabled/ to enable it.
 #
 #server {
 #	listen 80;

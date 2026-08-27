@@ -73,6 +73,26 @@ export async function requireAuth(): Promise<SessionData> {
 }
 
 /**
+ * Require admin OR a logged-in artist whose artist_id matches `ownerArtistId`.
+ * - admin: always allowed
+ * - artist: allowed only if their artist_id === ownerArtistId
+ * Throws 401 / 403 otherwise.
+ */
+export async function requireAdminOrOwner(
+  ownerArtistId: string | null | undefined
+): Promise<SessionData> {
+  const session = await requireAuth();
+  if (session.role === "admin") return session;
+  if (session.role === "artist" && session.artist_id && ownerArtistId && session.artist_id === ownerArtistId) {
+    return session;
+  }
+  throw new Response(
+    JSON.stringify({ status: "error", message: "Accès refusé" }),
+    { status: 403, headers: { "Content-Type": "application/json" } }
+  );
+}
+
+/**
  * Hash a plain-text password (bcrypt, cost 12).
  */
 export async function hashPassword(plain: string): Promise<string> {

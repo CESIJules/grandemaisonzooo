@@ -28,6 +28,9 @@ export const artistProfileSchema = z.object({
   soundcloudUsername: z.string().max(100).optional(),
   youtubeChannelId: z.string().max(50).optional(),
   deezerArtistId: z.string().max(20).optional(),
+  stripeAccountId: z.string().max(50).optional(),
+  stripeChargesEnabled: z.boolean().optional(),
+  stripeDetailsSubmitted: z.boolean().optional(),
 });
 
 export const saveArtistProfilesSchema = z.array(artistProfileSchema);
@@ -73,6 +76,72 @@ export const spotifyDownloadSchema = z.object({
     .string()
     .url()
     .refine((u) => u.includes("spotify.com"), "URL Spotify invalide"),
+});
+
+// ─── Shop ─────────────────────────────────────────────────────────────────────
+export const productTierSchema = z.object({
+  id: z.string().optional(),                    // present when editing an existing tier
+  name: z.string().min(1).max(60),
+  price_cents: z.number().int().min(0).max(1_000_000),
+  license_type: z.string().max(100).optional(),
+  is_exclusive: z.boolean().optional().default(false),
+  sort_order: z.number().int().min(0).max(999).optional().default(0),
+});
+
+export const createProductSchema = z.object({
+  title: z.string().min(1).max(200),
+  description: z.string().max(5000).optional().default(""),
+  artist_id: z.string().min(1).max(50),
+  bpm: z.number().int().min(20).max(400).optional(),
+  music_key: z.string().max(10).optional(),
+  status: z.enum(["draft", "published"]).optional().default("draft"),
+  tiers: z.array(productTierSchema).min(1, "Au moins un palier est requis"),
+});
+
+export const updateProductSchema = createProductSchema.partial().extend({
+  id: z.string().min(1),
+});
+
+export const shopConfigSchema = z.object({
+  commissionPct: z.number().min(0).max(100),
+  artistsCanSell: z.boolean(),
+  currency: z.string().min(3).max(4),
+});
+
+export const checkoutSchema = z.object({
+  tier_id: z.string().min(1),
+  discount_code: z.string().trim().max(60).optional(),
+});
+
+// ─── Discount codes ───────────────────────────────────────────────────────────
+const discountCodeRegex = /^[A-Za-z0-9_\-]{2,40}$/;
+
+export const discountCreateSchema = z.object({
+  code: z.string().trim().regex(discountCodeRegex, "Code: 2-40 caractères alphanumériques, _ ou -"),
+  type: z.enum(["percent", "fixed"]),
+  value: z.number().int().min(1).max(1_000_000),       // percent ≤100 enforced below
+  artist_id: z.string().min(1).max(50).nullable().optional(),
+  max_uses: z.number().int().min(1).max(100000).nullable().optional(),
+  expires_at: z.string().trim().min(1).nullable().optional(),  // YYYY-MM-DD or YYYY-MM-DD HH:MM:SS
+  enabled: z.boolean().optional(),
+}).refine((d) => d.type !== "percent" || d.value <= 100, {
+  message: "Un pourcentage doit être ≤ 100",
+  path: ["value"],
+});
+
+export const discountUpdateSchema = z.object({
+  code: z.string().trim().regex(discountCodeRegex).optional(),
+  type: z.enum(["percent", "fixed"]).optional(),
+  value: z.number().int().min(1).max(1_000_000).optional(),
+  artist_id: z.string().min(1).max(50).nullable().optional(),
+  max_uses: z.number().int().min(1).max(100000).nullable().optional(),
+  expires_at: z.string().trim().min(1).nullable().optional(),
+  enabled: z.boolean().optional(),
+});
+
+export const discountValidateSchema = z.object({
+  code: z.string().trim().min(1).max(60),
+  tier_id: z.string().min(1),
 });
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────

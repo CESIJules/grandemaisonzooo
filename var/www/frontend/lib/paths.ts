@@ -15,6 +15,16 @@ export const PATHS = {
   // VST plugins data
   VSTS_JSON: `${ROOT}/var/www/frontend/data/vsts.json`,
 
+  // Release candidates (sorties détectées en attente de validation)
+  RELEASES_CANDIDATES_JSON: `${ROOT}/var/www/frontend/data/releases_candidates.json`,
+  SYNC_STATUS_JSON: `${ROOT}/var/www/frontend/data/sync_status.json`,
+
+  // Shop — editable settings (commission %, artist self-service, currency)
+  SHOP_CONFIG_JSON: `${ROOT}/var/www/frontend/data/shop_config.json`,
+  // Deliverable product files — OUTSIDE the web root, NEVER served by nginx.
+  // Streamed only via the authenticated download-token route.
+  SHOP_FILES_DIR: `${ROOT}/var/www/shop_files`,
+
   // Analytics DB
   ANALYTICS_DB: `${ROOT}/var/www/data/analytics.db`,
 

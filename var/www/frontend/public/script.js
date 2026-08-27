@@ -183,9 +183,57 @@
   window.addEventListener('orientationchange', scheduleSetMainHeight);
   // --- END: Fullscreen height fix for mobile browsers ---
   
-  // Timeline State
+  // Timeline State (legacy, kept for compat)
   let timelineTargetScroll = 0;
   let isAnimatingTimeline = false;
+
+  // Globe Timeline State
+  let globeOrbitTarget  = 0;
+  let globeOrbitCurrent = 0;
+  let globeRotation     = 0;
+  let globeRafActive    = false;
+  let globeItems        = [];
+  const GLOBE_TILT      = 0.55; // backward tilt ~31°
+  const GLOBE_TILT_Z    = -0.28; // leftward canvas tilt ~-16°
+
+  // Radio / globe transition state
+  let globeScrollT      = 0;   // 0 = timeline, 1 = radio (interpolated)
+  let globeSweepLon     = 0;   // current radar sweep longitude (radians)
+  let globeSweepActive  = false;
+  let globeAnimT        = 0;     // linear progress 0→1 for entrance/exit
+  let globeZoomScale    = 0;     // cubic-eased scale derived from globeAnimT
+  let globeIsShowing    = false;  // target visibility state (set by updateRaf)
+  let globeCoastlines   = null; // loaded from world-coastline.json
+  const LISTENER_MODE   = 'random'; // 'random' | 'live'
+  const LISTENER_COORDS = [
+    [  2.3,  48.9], // Paris
+    [ -0.1,  51.5], // London
+    [ 13.4,  52.5], // Berlin
+    [ -3.7,  40.4], // Madrid
+    [ 12.5,  41.9], // Rome
+    [ 28.9,  41.0], // Istanbul
+    [-73.9,  40.7], // New York
+    [-87.6,  41.9], // Chicago
+    [-118.2, 34.1], // Los Angeles
+    [-43.2, -22.9], // Rio de Janeiro
+    [ -58.4, -34.6],// Buenos Aires
+    [-99.1,  19.4], // Mexico City
+    [  55.3,  25.2],// Dubai
+    [  72.9,  19.1],// Mumbai
+    [  77.2,  28.6],// New Delhi
+    [ 121.5,  31.2],// Shanghai
+    [ 139.7,  35.7],// Tokyo
+    [ 151.2, -33.9],// Sydney
+    [  18.4, -33.9],// Cape Town
+    [  36.8,  -1.3],// Nairobi
+    [ -17.4,  14.7],// Dakar
+    [  31.2,  30.1],// Cairo
+    [  37.6,  55.8],// Moscow
+    [  24.9,  60.2],// Helsinki
+    [ -71.0,  42.4],// Boston
+  ];
+  // Each listener dot: {lat, lon, alpha, flashT}
+  let globeListenerDots = [];
 
   let isScrolling;
   let isSnapping = false;
@@ -1774,6 +1822,7 @@
     audio.addEventListener('playing', () => { 
       status.textContent = ''; 
       document.getElementById('radio').classList.add('playing');
+      if (window._globeSetSweep) window._globeSetSweep(true);
       
       if (!fetchInterval) {
           // On attend 500ms avant la première récupération d'infos.
@@ -1812,6 +1861,7 @@
         audio.addEventListener('pause', () => {
           status.textContent = '';
           document.getElementById('radio').classList.remove('playing');
+          if (window._globeSetSweep) window._globeSetSweep(false);
           
           if (fetchInterval) {
               clearInterval(fetchInterval);
@@ -2555,13 +2605,15 @@
         return;
       }
 
+      // Clear globe items before repopulating
+      globeItems = [];
+
       posts.forEach((post, index) => {
         const timelineItem = document.createElement('div');
         timelineItem.classList.add('timeline-item');
 
         const contentDiv = document.createElement('div');
         contentDiv.classList.add('timeline-content');
-        contentDiv.classList.add(index % 2 === 0 ? 'timeline-content-left' : 'timeline-content-right');
 
         let displayTitle = post.title;
         let displaySubtitle = post.subtitle;
@@ -2618,9 +2670,23 @@
         // Add 3D Tilt Effect
         addTiltEffect(contentDiv);
 
+        // Back face — shown when item is behind the globe
+        const backFaceDiv = document.createElement('div');
+        backFaceDiv.classList.add('timeline-back-face');
+        backFaceDiv.innerHTML = `<span>${escapeHtml(post.artist || post.title || '')}</span>`;
+        backFaceDiv.style.display = 'none';
+
         timelineItem.appendChild(contentDiv);
+        timelineItem.appendChild(backFaceDiv);
         timelineContainer.appendChild(timelineItem);
+        globeItems.push(timelineItem);
       });
+
+      // Init globe orbit: start at newest item (RAF is managed by initGlobeVisibility)
+      if (window.innerWidth >= 900 && globeItems.length > 0) {
+        globeOrbitTarget  = globeItems.length - 1;
+        globeOrbitCurrent = globeOrbitTarget;
+      }
 
     } catch (error) {
       console.error('Impossible de charger la timeline:', error);
@@ -2795,39 +2861,592 @@
   // Initial check
   updateCurrentSectionIndex();
 
-  // Timeline Animation Loop
-  const animateTimeline = () => {
-    if (!timelineContainer) return;
-    
-    const currentScrollLeft = timelineContainer.scrollLeft;
-    const diff = timelineTargetScroll - currentScrollLeft;
-    
-    if (Math.abs(diff) > 0.5) {
-      // Reverted to 0.06 for momentum feel
-      timelineContainer.scrollLeft = currentScrollLeft + diff * 0.06;
-      requestAnimationFrame(animateTimeline);
-      isAnimatingTimeline = true;
-    } else {
-      timelineContainer.scrollLeft = timelineTargetScroll;
-      isAnimatingTimeline = false;
+  // ============================================================
+  //  Globe Timeline — Core rendering & orbit engine
+  // ============================================================
+
+  function getGlobeParams() {
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    if (!W || !H) return null;
+    // Scale up on radio section (globeScrollT = 0..1)
+    const baseR = Math.min(W * 0.32, H * 0.42);
+    const R = baseR * (1.0 + globeScrollT * 0.55);
+    // Center shifts slightly down on radio
+    const cx = W / 2;
+    const cy = H / 2 + globeScrollT * H * 0.08;
+    return { W, H, R, cx, cy };
+  }
+
+  function drawGlobe() {
+    const canvas = document.getElementById('globeCanvas');
+    if (!canvas) return;
+    const p = getGlobeParams();
+    if (!p) return;
+    const { W, H, R, cx, cy } = p;
+
+    if (canvas.width !== W || canvas.height !== H) {
+      canvas.width  = W;
+      canvas.height = H;
     }
+
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, W, H);
+
+    // Zoom scale: globe grows from its own center on entrance/exit
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(globeZoomScale, globeZoomScale);
+    ctx.translate(-cx, -cy);
+
+    // Interpolate tilt with scroll (T: 0.55 -> 0.30, Tz: -0.28 -> 0)
+    const T  = GLOBE_TILT  + globeScrollT * (0.08 - GLOBE_TILT);
+    const Tz = GLOBE_TILT_Z + globeScrollT * (0.12 - GLOBE_TILT_Z);
+
+    // Utility: 3D -> 2D projection (south-at-front)
+    function project(x3, y3, z3) {
+      const sx = cx + x3;
+      const sy = cy - y3 * Math.cos(T) - z3 * Math.sin(T);
+      const depth = -y3 * Math.sin(T) + z3 * Math.cos(T);
+      return { sx, sy, depth };
+    }
+
+    // Utility: lat/lon -> 3D point on sphere radius r
+    function latLonTo3D(lat, lon, r) {
+      const phi = lat * Math.PI / 180;
+      const lam = lon * Math.PI / 180 + globeRotation;
+      return {
+        x: r * Math.cos(phi) * Math.cos(lam),
+        y: r * Math.sin(phi),
+        z: r * Math.cos(phi) * Math.sin(lam)
+      };
+    }
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(Tz);
+    ctx.translate(-cx, -cy);
+
+    // ── Radio glow on globe (only when playing) ──
+    if (globeSweepActive && globeScrollT > 0.1) {
+      const glow = globeScrollT * 0.18;
+      ctx.save();
+      const grad = ctx.createRadialGradient(cx, cy, R * 0.7, cx, cy, R * 1.2);
+      grad.addColorStop(0, `rgba(0,255,80,${glow})`);
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R * 1.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // ── Latitude lines (parallels) ──
+    for (let i = 0; i <= 8; i++) {
+      const lat  = (-80 + i * 20) * Math.PI / 180;
+      const r_s  = R * Math.cos(lat);
+      if (r_s < 1) continue;
+      const yOff = -R * Math.sin(lat) * Math.cos(T);
+      const ry   = Math.max(0.5, r_s * Math.sin(T));
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + yOff, r_s, ry, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+      ctx.lineWidth   = 0.7;
+      ctx.stroke();
+    }
+
+    // ── Meridian lines (longitudes) — per-segment depth opacity ──
+    const LON_COUNT = 18;
+    const SEG       = 36;
+    for (let j = 0; j < LON_COUNT; j++) {
+      const lon = (j / LON_COUNT) * Math.PI * 2 + globeRotation;
+      for (let k = 0; k < SEG; k++) {
+        const t1 = (k     / SEG) * Math.PI * 2;
+        const t2 = ((k+1) / SEG) * Math.PI * 2;
+        const x1 = R * Math.sin(t1) * Math.cos(lon);
+        const y1 = R * Math.cos(t1);
+        const z1 = R * Math.sin(t1) * Math.sin(lon);
+        const x2 = R * Math.sin(t2) * Math.cos(lon);
+        const y2 = R * Math.cos(t2);
+        const z2 = R * Math.sin(t2) * Math.sin(lon);
+        const pr1 = project(x1, y1, z1);
+        const pr2 = project(x2, y2, z2);
+        ctx.beginPath();
+        ctx.moveTo(pr1.sx, pr1.sy);
+        ctx.lineTo(pr2.sx, pr2.sy);
+        ctx.strokeStyle = pr1.depth >= 0
+          ? 'rgba(255,255,255,0.22)'
+          : 'rgba(255,255,255,0.07)';
+        ctx.lineWidth = 0.7;
+        ctx.stroke();
+      }
+    }
+
+    // ── Continents (visible only when radio is playing) ──
+    if (globeSweepActive && globeScrollT > 0.05 && globeCoastlines) {
+      const coastOpacity = Math.min(1, globeScrollT * 2) * 0.55;
+      ctx.lineWidth = 0.9;
+      for (const line of globeCoastlines.lines) {
+        if (line.length < 2) continue;
+        // Depth based on mid-point — segments d'arrière entièrement masqués
+        const midIdx = Math.floor(line.length / 2);
+        const pm  = latLonTo3D(line[midIdx][1], line[midIdx][0], R);
+        const prm = project(pm.x, pm.y, pm.z);
+        // Opacité: front hemisphere plein, back hemisphere très dim
+        const _depthClamped = Math.max(-1, Math.min(1, prm.depth / (p.R || 1)));
+        const alpha = prm.depth >= 0
+          ? coastOpacity * (0.35 + _depthClamped * 0.65)  // front: 35%→100%
+          : coastOpacity * 0.12;                          // back: 12% (très dim)
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(255,255,255,${alpha.toFixed(2)})`;
+        let first = true;
+        for (const [lon, lat] of line) {
+          const pt = latLonTo3D(lat, lon, R);
+          const pr = project(pt.x, pt.y, pt.z);
+          if (first) { ctx.moveTo(pr.sx, pr.sy); first = false; }
+          else        { ctx.lineTo(pr.sx, pr.sy); }
+        }
+        ctx.stroke();
+      }
+    }
+
+    // ── Radar sweep plane (radio playing) ──
+    if (globeScrollT > 0.2 && globeSweepActive) {
+      const TRAIL_STEPS = 6;
+      const TRAIL_WIDTH = Math.PI / 3; // 60 deg trail
+      for (let ti = TRAIL_STEPS; ti >= 0; ti--) {
+        const sweepLon = globeSweepLon - (ti / TRAIL_STEPS) * TRAIL_WIDTH;
+        const alpha = (ti === 0) ? 0.7 : (0.5 * (1 - ti / TRAIL_STEPS) * 0.35);
+        const lw    = (ti === 0) ? 2.0 : 0.8;
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(0,255,100,${(alpha * globeScrollT).toFixed(2)})`;
+        ctx.lineWidth = lw;
+        if (ti === 0) {
+          ctx.shadowBlur  = 8;
+          ctx.shadowColor = 'rgba(0,255,80,0.6)';
+        } else {
+          ctx.shadowBlur  = 0;
+        }
+        let firstSeg = true;
+        const SWEEP_SEG = 24;
+        for (let k = 0; k <= SWEEP_SEG; k++) {
+          const lat3 = (-90 + (k / SWEEP_SEG) * 180);
+          const pt   = latLonTo3D(lat3, sweepLon * 180 / Math.PI - globeRotation * 180 / Math.PI, R);
+          const pr   = project(pt.x, pt.y, pt.z);
+          // Only draw front-facing half
+          if (pr.depth < 0) { firstSeg = true; continue; }
+          if (firstSeg) { ctx.moveTo(pr.sx, pr.sy); firstSeg = false; }
+          else           { ctx.lineTo(pr.sx, pr.sy); }
+        }
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    // ── Listener dots ──
+    if (globeScrollT > 0.3 && globeListenerDots.length > 0) {
+      ctx.shadowBlur = 0;
+      for (const dot of globeListenerDots) {
+        if (dot.alpha <= 0.005) continue;
+        const pt = latLonTo3D(dot.lat, dot.lon, R * 1.004);
+        const pr = project(pt.x, pt.y, pt.z);
+        if (pr.depth < -0.05) continue; // behind globe
+        // Color: flash white -> red
+        const ft = Math.min(1, dot.flashT);
+        const rr = 255;
+        const gg = Math.round(255 * Math.max(0, 1 - ft * 5));
+        const bb = gg;
+        const a  = dot.alpha * Math.min(1, globeScrollT * 2);
+        ctx.beginPath();
+        ctx.arc(pr.sx, pr.sy, dot.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${rr},${gg},${bb},${a.toFixed(2)})`;
+        ctx.shadowBlur  = 10 * dot.alpha;
+        ctx.shadowColor = `rgba(255,80,80,${a.toFixed(2)})`;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    ctx.restore(); // Tz rotation
+    ctx.restore(); // zoom scale
+  }
+
+  function positionGlobeItems() {
+    const N = globeItems.length;
+    if (!N) return;
+    const p = getGlobeParams();
+    if (!p) return;
+    const { W, H, R, cx, cy } = p;
+    const T = GLOBE_TILT;
+
+    // Orbit sur l'équateur exact du globe (pas de décalage vertical)
+    const orbit_rx = R * 1.08;              // légèrement à l'extérieur de la surface
+    const orbit_ry = orbit_rx * Math.sin(T); // projection de l'équateur avec le tilt
+    const cy_orbit = cy;                     // centre = centre du globe
+
+    // Cartes un peu plus petites, centre toujours plus grand
+    const itemW = Math.min(160, Math.max(120, W * 0.105));
+    const itemH = itemW * 1.55;
+
+    // 30° par slot, affiche offsets -4 à +4 (4 derriere, 4 devant + centre)
+    const SLOT_ANGLE = Math.PI / 6;  // 30°
+    const MAX_OFFSET = 4.5;
+
+    for (let i = 0; i < N; i++) {
+      const item = globeItems[i];
+
+      // Pas de wrapping — offset brut, les bords de la timeline finissent proprement
+      const offset = i - globeOrbitCurrent;
+
+      if (Math.abs(offset) > MAX_OFFSET) {
+        item.style.opacity       = '0';
+        item.style.pointerEvents = 'none';
+        item.style.visibility    = 'hidden';
+        const bf = item.querySelector('.timeline-back-face');
+        if (bf) bf.style.display = 'none';
+        continue;
+      }
+
+      item.style.visibility = 'visible';
+
+      const phi = Math.PI / 2 - offset * SLOT_ANGLE;
+
+      const sx = cx       + orbit_rx * Math.cos(phi);
+      const sy = cy_orbit - orbit_ry * Math.sin(phi);
+
+      // depth: +1 = plein avant, -1 = plein arrière
+      const depth = Math.sin(phi);
+      const t     = (depth + 1) / 2;  // [0,1]
+
+      const isBehind = depth < 0;
+
+      // Scale: centre un peu plus grand, transition douce (pas fisheye agressif)
+      const scale   = isBehind
+        ? 0.38 - Math.abs(depth) * 0.12          // arrière: 0.38 → 0.26
+        : 0.50 + t * 0.62;                       // avant:   0.50 → 1.12
+
+      // Opacité: cartes arrière bien visibles mais dimmées
+      const opacity = isBehind
+        ? 0.30 - Math.abs(depth) * 0.15          // arrière: 0.30 → 0.15
+        : 0.40 + t * 0.60;                       // avant: 0.40 → 1.00
+
+      // Blur léger pour les cartes arrière
+      const blur = isBehind
+        ? (Math.abs(depth) * 3.0).toFixed(1)
+        : '0';
+
+      // z-index: arrière < canvas (z=8) < avant
+      const zIdx = isBehind
+        ? Math.max(1, Math.round(4 - Math.abs(depth) * 3))   // 1–4
+        : Math.round(10 + t * 10);                           // 10–20
+
+      const rotateY = offset * (SLOT_ANGLE * 180 / Math.PI);
+
+      const tx = Math.round(sx - itemW / 2);
+      const ty = Math.round(sy - itemH / 2);
+
+      item.style.width           = `${itemW}px`;
+      item.style.margin          = '0';
+      item.style.transform       = `translate(${tx}px, ${ty}px) perspective(1200px) rotateY(${rotateY.toFixed(2)}deg) scale(${scale.toFixed(3)})`;
+      item.style.transformOrigin = 'center center';
+      item.style.opacity         = opacity.toFixed(2);
+      item.style.filter          = blur !== '0' ? `blur(${blur}px)` : '';
+      item.style.zIndex          = String(zIdx);
+      item.style.pointerEvents   = isBehind ? 'none' : 'auto';
+
+      const content  = item.querySelector('.timeline-content');
+      const backFace = item.querySelector('.timeline-back-face');
+
+      if (content) {
+        content.style.pointerEvents = isBehind ? 'none' : 'auto';
+        content.style.visibility    = isBehind ? 'hidden' : 'visible';
+      }
+      if (backFace) {
+        backFace.style.display = isBehind ? 'flex' : 'none';
+      }
+    }
+  }
+
+  function startGlobeRaf() {
+    if (globeRafActive) return;
+    globeRafActive = true;
+    globeAnimT = 0;     // reset linear progress for entrance animation
+    globeZoomScale = 0.03;
+
+    // Init listener dots once
+    if (globeListenerDots.length === 0) {
+      globeListenerDots = LISTENER_COORDS.map(([lon, lat]) => ({
+        lat, lon,
+        alpha: 0,   // starts invisible
+        flashT: 99, // 0=just swept, increases over time (for color transition)
+        size: 2.5 + Math.random() * 1.5,
+        sweptThisCycle: false,
+      }));
+    }
+
+    // Load coastline data once
+    if (!globeCoastlines) {
+      fetch('/world-coastline.json')
+        .then(r => r.json())
+        .then(d => { globeCoastlines = d; })
+        .catch(() => {});
+    }
+
+    const rafTlEl   = document.getElementById('timeline');
+    const rafRdEl   = document.getElementById('radio');
+    const rafMainEl = document.querySelector('main') || document.documentElement;
+    let lastT = performance.now();
+
+    function loop(now) {
+      if (!globeRafActive) return;
+      const dt = Math.min((now - lastT) / 1000, 0.1);
+      lastT = now;
+
+      // Lerp asymétrique : entrée douce (0.022 ~1s), sortie nette (0.06 ~0.35s)
+      const _zTarget = globeIsShowing ? 1.0 : 0.0;
+      const _zLerpF  = globeIsShowing ? 0.022 : 0.06;
+      globeAnimT += (_zTarget - globeAnimT) * _zLerpF;
+      // Scale : entrée linéaire (croissance régulière), sortie ease-in (^1.7)
+      //  → le globe reste grand puis s'effondre d'un coup, pas de point fantôme
+      globeZoomScale = globeIsShowing ? globeAnimT : Math.pow(globeAnimT, 1.7);
+      const _zCv = document.getElementById('globeCanvas');
+      // Opacity : entrée tardive (overlaps rush), sortie précoce (^0.6) pour fade rapide
+      const _zOp = globeIsShowing
+        ? Math.min(1, globeAnimT * 1.2)
+        : Math.pow(Math.max(0, globeAnimT), 0.6);
+      if (_zCv) _zCv.style.opacity = _zOp.toFixed(3);
+
+      // Reveal timeline content once globe is nearly at full scale
+      if (globeIsShowing && globeAnimT >= 0.75) {
+        const _tlEl = document.getElementById('timeline');
+        if (_tlEl && !_tlEl.dataset.globeRevealed) {
+          _tlEl.dataset.globeRevealed = '1';
+          const _filEl = _tlEl.querySelector('.timeline-filters');
+          const _ctEl  = _tlEl.querySelector('.timeline-container');
+          if (_filEl) { _filEl.style.transition = 'opacity 1.5s ease-in'; _filEl.style.opacity = '1'; }
+          if (_ctEl)  { _ctEl.style.transition  = 'opacity 1.5s ease-in'; _ctEl.style.opacity = '1'; }
+        }
+      }
+
+      // Exit animation complete: stop RAF and hide canvas
+      if (!globeIsShowing && globeAnimT < 0.01) {
+        globeRafActive = false;
+        if (_zCv) {
+          _zCv.style.opacity = '0';
+          const _zCt = _zCv.getContext('2d');
+          if (_zCt) _zCt.clearRect(0, 0, _zCv.width, _zCv.height);
+        }
+        return;
+      }
+
+      // Converge globeScrollT every frame (so transition works after snap-scroll)
+      if (rafTlEl && rafRdEl) {
+        const _raw = (rafMainEl.scrollTop - rafTlEl.offsetTop) / Math.max(1, rafRdEl.offsetTop - rafTlEl.offsetTop);
+        globeScrollT += (Math.max(0, Math.min(1, _raw)) - globeScrollT) * 0.06;
+      }
+
+      // Rotation speed: slow and steady (+ subtle spin-up on exit for character)
+      const exitSpin = globeIsShowing ? 0 : (1 - globeAnimT) * 0.0045;
+      const rotSpeed = 0.00012 + globeScrollT * 0.00035 + exitSpin;
+      globeRotation += rotSpeed;
+
+      globeOrbitCurrent += (globeOrbitTarget - globeOrbitCurrent) * 0.09;
+
+      const nearest = Math.round(globeOrbitTarget);
+      const snapDelta = nearest - globeOrbitTarget;
+      if (Math.abs(snapDelta) > 0.001 && Math.abs(globeOrbitCurrent - globeOrbitTarget) < 0.06) {
+        globeOrbitTarget += snapDelta * 0.12;
+      }
+
+      // ── Radar sweep update ──
+      if (globeSweepActive) {
+        const sweepSpeed = (2 * Math.PI) / 10; // full circle in 10s
+        globeSweepLon += sweepSpeed * dt;
+
+        // Check each listener dot
+        for (const dot of globeListenerDots) {
+          // Dot longitude in world space (not globe-rotation-relative)
+          const dotLon = dot.lon * Math.PI / 180;
+          // Sweep longitude in world space
+          const sweepWorld = globeSweepLon % (2 * Math.PI);
+          const dotWorld   = ((dotLon + globeRotation) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+          const diff = ((sweepWorld - dotWorld) + 2 * Math.PI) % (2 * Math.PI);
+
+          if (diff < 0.25 && !dot.sweptThisCycle) {
+            dot.sweptThisCycle = true;
+            dot.alpha  = 1.0;
+            dot.flashT = 0;  // restart flash animation
+          } else if (diff > 0.3) {
+            dot.sweptThisCycle = false;
+          }
+
+          // Fade out over ~4s
+          if (dot.alpha > 0) {
+            dot.alpha  = Math.max(0, dot.alpha - dt * 0.25);
+            dot.flashT += dt;
+          }
+        }
+      } else {
+        // Fade all dots when sweep stops
+        for (const dot of globeListenerDots) {
+          dot.alpha = Math.max(0, dot.alpha - dt * 0.5);
+          dot.sweptThisCycle = false;
+        }
+      }
+
+      drawGlobe();
+      positionGlobeItems();
+      requestAnimationFrame(loop);
+    }
+
+    requestAnimationFrame(loop);
+  }
+
+  function stopGlobeRaf() {
+    globeRafActive = false;
+  }
+
+  // Globe RAF — active on both #timeline and #radio (desktop only)
+  (function initGlobeVisibility() {
+    if (!('IntersectionObserver' in window) || window.innerWidth < 900) return;
+
+    let timelineVisible = false;
+    let radioVisible    = false;
+
+    function updateRaf() {
+      if (timelineVisible || radioVisible) {
+        globeIsShowing = true;
+        // Entrance sequence: hide timeline content only if globe isn't already showing
+        // (globeAnimT < 0.5 means we're not coming from radio section)
+        if (timelineVisible && globeAnimT < 0.5) {
+          const _tlEl = document.getElementById('timeline');
+          if (_tlEl) {
+            delete _tlEl.dataset.globeRevealed;
+            const _filEl = _tlEl.querySelector('.timeline-filters');
+            const _ctEl  = _tlEl.querySelector('.timeline-container');
+            if (_filEl) { _filEl.style.transition = 'none'; _filEl.style.opacity = '0'; }
+            if (_ctEl)  { _ctEl.style.transition  = 'none'; _ctEl.style.opacity = '0'; }
+          }
+        }
+        startGlobeRaf();
+      } else {
+        globeIsShowing = false;
+        // RAF continues for exit animation; stops itself when globeZoomScale < 0.01
+        if (!globeRafActive) {
+          const _cv = document.getElementById('globeCanvas');
+          if (_cv) _cv.style.opacity = '0';
+        }
+      }
+    }
+
+    const tlSection = document.getElementById('timeline');
+    const rdSection = document.getElementById('radio');
+
+    if (tlSection) {
+      // Show: section doit être à 70%+ dans le viewport (arrivée)
+      new IntersectionObserver(entries => {
+        if (entries[0].isIntersecting) { timelineVisible = true; updateRaf(); }
+      }, { threshold: 0.7 }).observe(tlSection);
+      // Hide: section doit être à moins de 10% visible (départ)
+      new IntersectionObserver(entries => {
+        if (!entries[0].isIntersecting) {
+          timelineVisible = false;
+          // Reset content so next entrance plays the animation again
+          const _tl = document.getElementById('timeline');
+          if (_tl) {
+            delete _tl.dataset.globeRevealed;
+            const _f = _tl.querySelector('.timeline-filters');
+            const _c = _tl.querySelector('.timeline-container');
+            if (_f) { _f.style.transition = 'none'; _f.style.opacity = '0'; }
+            if (_c) { _c.style.transition  = 'none'; _c.style.opacity = '0'; }
+          }
+          updateRaf();
+        }
+      }, { threshold: 0.1 }).observe(tlSection);
+    }
+
+    if (rdSection) {
+      new IntersectionObserver(entries => {
+        if (entries[0].isIntersecting) { radioVisible = true; updateRaf(); }
+      }, { threshold: 0.7 }).observe(rdSection);
+      new IntersectionObserver(entries => {
+        if (!entries[0].isIntersecting) { radioVisible = false; updateRaf(); }
+      }, { threshold: 0.1 }).observe(rdSection);
+    }
+
+    // Scroll-based globeScrollT interpolation
+    const mainEl = document.querySelector('main') || document.documentElement;
+    function updateScrollT() {
+      if (!tlSection || !rdSection) return;
+      const tlTop = tlSection.offsetTop;
+      const rdTop = rdSection.offsetTop;
+      const scroll = mainEl.scrollTop;
+      const raw = (scroll - tlTop) / Math.max(1, rdTop - tlTop);
+      // Smooth interpolation
+      const target = Math.max(0, Math.min(1, raw));
+      globeScrollT += (target - globeScrollT) * 0.08;
+    }
+    mainEl.addEventListener('scroll', updateScrollT, { passive: true });
+    updateScrollT();
+  })();
+
+  // Expose sweep toggle for radio play/pause
+  window._globeSetSweep = function(active) {
+    globeSweepActive = active;
+    if (!active) { globeListenerDots.forEach(d => { d.sweptThisCycle = false; }); }
   };
+
+  // Timeline Animation Loop (legacy no-op — orbit is handled by globe RAF)
+  const animateTimeline = () => {};
+
+  // VST internal scroll state (the rack list scrolls inside the section)
+  let vstTargetScroll = 0;
+  let isAnimatingVst = false;
+  function animateVst() {
+    const sc = document.getElementById('vstScroll');
+    if (!sc) { isAnimatingVst = false; return; }
+    const cur = sc.scrollTop;
+    const diff = vstTargetScroll - cur;
+    if (Math.abs(diff) > 0.5) {
+      sc.scrollTop = cur + diff * 0.16;
+      isAnimatingVst = true;
+      requestAnimationFrame(animateVst);
+    } else {
+      sc.scrollTop = vstTargetScroll;
+      isAnimatingVst = false;
+    }
+  }
 
   function scrollToSection(index) {
       if (index < 0 || index >= sections.length) return;
       
-      // Handle Timeline Entry Position (Right-to-Left Flow)
+      // Handle Timeline Entry Position (Globe Orbit)
       const targetSection = sections[index];
-      if (targetSection && targetSection.id === 'timeline' && timelineContainer) {
+      if (targetSection && targetSection.id === 'timeline' && globeItems.length > 0) {
+          const N = globeItems.length;
           if (index > currentSectionIndex) {
-              // Coming from above (scrolling down) -> Start at Right (End)
-              const maxScroll = timelineContainer.scrollWidth - timelineContainer.clientWidth;
-              timelineContainer.scrollLeft = maxScroll;
-              timelineTargetScroll = maxScroll;
+              // Coming from above (scrolling down) → start at newest item
+              globeOrbitTarget  = N - 1;
+              globeOrbitCurrent = N - 1;
           } else if (index < currentSectionIndex) {
-              // Coming from below (scrolling up) -> Start at Left (Start)
-              timelineContainer.scrollLeft = 0;
-              timelineTargetScroll = 0;
+              // Coming from below (scrolling up) → start at oldest item
+              globeOrbitTarget  = 0;
+              globeOrbitCurrent = 0;
+          }
+      }
+
+      // Handle VST internal scroll entry position
+      if (targetSection && targetSection.id === 'vst') {
+          const sc = document.getElementById('vstScroll');
+          if (sc) {
+              if (index > currentSectionIndex) {
+                  sc.scrollTop = 0;
+                  vstTargetScroll = 0;
+              } else if (index < currentSectionIndex) {
+                  const m = sc.scrollHeight - sc.clientHeight;
+                  sc.scrollTop = m;
+                  vstTargetScroll = m;
+              }
           }
       }
 
@@ -2934,48 +3553,57 @@
     // Check if we are in Timeline
     const currentSection = sections[currentSectionIndex];
     
-    if (currentSection && currentSection.id === 'timeline' && timelineContainer) {
-        const maxScroll = timelineContainer.scrollWidth - timelineContainer.clientWidth;
-        
-        // Sync target if not animating to ensure we start from current position
-        if (!isAnimatingTimeline) {
-            timelineTargetScroll = timelineContainer.scrollLeft;
-        }
-        
-        // Check if we are effectively at the boundaries based on TARGET
-        // This allows "scroll to end" then "next scroll exits" behavior
-        // Use a small epsilon for float comparison safety
-        const isAtEnd = timelineTargetScroll >= maxScroll - 1;
-        const isAtStart = timelineTargetScroll <= 1;
-        
-        // Logic: If we are pushing against the wall (target is at wall AND direction pushes further)
-        // INVERTED LOGIC: Scroll Down (1) moves Left (towards Start). Scroll Up (-1) moves Right (towards End).
-        
+    if (currentSection && currentSection.id === 'timeline' && globeItems.length > 0) {
+        const N = globeItems.length;
+
+        const isAtStart = globeOrbitTarget <= 0.4;
+        const isAtEnd   = globeOrbitTarget >= N - 1.1;
+
+        // Scroll Down (1) rotates toward oldest. Scroll Up (-1) toward newest.
         if (direction === 1 && isAtStart) {
-             // Go to next section (Radio)
              if (currentSectionIndex < sections.length - 1) {
                  scrollToSection(currentSectionIndex + 1);
              }
              return;
         }
-        
+
         if (direction === -1 && isAtEnd) {
-             // Go to prev section (Artists)
              if (currentSectionIndex > 0) {
                  scrollToSection(currentSectionIndex - 1);
              }
              return;
         }
-        
-        // Otherwise, scroll timeline
-        // Invert direction: Subtract deltaY
-        timelineTargetScroll -= e.deltaY * 3.5; 
-        timelineTargetScroll = Math.max(0, Math.min(timelineTargetScroll, maxScroll));
-        
-        if (!isAnimatingTimeline) {
-            requestAnimationFrame(animateTimeline);
+
+        globeOrbitTarget -= e.deltaY * 0.014;
+        globeOrbitTarget  = Math.max(0, Math.min(N - 1, globeOrbitTarget));
+
+    } else if (currentSection && currentSection.id === 'vst') {
+        // VST: scroll the rack list internally, exit to neighbour section at edges
+        const sc = document.getElementById('vstScroll');
+        if (sc) {
+            const maxScroll = sc.scrollHeight - sc.clientHeight;
+            if (!isAnimatingVst) vstTargetScroll = sc.scrollTop;
+            const atTop = vstTargetScroll <= 1;
+            const atBottom = vstTargetScroll >= maxScroll - 1;
+            if (direction === 1 && (atBottom || maxScroll <= 0)) {
+                if (currentSectionIndex < sections.length - 1) scrollToSection(currentSectionIndex + 1);
+                return;
+            }
+            if (direction === -1 && atTop) {
+                if (currentSectionIndex > 0) scrollToSection(currentSectionIndex - 1);
+                return;
+            }
+            vstTargetScroll += e.deltaY;
+            vstTargetScroll = Math.max(0, Math.min(vstTargetScroll, maxScroll));
+            if (!isAnimatingVst) requestAnimationFrame(animateVst);
+            return;
         }
-        
+        if (Math.abs(e.deltaY) > 10) {
+            const nextIndex = currentSectionIndex + direction;
+            if (nextIndex >= 0 && nextIndex < sections.length) {
+                scrollToSection(nextIndex);
+            }
+        }
     } else {
         // Normal Section Navigation
         // Use a threshold to avoid accidental triggers
@@ -3032,12 +3660,11 @@
       if (Math.abs(deltaX) > Math.abs(deltaY)) {
           // Horizontal Swipe
           const currentSection = sections[currentSectionIndex];
-          if (currentSection && currentSection.id === 'timeline' && timelineContainer) {
-               // Scroll timeline directly
-               timelineContainer.scrollLeft += deltaX;
-               timelineTargetScroll = timelineContainer.scrollLeft;
-               // Update startX for continuous horizontal scroll, but not startY
-               touchStartX = touchX; 
+          if (currentSection && currentSection.id === 'timeline' && globeItems.length > 0) {
+               const N = globeItems.length;
+               globeOrbitTarget -= deltaX * 0.03;
+               globeOrbitTarget  = Math.max(0, Math.min(N - 1, globeOrbitTarget));
+               touchStartX = touchX;
           }
       } else {
           // Vertical Swipe for changing sections

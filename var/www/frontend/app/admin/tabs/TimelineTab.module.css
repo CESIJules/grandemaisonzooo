@@ -1,0 +1,828 @@
+/* ═══════════════════════════════════════
+   TIMELINE TAB — module CSS
+   ═══════════════════════════════════════ */
+
+/* ── Header meta ─────────────────────── */
+.headerMeta {
+    margin: 0.25rem 0 0;
+    font-size: 0.8rem;
+    color: var(--text-secondary, #888);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+}
+
+.pendingBadge {
+    display: inline-block;
+    background: rgba(168, 85, 247, 0.18);
+    color: #c084fc;
+    border-radius: 999px;
+    padding: 1px 9px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+/* ── Inner tab bar ───────────────────── */
+.innerTabBar {
+    display: flex;
+    gap: 0.25rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    padding-bottom: 0;
+}
+
+.innerTab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.55rem 1.1rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border: none;
+    background: none;
+    color: var(--text-secondary, #888);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+    margin-bottom: -1px;
+}
+
+.innerTab:hover {
+    color: var(--text-primary, #f0f0f5);
+}
+
+.innerTabActive {
+    color: var(--text-primary, #f0f0f5);
+    border-bottom-color: var(--accent-primary, #a855f7);
+}
+
+.tabBadge {
+    background: var(--accent-primary, #a855f7);
+    color: #fff;
+    border-radius: 999px;
+    padding: 0 7px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    line-height: 1.6;
+}
+
+.tabBadgeGray {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary, #888);
+    border-radius: 999px;
+    padding: 0 7px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1.6;
+}
+
+/* ── Filter bar ─────────────────────── */
+.filterBar {
+    padding: 0.5rem 0;
+}
+
+.filterBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 13px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-secondary, #888);
+    transition: all 0.15s;
+}
+
+.filterBtn:hover {
+    background: rgba(255, 255, 255, 0.09);
+    color: var(--text-primary, #f0f0f5);
+}
+
+.filterBtnActive {
+    background: rgba(168, 85, 247, 0.15);
+    border-color: rgba(168, 85, 247, 0.35);
+    color: #c084fc;
+}
+
+/* ── Search box ─────────────────────── */
+.searchBox {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.searchBox i {
+    position: absolute;
+    left: 10px;
+    color: var(--text-secondary, #888);
+    font-size: 0.78rem;
+    pointer-events: none;
+}
+
+.searchInput {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 8px;
+    padding: 7px 12px 7px 30px;
+    color: var(--text-primary, #f0f0f5);
+    font-size: 0.82rem;
+    font-family: inherit;
+    width: 200px;
+    transition: border-color 0.15s;
+}
+
+.searchInput:focus {
+    outline: none;
+    border-color: var(--accent-primary, #a855f7);
+}
+
+/* ── Select-all row ─────────────────── */
+.selectAllRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+}
+
+.selectAllLabel {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary, #888);
+    cursor: pointer;
+}
+
+.countLabel {
+    font-size: 0.78rem;
+    color: var(--text-secondary, #888);
+}
+
+/* ── Cards grid ─────────────────────── */
+.cardsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem;
+}
+
+/* ── Candidate card ─────────────────── */
+.card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.card:hover {
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.cardSelected {
+    border-color: rgba(168, 85, 247, 0.5);
+    box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.18);
+}
+
+.cardIgnored {
+    opacity: 0.45;
+}
+
+.cardHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.65rem 0.85rem 0.4rem;
+}
+
+.cardCheck {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--accent-primary, #a855f7);
+}
+
+.cardBadges {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.badgeType {
+    font-size: 0.63rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary, #888);
+}
+
+.badgeSource {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 999px;
+}
+
+/* ── Card image ─────────────────────── */
+.cardImageWrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    background: rgba(255, 255, 255, 0.04);
+    overflow: hidden;
+}
+
+.cardImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    cursor: zoom-in;
+    transition: transform 0.2s;
+}
+
+.cardImage:hover {
+    transform: scale(1.03);
+}
+
+.cardImagePlaceholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: rgba(255, 255, 255, 0.1);
+}
+
+.cardImageOverlay {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    background: rgba(0, 0, 0, 0.6);
+    border: none;
+    border-radius: 6px;
+    padding: 4px 9px;
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    backdrop-filter: blur(4px);
+    transition: opacity 0.15s;
+    opacity: 0;
+}
+
+.cardImageWrap:hover .cardImageOverlay {
+    opacity: 1;
+}
+
+.imageEditRow {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem 0.85rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ── Card body ──────────────────────── */
+.cardBody {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.75rem 0.85rem;
+    flex: 1;
+}
+
+.cardTitle {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--text-primary, #f0f0f5);
+}
+
+.cardMeta {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--text-secondary, #888);
+}
+
+.dupWarning {
+    margin: 0;
+    font-size: 0.72rem;
+    color: #fbbf24;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.sourceLink {
+    font-size: 0.74rem;
+    color: var(--accent-primary, #a855f7);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.sourceLink:hover {
+    text-decoration: underline;
+}
+
+.linkLabel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary, #888);
+    margin-top: 0.25rem;
+}
+
+/* ── Card actions ───────────────────── */
+.cardActions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.btnPublish {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0.65rem;
+    border: none;
+    background: none;
+    color: #4ade80;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.btnPublish:hover {
+    background: rgba(74, 222, 128, 0.1);
+}
+
+.btnIgnore {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0.65rem;
+    border: none;
+    background: none;
+    color: var(--text-secondary, #888);
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.btnIgnore:hover {
+    background: rgba(239, 68, 68, 0.09);
+    color: #f87171;
+}
+
+/* ── Toggle ignored ─────────────────── */
+.toggleIgnored {
+    display: flex;
+    justify-content: center;
+    padding: 1rem 0 0.25rem;
+}
+
+.toggleIgnoredBtn {
+    background: none;
+    border: none;
+    color: var(--text-secondary, #888);
+    font-size: 0.78rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.15s;
+}
+
+.toggleIgnoredBtn:hover {
+    color: var(--text-primary, #f0f0f5);
+}
+
+/* ── Empty state ────────────────────── */
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 3rem 1rem;
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.emptyState i {
+    font-size: 2rem;
+}
+
+.emptyState p {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--text-secondary, #888);
+}
+
+.emptyMsg {
+    padding: 1.5rem;
+    text-align: center;
+    color: var(--text-secondary, #888);
+    font-size: 0.85rem;
+}
+
+/* ── Post row ───────────────────────── */
+.postList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.postRow {
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: rgba(255, 255, 255, 0.03);
+    overflow: hidden;
+    transition: border-color 0.15s;
+}
+
+.postRow:hover {
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.postRowMain {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.6rem 0.85rem;
+}
+
+.postThumb {
+    width: 44px;
+    height: 44px;
+    border-radius: 6px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.postThumbEmpty {
+    width: 44px;
+    height: 44px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.15);
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.postRowInfo {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.postRowTitle {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-primary, #f0f0f5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.postRowMeta {
+    font-size: 0.75rem;
+    color: var(--text-secondary, #888);
+}
+
+.postSourceTag {
+    font-weight: 600;
+}
+
+.postRowLinks {
+    display: flex;
+    gap: 0.65rem;
+    margin-top: 0.1rem;
+}
+
+.postLink {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--accent-primary, #a855f7);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.postLink:hover {
+    text-decoration: underline;
+}
+
+.postRowBtns {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+}
+
+.postEditPanel {
+    padding: 0.9rem 0.85rem 0.85rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(0, 0, 0, 0.12);
+}
+
+/* ── Add post form ──────────────────── */
+.addPostForm {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+
+.addPostTitle {
+    margin: 0 0 1rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--text-secondary, #888);
+}
+
+/* ── Source card ────────────────────── */
+.sourceCardList {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.sourceCard {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 1.1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.sourceCardHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.sourceArtistName {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary, #f0f0f5);
+}
+
+.sourceStatusDot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.sourcePostCount {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--text-secondary, #888);
+}
+
+.sourcesConfigured {
+    font-size: 0.75rem;
+    color: var(--text-secondary, #888);
+    font-weight: 600;
+}
+
+.helpTooltip {
+    cursor: help;
+    color: var(--text-secondary, #888);
+    font-size: 0.78rem;
+    margin-left: 2px;
+}
+
+.testAccordion {
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.testAccordionHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-secondary, #888);
+    cursor: pointer;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+    transition: color 0.15s;
+}
+
+.testAccordionHeader:hover {
+    color: var(--text-primary, #f0f0f5);
+}
+
+.testResult {
+    margin: 0;
+    padding: 0.5rem 0.75rem 0.65rem;
+    font-size: 0.8rem;
+    color: var(--text-primary, #f0f0f5);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.sourcesNote {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--text-secondary, #888);
+}
+
+/* ── Bulk action bar ────────────────── */
+.bulkBar {
+    position: sticky;
+    bottom: 1.5rem;
+    background: rgba(20, 20, 30, 0.92);
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    border-radius: 14px;
+    padding: 0.75rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    backdrop-filter: blur(12px);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary, #f0f0f5);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    z-index: 10;
+}
+
+/* ── Lightbox ───────────────────────── */
+.lightboxOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(8px);
+}
+
+.lightboxImg {
+    max-width: min(90vw, 600px);
+    max-height: 85vh;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    object-fit: contain;
+}
+
+.lightboxClose {
+    position: fixed;
+    top: 1.25rem;
+    right: 1.25rem;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.lightboxClose:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* ── Toast notifications ────────────── */
+.toastContainer {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    z-index: 2000;
+    pointer-events: none;
+}
+
+.toast {
+    pointer-events: all;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.65rem 1rem;
+    border-radius: 10px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    min-width: 260px;
+    max-width: 360px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    animation: toastIn 0.2s ease;
+}
+
+@keyframes toastIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.toastSuccess {
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: #4ade80;
+}
+
+.toastError {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #f87171;
+}
+
+.toastInfo {
+    background: rgba(148, 163, 184, 0.1);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    color: var(--text-secondary, #888);
+}
+
+.toastUndo {
+    background: none;
+    border: 1px solid currentColor;
+    border-radius: 5px;
+    padding: 2px 9px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: inherit;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+}
+
+.toastUndo:hover {
+    opacity: 0.75;
+}
+
+.toastClose {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    opacity: 0.6;
+    font-size: 0.8rem;
+    padding: 0 2px;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
+}
+
+.toastClose:hover {
+    opacity: 1;
+}

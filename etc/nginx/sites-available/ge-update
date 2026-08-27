@@ -1,0 +1,5 @@
+location /gm-editor/ {
+    root /var/www/html;
+    add_header Access-Control-Allow-Origin *;
+    try_files $uri =404;
+}

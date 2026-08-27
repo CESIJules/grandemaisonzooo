@@ -4,7 +4,7 @@ import VideoOverlay from "./_components/VideoOverlay";
 import RadioController from "./_components/RadioController";
 import MenuOverlay from "./_components/MenuOverlay";
 import RadioSection from "./_components/RadioSection";
-import VstSection from "./_components/VstSection";
+import BoutiqueSection from "./_components/BoutiqueSection";
 import ContactSection from "./_components/ContactSection";
 import TerminalOverlay from "./_components/TerminalOverlay";
 
@@ -21,6 +21,7 @@ export default function HomePage() {
       <div id="scrollArrow" className="scroll-arrow">
         <i className="fas fa-chevron-down"></i>
       </div>
+      <canvas id="globeCanvas"></canvas>
       <MenuOverlay />
       <main>
         <section id="accueil" className="screen">
@@ -42,7 +43,7 @@ export default function HomePage() {
           <div className="timeline-container"></div>
         </section>
         <RadioSection />
-        <VstSection />
+        <BoutiqueSection />
         <ContactSection />
       </main>
       <TerminalOverlay />

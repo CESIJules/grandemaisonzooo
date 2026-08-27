@@ -1,0 +1,312 @@
+/* ================================================================
+ * Boutique — section catalogue de la home page
+ * (typographie Syne / Space Grotesk, accent vert #00ff68 du site)
+ * ================================================================ */
+
+.section {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: clamp(28px, 4.5vh, 52px) 1.5rem 0;
+    gap: 1.5rem;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* ── Header ─────────────────────────────────────────────────────── */
+.header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.title {
+    font-family: 'SyneGMZExtraBold', 'Syne', sans-serif;
+    font-size: clamp(3rem, 8vw, 6rem);
+    font-weight: 800;
+    letter-spacing: -3px;
+    line-height: 1;
+    margin: 0;
+    color: #f5f5f5;
+    mix-blend-mode: difference;
+}
+
+.subtitle {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.35);
+    margin: 0;
+}
+
+/* ── Console (count) ────────────────────────────────────────────── */
+.console {
+    width: 100%;
+    max-width: 1080px;
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    margin-bottom: 0.6rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.count {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.count b {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #00ff68;
+    letter-spacing: 0.02em;
+}
+
+.count span {
+    font-size: 0.6rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.spacer {
+    flex: 1;
+}
+
+/* ── Scroll area & grid ─────────────────────────────────────────── */
+.scrollArea {
+    width: 100%;
+    max-width: 1080px;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 6px 6px 30px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 28px), transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 28px), transparent 100%);
+}
+
+.scrollArea::-webkit-scrollbar {
+    display: none;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.25rem;
+}
+
+/* ── Product card ───────────────────────────────────────────────── */
+.card {
+    display: flex;
+    flex-direction: column;
+    border-radius: 16px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.022);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    text-decoration: none;
+    color: inherit;
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 12px 32px rgba(0, 0, 0, 0.3);
+    transition: border-color 0.3s ease, transform 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-4px);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.coverWrap {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.cover {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.card:hover .cover {
+    transform: scale(1.04);
+}
+
+.coverPlaceholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.6rem;
+    color: rgba(255, 255, 255, 0.1);
+}
+
+/* Top-left fmt-like tag */
+.tag {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.52rem;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+    padding: 4px 9px;
+    background: rgba(0, 0, 0, 0.45);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+}
+
+/* Price chip top-right */
+.priceTag {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: #002b14;
+    background: #00ff68;
+    border-radius: 999px;
+    padding: 5px 11px;
+}
+
+/* Body */
+.body {
+    padding: 0.95rem 1.1rem 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.head {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.2rem;
+}
+
+.kicker {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.42);
+    white-space: nowrap;
+}
+
+.rule {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0));
+}
+
+.name {
+    font-family: 'SyneGMZExtraBold', 'Syne', sans-serif;
+    font-size: 1.25rem;
+    line-height: 1.05;
+    letter-spacing: -0.5px;
+    color: #f5f5f5;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.artist {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.55);
+    letter-spacing: 0.04em;
+    margin-top: 0.15rem;
+}
+
+.specsLine {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.empty {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.95rem;
+    text-align: center;
+    padding: 3rem 0;
+}
+
+/* ── Filters (artist chips) ─────────────────────────────────────── */
+.filters {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.45rem;
+    width: 100%;
+    max-width: 1080px;
+    margin: -0.25rem 0 0;
+}
+
+.filterBtn {
+    padding: 7px 14px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.filterBtn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.28);
+}
+
+.filterBtnActive {
+    background: rgba(255, 255, 255, 0.92);
+    color: #0a0a0a;
+    border-color: #fff;
+    box-shadow: 0 0 18px rgba(255, 255, 255, 0.18);
+}
+
+.filterBtnActive:hover {
+    background: #fff;
+    color: #0a0a0a;
+}

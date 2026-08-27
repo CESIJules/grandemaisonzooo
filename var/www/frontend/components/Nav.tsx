@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import styles from "./Nav.module.css";
+import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 
 const LINKS = [
   { label: "ACCUEIL", href: "#accueil", num: "01" },
@@ -12,6 +13,11 @@ const LINKS = [
 
 export default function Nav() {
   const [open, setOpen] = useState(false);
+  const [iosHint, setIosHint] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const { canInstall, installed, install } = useInstallPrompt();
+
+  useEffect(() => { setMounted(true); }, []);
 
   return (
     <>
@@ -58,6 +64,25 @@ export default function Nav() {
         <a href="/login" className={styles.loginLink} aria-label="Connexion">
           <i className="fas fa-circle-user" />
         </a>
+
+        {mounted && !installed && (
+          <div className={styles.installWrap}>
+            <button
+              className={styles.installBtn}
+              onClick={canInstall ? install : () => setIosHint((h) => !h)}
+              aria-label="Ajouter à l'écran d'accueil"
+            >
+              <i className="fas fa-plus-circle" />
+              <span>Ajouter à l&rsquo;écran d&rsquo;accueil</span>
+            </button>
+            {!canInstall && iosHint && (
+              <p className={styles.iosHint}>
+                Appuyez sur <i className="fas fa-arrow-up-from-bracket" /> puis
+                &nbsp;&laquo;&nbsp;Sur l&rsquo;écran d&rsquo;accueil&nbsp;&raquo;
+              </p>
+            )}
+          </div>
+        )}
       </nav>
     </>
   );

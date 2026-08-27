@@ -127,8 +127,12 @@ export default function VstTab() {
   const [downloadFile, setDownloadFile] = useState<File | null>(null);
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [saving, setSaving] = useState(false);
+  const [editNewFiles, setEditNewFiles] = useState<File[]>([]);
+  const [editNewPreviewUrls, setEditNewPreviewUrls] = useState<string[]>([]);
+  const [editNewPositions, setEditNewPositions] = useState<string[]>([]);
   const screenshotInputRef = useRef<HTMLInputElement>(null);
   const downloadInputRef = useRef<HTMLInputElement>(null);
+  const editScreenshotAddRef = useRef<HTMLInputElement>(null);
 
   // Create / revoke object URLs for new screenshots preview
   useEffect(() => {
@@ -138,6 +142,13 @@ export default function VstTab() {
     setScreenshotPositions(urls.map(() => "50% 0%"));
     return () => { urls.forEach((u) => URL.revokeObjectURL(u)); };
   }, [screenshots]);
+
+  useEffect(() => {
+    const urls = editNewFiles.map((f) => URL.createObjectURL(f));
+    setEditNewPreviewUrls(urls);
+    setEditNewPositions(urls.map(() => "50% 0%"));
+    return () => { urls.forEach((u) => URL.revokeObjectURL(u)); };
+  }, [editNewFiles]);
 
   async function load() {
     setLoading(true);
@@ -181,6 +192,9 @@ export default function VstTab() {
     });
     setEditScreenshots(vst.screenshots);
     setEditPositions(vst.screenshots.map((_, i) => vst.screenshotPositions?.[i] ?? "50% 0%"));
+    setEditNewFiles([]);
+    setEditNewPreviewUrls([]);
+    setEditNewPositions([]);
     setScreenshots([]);
     setPreviewUrls([]);
     setScreenshotPositions([]);
@@ -193,6 +207,9 @@ export default function VstTab() {
     setEditId(null);
     setEditScreenshots([]);
     setEditPositions([]);
+    setEditNewFiles([]);
+    setEditNewPreviewUrls([]);
+    setEditNewPositions([]);
     setMsg(null);
   }
 
@@ -201,25 +218,45 @@ export default function VstTab() {
     setSaving(true);
     try {
       if (editId !== null) {
-        // PUT — JSON only (no new files in edit mode for simplicity, files managed separately)
-        const res = await fetch(`/api/vsts/${editId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: form.name,
-            description: form.description,
-            releaseDate: form.releaseDate,
-            version: form.version || undefined,
-            downloadUrl: form.downloadUrl,
-            screenshotPositions: editPositions.length ? editPositions : undefined,
-          }),
-        });
+        let res: Response;
+        const allPositions = [...editPositions, ...editNewPositions];
+        if (editNewFiles.length > 0) {
+          // Multipart PUT — includes new screenshot files
+          const fd = new FormData();
+          fd.append("name", form.name);
+          fd.append("description", form.description);
+          fd.append("releaseDate", form.releaseDate);
+          if (form.version) fd.append("version", form.version);
+          if (form.downloadUrl) fd.append("downloadUrl", form.downloadUrl);
+          fd.append("screenshots", JSON.stringify(editScreenshots));
+          if (allPositions.length) fd.append("screenshotPositions", JSON.stringify(allPositions));
+          for (const f of editNewFiles) fd.append("newScreenshots", f);
+          res = await fetch(`/api/vsts/${editId}`, { method: "PUT", body: fd });
+        } else {
+          // JSON PUT — field edits + screenshot removals/position adjustments
+          res = await fetch(`/api/vsts/${editId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: form.name,
+              description: form.description,
+              releaseDate: form.releaseDate,
+              version: form.version || undefined,
+              downloadUrl: form.downloadUrl,
+              screenshots: editScreenshots,
+              screenshotPositions: allPositions.length ? allPositions : undefined,
+            }),
+          });
+        }
         const data = await res.json();
         if (data.status === "success") {
           setMsg({ text: "VST mis à jour.", ok: true });
           setEditId(null);
           setEditScreenshots([]);
           setEditPositions([]);
+          setEditNewFiles([]);
+          setEditNewPreviewUrls([]);
+          setEditNewPositions([]);
           load();
         } else {
           setMsg({ text: data.message ?? "Erreur", ok: false });
@@ -351,7 +388,7 @@ export default function VstTab() {
               </p>
               <div style={{
                 display: "grid",
-                gridTemplateColumns: previewUrls.length === 1 ? "1fr" : "repeat(auto-fill, minmax(300px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
                 gap: "1.25rem",
               }}>
                 {previewUrls.map((url, i) => (
@@ -371,31 +408,105 @@ export default function VstTab() {
             </div>
           )}
 
-          {/* Screenshot croppers — shown in edit mode for existing screenshots */}
-          {editId !== null && editScreenshots.length > 0 && (
+          {/* Screenshot management — edit mode */}
+          {editId !== null && (
             <div style={{ marginTop: "1rem" }}>
               <p style={{ fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--text-secondary)", margin: "0 0 0.75rem" }}>
-                Recadrage des screenshots
+                Screenshots
               </p>
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: editScreenshots.length === 1 ? "1fr" : "repeat(auto-fill, minmax(300px, 1fr))",
-                gap: "1.25rem",
-              }}>
-                {editScreenshots.map((url, i) => (
-                  <ImageCropper
-                    key={url}
-                    src={url}
-                    position={editPositions[i] ?? "50% 0%"}
-                    label={`Screenshot ${i + 1}`}
-                    onChange={(pos) => setEditPositions((prev) => {
-                      const next = [...prev];
-                      next[i] = pos;
-                      return next;
-                    })}
-                  />
-                ))}
-              </div>
+
+              {/* Existing screenshots */}
+              {editScreenshots.length > 0 && (
+                <div style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+                  gap: "1rem",
+                  marginBottom: "0.75rem",
+                }}>
+                  {editScreenshots.map((url, i) => (
+                    <div key={url} style={{ position: "relative" }}>
+                      <ImageCropper
+                        src={url}
+                        position={editPositions[i] ?? "50% 0%"}
+                        label={`Screenshot ${i + 1}`}
+                        onChange={(pos) => setEditPositions((prev) => {
+                          const next = [...prev];
+                          next[i] = pos;
+                          return next;
+                        })}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditScreenshots((prev) => prev.filter((_, j) => j !== i));
+                          setEditPositions((prev) => prev.filter((_, j) => j !== i));
+                        }}
+                        style={{
+                          position: "absolute", top: 20, right: 4,
+                          background: "rgba(248,113,113,0.85)", border: "none", borderRadius: 4,
+                          color: "#fff", padding: "2px 7px", cursor: "pointer",
+                          fontSize: "0.68rem", lineHeight: 1.5,
+                        }}
+                      >
+                        <i className="fas fa-times" /> Supprimer
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* New screenshots pending upload */}
+              {editNewPreviewUrls.length > 0 && (
+                <div style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+                  gap: "1rem",
+                  marginBottom: "0.75rem",
+                }}>
+                  {editNewPreviewUrls.map((url, i) => (
+                    <div key={url} style={{ position: "relative" }}>
+                      <ImageCropper
+                        src={url}
+                        position={editNewPositions[i] ?? "50% 0%"}
+                        label={`Nouveau ${i + 1} — ${editNewFiles[i]?.name}`}
+                        onChange={(pos) => setEditNewPositions((prev) => {
+                          const next = [...prev];
+                          next[i] = pos;
+                          return next;
+                        })}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setEditNewFiles((prev) => prev.filter((_, j) => j !== i))}
+                        style={{
+                          position: "absolute", top: 20, right: 4,
+                          background: "rgba(248,113,113,0.85)", border: "none", borderRadius: 4,
+                          color: "#fff", padding: "2px 7px", cursor: "pointer",
+                          fontSize: "0.68rem", lineHeight: 1.5,
+                        }}
+                      >
+                        <i className="fas fa-times" /> Annuler
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Add new screenshots */}
+              <label className={styles.btnSm} style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+                <i className="fas fa-plus" /> Ajouter des screenshots
+                <input
+                  ref={editScreenshotAddRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    setEditNewFiles((prev) => [...prev, ...Array.from(e.target.files ?? [])]);
+                    if (editScreenshotAddRef.current) editScreenshotAddRef.current.value = "";
+                  }}
+                />
+              </label>
             </div>
           )}
 

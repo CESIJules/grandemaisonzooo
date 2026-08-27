@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
-import { getPosts, addPost } from "@/lib/data";
-import { requireAdmin } from "@/lib/auth";
+import { getPosts, addPost, getArtistProfileById } from "@/lib/data";
+import { requireAuth } from "@/lib/auth";
 import { PATHS } from "@/lib/paths";
+
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const artist = searchParams.get("artist");
   let posts = getPosts();
-  if (artist && artist !== "Tous") posts = posts.filter((p) => p.artist === artist);
+  if (artist && artist !== "Tous") posts = posts.filter((p) => p.artist?.toLowerCase() === artist.toLowerCase());
   return NextResponse.json(posts);
 }
 
@@ -24,8 +27,9 @@ async function saveUploadedImage(file: File): Promise<string> {
 }
 
 export async function POST(req: NextRequest) {
+  let session;
   try {
-    await requireAdmin();
+    session = await requireAuth();
   } catch (res) {
     return res as Response;
   }
@@ -47,6 +51,19 @@ export async function POST(req: NextRequest) {
     } else {
       const body = await req.json();
       ({ title, date, artist, link, image } = body);
+    }
+
+    // Artists can only post under their own name
+    if (session.role === "artist") {
+      if (!session.artist_id) {
+        return NextResponse.json({ status: "error", message: "Accès refusé" }, { status: 403 });
+      }
+      const ownProfile = getArtistProfileById(session.artist_id);
+      if (!ownProfile) {
+        return NextResponse.json({ status: "error", message: "Profil artiste introuvable" }, { status: 403 });
+      }
+      // Force the post's artist name to match the artist's profile (ignore any spoofed value)
+      artist = ownProfile.name;
     }
 
     if (!title || !date || !artist) {

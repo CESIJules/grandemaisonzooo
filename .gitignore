@@ -26,6 +26,7 @@
 /var/www/html/music_metadata.json
 /var/www/html/track_info.json
 /var/www/html/introboucle_old.mp4
+/var/www/ohara/node_modules/
 
 # ---- Frontend Next.js ----
 !/var/www/frontend/
