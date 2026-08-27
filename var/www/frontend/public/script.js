@@ -193,8 +193,8 @@
   let globeRotation     = 0;
   let globeRafActive    = false;
   let globeItems        = [];
-  const GLOBE_TILT      = 0.15; // gentle backward tilt ~8.6° (front equator in visual center)
-  const GLOBE_TILT_Z    = -0.14; // subtle leftward canvas tilt ~-8°
+  const GLOBE_TILT      = 0.38; // stylized backward tilt ~22° (dynamic 3D look)
+  const GLOBE_TILT_Z    = -0.22; // stylish diagonal canvas tilt ~-13°
 
   // Radio / globe transition state
   let globeScrollT      = 0;   // 0 = timeline, 1 = radio (interpolated)
@@ -2872,9 +2872,9 @@
     // Scale up on radio section (globeScrollT = 0..1)
     const baseR = Math.min(W * 0.32, H * 0.42);
     const R = baseR * (1.0 + globeScrollT * 0.55);
-    // Center of globe: slightly offset so the front equator lands precisely in the viewport center
+    // Center of globe shifted to compensate tilt so the front active card sits in the vertical center
     const cx = W / 2;
-    const cy = (H / 2 + H * 0.04) + globeScrollT * H * 0.08;
+    const cy = (H / 2 + H * 0.13) + globeScrollT * H * 0.08;
     return { W, H, R, cx, cy };
   }
 
