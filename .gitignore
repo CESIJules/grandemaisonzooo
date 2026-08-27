@@ -26,6 +26,8 @@
 /var/www/html/music_metadata.json
 /var/www/html/track_info.json
 /var/www/html/introboucle_old.mp4
+/var/www/html/gme/*.exe
+/var/www/shop_files/*.rar
 /var/www/ohara/node_modules/
 
 # ---- Frontend Next.js ----
@@ -45,6 +47,7 @@
 !/var/www/frontend/types/**
 !/var/www/frontend/public/
 !/var/www/frontend/public/**
+/var/www/frontend/public/vid/*.mp4
 !/var/www/frontend/data/
 !/var/www/frontend/data/artists.json
 !/var/www/frontend/data/timeline.json
@@ -62,6 +65,7 @@
 /var/www/frontend/.next/
 /var/www/frontend/node_modules/
 /var/www/frontend/.env*.local
+/var/www/updates/gme/*.exe*
 
 ############# /home #############
 !/home/
