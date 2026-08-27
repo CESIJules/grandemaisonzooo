@@ -3083,19 +3083,15 @@
     const Tz = GLOBE_TILT_Z + globeScrollT * (0.12 - GLOBE_TILT_Z);
 
     // Rayon orbital légèrement au-dessus de la surface du globe
-    const orbitR = R * 1.14;
+    const orbitR = R * 1.15;
 
-    // Dimensions adaptatives des cartes
-    const itemW = Math.min(170, Math.max(125, W * 0.108));
-    const itemH = itemW * 1.55;
+    // Cartes agrandies pour une excellente lisibilité du contenu
+    const itemW = Math.min(240, Math.max(160, W * 0.135));
+    const itemH = itemW * 1.50;
 
-    // Angle d'espacement des cartes sur l'orbite (~32.7°)
-    const SLOT_ANGLE = Math.PI / 5.5;
+    // Angle d'espacement des cartes sur l'orbite (~34.6°)
+    const SLOT_ANGLE = Math.PI / 5.2;
     const MAX_OFFSET = 4.5;
-
-    // Degrés de tilt pour les rotations 3D en CSS
-    const Tz_deg = Tz * 180 / Math.PI;
-    const Tx_deg = T * 180 / Math.PI * 0.32; // inclinaison arrière subtile suivant le globe
 
     for (let i = 0; i < N; i++) {
       const item = globeItems[i];
@@ -3113,7 +3109,7 @@
 
       item.style.visibility = 'visible';
 
-      // ── Position 3D exacte sur l'orbite équatoriale du globe ──
+      // ── Position 3D exacte le long de l'équateur du globe ──
       const angle = offset * SLOT_ANGLE;
       const x3 = orbitR * Math.sin(angle);
       const y3 = 0;
@@ -3124,7 +3120,7 @@
       const dy = -y3 * Math.cos(T) - z3 * Math.sin(T);
       const depth = -y3 * Math.sin(T) + z3 * Math.cos(T);
 
-      // Rotation 2D Tz (correspondant à ctx.rotate(Tz)) + zoomScale
+      // Positionnement sur l'orbite avec la rotation 2D Tz du canevas
       const sx_unscaled = cx + (dx * Math.cos(Tz) - dy * Math.sin(Tz));
       const sy_unscaled = cy + (dx * Math.sin(Tz) + dy * Math.cos(Tz));
 
@@ -3135,23 +3131,20 @@
       const zNorm = z3 / orbitR;
       const isBehind = zNorm < -0.05;
 
-      // ── Courbes réalistes basées sur Math.tanh ──
-      // 1. Rotation yaw 3D (tanh lisse l'angle, évitant l'effet papier plat ou inversion brutale)
-      const rotateY = Math.tanh(offset * 0.48) * 66.0;
+      // ── Rotation 3D : Tangente exacte à l'orbite (dos constamment face au globe) ──
+      const rotateY = angle * (180 / Math.PI);
 
-      // 2. Échelle (tanh crée un focus doux sur la carte active et une transition fluide)
-      const distNorm = Math.tanh(Math.abs(offset) * 0.72);
-      const scale = (0.34 + 0.76 * (1.0 - distNorm * 0.70)) * Math.max(0.01, globeZoomScale);
+      // ── Échelle avec tanh : grande carte centrale, voisines bien visibles ──
+      const distNorm = Math.tanh(Math.abs(offset) * 0.55);
+      const scale = (0.42 + 0.68 * (1.0 - distNorm * 0.65)) * Math.max(0.01, globeZoomScale);
 
-      // 3. Opacité (dégradé organique avec tanh suivant la profondeur)
-      const opacity = Math.min(1, Math.max(0, 0.20 + 0.80 * ((1.0 + Math.tanh(1.8 * zNorm)) / 2.0)));
-
-      // 4. Flou progressif pour les cartes passant derrière le globe
-      const blur = zNorm < 0.05
-        ? (Math.tanh(Math.max(0, -zNorm) * 2.5) * 4.0).toFixed(1)
+      // ── Opacité et flou d'arrière-plan ──
+      const opacity = Math.min(1, Math.max(0, 0.30 + 0.70 * ((1.0 + Math.tanh(2.0 * zNorm)) / 2.0)));
+      const blur = isBehind
+        ? (Math.tanh(Math.max(0, -zNorm) * 2.5) * 3.5).toFixed(1)
         : '0';
 
-      // 5. Z-Index hiérarchisé (carte centrale au sommet, cartes arrières < canvas z:8)
+      // ── Z-Index hiérarchisé (carte centrale au sommet, cartes arrières < canvas z:8) ──
       const zIdx = isBehind
         ? Math.max(1, Math.round(5 - Math.abs(offset)))
         : Math.round(10 + (1 - distNorm) * 15);
@@ -3161,7 +3154,8 @@
 
       item.style.width           = `${itemW}px`;
       item.style.margin          = '0';
-      item.style.transform       = `translate(${tx}px, ${ty}px) perspective(1100px) rotateZ(${Tz_deg.toFixed(2)}deg) rotateX(${Tx_deg.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale(${scale.toFixed(3)})`;
+      // Cartes maintenues bien droites (sans tilt Z parasite) avec rotation Y tangente
+      item.style.transform       = `translate(${tx}px, ${ty}px) perspective(1100px) rotateY(${rotateY.toFixed(2)}deg) scale(${scale.toFixed(3)})`;
       item.style.transformOrigin = 'center center';
       item.style.opacity         = opacity.toFixed(2);
       item.style.filter          = blur !== '0' ? `blur(${blur}px)` : '';
