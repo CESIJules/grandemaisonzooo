@@ -2093,16 +2093,16 @@ body.menu-open {
     z-index: 5;
     width: 100%;
     pointer-events: auto;
-    background: rgba(14, 14, 18, 0.78);
-    padding: clamp(14px, 1.6vw, 20px);
-    border-radius: 18px;
+    background-color: #0000;
+    padding: clamp(12px, 1.5vw, 18px);
+    border-radius: 16px;
     text-align: center;
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8),
-        0 0 1px rgba(255, 255, 255, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.8),
+        inset 6px 0 14px rgba(0, 0, 0, 0.55),
+        inset -6px 0 14px rgba(0, 0, 0, 0.55);
 
     /* 3D Tilt Setup */
     transform-style: preserve-3d;
@@ -2122,7 +2122,7 @@ body.menu-open {
     .timeline-content:hover {
         transform: perspective(1000px) scale(1.05) translateY(-5px) rotateX(var(--rotate-x)) rotateY(var(--rotate-y));
         box-shadow: 0 30px 50px rgba(0, 0, 0, 0.9), 0 0 25px rgba(255, 255, 255, 0.15);
-        background-color: rgba(28, 28, 34, 0.9);
+        background-color: rgba(35, 35, 35, 0.8);
         border-color: rgba(255, 255, 255, 0.4);
         z-index: 200;
         /* Ensure it pops over everything including header */
@@ -2161,22 +2161,18 @@ body.menu-open {
     justify-content: center;
     padding: 16px;
     text-align: center;
-    background: linear-gradient(160deg, rgba(20, 20, 24, 0.85) 0%, rgba(10, 10, 14, 0.9) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 18px;
-    box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.7);
+    background: linear-gradient(160deg, #111 0%, #0a0a0a 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.6);
     pointer-events: none;
-    transform: rotateY(180deg);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
 }
 
 .timeline-back-face span {
     font-family: 'Space Grotesk', sans-serif;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.45);
-    letter-spacing: 0.16em;
+    font-size: 0.5rem;
+    color: rgba(255, 255, 255, 0.22);
+    letter-spacing: 0.18em;
     text-transform: uppercase;
     word-break: break-word;
 }
@@ -2184,16 +2180,14 @@ body.menu-open {
 .timeline-item h3 {
     color: #fff;
     margin: 0 0 6px;
-    font-size: clamp(1.05em, 1.25vw, 1.3em);
-    font-weight: 700;
-    letter-spacing: 0.05em;
+    font-size: clamp(1em, 1.2vw, 1.2em);
 }
 
 .timeline-item h4 {
     font-family: 'Outfit', sans-serif;
-    color: #bbb;
+    color: #999;
     margin: 0 0 8px;
-    font-size: clamp(0.75em, 0.9vw, 0.9em);
+    font-size: clamp(0.7em, 0.9vw, 0.85em);
     text-transform: uppercase;
     letter-spacing: 1px;
 }
@@ -2207,16 +2201,11 @@ body.menu-open {
     text-align: center;
 }
 
-.timeline-item img,
-.timeline-item .timeline-image {
+.timeline-item img {
     max-width: 100%;
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    object-fit: cover;
     height: auto;
-    border-radius: 10px;
+    border-radius: 0;
     margin-top: 10px;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
 }
 
 /* Remove old generic link style that might conflict */

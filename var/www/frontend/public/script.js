@@ -193,8 +193,8 @@
   let globeRotation     = 0;
   let globeRafActive    = false;
   let globeItems        = [];
-  const GLOBE_TILT      = 0.38; // stylized backward tilt ~22° (dynamic 3D look)
-  const GLOBE_TILT_Z    = -0.22; // stylish diagonal canvas tilt ~-13°
+  const GLOBE_TILT      = 0.55; // backward tilt ~31°
+  const GLOBE_TILT_Z    = -0.28; // leftward canvas tilt ~-16°
 
   // Radio / globe transition state
   let globeScrollT      = 0;   // 0 = timeline, 1 = radio (interpolated)
@@ -2872,9 +2872,9 @@
     // Scale up on radio section (globeScrollT = 0..1)
     const baseR = Math.min(W * 0.32, H * 0.42);
     const R = baseR * (1.0 + globeScrollT * 0.55);
-    // Center of globe shifted to compensate tilt so the front active card sits in the vertical center
+    // Center shifts slightly down on radio
     const cx = W / 2;
-    const cy = (H / 2 + H * 0.13) + globeScrollT * H * 0.08;
+    const cy = H / 2 + globeScrollT * H * 0.08;
     return { W, H, R, cx, cy };
   }
 
@@ -2899,7 +2899,7 @@
     ctx.scale(globeZoomScale, globeZoomScale);
     ctx.translate(-cx, -cy);
 
-    // Interpolate tilt with scroll (T: 0.55 -> 0.08, Tz: -0.28 -> 0.12)
+    // Interpolate tilt with scroll (T: 0.55 -> 0.30, Tz: -0.28 -> 0)
     const T  = GLOBE_TILT  + globeScrollT * (0.08 - GLOBE_TILT);
     const Tz = GLOBE_TILT_Z + globeScrollT * (0.12 - GLOBE_TILT_Z);
 
@@ -2947,7 +2947,7 @@
       const r_s  = R * Math.cos(lat);
       if (r_s < 1) continue;
       const yOff = -R * Math.sin(lat) * Math.cos(T);
-      const ry   = Math.max(0.5, r_s * Math.abs(Math.sin(T)));
+      const ry   = Math.max(0.5, r_s * Math.sin(T));
       ctx.beginPath();
       ctx.ellipse(cx, cy + yOff, r_s, ry, 0, 0, Math.PI * 2);
       ctx.strokeStyle = 'rgba(255,255,255,0.14)';
@@ -3077,25 +3077,25 @@
     const p = getGlobeParams();
     if (!p) return;
     const { W, H, R, cx, cy } = p;
+    const T = GLOBE_TILT;
 
-    // Interpolation des angles de tilt avec le scroll (identique à drawGlobe)
-    const T  = GLOBE_TILT  + globeScrollT * (0.08 - GLOBE_TILT);
-    const Tz = GLOBE_TILT_Z + globeScrollT * (0.12 - GLOBE_TILT_Z);
+    // Orbit sur l'équateur exact du globe (pas de décalage vertical)
+    const orbit_rx = R * 1.08;              // légèrement à l'extérieur de la surface
+    const orbit_ry = orbit_rx * Math.sin(T); // projection de l'équateur avec le tilt
+    const cy_orbit = cy;                     // centre = centre du globe
 
-    // Rayon orbital légèrement au-dessus de la surface du globe
-    const orbitR = R * 1.15;
+    // Cartes un peu plus petites, centre toujours plus grand
+    const itemW = Math.min(160, Math.max(120, W * 0.105));
+    const itemH = itemW * 1.55;
 
-    // Cartes agrandies pour une excellente lisibilité du contenu
-    const itemW = Math.min(240, Math.max(160, W * 0.135));
-    const itemH = itemW * 1.50;
-
-    // Angle d'espacement des cartes sur l'orbite (~34.6°)
-    const SLOT_ANGLE = Math.PI / 5.2;
+    // 30° par slot, affiche offsets -4 à +4 (4 derriere, 4 devant + centre)
+    const SLOT_ANGLE = Math.PI / 6;  // 30°
     const MAX_OFFSET = 4.5;
 
     for (let i = 0; i < N; i++) {
       const item = globeItems[i];
 
+      // Pas de wrapping — offset brut, les bords de la timeline finissent proprement
       const offset = i - globeOrbitCurrent;
 
       if (Math.abs(offset) > MAX_OFFSET) {
@@ -3109,53 +3109,45 @@
 
       item.style.visibility = 'visible';
 
-      // ── Position 3D exacte le long de l'équateur du globe ──
-      const angle = offset * SLOT_ANGLE;
-      const x3 = orbitR * Math.sin(angle);
-      const y3 = 0;
-      const z3 = orbitR * Math.cos(angle);
+      const phi = Math.PI / 2 - offset * SLOT_ANGLE;
 
-      // Projection 3D -> 2D avec tilt T (identique à project() dans drawGlobe)
-      const dx = x3;
-      const dy = -y3 * Math.cos(T) - z3 * Math.sin(T);
-      const depth = -y3 * Math.sin(T) + z3 * Math.cos(T);
+      const sx = cx       + orbit_rx * Math.cos(phi);
+      const sy = cy_orbit - orbit_ry * Math.sin(phi);
 
-      // Positionnement sur l'orbite avec la rotation 2D Tz du canevas
-      const sx_unscaled = cx + (dx * Math.cos(Tz) - dy * Math.sin(Tz));
-      const sy_unscaled = cy + (dx * Math.sin(Tz) + dy * Math.cos(Tz));
+      // depth: +1 = plein avant, -1 = plein arrière
+      const depth = Math.sin(phi);
+      const t     = (depth + 1) / 2;  // [0,1]
 
-      const sx = cx + (sx_unscaled - cx) * globeZoomScale;
-      const sy = cy + (sy_unscaled - cy) * globeZoomScale;
+      const isBehind = depth < 0;
 
-      // Profondeur normalisée : +1.0 plein devant, 0 sur les côtés, -1.0 derrière
-      const zNorm = z3 / orbitR;
-      const isBehind = zNorm < -0.05;
+      // Scale: centre un peu plus grand, transition douce (pas fisheye agressif)
+      const scale   = isBehind
+        ? 0.38 - Math.abs(depth) * 0.12          // arrière: 0.38 → 0.26
+        : 0.50 + t * 0.62;                       // avant:   0.50 → 1.12
 
-      // ── Rotation 3D : Tangente exacte à l'orbite (dos constamment face au globe) ──
-      const rotateY = angle * (180 / Math.PI);
+      // Opacité: cartes arrière bien visibles mais dimmées
+      const opacity = isBehind
+        ? 0.30 - Math.abs(depth) * 0.15          // arrière: 0.30 → 0.15
+        : 0.40 + t * 0.60;                       // avant: 0.40 → 1.00
 
-      // ── Échelle avec tanh : grande carte centrale, voisines bien visibles ──
-      const distNorm = Math.tanh(Math.abs(offset) * 0.55);
-      const scale = (0.42 + 0.68 * (1.0 - distNorm * 0.65)) * Math.max(0.01, globeZoomScale);
-
-      // ── Opacité et flou d'arrière-plan ──
-      const opacity = Math.min(1, Math.max(0, 0.30 + 0.70 * ((1.0 + Math.tanh(2.0 * zNorm)) / 2.0)));
+      // Blur léger pour les cartes arrière
       const blur = isBehind
-        ? (Math.tanh(Math.max(0, -zNorm) * 2.5) * 3.5).toFixed(1)
+        ? (Math.abs(depth) * 3.0).toFixed(1)
         : '0';
 
-      // ── Z-Index hiérarchisé (carte centrale au sommet, cartes arrières < canvas z:8) ──
+      // z-index: arrière < canvas (z=8) < avant
       const zIdx = isBehind
-        ? Math.max(1, Math.round(5 - Math.abs(offset)))
-        : Math.round(10 + (1 - distNorm) * 15);
+        ? Math.max(1, Math.round(4 - Math.abs(depth) * 3))   // 1–4
+        : Math.round(10 + t * 10);                           // 10–20
+
+      const rotateY = offset * (SLOT_ANGLE * 180 / Math.PI);
 
       const tx = Math.round(sx - itemW / 2);
       const ty = Math.round(sy - itemH / 2);
 
       item.style.width           = `${itemW}px`;
       item.style.margin          = '0';
-      // Cartes maintenues bien droites (sans tilt Z parasite) avec rotation Y tangente
-      item.style.transform       = `translate(${tx}px, ${ty}px) perspective(1100px) rotateY(${rotateY.toFixed(2)}deg) scale(${scale.toFixed(3)})`;
+      item.style.transform       = `translate(${tx}px, ${ty}px) perspective(1200px) rotateY(${rotateY.toFixed(2)}deg) scale(${scale.toFixed(3)})`;
       item.style.transformOrigin = 'center center';
       item.style.opacity         = opacity.toFixed(2);
       item.style.filter          = blur !== '0' ? `blur(${blur}px)` : '';
