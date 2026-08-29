@@ -30,6 +30,9 @@ export async function GET(
       ".zip": "application/zip",
       ".rar": "application/x-rar-compressed",
       ".pdf": "application/pdf",
+      ".glb": "model/gltf-binary",
+      ".gltf": "model/gltf+json",
+      ".obj": "text/plain",
     };
     const contentType = contentTypes[ext] ?? "application/octet-stream";
     return new NextResponse(buffer, {

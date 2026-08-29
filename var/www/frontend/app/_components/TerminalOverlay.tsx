@@ -1,3 +1,5 @@
+import AsciiObject from "@/components/canvasui/AsciiObject";
+
 export default function TerminalOverlay() {
   return (
     <div id="terminalOverlay" className="hidden">
@@ -22,8 +24,27 @@ export default function TerminalOverlay() {
             </div>
           </div>
         </div>
-        <div className="terminal-right">
-          <pre id="asciiS"></pre>
+        <div className="terminal-right" style={{ position: "relative", width: "50%", height: "100%" }}>
+          <AsciiObject
+            src="/uploads/obj/base_basic_pbr.glb"
+            style={{ width: "100%", height: "100%" }}
+            cellSize={8}
+            cellAspect={0.6}
+            contrast={1.6}
+            edgeContrast={3.2}
+            exposure={1.1}
+            environmentIntensity={1.2}
+            scale={3.2}
+            floatIntensity={1.2}
+            rotationIntensity={0.8}
+            floatSpeed={1.5}
+            orbit={true}
+            autoRotate={true}
+            autoRotateSpeed={1.5}
+            colored={true}
+            color="#a78bfa"
+            highlight="#7c3aed"
+          />
         </div>
       </div>
     </div>
