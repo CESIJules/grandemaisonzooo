@@ -6,10 +6,21 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
 
 export interface AsciiObjectOptions {
-  /** URL of the asset to display: GLB/glTF, SVG, PNG, JPEG, WebP, or GIF. Object URLs from a file input work too. The format is sniffed from the bytes, not the extension. */
+  /** URL of the asset to display: GLB/glTF, OBJ, SVG, PNG, JPEG, WebP, or GIF. Object URLs from a file input work too. The format is sniffed from the bytes, not the extension. */
   src?: string;
+  /** Diffuse / Base color texture map URL (PNG/JPG/WebP) */
+  diffuseMap?: string;
+  /** Normal texture map URL */
+  normalMap?: string;
+  /** Roughness texture map URL */
+  roughnessMap?: string;
+  /** Metalness texture map URL */
+  metalnessMap?: string;
+  /** Override texture vertical flip behavior. If undefined, false for glTF/GLB and true for OBJ. */
+  textureFlipY?: boolean | null;
   /** Render the object as ASCII characters. Turn off to see the raw render. */
   ascii?: boolean;
   /** Height of one character cell in CSS pixels. */
@@ -90,6 +101,11 @@ const PRINTABLE_ASCII = Array.from({ length: 95 }, (_, i) =>
 
 const DEFAULTS: Required<AsciiObjectOptions> = {
   src: "",
+  diffuseMap: "",
+  normalMap: "",
+  roughnessMap: "",
+  metalnessMap: "",
+  textureFlipY: null,
   ascii: true,
   cellSize: 10,
   cellAspect: 0.6,
@@ -490,9 +506,10 @@ function glyphShapes(
   return vectors;
 }
 
-type AssetKind = "glb" | "gltf" | "svg" | "bitmap";
+type AssetKind = "glb" | "gltf" | "obj" | "svg" | "bitmap";
 
-function sniffKind(bytes: Uint8Array): AssetKind | null {
+function sniffKind(bytes: Uint8Array, srcUrl = ""): AssetKind | null {
+  if (srcUrl.toLowerCase().endsWith(".obj")) return "obj";
   if (bytes.length < 4) return null;
   const ascii = (start: number, text: string) => {
     for (let i = 0; i < text.length; i++) {
@@ -516,6 +533,7 @@ function sniffKind(bytes: Uint8Array): AssetKind | null {
   }
   if (head.startsWith("{")) return "gltf";
   if (head.startsWith("<")) return head.includes("<svg") ? "svg" : null;
+  if (/^(#|v |vn |vt |f |o |g |mtllib |usemtl )/m.test(head)) return "obj";
   return null;
 }
 
@@ -1150,6 +1168,65 @@ export function createAsciiObject(
     fitGroup.add(model);
   }
 
+  const textureLoader = new THREE.TextureLoader();
+
+  async function applyCustomTextures(root: THREE.Object3D, kind: AssetKind) {
+    if (!config.diffuseMap && !config.normalMap && !config.roughnessMap && !config.metalnessMap) {
+      return;
+    }
+
+    const defaultFlipY = (kind === "obj");
+    const flipY = config.textureFlipY !== null && config.textureFlipY !== undefined ? config.textureFlipY : defaultFlipY;
+
+    const loadTex = async (url: string, isColor = false): Promise<THREE.Texture | null> => {
+      if (!url) return null;
+      try {
+        const tex = await textureLoader.loadAsync(url);
+        tex.flipY = flipY;
+        tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+        if (isColor) {
+          tex.colorSpace = THREE.SRGBColorSpace;
+        }
+        return tex;
+      } catch (err) {
+        console.warn(`[AsciiObject] Failed to load texture: ${url}`, err);
+        return null;
+      }
+    };
+
+    const [diffuseTex, normalTex, roughnessTex, metalnessTex] = await Promise.all([
+      loadTex(config.diffuseMap, true),
+      loadTex(config.normalMap, false),
+      loadTex(config.roughnessMap, false),
+      loadTex(config.metalnessMap, false),
+    ]);
+
+    root.traverse((node) => {
+      const mesh = node as THREE.Mesh;
+      if (!mesh || !mesh.isMesh) return;
+
+      const existingMat = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
+      const standard = (existingMat instanceof THREE.MeshStandardMaterial)
+        ? existingMat
+        : new THREE.MeshStandardMaterial({
+            color: 0xffffff,
+            roughness: config.roughness >= 0 ? config.roughness : 0.7,
+            metalness: 0.1,
+          });
+
+      if (diffuseTex) {
+        standard.map = diffuseTex;
+        standard.color.setHex(0xffffff); // ensure pure white multiplier so texture colors are 100% visible
+      }
+      if (normalTex) standard.normalMap = normalTex;
+      if (roughnessTex) standard.roughnessMap = roughnessTex;
+      if (metalnessTex) standard.metalnessMap = metalnessTex;
+
+      standard.needsUpdate = true;
+      mesh.material = standard;
+    });
+  }
+
   async function loadAsset() {
     const src = config.src;
     if (src === loadedSrc) return;
@@ -1165,7 +1242,7 @@ export function createAsciiObject(
       const buffer = await response.arrayBuffer();
       if (disposed || token !== loadToken) return;
       const bytes = new Uint8Array(buffer);
-      const kind = sniffKind(bytes);
+      const kind = sniffKind(bytes, src);
       if (!kind) throw new Error("Unrecognized asset format");
 
       if (kind === "glb" || kind === "gltf") {
@@ -1177,7 +1254,18 @@ export function createAsciiObject(
           disposeObject(gltf.scene);
           return;
         }
+        await applyCustomTextures(gltf.scene, kind);
         adoptModel(gltf.scene);
+      } else if (kind === "obj") {
+        const text = new TextDecoder().decode(bytes);
+        const objLoader = new OBJLoader();
+        const obj = objLoader.parse(text);
+        if (disposed || token !== loadToken) {
+          disposeObject(obj);
+          return;
+        }
+        await applyCustomTextures(obj, kind);
+        adoptModel(obj);
       } else {
         const blob = new Blob([buffer], {
           type: kind === "svg" ? "image/svg+xml" : "",
@@ -1407,11 +1495,15 @@ export function createAsciiObject(
   return {
     setOptions(next: AsciiObjectOptions) {
       let changed = false;
+      let assetChanged = false;
+      const assetKeys = ["src", "diffuseMap", "normalMap", "roughnessMap", "metalnessMap", "textureFlipY"];
       for (const [key, value] of Object.entries(next)) {
         if (typeof value === "function") continue;
         if (config[key as keyof AsciiObjectOptions] !== value) {
           changed = true;
-          break;
+          if (assetKeys.includes(key)) {
+            assetChanged = true;
+          }
         }
       }
       if (!changed) {
@@ -1428,6 +1520,9 @@ export function createAsciiObject(
       }
       applyOptions();
       resize();
+      if (assetChanged) {
+        loadedSrc = null;
+      }
       loadAsset();
       startLoop();
     },

@@ -27,6 +27,10 @@ export default function TerminalOverlay() {
         <div className="terminal-right" style={{ position: "relative", width: "50%", height: "100%" }}>
           <AsciiObject
             src="/uploads/obj/base_basic_pbr.glb"
+            diffuseMap="/uploads/obj/texture_diffuse.png"
+            normalMap="/uploads/obj/texture_normal.png"
+            roughnessMap="/uploads/obj/texture_roughness.png"
+            metalnessMap="/uploads/obj/texture_metallic.png"
             style={{ width: "100%", height: "100%" }}
             cellSize={8}
             cellAspect={0.6}
