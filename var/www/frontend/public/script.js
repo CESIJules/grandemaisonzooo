@@ -234,6 +234,48 @@
   ];
   // Each listener dot: {lat, lon, alpha, flashT}
   let globeListenerDots = [];
+  let globeLandDots     = []; // Tactical holographic land dot matrix
+
+  function initLandDots() {
+    if (globeLandDots.length > 0) return;
+    const dots = [];
+    const REGIONS = [
+      // Europe
+      { lat1: 36, lat2: 66, lon1: -9, lon2: 38, stepLat: 4.0, stepLon: 5.0 },
+      // Africa
+      { lat1: -33, lat2: 35, lon1: -16, lon2: 48, stepLat: 5.0, stepLon: 5.5 },
+      // North America
+      { lat1: 18, lat2: 68, lon1: -125, lon2: -65, stepLat: 5.0, stepLon: 6.0 },
+      // South America
+      { lat1: -52, lat2: 11, lon1: -78, lon2: -36, stepLat: 5.0, stepLon: 5.5 },
+      // Asia
+      { lat1: 10, lat2: 68, lon1: 42, lon2: 140, stepLat: 5.0, stepLon: 6.5 },
+      // Australia
+      { lat1: -38, lat2: -14, lon1: 116, lon2: 150, stepLat: 4.5, stepLon: 5.0 },
+      // Japan & UK
+      { lat1: 31, lat2: 44, lon1: 130, lon2: 144, stepLat: 3.0, stepLon: 3.5 },
+      { lat1: 50, lat2: 58, lon1: -5, lon2: 1.5, stepLat: 2.5, stepLon: 2.8 }
+    ];
+    for (const reg of REGIONS) {
+      for (let lat = reg.lat1; lat <= reg.lat2; lat += reg.stepLat) {
+        for (let lon = reg.lon1; lon <= reg.lon2; lon += reg.stepLon) {
+          const jLat = lat + Math.sin(lat * 11.7 + lon * 7.3) * 0.35;
+          const jLon = lon + Math.cos(lat * 8.3 + lon * 13.9) * 0.35;
+          dots.push({ lat: jLat, lon: jLon });
+        }
+      }
+    }
+    globeLandDots = dots;
+  }
+
+  // Pre-fetch coastlines immediately
+  fetch('/world-coastline.json')
+    .then(r => r.json())
+    .then(d => {
+      globeCoastlines = d;
+      initLandDots();
+    })
+    .catch(() => {});
 
   let isScrolling;
   let isSnapping = false;
@@ -2927,6 +2969,30 @@
     ctx.rotate(Tz);
     ctx.translate(-cx, -cy);
 
+    // ── Atmospheric Fresnel Rim Glow & Volumetric Depth ──
+    const rimGrad = ctx.createRadialGradient(cx, cy, R * 0.93, cx, cy, R * 1.14);
+    rimGrad.addColorStop(0, 'rgba(0, 255, 120, 0)');
+    rimGrad.addColorStop(0.5, 'rgba(0, 255, 120, 0.04)');
+    rimGrad.addColorStop(0.88, 'rgba(0, 255, 140, 0.18)');
+    rimGrad.addColorStop(1, 'rgba(0, 255, 120, 0)');
+    ctx.fillStyle = rimGrad;
+    ctx.beginPath();
+    ctx.arc(cx, cy, R * 1.15, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Internal spherical lighting gradient
+    const innerGlow = ctx.createRadialGradient(cx - R * 0.35, cy - R * 0.35, R * 0.1, cx, cy, R);
+    innerGlow.addColorStop(0, 'rgba(255, 255, 255, 0.03)');
+    innerGlow.addColorStop(0.75, 'rgba(0, 0, 0, 0.12)');
+    innerGlow.addColorStop(1, 'rgba(0, 255, 120, 0.07)');
+    ctx.fillStyle = innerGlow;
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Virtual Light Direction for 3D Faux-Lighting (top-left front)
+    const LX = -0.38, LY = 0.58, LZ = 0.72;
+
     // ── Radio glow on globe (only when playing) ──
     if (globeSweepActive && globeScrollT > 0.1) {
       const glow = globeScrollT * 0.18;
@@ -2941,21 +3007,26 @@
       ctx.restore();
     }
 
-    // ── Latitude lines (parallels) ──
+    // ── Latitude lines (parallels) with 3D depth & lighting ──
     for (let i = 0; i <= 8; i++) {
       const lat  = (-80 + i * 20) * Math.PI / 180;
       const r_s  = R * Math.cos(lat);
       if (r_s < 1) continue;
       const yOff = -R * Math.sin(lat) * Math.cos(T);
       const ry   = Math.max(0.5, r_s * Math.abs(Math.sin(T)));
+
+      const normY = Math.sin(lat);
+      const normZ = Math.cos(lat);
+      const lightDiff = Math.max(0.2, 0.5 + 0.5 * (normY * LY + normZ * LZ));
+
       ctx.beginPath();
       ctx.ellipse(cx, cy + yOff, r_s, ry, 0, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+      ctx.strokeStyle = `rgba(255,255,255,${(0.06 + 0.12 * lightDiff).toFixed(2)})`;
       ctx.lineWidth   = 0.7;
       ctx.stroke();
     }
 
-    // ── Meridian lines (longitudes) — per-segment depth opacity ──
+    // ── Meridian lines (longitudes) — per-segment 3D lighting & occlusion ──
     const LON_COUNT = 18;
     const SEG       = 36;
     for (let j = 0; j < LON_COUNT; j++) {
@@ -2971,42 +3042,97 @@
         const z2 = R * Math.sin(t2) * Math.sin(lon);
         const pr1 = project(x1, y1, z1);
         const pr2 = project(x2, y2, z2);
+
+        const mx = (x1 + x2) * 0.5 / R;
+        const my = (y1 + y2) * 0.5 / R;
+        const mz = (z1 + z2) * 0.5 / R;
+        const lightDiff = Math.max(0.15, 0.45 + 0.55 * (mx * LX + my * LY + mz * LZ));
+
         ctx.beginPath();
         ctx.moveTo(pr1.sx, pr1.sy);
         ctx.lineTo(pr2.sx, pr2.sy);
         ctx.strokeStyle = pr1.depth >= 0
-          ? 'rgba(255,255,255,0.22)'
-          : 'rgba(255,255,255,0.07)';
+          ? `rgba(255,255,255,${(0.08 + 0.18 * lightDiff).toFixed(2)})`
+          : 'rgba(255,255,255,0.04)';
         ctx.lineWidth = 0.7;
         ctx.stroke();
       }
     }
 
-    // ── Continents (visible only when radio is playing) ──
-    if (globeSweepActive && globeScrollT > 0.05 && globeCoastlines) {
-      const coastOpacity = Math.min(1, globeScrollT * 2) * 0.55;
-      ctx.lineWidth = 0.9;
+    // ── Land Dot Matrix (Holographic Tactical Grid) ──
+    if (globeLandDots && globeLandDots.length > 0) {
+      for (let i = 0; i < globeLandDots.length; i++) {
+        const dot = globeLandDots[i];
+        const p3 = latLonTo3D(dot.lat, dot.lon, R * 0.998);
+        const pr = project(p3.x, p3.y, p3.z);
+        if (pr.depth < -0.02) continue; // Behind globe
+
+        const nx = p3.x / R, ny = p3.y / R, nz = p3.z / R;
+        const lightDiff = Math.max(0.18, 0.4 + 0.6 * (nx * LX + ny * LY + nz * LZ));
+        const dotAlpha = (0.14 + 0.32 * lightDiff) * (globeSweepActive ? 1.0 : 0.75);
+
+        ctx.beginPath();
+        ctx.arc(pr.sx, pr.sy, 0.85, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(0, 255, 140, ${dotAlpha.toFixed(2)})`;
+        ctx.fill();
+      }
+    }
+
+    // ── Continents & Coastlines (Smooth Bézier Curves + Permanent Visibility) ──
+    if (globeCoastlines && globeCoastlines.lines) {
+      const activeBoost = globeSweepActive ? 0.35 * Math.min(1, globeScrollT * 2) : 0;
+      const baseCoastOpacity = 0.40 + activeBoost;
+      ctx.lineWidth = 0.95;
+
       for (const line of globeCoastlines.lines) {
         if (line.length < 2) continue;
-        // Depth based on mid-point — segments d'arrière entièrement masqués
-        const midIdx = Math.floor(line.length / 2);
-        const pm  = latLonTo3D(line[midIdx][1], line[midIdx][0], R);
-        const prm = project(pm.x, pm.y, pm.z);
-        // Opacité: front hemisphere plein, back hemisphere très dim
-        const _depthClamped = Math.max(-1, Math.min(1, prm.depth / (p.R || 1)));
-        const alpha = prm.depth >= 0
-          ? coastOpacity * (0.35 + _depthClamped * 0.65)  // front: 35%→100%
-          : coastOpacity * 0.12;                          // back: 12% (très dim)
-        ctx.beginPath();
-        ctx.strokeStyle = `rgba(255,255,255,${alpha.toFixed(2)})`;
-        let first = true;
-        for (const [lon, lat] of line) {
-          const pt = latLonTo3D(lat, lon, R);
-          const pr = project(pt.x, pt.y, pt.z);
-          if (first) { ctx.moveTo(pr.sx, pr.sy); first = false; }
-          else        { ctx.lineTo(pr.sx, pr.sy); }
+
+        const pts = [];
+        for (let i = 0; i < line.length; i++) {
+          const p3 = latLonTo3D(line[i][1], line[i][0], R);
+          const pr = project(p3.x, p3.y, p3.z);
+          const nx = p3.x / R, ny = p3.y / R, nz = p3.z / R;
+          const lightDiff = Math.max(0.2, 0.45 + 0.55 * (nx * LX + ny * LY + nz * LZ));
+          pts.push({ sx: pr.sx, sy: pr.sy, depth: pr.depth, light: lightDiff });
         }
-        ctx.stroke();
+
+        // Split into continuous front segments (depth >= -0.05) and draw smooth bezier
+        let seg = [];
+        for (let i = 0; i < pts.length; i++) {
+          if (pts[i].depth >= -0.05) {
+            seg.push(pts[i]);
+          } else {
+            if (seg.length >= 2) {
+              const avgLight = seg[Math.floor(seg.length / 2)].light || 0.5;
+              const alpha = Math.min(1, baseCoastOpacity * (0.45 + 0.55 * avgLight));
+              ctx.beginPath();
+              ctx.strokeStyle = `rgba(255,255,255,${alpha.toFixed(2)})`;
+              ctx.moveTo(seg[0].sx, seg[0].sy);
+              for (let k = 1; k < seg.length - 1; k++) {
+                const mx = (seg[k].sx + seg[k + 1].sx) * 0.5;
+                const my = (seg[k].sy + seg[k + 1].sy) * 0.5;
+                ctx.quadraticCurveTo(seg[k].sx, seg[k].sy, mx, my);
+              }
+              ctx.lineTo(seg[seg.length - 1].sx, seg[seg.length - 1].sy);
+              ctx.stroke();
+            }
+            seg = [];
+          }
+        }
+        if (seg.length >= 2) {
+          const avgLight = seg[Math.floor(seg.length / 2)].light || 0.5;
+          const alpha = Math.min(1, baseCoastOpacity * (0.45 + 0.55 * avgLight));
+          ctx.beginPath();
+          ctx.strokeStyle = `rgba(255,255,255,${alpha.toFixed(2)})`;
+          ctx.moveTo(seg[0].sx, seg[0].sy);
+          for (let k = 1; k < seg.length - 1; k++) {
+            const mx = (seg[k].sx + seg[k + 1].sx) * 0.5;
+            const my = (seg[k].sy + seg[k + 1].sy) * 0.5;
+            ctx.quadraticCurveTo(seg[k].sx, seg[k].sy, mx, my);
+          }
+          ctx.lineTo(seg[seg.length - 1].sx, seg[seg.length - 1].sy);
+          ctx.stroke();
+        }
       }
     }
 
@@ -3196,7 +3322,7 @@
     if (!globeCoastlines) {
       fetch('/world-coastline.json')
         .then(r => r.json())
-        .then(d => { globeCoastlines = d; })
+        .then(d => { globeCoastlines = d; initLandDots(); })
         .catch(() => {});
     }
 
