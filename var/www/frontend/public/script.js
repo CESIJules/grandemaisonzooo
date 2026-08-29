@@ -4274,7 +4274,97 @@
         }, 2000); // 2 seconds loading
     }
 
+    let isEcoMode = false;
+
+    function enableEcoMode() {
+        if (isEcoMode) {
+            printOutput('Eco mode is already active.');
+            return;
+        }
+        isEcoMode = true;
+
+        // 1. Ensure radio is playing
+        if (window.RadioControl) {
+            const info = window.RadioControl.getInfo();
+            if (!info.isPlaying) {
+                window.RadioControl.togglePlay();
+            }
+        }
+
+        // 2. Hide terminal right (halts Three.js 3D ASCII rendering & loop)
+        const terminalRight = document.getElementById('terminalRight');
+        if (terminalRight) {
+            terminalRight.style.display = 'none';
+        }
+        const terminalLeft = document.getElementById('terminalLeft');
+        if (terminalLeft) {
+            terminalLeft.style.width = '100%';
+        }
+        terminalOverlay.classList.add('eco-mode');
+
+        // 3. Pause background video
+        const bgVideo = document.getElementById('backgroundVideo');
+        if (bgVideo && !bgVideo.paused) {
+            bgVideo.pause();
+        }
+
+        // 4. Hide / pause background canvases
+        const asciiBg = document.getElementById('asciiBg');
+        if (asciiBg) asciiBg.style.display = 'none';
+        const globeCanvas = document.getElementById('globeCanvas');
+        if (globeCanvas) globeCanvas.style.display = 'none';
+
+        printOutput('==================================================');
+        printOutput('[⚡ ECO STREAMING MODE ACTIVATED]');
+        printOutput('• Radio stream: RUNNING');
+        printOutput('• 3D ASCII Engine: SUSPENDED (0% GPU / minimal CPU)');
+        printOutput('• Background animations: PAUSED');
+        printOutput('--------------------------------------------------');
+        printOutput("Type 'eco off' or 'normal' to restore 3D visuals.");
+        printOutput("Type 'exit' to return to full site.");
+        printOutput('==================================================');
+    }
+
+    function disableEcoMode(verbose = true) {
+        if (!isEcoMode) {
+            if (verbose) printOutput('Eco mode is not active.');
+            return;
+        }
+        isEcoMode = false;
+
+        // 1. Restore terminal right (resumes 3D ASCII canvas)
+        const terminalRight = document.getElementById('terminalRight');
+        if (terminalRight) {
+            terminalRight.style.display = '';
+        }
+        const terminalLeft = document.getElementById('terminalLeft');
+        if (terminalLeft) {
+            terminalLeft.style.width = '';
+        }
+        terminalOverlay.classList.remove('eco-mode');
+
+        // 2. Restore background video
+        const bgVideo = document.getElementById('backgroundVideo');
+        if (bgVideo) {
+            bgVideo.play().catch(() => {});
+        }
+
+        // 3. Restore background canvases
+        const asciiBg = document.getElementById('asciiBg');
+        if (asciiBg) asciiBg.style.display = '';
+        const globeCanvas = document.getElementById('globeCanvas');
+        if (globeCanvas) globeCanvas.style.display = '';
+
+        if (verbose) {
+            printOutput('[ECO MODE DEACTIVATED]');
+            printOutput('• 3D engine and visuals restored.');
+        }
+    }
+
     function deactivateTerminal() {
+        if (isEcoMode) {
+            disableEcoMode(false);
+        }
         terminalOverlay.classList.remove('active');
         document.body.style.overflow = ''; 
         stopAsciiAnimation(); // Stop ASCII
@@ -4317,7 +4407,7 @@
     }
 
     // --- Autocomplete Logic ---
-    const commands = ['help', 'credits', 'clear', 'exit', 'radio', 'r'];
+    const commands = ['help', 'credits', 'clear', 'exit', 'radio', 'r', 'eco', 'perf', 'stream', 'normal', 'lowpower'];
     const ghostText = document.getElementById('ghostText');
     
     // Command History
@@ -4409,10 +4499,28 @@
             case 'help':
             case '?':
                 printOutput('Available commands:');
-                printOutput('  radio | r [options] - Control radio');
-                printOutput('  credits [-D|--details]');
-                printOutput('  clear   - Clear terminal');
-                printOutput('  exit    - Exit terminal');
+                printOutput('  radio | r [options] - Control radio (--play, --info)');
+                printOutput('  eco [on|off]        - Ultra performance mode (streams radio, pauses all 3D/animations)');
+                printOutput('  perf                - Alias for eco mode (0% GPU)');
+                printOutput('  normal              - Restore full 3D visual mode');
+                printOutput('  credits             - Display credits');
+                printOutput('  clear               - Clear terminal');
+                printOutput('  exit                - Exit terminal');
+                break;
+            case 'eco':
+            case 'perf':
+            case 'stream':
+            case 'lowpower':
+                const ecoArg = parts[1] ? parts[1].toLowerCase() : '';
+                if (ecoArg === 'off' || ecoArg === '0' || ecoArg === 'disable') {
+                    disableEcoMode(true);
+                } else {
+                    enableEcoMode();
+                }
+                break;
+            case 'normal':
+            case 'restore':
+                disableEcoMode(true);
                 break;
             case 'radio':
             case 'r':

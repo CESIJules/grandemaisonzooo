@@ -24,7 +24,7 @@ export default function TerminalOverlay() {
             </div>
           </div>
         </div>
-        <div className="terminal-right" style={{ position: "relative", width: "50%", height: "100%" }}>
+        <div className="terminal-right" id="terminalRight" style={{ position: "relative", width: "50%", height: "100%" }}>
           <AsciiObject
             src="/uploads/obj/base_basic_pbr.glb"
             diffuseMap="/uploads/obj/texture_diffuse.png"
