@@ -77,20 +77,27 @@ export default function TerminalOverlay() {
               style={{ width: "100%", height: "100%" }}
               ior={1.75}
               thickness={4}
-              roughness={0.15}
+              roughness={0.25}
               dispersion={1.5}
-              clearcoat={0.6}
-              tint="#a78bfa"
-              tintDensity={1.2}
-              environmentIntensity={1.5}
-              highlight="#7c3aed"
-              scale={3.2}
-              floatIntensity={1.2}
-              rotationIntensity={0.8}
-              floatSpeed={1.5}
-              orbit={true}
+              clearcoat={0.5}
+              tintDensity={2}
+              depth={0.1}
+              bevel={1}
+              environmentIntensity={1}
+              scale={3}
+              xOffset={0}
+              yOffset={0}
+              floatIntensity={1}
+              rotationIntensity={1}
+              floatSpeed={2}
+              fov={55}
+              cameraDistance={4}
               autoRotate={true}
               autoRotateSpeed={1.5}
+              zoom={false}
+              tint=""
+              highlight="#066aff"
+              backgroundImage="https://images.unsplash.com/photo-1782977389500-dd7adad33ebe?q=80&w=2032&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
             />
           )}
         </div>

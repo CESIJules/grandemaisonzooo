@@ -784,84 +784,6 @@ export function createGlassObject(
     specularIntensity: 1,
   });
 
-  // Particle starfield backdrop for glass refraction
-  const particleCount = 140;
-  const particleGeo = new THREE.BufferGeometry();
-  const particlePos = new Float32Array(particleCount * 3);
-  const particleVel = new Float32Array(particleCount * 3);
-  const particleCol = new Float32Array(particleCount * 3);
-
-  const palette = [
-    new THREE.Color("#ffffff"),
-    new THREE.Color("#c4b5fd"),
-    new THREE.Color("#a78bfa"),
-    new THREE.Color("#38bdf8"),
-    new THREE.Color("#f472b6"),
-  ];
-
-  for (let i = 0; i < particleCount; i++) {
-    particlePos[i * 3] = (Math.random() - 0.5) * 14;
-    particlePos[i * 3 + 1] = (Math.random() - 0.5) * 10;
-    particlePos[i * 3 + 2] = -0.5 - Math.random() * 6;
-
-    particleVel[i * 3] = (Math.random() - 0.5) * 0.4;
-    particleVel[i * 3 + 1] = (Math.random() - 0.5) * 0.4;
-    particleVel[i * 3 + 2] = (Math.random() - 0.5) * 0.2;
-
-    const col = palette[Math.floor(Math.random() * palette.length)];
-    particleCol[i * 3] = col.r;
-    particleCol[i * 3 + 1] = col.g;
-    particleCol[i * 3 + 2] = col.b;
-  }
-
-  particleGeo.setAttribute("position", new THREE.BufferAttribute(particlePos, 3));
-  particleGeo.setAttribute("color", new THREE.BufferAttribute(particleCol, 3));
-
-  function createDotTexture() {
-    const cvs = document.createElement("canvas");
-    cvs.width = 64;
-    cvs.height = 64;
-    const ctx = cvs.getContext("2d");
-    if (ctx) {
-      const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
-      grad.addColorStop(0, "rgba(255,255,255,1)");
-      grad.addColorStop(0.3, "rgba(255,255,255,0.9)");
-      grad.addColorStop(0.7, "rgba(167,139,250,0.3)");
-      grad.addColorStop(1, "rgba(0,0,0,0)");
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 64, 64);
-    }
-    const tex = new THREE.CanvasTexture(cvs);
-    return tex;
-  }
-
-  const dotTex = createDotTexture();
-  const particleMat = new THREE.PointsMaterial({
-    size: 0.32,
-    vertexColors: true,
-    map: dotTex,
-    transparent: true,
-    opacity: 0.9,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  });
-
-  const particles = new THREE.Points(particleGeo, particleMat);
-  scene.add(particles);
-
-  // Colored studio accent lights for vibrant chromatic reflections on the glass
-  const accentLightLeft = new THREE.PointLight(0xa78bfa, 60, 15, 2);
-  accentLightLeft.position.set(-6, 4, 3);
-  scene.add(accentLightLeft);
-
-  const accentLightRight = new THREE.PointLight(0x38bdf8, 60, 15, 2);
-  accentLightRight.position.set(6, -2, 3);
-  scene.add(accentLightRight);
-
-  const accentLightBack = new THREE.PointLight(0xf43f5e, 50, 20, 2);
-  accentLightBack.position.set(0, 5, -6);
-  scene.add(accentLightBack);
-
   const pmrem = new THREE.PMREMGenerator(renderer);
   let roomScene: THREE.Scene | null = null;
   let ringMaterial: THREE.MeshBasicMaterial | null = null;
@@ -1222,20 +1144,6 @@ export function createGlassObject(
         MODEL_LIFT +
         config.yOffset +
         (Math.sin(elapsed / 1.5) / 10) * config.floatIntensity;
-
-      // Animate background particles for dynamic refraction
-      const pArr = particleGeo.attributes.position.array as Float32Array;
-      for (let i = 0; i < particleCount; i++) {
-        pArr[i * 3] += particleVel[i * 3] * delta;
-        pArr[i * 3 + 1] += particleVel[i * 3 + 1] * delta;
-        pArr[i * 3 + 2] += particleVel[i * 3 + 2] * delta;
-
-        if (pArr[i * 3] > 7) pArr[i * 3] = -7;
-        if (pArr[i * 3] < -7) pArr[i * 3] = 7;
-        if (pArr[i * 3 + 1] > 5) pArr[i * 3 + 1] = -5;
-        if (pArr[i * 3 + 1] < -5) pArr[i * 3 + 1] = 5;
-      }
-      particleGeo.attributes.position.needsUpdate = true;
     }
 
     renderer.render(scene, camera);
@@ -1322,9 +1230,6 @@ export function createGlassObject(
       pmrem.dispose();
       draco.dispose();
       glass.dispose();
-      particleGeo.dispose();
-      particleMat.dispose();
-      dotTex.dispose();
       renderer.dispose();
     },
   };
