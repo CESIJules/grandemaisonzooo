@@ -3981,273 +3981,6 @@
       }
     });
 
-    // --- ASCII S Animation Logic ---
-    let asciiInterval;
-    let A = 0, B = 0;
-    const asciiElement = document.getElementById('asciiS');
-    let asciiCanvas = null;
-    let asciiCtx = null;
-
-    const ASCII_S_COLS = 120;
-    const ASCII_S_ROWS = 80;
-    let zBuffer = null;
-
-    function initAsciiCanvas() {
-        if (!asciiElement) return;
-        if (!asciiCanvas) {
-            asciiCanvas = document.createElement('canvas');
-            asciiElement.innerHTML = '';
-            asciiElement.appendChild(asciiCanvas);
-            asciiCtx = asciiCanvas.getContext('2d', { alpha: true });
-            
-            // High DPI Scaling
-            const dpr = window.devicePixelRatio || 1;
-            const fontSize = 12; // Reverted to standard size for sharpness
-            const font = `${fontSize}px "Courier New", monospace`;
-            
-            asciiCtx.font = font;
-            const metrics = asciiCtx.measureText('M');
-            const charWidth = metrics.width;
-            const charHeight = fontSize + 2; 
-            
-            const cols = ASCII_S_COLS;
-            const rows = ASCII_S_ROWS;
-            
-            // CSS Size
-            const cssWidth = cols * charWidth;
-            const cssHeight = rows * charHeight;
-            
-            asciiCanvas.style.width = `${width}px`;
-            asciiCanvas.style.height = `${height}px`;
-            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-            // Actual Size (Scaled)
-            asciiCanvas.width = cssWidth * dpr;
-            asciiCanvas.height = cssHeight * dpr;
-            
-            // Scale Context
-            asciiCtx.scale(dpr, dpr);
-            
-            asciiCanvas.charWidth = charWidth;
-            asciiCanvas.charHeight = charHeight;
-            asciiCanvas.fontStr = font;
-            asciiCanvas.cssWidth = cssWidth;
-            asciiCanvas.cssHeight = cssHeight;
-
-            // Reusable depth buffer to avoid per-frame allocations
-            zBuffer = new Float32Array(ASCII_S_COLS * ASCII_S_ROWS);
-        }
-    }
-
-    function renderAsciiFrame() {
-        // PERFORMANCE: Skip if hidden
-        if (document.hidden) return;
-
-        if (!asciiElement) return;
-        if (!asciiCanvas) initAsciiCanvas();
-        
-        const width = ASCII_S_COLS;
-        const height = ASCII_S_ROWS;
-        if (!zBuffer || zBuffer.length !== width * height) {
-          zBuffer = new Float32Array(width * height);
-        } else {
-          zBuffer.fill(0);
-        }
-        
-        // Clear Canvas (using logical coords)
-        asciiCtx.clearRect(0, 0, asciiCanvas.cssWidth, asciiCanvas.cssHeight);
-        asciiCtx.font = asciiCanvas.fontStr;
-        asciiCtx.textBaseline = 'top';
-        
-        // S-Shape Parameters
-        const R = 1;
-        const r = 0.4;
-        const K2 = 5;
-        // Reduced scale factor to prevent clipping (was 1.5, now 1.0)
-        const K1 = width * K2 * 1.1 / (8 * (R + r));
-
-        // Rotation
-        const cosA = Math.cos(A), sinA = Math.sin(A);
-        const cosB = Math.cos(B), sinB = Math.sin(B);
-
-        // Color Helper: Smoother Violet Gradient
-        function getLuminanceColor(L) {
-            let norm = (L + 0.2) / 1.6;
-            norm = Math.max(0, Math.min(1, norm));
-            norm = Math.pow(norm, 0.8); 
-
-            // Gradient: Vibrant Violet to Soft White
-            // Start: rgb(100, 50, 255)
-            // End:   rgb(230, 230, 255)
-            
-            const r = Math.floor(100 + (230 - 100) * norm);
-            const g = Math.floor(50 + (230 - 50) * norm);
-            const b = 255; // Always max blue for vibrancy
-            
-            return `rgb(${r},${g},${b})`;
-        }
-
-        function renderPoint(x, y, z, nx, ny, nz) {
-            const y1 = y * cosA - z * sinA;
-            const z1 = y * sinA + z * cosA;
-            const x1 = x;
-
-            const x2 = x1 * cosB - y1 * sinB;
-            const y2 = x1 * sinB + y1 * cosB;
-            const z2 = z1;
-
-            const ny1 = ny * cosA - nz * sinA;
-            const nz1 = ny * sinA + nz * cosA;
-            const nx1 = nx;
-
-            const nx2 = nx1 * cosB - ny1 * sinB;
-            const ny2 = nx1 * sinB + ny1 * cosB;
-            const nz2 = nz1;
-
-            const L = (ny2 - nz2) + 0.4;
-
-            if (L > 0) {
-                const ooz = 1 / (z2 + K2);
-                const xp = Math.floor(width / 2 + K1 * ooz * x2);
-                const yp = Math.floor(height / 2 - K1 * ooz * y2);
-
-                if (xp >= 0 && xp < width && yp >= 0 && yp < height) {
-                    const idx = xp + yp * width;
-                    if (ooz > zBuffer[idx]) {
-                        zBuffer[idx] = ooz;
-                        
-                        const luminanceChars = ".,-~:;=!*#$@";
-                        const charIdx = Math.floor(L * 8);
-                        const char = luminanceChars[Math.max(0, Math.min(charIdx, luminanceChars.length - 1))];
-                        const color = getLuminanceColor(L);
-                        
-                        const px = xp * asciiCanvas.charWidth;
-                        const py = yp * asciiCanvas.charHeight;
-                        
-                        asciiCtx.fillStyle = color;
-                        asciiCtx.fillText(char, px, py);
-                    }
-                }
-            }
-        }
-
-        // Render Part (Torus Segment)
-        function renderPart(thetaStart, thetaEnd, centerX, centerY) {
-            for (let theta = thetaStart; theta < thetaEnd; theta += 0.04) {
-                const costheta = Math.cos(theta);
-                const sintheta = Math.sin(theta);
-
-                for (let phi = 0; phi < 6.28; phi += 0.05) {
-                    const cosphi = Math.cos(phi);
-                    const sinphi = Math.sin(phi);
-
-                    const circlex = R + r * cosphi;
-                    const circley = r * sinphi;
-
-                    const ox = circlex * costheta + centerX;
-                    const oy = circlex * sintheta + centerY;
-                    const oz = circley;
-
-                    const nx = costheta * cosphi;
-                    const ny = sintheta * cosphi;
-                    const nz = sinphi;
-
-                    renderPoint(ox, oy, oz, nx, ny, nz);
-                }
-            }
-        }
-
-        // Render Line (Cylinder)
-        function renderLine(x1, y1, x2, y2) {
-            const dx = x2 - x1;
-            const dy = y2 - y1;
-            const len = Math.sqrt(dx*dx + dy*dy);
-            const steps = Math.floor(len * 50); 
-            
-            const alpha = Math.atan2(dy, dx);
-            const cosAlpha = Math.cos(alpha);
-            const sinAlpha = Math.sin(alpha);
-
-            for (let i = 0; i <= steps; i++) {
-                const t = i / steps;
-                const cx = x1 + dx * t;
-                const cy = y1 + dy * t;
-
-                for (let phi = 0; phi < 6.28; phi += 0.05) {
-                    const cosphi = Math.cos(phi);
-                    const sinphi = Math.sin(phi);
-
-                    const ox = cx - r * sinAlpha * sinphi;
-                    const oy = cy + r * cosAlpha * sinphi;
-                    const oz = r * cosphi;
-
-                    const nx = -sinAlpha * sinphi;
-                    const ny = cosAlpha * sinphi;
-                    const nz = cosphi;
-
-                    renderPoint(ox, oy, oz, nx, ny, nz);
-                }
-            }
-        }
-
-        // Render Sphere
-        function renderSphere(cx, cy, cz, radius) {
-            for (let theta = 0; theta < 3.14; theta += 0.05) {
-                for (let phi = 0; phi < 6.28; phi += 0.05) {
-                    const costheta = Math.cos(theta);
-                    const sintheta = Math.sin(theta);
-                    const cosphi = Math.cos(phi);
-                    const sinphi = Math.sin(phi);
-
-                    const ox = cx + radius * sintheta * cosphi;
-                    const oy = cy + radius * sintheta * sinphi;
-                    const oz = cz + radius * costheta;
-
-                    const nx = sintheta * cosphi;
-                    const ny = sintheta * sinphi;
-                    const nz = costheta;
-
-                    renderPoint(ox, oy, oz, nx, ny, nz);
-                }
-            }
-        }
-
-        // --- Geometry ---
-        renderPart(0.5, 3.57, 0, 1.0);
-        renderPart(3.5, 6.71, 0, -1.0);
-        renderLine(-0.9, 0.6, 0.9, -0.6);
-        renderSphere(-0.9, 0.6, 0, r);
-        renderSphere(0.9, -0.6, 0, r);
-        renderSphere(0.88, 1.48, 0, r);
-        renderSphere(-0.94, -1.35, 0, r);
-
-        A += 0.04;
-        B += 0.02;
-    }
-
-    function startAsciiAnimation() {
-      if (asciiInterval) clearInterval(asciiInterval);
-        asciiInterval = setInterval(renderAsciiFrame, 50);
-    }
-
-    function stopAsciiAnimation() {
-      if (asciiInterval) {
-        clearInterval(asciiInterval);
-        asciiInterval = null;
-      }
-    }
-
-    // Pause the animation when the tab is hidden
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        stopAsciiAnimation();
-        return;
-      }
-      if (terminalOverlay && terminalOverlay.classList.contains('active')) {
-        startAsciiAnimation();
-      }
-    });
-
     function activateTerminal() {
         terminalOverlay.classList.remove('hidden');
         void terminalOverlay.offsetWidth;
@@ -4270,7 +4003,15 @@
             terminalLoading.classList.add('hidden');
             terminalContent.classList.remove('hidden');
             terminalInput.focus();
-            startAsciiAnimation(); // Start ASCII
+            
+            // Trigger 3D canvas resize once DOM is visible
+            window.dispatchEvent(new CustomEvent('terminal-3d-resize'));
+            setTimeout(() => {
+                window.dispatchEvent(new CustomEvent('terminal-3d-resize'));
+            }, 60);
+            setTimeout(() => {
+                window.dispatchEvent(new CustomEvent('terminal-3d-resize'));
+            }, 250);
         }, 2000); // 2 seconds loading
     }
 
@@ -4359,6 +4100,11 @@
             printOutput('[ECO MODE DEACTIVATED]');
             printOutput('• 3D engine and visuals restored.');
         }
+
+        window.dispatchEvent(new CustomEvent('terminal-3d-resize'));
+        setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('terminal-3d-resize'));
+        }, 50);
     }
 
     function deactivateTerminal() {
@@ -4367,7 +4113,6 @@
         }
         terminalOverlay.classList.remove('active');
         document.body.style.overflow = ''; 
-        stopAsciiAnimation(); // Stop ASCII
         setTimeout(() => {
              terminalOverlay.classList.add('hidden');
         }, 1000);

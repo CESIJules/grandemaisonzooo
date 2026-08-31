@@ -1479,6 +1479,7 @@ export function createAsciiObject(
       ? new IntersectionObserver((entries) => {
           inView = entries[entries.length - 1]?.isIntersecting ?? true;
           if (inView) {
+            resize();
             startLoop();
           } else {
             stopLoop();
@@ -1486,6 +1487,10 @@ export function createAsciiObject(
         })
       : null;
   viewObserver?.observe(canvas);
+
+  const handleWindowResize = () => resize();
+  window.addEventListener("resize", handleWindowResize);
+  window.addEventListener("terminal-3d-resize", handleWindowResize);
 
   let lastTime = 0;
   let elapsed = Math.random() * 100;
@@ -1533,6 +1538,8 @@ export function createAsciiObject(
       stopLoop();
       observer.disconnect();
       viewObserver?.disconnect();
+      window.removeEventListener("resize", handleWindowResize);
+      window.removeEventListener("terminal-3d-resize", handleWindowResize);
       motionQuery.removeEventListener("change", onMotionChange);
       controls.dispose();
       clearModel();

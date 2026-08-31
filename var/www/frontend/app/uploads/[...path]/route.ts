@@ -38,14 +38,46 @@ export async function GET(
     return new NextResponse(buffer, {
       headers: {
         "Content-Type": contentType,
+        "Access-Control-Allow-Origin": "*",
         "Cache-Control": "public, max-age=86400",
       },
     });
   }
 
-  // Fallback: redirect to production server
-  return NextResponse.redirect(
-    `https://grandemaisonzoo.com/uploads/${segments.join("/")}`,
-    { status: 302 }
-  );
+  // Fallback: proxy from production server to prevent CORS issues in dev
+  try {
+    const upstreamUrl = `https://grandemaisonzoo.com/uploads/${segments.join("/")}`;
+    const upstreamRes = await fetch(upstreamUrl);
+    if (!upstreamRes.ok) {
+      return new NextResponse(null, { status: upstreamRes.status });
+    }
+    const arrayBuffer = await upstreamRes.arrayBuffer();
+    const ext = path.extname(segments[segments.length - 1] || "").toLowerCase();
+    const contentTypes: Record<string, string> = {
+      ".jpg": "image/jpeg",
+      ".jpeg": "image/jpeg",
+      ".png": "image/png",
+      ".gif": "image/gif",
+      ".webp": "image/webp",
+      ".svg": "image/svg+xml",
+      ".zip": "application/zip",
+      ".rar": "application/x-rar-compressed",
+      ".pdf": "application/pdf",
+      ".glb": "model/gltf-binary",
+      ".gltf": "model/gltf+json",
+      ".obj": "text/plain",
+    };
+    const contentType = contentTypes[ext] ?? upstreamRes.headers.get("content-type") ?? "application/octet-stream";
+    return new NextResponse(arrayBuffer, {
+      status: 200,
+      headers: {
+        "Content-Type": contentType,
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "public, max-age=86400",
+      },
+    });
+  } catch (err) {
+    console.error("Failed to proxy upload from production:", err);
+    return new NextResponse(null, { status: 404 });
+  }
 }
