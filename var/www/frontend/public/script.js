@@ -4407,7 +4407,7 @@
     }
 
     // --- Autocomplete Logic ---
-    const commands = ['help', 'credits', 'clear', 'exit', 'radio', 'r', 'eco', 'perf', 'stream', 'normal', 'lowpower'];
+    const commands = ['help', 'credits', 'clear', 'exit', 'radio', 'r', 'eco', 'perf', 'stream', 'normal', 'glass', 'ascii', 'mode', 'shader', 'lowpower'];
     const ghostText = document.getElementById('ghostText');
     
     // Command History
@@ -4499,6 +4499,9 @@
             case 'help':
             case '?':
                 printOutput('Available commands:');
+                printOutput('  glass               - Switch 3D model to refractive Glass shader');
+                printOutput('  ascii               - Switch 3D model to dynamic ASCII shader');
+                printOutput('  mode [glass|ascii]  - Switch 3D rendering mode');
                 printOutput('  radio | r [options] - Control radio (--play, --info)');
                 printOutput('  eco [on|off]        - Ultra performance mode (streams radio, pauses all 3D/animations)');
                 printOutput('  perf                - Alias for eco mode (0% GPU)');
@@ -4506,6 +4509,36 @@
                 printOutput('  credits             - Display credits');
                 printOutput('  clear               - Clear terminal');
                 printOutput('  exit                - Exit terminal');
+                break;
+            case 'glass':
+                if (isEcoMode) disableEcoMode(false);
+                window.dispatchEvent(new CustomEvent('terminal-3d-mode', { detail: { mode: 'glass' } }));
+                printOutput('[3D SHADER: GLASS]');
+                printOutput('• Material: Solid Refractive Glass (IOR 1.75, Dispersion, Clearcoat)');
+                break;
+            case 'ascii':
+                if (isEcoMode) disableEcoMode(false);
+                window.dispatchEvent(new CustomEvent('terminal-3d-mode', { detail: { mode: 'ascii' } }));
+                printOutput('[3D SHADER: ASCII]');
+                printOutput('• Material: Realtime Dynamic ASCII Edge & Color Matrix');
+                break;
+            case 'mode':
+            case 'shader':
+            case 'render':
+                const modeArg = parts[1] ? parts[1].toLowerCase() : '';
+                if (modeArg === 'glass') {
+                    if (isEcoMode) disableEcoMode(false);
+                    window.dispatchEvent(new CustomEvent('terminal-3d-mode', { detail: { mode: 'glass' } }));
+                    printOutput('[3D SHADER: GLASS] Switched to Refractive Glass mode.');
+                } else if (modeArg === 'ascii') {
+                    if (isEcoMode) disableEcoMode(false);
+                    window.dispatchEvent(new CustomEvent('terminal-3d-mode', { detail: { mode: 'ascii' } }));
+                    printOutput('[3D SHADER: ASCII] Switched to ASCII mode.');
+                } else {
+                    printOutput('Usage: mode [glass|ascii]');
+                    printOutput('  mode glass  - Solid refractive glass house');
+                    printOutput('  mode ascii  - Realtime dynamic ASCII house');
+                }
                 break;
             case 'eco':
             case 'perf':

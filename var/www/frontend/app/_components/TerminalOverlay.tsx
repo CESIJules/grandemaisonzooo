@@ -1,6 +1,25 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import AsciiObject from "@/components/canvasui/AsciiObject";
+import GlassObject from "@/components/canvasui/GlassObject";
 
 export default function TerminalOverlay() {
+  const [renderMode, setRenderMode] = useState<"ascii" | "glass">("ascii");
+
+  useEffect(() => {
+    const handleModeChange = (e: Event) => {
+      const customEvent = e as CustomEvent<{ mode: "ascii" | "glass" }>;
+      if (customEvent.detail?.mode) {
+        setRenderMode(customEvent.detail.mode);
+      }
+    };
+    window.addEventListener("terminal-3d-mode", handleModeChange);
+    return () => {
+      window.removeEventListener("terminal-3d-mode", handleModeChange);
+    };
+  }, []);
+
   return (
     <div id="terminalOverlay" className="hidden">
       <div id="terminalLoading" className="hidden">
@@ -25,30 +44,55 @@ export default function TerminalOverlay() {
           </div>
         </div>
         <div className="terminal-right" id="terminalRight" style={{ position: "relative", width: "50%", height: "100%" }}>
-          <AsciiObject
-            src="/uploads/obj/base_basic_pbr.glb"
-            diffuseMap="/uploads/obj/texture_diffuse.png"
-            normalMap="/uploads/obj/texture_normal.png"
-            roughnessMap="/uploads/obj/texture_roughness.png"
-            metalnessMap="/uploads/obj/texture_metallic.png"
-            style={{ width: "100%", height: "100%" }}
-            cellSize={8}
-            cellAspect={0.6}
-            contrast={1.6}
-            edgeContrast={3.2}
-            exposure={1.1}
-            environmentIntensity={1.2}
-            scale={3.2}
-            floatIntensity={1.2}
-            rotationIntensity={0.8}
-            floatSpeed={1.5}
-            orbit={true}
-            autoRotate={true}
-            autoRotateSpeed={1.5}
-            colored={true}
-            color="#a78bfa"
-            highlight="#7c3aed"
-          />
+          {renderMode === "ascii" ? (
+            <AsciiObject
+              key="ascii"
+              src="/uploads/obj/base_basic_pbr.glb"
+              diffuseMap="/uploads/obj/texture_diffuse.png"
+              normalMap="/uploads/obj/texture_normal.png"
+              roughnessMap="/uploads/obj/texture_roughness.png"
+              metalnessMap="/uploads/obj/texture_metallic.png"
+              style={{ width: "100%", height: "100%" }}
+              cellSize={8}
+              cellAspect={0.6}
+              contrast={1.6}
+              edgeContrast={3.2}
+              exposure={1.1}
+              environmentIntensity={1.2}
+              scale={3.2}
+              floatIntensity={1.2}
+              rotationIntensity={0.8}
+              floatSpeed={1.5}
+              orbit={true}
+              autoRotate={true}
+              autoRotateSpeed={1.5}
+              colored={true}
+              color="#a78bfa"
+              highlight="#7c3aed"
+            />
+          ) : (
+            <GlassObject
+              key="glass"
+              src="/uploads/obj/base_basic_pbr.glb"
+              style={{ width: "100%", height: "100%" }}
+              ior={1.75}
+              thickness={4}
+              roughness={0.15}
+              dispersion={1.5}
+              clearcoat={0.6}
+              tint="#a78bfa"
+              tintDensity={1.2}
+              environmentIntensity={1.5}
+              highlight="#7c3aed"
+              scale={3.2}
+              floatIntensity={1.2}
+              rotationIntensity={0.8}
+              floatSpeed={1.5}
+              orbit={true}
+              autoRotate={true}
+              autoRotateSpeed={1.5}
+            />
+          )}
         </div>
       </div>
     </div>
