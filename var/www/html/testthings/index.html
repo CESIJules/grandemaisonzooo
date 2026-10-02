@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LAB WebAR — Grande Maison / Room 45</title>
+  <link rel="stylesheet" href="/testthings/css/style.css">
+  <style>
+    .hub-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 8px;
+      padding: 1.8rem;
+      margin-bottom: 1.5rem;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .hub-card:hover {
+      border-color: rgba(255, 255, 255, 0.35);
+      transform: translateY(-2px);
+    }
+    .btn {
+      display: inline-block;
+      background: var(--text);
+      color: var(--bg);
+      padding: 0.65rem 1.4rem;
+      border-radius: 4px;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 0.85rem;
+      letter-spacing: 0.08em;
+      transition: opacity 0.15s;
+    }
+    .btn:hover {
+      opacity: 0.88;
+    }
+    .badge {
+      display: inline-block;
+      font-size: 0.68rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 3px;
+      margin-bottom: 0.8rem;
+    }
+    .badge-a { background: rgba(0, 255, 136, 0.15); color: #00ff88; border: 1px solid rgba(0, 255, 136, 0.4); }
+    .badge-b { background: rgba(0, 170, 255, 0.15); color: #00aaff; border: 1px solid rgba(0, 170, 255, 0.4); }
+  </style>
+</head>
+<body>
+  <div class="pc-container" style="max-width: 780px;">
+    
+    <header style="margin-bottom: 2.5rem; border-bottom: 1px solid var(--surface-border); padding-bottom: 1.5rem;">
+      <div style="font-size: 0.72rem; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 0.4rem;">
+        Environnement de test isolé
+      </div>
+      <h1 style="font-size: 1.8rem; font-weight: normal; letter-spacing: 0.05em; color: #ffffff;">
+        GRANDE MAISON — PROTOTYPES WEBAR
+      </h1>
+      <p style="color: var(--text-dim); font-size: 0.85rem; line-height: 1.5; margin-top: 0.6rem;">
+        Test d'énigme en réalité augmentée : le joueur regarde son écran de PC à travers la caméra de son smartphone, et le site sur PC révèle un calque secret invisible à l'œil nu.
+      </p>
+    </header>
+
+    <!-- Solution A -->
+    <div class="hub-card">
+      <span class="badge badge-a">Solution A (Recommandée — 60 FPS)</span>
+      <h2 style="font-size: 1.3rem; margin-bottom: 0.6rem;">Suivi par 4 points de coins discrets (ArUco & Homographie)</h2>
+      <p style="color: var(--text-dim); font-size: 0.82rem; line-height: 1.6; margin-bottom: 1.2rem;">
+        L'écran du PC affiche une énigme entourée de 4 petits repères graphiques très discrets aux 4 coins. 
+        Dès que l'iPhone pointe l'écran du PC, la caméra verrouille les 4 points et projette le message secret en 3D parfaitement calé sur l'écran du PC.
+      </p>
+      <div style="display: flex; gap: 0.8rem; flex-wrap: wrap;">
+        <a href="/testthings/pc-a.html" class="btn">Ouvrir l'écran PC (Cible A)</a>
+        <a href="/testthings/mobile-a.html" class="btn" style="background: transparent; color: var(--text); border: 1px solid var(--surface-border);">Ouvrir la caméra mobile (Lens A)</a>
+      </div>
+    </div>
+
+    <!-- Solution B -->
+    <div class="hub-card">
+      <span class="badge badge-b">Solution B</span>
+      <h2 style="font-size: 1.3rem; margin-bottom: 0.6rem;">Suivi de Cadre Naturel / Artwork (Sans aucun marqueur)</h2>
+      <p style="color: var(--text-dim); font-size: 0.82rem; line-height: 1.6; margin-bottom: 1.2rem;">
+        Aucun marqueur ArUco ni carré noir : le PC affiche une illustration ou un cadre d'art pur. 
+        L'algorithme de vision détecte le cadre rectangulaire de l'artwork sur l'écran du PC et y incruste le calque secret en perspective.
+      </p>
+      <div style="display: flex; gap: 0.8rem; flex-wrap: wrap;">
+        <a href="/testthings/pc-b.html" class="btn">Ouvrir l'écran PC (Cible B)</a>
+        <a href="/testthings/mobile-b.html" class="btn" style="background: transparent; color: var(--text); border: 1px solid var(--surface-border);">Ouvrir la caméra mobile (Lens B)</a>
+      </div>
+    </div>
+
+    <!-- Instructions de test -->
+    <div style="background: rgba(255,255,255,0.03); border: 1px dashed var(--surface-border); border-radius: 6px; padding: 1.2rem; font-size: 0.78rem; color: var(--text-dim); line-height: 1.6;">
+      <strong style="color: #ffffff;">💡 Comment tester en 30 secondes :</strong><br>
+      1. Clique sur <strong>"Ouvrir l'écran PC (Cible A)"</strong> sur ton ordinateur.<br>
+      2. Un QR Code s'affiche sur la page PC : scanne-le avec l'appareil photo de ton iPhone 15.<br>
+      3. Ton iPhone ouvre directement la caméra du site WebAR.<br>
+      4. Vise ton écran de PC : le secret apparaît plaqué en 3D en temps réel !
+    </div>
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cible PC (Solution B) — Room 45</title>
+  <link rel="stylesheet" href="/testthings/css/style.css">
+  <script src="/testthings/js/qrcode.min.js"></script>
+</head>
+<body>
+  <div class="pc-container" style="max-width: 960px;">
+
+    <!-- Navigation haut -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; font-size: 0.8rem;">
+      <a href="/testthings/" style="color: var(--text-dim); text-decoration: none;">← Retour au HUB</a>
+      <span style="color: #00aaff; letter-spacing: 0.1em;">SOLUTION B — CADRE NATUREL SANS MARQUEURS</span>
+      <a href="/testthings/pc-a.html" style="color: var(--text-dim); text-decoration: none;">Voir Solution A →</a>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 280px; gap: 2rem; align-items: start;">
+      
+      <!-- Zone Cible Énigme B : Artwork avec cadre contrasté -->
+      <div>
+        <div id="artworkFrame" style="position: relative; background: #000000; border: 8px solid #ffffff; box-shadow: 0 10px 40px rgba(0,0,0,0.9); border-radius: 4px; overflow: hidden; max-width: 580px; margin: 0 auto; user-select: none;">
+          
+          <!-- Image Artwork de Room 45 -->
+          <img src="/room45/cover/a01.png" alt="Artwork Salle 45" style="display: block; width: 100%; height: auto; filter: contrast(1.15) brightness(0.95); opacity: 0.92;">
+
+          <!-- Titre gravé sur le cadre -->
+          <div style="position: absolute; bottom: 0; inset-inline: 0; background: linear-gradient(transparent, rgba(0,0,0,0.85) 60%); padding: 2rem 1.5rem 1rem; color: #fff; text-align: center;">
+            <div style="font-size: 0.72rem; letter-spacing: 0.3em; text-transform: uppercase; color: #aaa;">
+              SALLE 45 • PORTRAIT SILENCIEUX
+            </div>
+            <p style="font-size: 0.95rem; margin-top: 0.4rem; color: #ddd; font-style: italic;">
+              « Ce que la toile retient, la lentille le révèle. »
+            </p>
+          </div>
+
+        </div>
+
+        <div style="margin-top: 1rem; text-align: center; font-size: 0.75rem; color: var(--text-dim);">
+          Zéro marqueur ArUco : la caméra du téléphone reconnaît directement le cadre rectangulaire blanc.
+        </div>
+      </div>
+
+      <!-- Panneau latéral : QR Code & Contrôles -->
+      <div style="background: var(--surface); border: 1px solid var(--surface-border); border-radius: 8px; padding: 1.5rem;">
+        
+        <div style="font-size: 0.72rem; letter-spacing: 0.15em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 0.8rem;">
+          Connexion iPhone / Mobile
+        </div>
+
+        <div id="qrcodeBoxB" style="background: #ffffff; padding: 0.8rem; border-radius: 6px; margin-bottom: 1rem; text-align: center;">
+          <!-- QR code injecté ici en JS -->
+        </div>
+
+        <p style="font-size: 0.75rem; color: var(--text-dim); line-height: 1.5; margin-bottom: 1.2rem; text-align: center;">
+          📱 <strong>Scanne ce QR Code</strong> avec ton iPhone pour ouvrir la caméra Solution B.
+        </p>
+
+        <div style="border-top: 1px solid var(--surface-border); padding-top: 1rem; margin-top: 1rem;">
+          <label style="display: block; font-size: 0.7rem; letter-spacing: 0.1em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 0.4rem;">
+            Secret à projeter :
+          </label>
+          <input type="text" id="secretTextInputB" value="RÉPONSE : OUVERTURE" style="width: 100%; background: var(--bg); border: 1px solid var(--surface-border); color: #00aaff; padding: 0.5rem; font-family: monospace; font-size: 0.85rem; font-weight: bold; border-radius: 4px; box-sizing: border-box; text-align: center;">
+          <button id="saveSecretBtnB" style="width: 100%; margin-top: 0.5rem; background: var(--text); color: var(--bg); border: none; padding: 0.45rem; font-size: 0.75rem; font-weight: bold; border-radius: 4px; cursor: pointer;">
+            Mettre à jour le secret
+          </button>
+        </div>
+
+        <div style="margin-top: 1.2rem; text-align: center;">
+          <a id="directLinkB" href="/testthings/mobile-b.html" target="_blank" style="font-size: 0.72rem; color: var(--text-dim); text-decoration: underline;">
+            Ou ouvrir directement le lien mobile
+          </a>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    const mobileUrl = window.location.origin + '/testthings/mobile-b.html';
+    new QRCode(document.getElementById('qrcodeBoxB'), {
+      text: mobileUrl,
+      width: 170,
+      height: 170
+    });
+    document.getElementById('directLinkB').href = mobileUrl;
+
+    const secretInput = document.getElementById('secretTextInputB');
+    const saveBtn = document.getElementById('saveSecretBtnB');
+    const saved = localStorage.getItem('room45_webar_secret_b');
+    if (saved) secretInput.value = saved;
+
+    saveBtn.addEventListener('click', () => {
+      localStorage.setItem('room45_webar_secret_b', secretInput.value);
+      saveBtn.textContent = '✓ Enregistré !';
+      setTimeout(() => { saveBtn.textContent = 'Mettre à jour le secret'; }, 1500);
+    });
+  </script>
+</body>
+</html>

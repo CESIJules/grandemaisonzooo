@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Lentille Spectrale AR (Solution A)</title>
+  <link rel="stylesheet" href="/testthings/css/style.css">
+  <script src="/testthings/js/aruco.js"></script>
+</head>
+<body style="background: #000; overflow: hidden; position: fixed; inset: 0;">
+
+  <!-- Viewport Caméra WebAR -->
+  <div class="ar-viewport">
+    
+    <!-- Flux vidéo de la caméra arrière -->
+    <video id="cameraFeed" autoplay playsinline muted></video>
+
+    <!-- Calque de Réalité Augmentée projeté en 3D -->
+    <div id="arSecretLayer">
+      <div class="secret-badge">CLÉ SPECTRAL DÉTECTÉE</div>
+      <div class="secret-title">SECRET DE LA SALLE 45</div>
+      <div id="secretCodeDisplay" class="secret-code">CODE : VOID-45</div>
+      <p style="font-size: 0.85rem; line-height: 1.4; color: rgba(255,255,255,0.85); margin-top: 0.5rem;">
+        « Là où la lumière s'éteint, le passage s'ouvre. Note ce code pour ouvrir la porte. »
+      </p>
+      <div style="font-size: 0.65rem; color: #00ff88; margin-top: 0.8rem; letter-spacing: 0.2em;">
+        • SIGNAL SYNCHRONISÉ AVEC LE MONITEUR •
+      </div>
+    </div>
+
+    <!-- Viseur HUD -->
+    <div id="hudReticle" class="hud-reticle"></div>
+
+    <!-- Barre d'état bas d'écran -->
+    <div class="hud-bar">
+      <div id="hudDot" class="hud-status-dot"></div>
+      <span id="hudText">Recherche des 4 repères sur l'écran PC...</span>
+    </div>
+
+    <!-- Bouton plein écran / recharger -->
+    <button id="restartBtn" style="position: absolute; top: 1rem; right: 1rem; z-index: 30; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 0.4rem 0.8rem; font-size: 0.75rem; border-radius: 20px; backdrop-filter: blur(5px);">
+      ↺ Reset
+    </button>
+
+    <!-- Écran d'accueil / demande d'autorisation caméra -->
+    <div id="startOverlay" style="position: absolute; inset: 0; background: rgba(13,13,14,0.96); z-index: 50; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 2rem; text-align: center;">
+      <div style="width: 50px; height: 50px; border-radius: 50%; border: 2px solid #00ff88; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 0 15px rgba(0,255,136,0.3);">
+        📷
+      </div>
+      <h2 style="font-size: 1.3rem; margin-bottom: 0.8rem; color: #fff;">LENTILLE SPECTRALE</h2>
+      <p style="font-size: 0.85rem; color: var(--text-dim); line-height: 1.5; max-width: 320px; margin-bottom: 2rem;">
+        Pour révéler l'énigme cachée sur votre écran de PC, autorisez l'accès à la caméra arrière.
+      </p>
+      <button id="startBtn" style="background: #00ff88; color: #000; border: none; padding: 0.9rem 2rem; font-size: 0.9rem; font-weight: bold; border-radius: 30px; letter-spacing: 0.1em; cursor: pointer; box-shadow: 0 0 20px rgba(0,255,136,0.5);">
+        ACTIVER LA CAMÉRA
+      </button>
+      <div id="permError" style="display: none; color: #ff5555; font-size: 0.78rem; margin-top: 1.5rem; line-height: 1.4; max-width: 300px;"></div>
+    </div>
+
+  </div>
+
+  <script>
+    const video = document.getElementById('cameraFeed');
+    const startOverlay = document.getElementById('startOverlay');
+    const startBtn = document.getElementById('startBtn');
+    const permError = document.getElementById('permError');
+    const hudDot = document.getElementById('hudDot');
+    const hudText = document.getElementById('hudText');
+    const hudReticle = document.getElementById('hudReticle');
+    const arLayer = document.getElementById('arSecretLayer');
+    const secretCodeDisplay = document.getElementById('secretCodeDisplay');
+    const restartBtn = document.getElementById('restartBtn');
+
+    // Récupérer le secret personnalisé
+    const urlParams = new URLSearchParams(window.location.search);
+    const customSecret = urlParams.get('secret') || localStorage.getItem('room45_webar_secret') || 'CODE : VOID-45';
+    secretCodeDisplay.textContent = customSecret;
+
+    const engine = new ArUcoEngine();
+    let isTracking = false;
+    let lastTrackTime = 0;
+    let smoothedDst = null;
+
+    // Dimensions virtuelles du calque AR
+    const LAYER_W = 500;
+    const LAYER_H = 350;
+    arLayer.style.width = LAYER_W + 'px';
+    arLayer.style.height = LAYER_H + 'px';
+
+    // Démarrage de la caméra
+    startBtn.addEventListener('click', async () => {
+      startBtn.textContent = 'Activation...';
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
+          audio: false
+        });
+        video.srcObject = stream;
+        await video.play();
+        startOverlay.style.display = 'none';
+        isTracking = true;
+        requestAnimationFrame(trackLoop);
+      } catch (err) {
+        console.error('Camera error:', err);
+        permError.style.display = 'block';
+        permError.innerHTML = '⚠️ Impossible d\'accéder à la caméra.<br>Vérifiez que vous êtes bien sur <strong>HTTPS</strong> et que la caméra est autorisée dans les réglages de votre navigateur.';
+        startBtn.textContent = 'RÉESSAYER';
+      }
+    });
+
+    restartBtn.addEventListener('click', () => {
+      window.location.reload();
+    });
+
+    // Boucle de vision par ordinateur en temps réel
+    function trackLoop() {
+      if (!isTracking) return;
+
+      if (video.readyState >= 2 && video.videoWidth > 0) {
+        // Détecter les marqueurs ArUco dans le flux
+        const markers = engine.detect(video, 640);
+        
+        // Ranger par ID (0, 1, 2, 3)
+        const found = {};
+        for (const m of markers) {
+          found[m.id] = m;
+        }
+
+        const count = Object.keys(found).length;
+
+        if (found[0] && found[1] && found[2] && found[3]) {
+          // Tous les 4 coins sont trouvés !
+          // Coin 0 (Haut-Gauche), Coin 1 (Haut-Droit), Coin 2 (Bas-Droit), Coin 3 (Bas-Gauche)
+          const rawCornersInVideo = [
+            found[0].corners[0], // coin externe du marqueur 0
+            found[1].corners[1], // coin externe du marqueur 1
+            found[2].corners[2], // coin externe du marqueur 2
+            found[3].corners[3]  // coin externe du marqueur 3
+          ];
+
+          // Convertir les coordonnées de l'espace vidéo vers l'espace écran du téléphone
+          const screenPts = rawCornersInVideo.map(pt => videoToScreen(pt.x, pt.y));
+
+          // Lissage exponentiel (LERP) pour éliminer les micro-tremblements
+          if (!smoothedDst) {
+            smoothedDst = screenPts;
+            if (navigator.vibrate) navigator.vibrate(40);
+          } else {
+            const alpha = 0.45; // Vitesse de suivi
+            smoothedDst = smoothedDst.map((p, i) => ({
+              x: p.x + (screenPts[i].x - p.x) * alpha,
+              y: p.y + (screenPts[i].y - p.y) * alpha
+            }));
+          }
+
+          // Calcul de la matrice Homographique CSS 3D
+          const matrix3d = getCssMatrix3d(LAYER_W, LAYER_H, smoothedDst);
+          if (matrix3d) {
+            arLayer.style.transform = matrix3d;
+            arLayer.style.display = 'block';
+            hudDot.classList.add('active');
+            hudReticle.classList.add('locked');
+            hudText.textContent = 'VERROUILLÉ • Clé spectrale affichée';
+            lastTrackTime = performance.now();
+          }
+
+        } else if (count > 0 && smoothedDst && (performance.now() - lastTrackTime < 350)) {
+          // Persistance de 350ms en cas de perte furtive d'un marqueur
+          hudText.textContent = `Alignement partiel (${count}/4 repères)...`;
+        } else {
+          // Perdu
+          smoothedDst = null;
+          arLayer.style.display = 'none';
+          hudDot.classList.remove('active');
+          hudReticle.classList.remove('locked');
+          hudText.textContent = count > 0 ? `Détecté ${count}/4 repères... Approchez-vous` : 'Visez les 4 repères sur l\'écran PC...';
+        }
+      }
+
+      requestAnimationFrame(trackLoop);
+    }
+
+    /**
+     * Convertit une coordonnée dans le repère natif de la vidéo (ex: 1280x720)
+     * vers le repère réel de l'écran du smartphone (avec object-fit: cover)
+     */
+    function videoToScreen(vx, vy) {
+      const vw = video.videoWidth;
+      const vh = video.videoHeight;
+      const sw = window.innerWidth;
+      const sh = window.innerHeight;
+
+      const scale = Math.max(sw / vw, sh / vh);
+      const renderedW = vw * scale;
+      const renderedH = vh * scale;
+
+      const offsetX = (sw - renderedW) / 2;
+      const offsetY = (sh - renderedH) / 2;
+
+      return {
+        x: vx * scale + offsetX,
+        y: vy * scale + offsetY
+      };
+    }
+  </script>
+</body>
+</html>

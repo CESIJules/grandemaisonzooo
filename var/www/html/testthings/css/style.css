@@ -1,0 +1,205 @@
+/**
+ * style.css — Grande Maison / Room 45 — Testthings WebAR
+ */
+:root {
+  --bg: #0d0d0e;
+  --surface: #141416;
+  --surface-border: rgba(255, 255, 255, 0.12);
+  --text: #f0f0f2;
+  --text-dim: rgba(240, 240, 242, 0.55);
+  --accent: #e2e8f0;
+  --glow-secret: #00ff88;
+  --glow-rgb: 0, 255, 136;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Courier New', Courier, monospace;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Cadre PC Énigme ───────────────────────────────────────────────────────── */
+.pc-container {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 2rem;
+  width: 92%;
+}
+
+.enigma-box {
+  position: relative;
+  background: #ffffff;
+  color: #111111;
+  padding: 3rem 2.5rem;
+  border-radius: 6px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  user-select: none;
+}
+
+/* Repères de coins ArUco */
+.corner-marker {
+  position: absolute;
+  width: 54px;
+  height: 54px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  z-index: 10;
+}
+
+.corner-marker.tl { top: 14px; left: 14px; }
+.corner-marker.tr { top: 14px; right: 14px; }
+.corner-marker.br { bottom: 14px; right: 14px; }
+.corner-marker.bl { bottom: 14px; left: 14px; }
+
+.corner-marker canvas {
+  width: 48px;
+  height: 48px;
+  display: block;
+}
+
+/* ── Écran Mobile Plein Écran (WebAR) ─────────────────────────────────────── */
+.ar-viewport {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  overflow: hidden;
+  touch-action: none;
+}
+
+#cameraFeed {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  min-width: 100%;
+  min-height: 100%;
+  width: auto;
+  height: auto;
+  transform: translate(-50%, -50%);
+  object-fit: cover;
+  z-index: 1;
+}
+
+/* Calque de réalité augmentée projeté en 3D */
+#arSecretLayer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 500px;
+  height: 350px;
+  transform-origin: 0 0;
+  pointer-events: none;
+  z-index: 20;
+  display: none;
+  background: rgba(0, 0, 0, 0.78);
+  border: 2px solid var(--glow-secret);
+  box-shadow: 0 0 30px rgba(var(--glow-rgb), 0.6), inset 0 0 20px rgba(var(--glow-rgb), 0.4);
+  color: #ffffff;
+  padding: 1.5rem;
+  backdrop-filter: blur(4px);
+  border-radius: 4px;
+  will-change: transform;
+}
+
+.secret-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  color: var(--glow-secret);
+  border: 1px solid var(--glow-secret);
+  padding: 3px 8px;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  background: rgba(var(--glow-rgb), 0.1);
+}
+
+.secret-title {
+  font-size: 1.6rem;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(var(--glow-rgb), 0.8);
+  margin-bottom: 0.5rem;
+}
+
+.secret-code {
+  font-size: 2.2rem;
+  font-weight: 900;
+  letter-spacing: 0.25em;
+  color: var(--glow-secret);
+  text-shadow: 0 0 20px rgba(var(--glow-rgb), 1);
+  background: rgba(0, 0, 0, 0.4);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  border: 1px dashed var(--glow-secret);
+  display: inline-block;
+  margin: 0.5rem 0;
+}
+
+/* Viseur HUD sur le mobile */
+.hud-reticle {
+  position: absolute;
+  inset: 12%;
+  border: 1px dashed rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 10;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.hud-reticle.locked {
+  border-color: var(--glow-secret);
+  box-shadow: 0 0 20px rgba(var(--glow-rgb), 0.4);
+}
+
+.hud-bar {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(18, 18, 20, 0.88);
+  border: 1px solid var(--surface-border);
+  padding: 0.7rem 1.4rem;
+  border-radius: 30px;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  color: var(--text);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  backdrop-filter: blur(10px);
+  white-space: nowrap;
+}
+
+.hud-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffaa00;
+  animation: pulse 1.5s infinite;
+}
+
+.hud-status-dot.active {
+  background: var(--glow-secret);
+  box-shadow: 0 0 10px var(--glow-secret);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Lentille Spectrale AR (Solution B)</title>
+  <link rel="stylesheet" href="/testthings/css/style.css">
+  <script src="/testthings/js/aruco.js"></script>
+  <script src="/testthings/js/frame-tracker.js"></script>
+</head>
+<body style="background: #000; overflow: hidden; position: fixed; inset: 0;">
+
+  <div class="ar-viewport">
+    
+    <video id="cameraFeed" autoplay playsinline muted></video>
+
+    <!-- Calque AR Solution B -->
+    <div id="arSecretLayer" style="border-color: #00aaff; box-shadow: 0 0 30px rgba(0, 170, 255, 0.6);">
+      <div class="secret-badge" style="color: #00aaff; border-color: #00aaff; background: rgba(0, 170, 255, 0.1);">
+        ANALYSE DU CADRE TERMINÉE
+      </div>
+      <div class="secret-title">SECRET CACHÉ DANS LA TOILE</div>
+      <div id="secretCodeDisplay" class="secret-code" style="color: #00aaff; border-color: #00aaff; text-shadow: 0 0 20px rgba(0, 170, 255, 1);">
+        RÉPONSE : OUVERTURE
+      </div>
+      <p style="font-size: 0.85rem; line-height: 1.4; color: rgba(255,255,255,0.85); margin-top: 0.5rem;">
+        « Les symboles invisibles à l'œil nu étaient gravés au cœur même de l'œuvre. »
+      </p>
+    </div>
+
+    <!-- Viseur HUD -->
+    <div id="hudReticle" class="hud-reticle"></div>
+
+    <!-- Barre d'état bas d'écran -->
+    <div class="hud-bar">
+      <div id="hudDot" class="hud-status-dot" style="background: #00aaff;"></div>
+      <span id="hudText">Ciblez le cadre de l'image sur l'écran PC...</span>
+    </div>
+
+    <!-- Bouton Reset -->
+    <button id="restartBtn" style="position: absolute; top: 1rem; right: 1rem; z-index: 30; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 0.4rem 0.8rem; font-size: 0.75rem; border-radius: 20px; backdrop-filter: blur(5px);">
+      ↺ Reset
+    </button>
+
+    <!-- Écran d'accueil -->
+    <div id="startOverlay" style="position: absolute; inset: 0; background: rgba(13,13,14,0.96); z-index: 50; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 2rem; text-align: center;">
+      <div style="width: 50px; height: 50px; border-radius: 50%; border: 2px solid #00aaff; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 0 15px rgba(0,170,255,0.3);">
+        👁️
+      </div>
+      <h2 style="font-size: 1.3rem; margin-bottom: 0.8rem; color: #fff;">SCANNER D'ARTWORK (B)</h2>
+      <p style="font-size: 0.85rem; color: var(--text-dim); line-height: 1.5; max-width: 320px; margin-bottom: 2rem;">
+        Autorisez l'accès à la caméra pour scanner le cadre de l'image affichée sur votre PC.
+      </p>
+      <button id="startBtn" style="background: #00aaff; color: #000; border: none; padding: 0.9rem 2rem; font-size: 0.9rem; font-weight: bold; border-radius: 30px; letter-spacing: 0.1em; cursor: pointer; box-shadow: 0 0 20px rgba(0,170,255,0.5);">
+        ACTIVER LA CAMÉRA
+      </button>
+      <div id="permError" style="display: none; color: #ff5555; font-size: 0.78rem; margin-top: 1.5rem; line-height: 1.4; max-width: 300px;"></div>
+    </div>
+
+  </div>
+
+  <script>
+    const video = document.getElementById('cameraFeed');
+    const startOverlay = document.getElementById('startOverlay');
+    const startBtn = document.getElementById('startBtn');
+    const permError = document.getElementById('permError');
+    const hudDot = document.getElementById('hudDot');
+    const hudText = document.getElementById('hudText');
+    const hudReticle = document.getElementById('hudReticle');
+    const arLayer = document.getElementById('arSecretLayer');
+    const secretCodeDisplay = document.getElementById('secretCodeDisplay');
+    const restartBtn = document.getElementById('restartBtn');
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const customSecret = urlParams.get('secret') || localStorage.getItem('room45_webar_secret_b') || 'RÉPONSE : OUVERTURE';
+    secretCodeDisplay.textContent = customSecret;
+
+    const tracker = new FrameTracker();
+    let isTracking = false;
+    let smoothedDst = null;
+    let lastTrackTime = 0;
+
+    const LAYER_W = 500;
+    const LAYER_H = 350;
+    arLayer.style.width = LAYER_W + 'px';
+    arLayer.style.height = LAYER_H + 'px';
+
+    startBtn.addEventListener('click', async () => {
+      startBtn.textContent = 'Activation...';
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
+          audio: false
+        });
+        video.srcObject = stream;
+        await video.play();
+        startOverlay.style.display = 'none';
+        isTracking = true;
+        requestAnimationFrame(trackLoop);
+      } catch (err) {
+        console.error('Camera error:', err);
+        permError.style.display = 'block';
+        permError.innerHTML = '⚠️ Impossible d\'accéder à la caméra.<br>Vérifiez les permissions HTTPS / Safari.';
+        startBtn.textContent = 'RÉESSAYER';
+      }
+    });
+
+    restartBtn.addEventListener('click', () => window.location.reload());
+
+    function trackLoop() {
+      if (!isTracking) return;
+
+      if (video.readyState >= 2 && video.videoWidth > 0) {
+        const quad = tracker.detect(video, 480);
+
+        if (quad) {
+          const screenPts = quad.map(pt => videoToScreen(pt.x, pt.y));
+
+          if (!smoothedDst) {
+            smoothedDst = screenPts;
+            if (navigator.vibrate) navigator.vibrate(30);
+          } else {
+            const alpha = 0.4;
+            smoothedDst = smoothedDst.map((p, i) => ({
+              x: p.x + (screenPts[i].x - p.x) * alpha,
+              y: p.y + (screenPts[i].y - p.y) * alpha
+            }));
+          }
+
+          const matrix3d = getCssMatrix3d(LAYER_W, LAYER_H, smoothedDst);
+          if (matrix3d) {
+            arLayer.style.transform = matrix3d;
+            arLayer.style.display = 'block';
+            hudDot.style.background = '#00aaff';
+            hudReticle.style.borderColor = '#00aaff';
+            hudText.textContent = 'CADRE VERROUILLÉ • Révélation en cours';
+            lastTrackTime = performance.now();
+          }
+
+        } else if (smoothedDst && (performance.now() - lastTrackTime < 300)) {
+          // Maintien temporaire
+        } else {
+          smoothedDst = null;
+          arLayer.style.display = 'none';
+          hudDot.style.background = '#ffaa00';
+          hudReticle.style.borderColor = 'rgba(255,255,255,0.3)';
+          hudText.textContent = 'Ciblez le cadre blanc de l\'image sur PC...';
+        }
+      }
+
+      requestAnimationFrame(trackLoop);
+    }
+
+    function videoToScreen(vx, vy) {
+      const vw = video.videoWidth;
+      const vh = video.videoHeight;
+      const sw = window.innerWidth;
+      const sh = window.innerHeight;
+
+      const scale = Math.max(sw / vw, sh / vh);
+      const renderedW = vw * scale;
+      const renderedH = vh * scale;
+
+      const offsetX = (sw - renderedW) / 2;
+      const offsetY = (sh - renderedH) / 2;
+
+      return {
+        x: vx * scale + offsetX,
+        y: vy * scale + offsetY
+      };
+    }
+  </script>
+</body>
+</html>
