@@ -30,47 +30,49 @@ body {
 
 /* ── Cadre PC Énigme ───────────────────────────────────────────────────────── */
 .pc-container {
-  max-width: 900px;
-  margin: 2rem auto;
-  padding: 2rem;
-  width: 92%;
+  max-width: 960px;
+  margin: 1.5rem auto;
+  padding: 1.5rem;
+  width: 95%;
 }
 
 .enigma-box {
   position: relative;
   background: #ffffff;
   color: #111111;
-  padding: 3rem 2.5rem;
+  padding: 3.5rem 2.5rem;
   border-radius: 6px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(0, 0, 0, 0.05);
   overflow: hidden;
   user-select: none;
 }
 
-/* Repères de coins ArUco */
-.corner-marker {
+/* Mires de coins Chromatiques (4 Couleurs distinctes) */
+.chroma-target {
   position: absolute;
-  width: 54px;
-  height: 54px;
-  background: #ffffff;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(0, 0, 0, 0.15);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
   z-index: 10;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+  border: 3px solid #000000;
 }
 
-.corner-marker.tl { top: 14px; left: 14px; }
-.corner-marker.tr { top: 14px; right: 14px; }
-.corner-marker.br { bottom: 14px; right: 14px; }
-.corner-marker.bl { bottom: 14px; left: 14px; }
-
-.corner-marker canvas {
-  width: 48px;
-  height: 48px;
-  display: block;
+.chroma-target::after {
+  content: '+';
+  font-size: 26px;
+  font-weight: 900;
+  color: #000000;
+  line-height: 1;
 }
+
+.chroma-target.tl { top: 12px; left: 12px; background: #00f0ff; box-shadow: 0 0 20px #00f0ff; }
+.chroma-target.tr { top: 12px; right: 12px; background: #ff0055; box-shadow: 0 0 20px #ff0055; }
+.chroma-target.br { bottom: 12px; right: 12px; background: #ffe600; box-shadow: 0 0 20px #ffe600; }
+.chroma-target.bl { bottom: 12px; left: 12px; background: #00ff66; box-shadow: 0 0 20px #00ff66; }
 
 /* ── Écran Mobile Plein Écran (WebAR) ─────────────────────────────────────── */
 .ar-viewport {
@@ -79,19 +81,22 @@ body {
   background: #000;
   overflow: hidden;
   touch-action: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
+/* Le flux vidéo ne zoome plus artificiellement */
 #cameraFeed {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  min-width: 100%;
-  min-height: 100%;
-  width: auto;
-  height: auto;
-  transform: translate(-50%, -50%);
-  object-fit: cover;
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* Vue complète sans aucun zoom par défaut */
   z-index: 1;
+  background: #000;
+}
+
+#cameraFeed.cover-mode {
+  object-fit: cover;
 }
 
 /* Calque de réalité augmentée projeté en 3D */
@@ -105,13 +110,13 @@ body {
   pointer-events: none;
   z-index: 20;
   display: none;
-  background: rgba(0, 0, 0, 0.78);
+  background: rgba(0, 0, 0, 0.85);
   border: 2px solid var(--glow-secret);
-  box-shadow: 0 0 30px rgba(var(--glow-rgb), 0.6), inset 0 0 20px rgba(var(--glow-rgb), 0.4);
+  box-shadow: 0 0 35px rgba(var(--glow-rgb), 0.7), inset 0 0 25px rgba(var(--glow-rgb), 0.4);
   color: #ffffff;
   padding: 1.5rem;
-  backdrop-filter: blur(4px);
-  border-radius: 4px;
+  backdrop-filter: blur(5px);
+  border-radius: 6px;
   will-change: transform;
 }
 
@@ -122,27 +127,27 @@ body {
   color: var(--glow-secret);
   border: 1px solid var(--glow-secret);
   padding: 3px 8px;
-  margin-bottom: 1rem;
+  margin-bottom: 0.8rem;
   text-transform: uppercase;
   background: rgba(var(--glow-rgb), 0.1);
 }
 
 .secret-title {
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   font-weight: bold;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   color: #ffffff;
   text-shadow: 0 0 10px rgba(var(--glow-rgb), 0.8);
   margin-bottom: 0.5rem;
 }
 
 .secret-code {
-  font-size: 2.2rem;
+  font-size: 2rem;
   font-weight: 900;
   letter-spacing: 0.25em;
   color: var(--glow-secret);
   text-shadow: 0 0 20px rgba(var(--glow-rgb), 1);
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.6);
   padding: 0.5rem 1rem;
   border-radius: 4px;
   border: 1px dashed var(--glow-secret);
@@ -153,8 +158,8 @@ body {
 /* Viseur HUD sur le mobile */
 .hud-reticle {
   position: absolute;
-  inset: 12%;
-  border: 1px dashed rgba(255, 255, 255, 0.3);
+  inset: 15%;
+  border: 1px dashed rgba(255, 255, 255, 0.25);
   border-radius: 8px;
   pointer-events: none;
   z-index: 10;
@@ -163,19 +168,20 @@ body {
 
 .hud-reticle.locked {
   border-color: var(--glow-secret);
-  box-shadow: 0 0 20px rgba(var(--glow-rgb), 0.4);
+  box-shadow: 0 0 25px rgba(var(--glow-rgb), 0.5);
 }
 
+/* Barre d'état bas d'écran */
 .hud-bar {
   position: absolute;
-  bottom: 2rem;
+  bottom: 1.5rem;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(18, 18, 20, 0.88);
+  background: rgba(18, 18, 20, 0.92);
   border: 1px solid var(--surface-border);
-  padding: 0.7rem 1.4rem;
+  padding: 0.65rem 1.2rem;
   border-radius: 30px;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   letter-spacing: 0.08em;
   color: var(--text);
   z-index: 30;
@@ -183,7 +189,8 @@ body {
   align-items: center;
   gap: 0.6rem;
   backdrop-filter: blur(10px);
-  white-space: nowrap;
+  max-width: 90%;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
 }
 
 .hud-status-dot {
@@ -191,6 +198,7 @@ body {
   height: 8px;
   border-radius: 50%;
   background: #ffaa00;
+  flex-shrink: 0;
   animation: pulse 1.5s infinite;
 }
 
@@ -202,4 +210,28 @@ body {
 @keyframes pulse {
   0%, 100% { opacity: 0.4; }
   50% { opacity: 1; }
+}
+
+/* Bandeau de diagnostic en haut du mobile */
+.debug-top-bar {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  right: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 35;
+  pointer-events: auto;
+}
+
+.pill-btn {
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.7rem;
+  border-radius: 20px;
+  backdrop-filter: blur(8px);
+  cursor: pointer;
 }

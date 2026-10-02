@@ -3,65 +3,54 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cible PC (Solution A) — Room 45</title>
+  <title>Cible PC (Solution A — Mires Optiques) — Room 45</title>
   <link rel="stylesheet" href="/testthings/css/style.css">
-  <script src="/testthings/js/aruco.js"></script>
   <script src="/testthings/js/qrcode.min.js"></script>
 </head>
 <body>
-  <div class="pc-container" style="max-width: 960px;">
+  <div class="pc-container">
 
     <!-- Navigation haut -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; font-size: 0.8rem;">
       <a href="/testthings/" style="color: var(--text-dim); text-decoration: none;">← Retour au HUB</a>
-      <span style="color: #00ff88; letter-spacing: 0.1em;">SOLUTION A — 4 REPÈRES DISCRETS</span>
+      <span style="color: #00ff88; letter-spacing: 0.1em; font-weight: bold;">SOLUTION A — 4 MIRES CHROMATIQUES</span>
       <a href="/testthings/pc-b.html" style="color: var(--text-dim); text-decoration: none;">Voir Solution B →</a>
     </div>
 
     <div style="display: grid; grid-template-columns: 1fr 280px; gap: 2rem; align-items: start;">
       
-      <!-- Zone Cible Énigme avec les 4 marqueurs ArUco -->
+      <!-- Zone Cible Énigme avec les 4 mires optiques chromatiques -->
       <div>
-        <div id="targetZone" class="enigma-box" style="min-height: 440px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; position: relative;">
+        <div id="targetZone" class="enigma-box" style="min-height: 480px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; position: relative;">
           
-          <!-- Les 4 marqueurs ArUco aux 4 coins -->
-          <div class="corner-marker tl" title="Repère 0">
-            <canvas id="marker0"></canvas>
-          </div>
-          <div class="corner-marker tr" title="Repère 1">
-            <canvas id="marker1"></canvas>
-          </div>
-          <div class="corner-marker br" title="Repère 2">
-            <canvas id="marker2"></canvas>
-          </div>
-          <div class="corner-marker bl" title="Repère 3">
-            <canvas id="marker3"></canvas>
-          </div>
+          <!-- Les 4 mires de couleur ultra-repérables par la caméra -->
+          <div class="chroma-target tl" title="Mire 1 : Cyan"></div>
+          <div class="chroma-target tr" title="Mire 2 : Magenta"></div>
+          <div class="chroma-target br" title="Mire 3 : Jaune"></div>
+          <div class="chroma-target bl" title="Mire 4 : Vert"></div>
 
           <!-- Contenu de l'énigme visible à l'œil nu sur PC -->
-          <div style="max-width: 440px; padding: 1rem; position: relative; z-index: 2;">
-            <div style="font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase; color: #888; margin-bottom: 1.5rem;">
-              • SALLE EXPÉRIMENTALE 45 •
+          <div style="max-width: 480px; padding: 1.5rem; position: relative; z-index: 2;">
+            <div style="font-size: 0.72rem; letter-spacing: 0.35em; text-transform: uppercase; color: #888; margin-bottom: 1.5rem;">
+              • PROTOCOLE D'ALIGNEMENT OPTIQUE •
             </div>
             
-            <p style="font-size: 1.15rem; line-height: 1.7; font-weight: normal; color: #222; margin-bottom: 1.5rem;">
+            <p style="font-size: 1.2rem; line-height: 1.7; font-weight: normal; color: #111; margin-bottom: 1.8rem;">
               « L'œil organique fusionne l'ombre et la cendre.<br>
               Ce que tes sens confondent,<br>
               la lentille de poche le sépare. »
             </p>
 
-            <div style="font-size: 0.8rem; letter-spacing: 0.15em; color: #666; border-top: 1px solid #eee; padding-top: 1.2rem;">
-              [ REGARDEZ CET ÉCRAN À TRAVERS VOTRE TÉLÉPHONE ]
+            <div style="font-size: 0.82rem; letter-spacing: 0.15em; color: #555; border-top: 1px solid #e0e0e0; padding-top: 1.4rem;">
+              [ ALIGNEZ LES 4 MIRES DE COULEURS AVEC VOTRE SMARTPHONE ]
             </div>
           </div>
 
         </div>
 
         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; font-size: 0.75rem; color: var(--text-dim);">
-          <span>Format : Zone traçable en 4 points d'ancrage</span>
-          <label style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
-            <input type="checkbox" id="toggleMarkers" checked> Repères visibles (48px)
-          </label>
+          <span>Les 4 cercles de couleur permettent un verrouillage instantané sans lag.</span>
+          <span style="color: #00ff88;">✓ Actif</span>
         </div>
       </div>
 
@@ -77,22 +66,22 @@
         </div>
 
         <p style="font-size: 0.75rem; color: var(--text-dim); line-height: 1.5; margin-bottom: 1.2rem; text-align: center;">
-          📱 <strong>Scanne ce QR Code</strong> avec l'appareil photo de ton téléphone pour ouvrir la caméra AR.
+          📱 <strong>Scanne ce QR Code</strong> avec ton iPhone 15 pour lancer la caméra AR.
         </p>
 
         <div style="border-top: 1px solid var(--surface-border); padding-top: 1rem; margin-top: 1rem;">
           <label style="display: block; font-size: 0.7rem; letter-spacing: 0.1em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 0.4rem;">
-            Message secret à révéler :
+            Message secret à afficher en AR :
           </label>
           <input type="text" id="secretTextInput" value="CODE : VOID-45" style="width: 100%; background: var(--bg); border: 1px solid var(--surface-border); color: #00ff88; padding: 0.5rem; font-family: monospace; font-size: 0.85rem; font-weight: bold; border-radius: 4px; box-sizing: border-box; text-align: center;">
-          <button id="saveSecretBtn" style="width: 100%; margin-top: 0.5rem; background: var(--text); color: var(--bg); border: none; padding: 0.45rem; font-size: 0.75rem; font-weight: bold; border-radius: 4px; cursor: pointer;">
+          <button id="saveSecretBtn" style="width: 100%; margin-top: 0.5rem; background: var(--text); color: var(--bg); border: none; padding: 0.5rem; font-size: 0.75rem; font-weight: bold; border-radius: 4px; cursor: pointer;">
             Mettre à jour le secret
           </button>
         </div>
 
         <div style="margin-top: 1.2rem; text-align: center;">
           <a id="directLink" href="/testthings/mobile-a.html" target="_blank" style="font-size: 0.72rem; color: var(--text-dim); text-decoration: underline;">
-            Ou ouvrir directement le lien mobile
+            Ouvrir directement le lien mobile
           </a>
         </div>
 
@@ -103,13 +92,7 @@
   </div>
 
   <script>
-    // 1. Dessiner les 4 marqueurs ArUco distincts
-    ArUcoEngine.drawMarker(document.getElementById('marker0'), 0, 48);
-    ArUcoEngine.drawMarker(document.getElementById('marker1'), 1, 48);
-    ArUcoEngine.drawMarker(document.getElementById('marker2'), 2, 48);
-    ArUcoEngine.drawMarker(document.getElementById('marker3'), 3, 48);
-
-    // 2. Générer le QR Code dynamique avec l'URL exacte
+    // QR Code avec URL absolue
     const mobileUrl = window.location.origin + '/testthings/mobile-a.html';
     new QRCode(document.getElementById('qrcodeBox'), {
       text: mobileUrl,
@@ -118,11 +101,8 @@
     });
     document.getElementById('directLink').href = mobileUrl;
 
-    // 3. Gestion du secret personnalisé (via localStorage pour synchro instantanée)
     const secretInput = document.getElementById('secretTextInput');
     const saveBtn = document.getElementById('saveSecretBtn');
-    
-    // Charger secret existant
     const saved = localStorage.getItem('room45_webar_secret');
     if (saved) secretInput.value = saved;
 
@@ -130,13 +110,6 @@
       localStorage.setItem('room45_webar_secret', secretInput.value);
       saveBtn.textContent = '✓ Enregistré !';
       setTimeout(() => { saveBtn.textContent = 'Mettre à jour le secret'; }, 1500);
-    });
-
-    // 4. Toggle opacité des marqueurs
-    document.getElementById('toggleMarkers').addEventListener('change', (e) => {
-      document.querySelectorAll('.corner-marker').forEach(el => {
-        el.style.opacity = e.target.checked ? '1' : '0.25';
-      });
     });
   </script>
 </body>

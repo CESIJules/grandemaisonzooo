@@ -5,8 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Lentille Spectrale AR (Solution B)</title>
   <link rel="stylesheet" href="/testthings/css/style.css">
-  <script src="/testthings/js/aruco.js"></script>
-  <script src="/testthings/js/frame-tracker.js"></script>
+  <script src="/testthings/js/tracker.js"></script>
 </head>
 <body style="background: #000; overflow: hidden; position: fixed; inset: 0;">
 
@@ -14,8 +13,11 @@
     
     <video id="cameraFeed" autoplay playsinline muted></video>
 
+    <!-- Canvas de superposition -->
+    <canvas id="arCanvas" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 15;"></canvas>
+
     <!-- Calque AR Solution B -->
-    <div id="arSecretLayer" style="border-color: #00aaff; box-shadow: 0 0 30px rgba(0, 170, 255, 0.6);">
+    <div id="arSecretLayer" style="border-color: #00aaff; box-shadow: 0 0 35px rgba(0, 170, 255, 0.7);">
       <div class="secret-badge" style="color: #00aaff; border-color: #00aaff; background: rgba(0, 170, 255, 0.1);">
         ANALYSE DU CADRE TERMINÉE
       </div>
@@ -28,30 +30,35 @@
       </p>
     </div>
 
+    <!-- Barre d'outils haut d'écran -->
+    <div class="debug-top-bar">
+      <button id="toggleZoomBtn" class="pill-btn">
+        🔍 Vue Complète (Dézoomée)
+      </button>
+      <button id="restartBtn" class="pill-btn">
+        ↺ Reset
+      </button>
+    </div>
+
     <!-- Viseur HUD -->
     <div id="hudReticle" class="hud-reticle"></div>
 
     <!-- Barre d'état bas d'écran -->
     <div class="hud-bar">
       <div id="hudDot" class="hud-status-dot" style="background: #00aaff;"></div>
-      <span id="hudText">Ciblez le cadre de l'image sur l'écran PC...</span>
+      <span id="hudText">Ciblez le cadre blanc de l'image sur l'écran PC...</span>
     </div>
-
-    <!-- Bouton Reset -->
-    <button id="restartBtn" style="position: absolute; top: 1rem; right: 1rem; z-index: 30; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 0.4rem 0.8rem; font-size: 0.75rem; border-radius: 20px; backdrop-filter: blur(5px);">
-      ↺ Reset
-    </button>
 
     <!-- Écran d'accueil -->
     <div id="startOverlay" style="position: absolute; inset: 0; background: rgba(13,13,14,0.96); z-index: 50; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 2rem; text-align: center;">
-      <div style="width: 50px; height: 50px; border-radius: 50%; border: 2px solid #00aaff; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 0 15px rgba(0,170,255,0.3);">
+      <div style="width: 54px; height: 54px; border-radius: 50%; border: 2px solid #00aaff; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 1.5rem; box-shadow: 0 0 20px rgba(0,170,255,0.4);">
         👁️
       </div>
       <h2 style="font-size: 1.3rem; margin-bottom: 0.8rem; color: #fff;">SCANNER D'ARTWORK (B)</h2>
       <p style="font-size: 0.85rem; color: var(--text-dim); line-height: 1.5; max-width: 320px; margin-bottom: 2rem;">
         Autorisez l'accès à la caméra pour scanner le cadre de l'image affichée sur votre PC.
       </p>
-      <button id="startBtn" style="background: #00aaff; color: #000; border: none; padding: 0.9rem 2rem; font-size: 0.9rem; font-weight: bold; border-radius: 30px; letter-spacing: 0.1em; cursor: pointer; box-shadow: 0 0 20px rgba(0,170,255,0.5);">
+      <button id="startBtn" style="background: #00aaff; color: #000; border: none; padding: 0.9rem 2.2rem; font-size: 0.95rem; font-weight: bold; border-radius: 30px; letter-spacing: 0.1em; cursor: pointer; box-shadow: 0 0 20px rgba(0,170,255,0.6);">
         ACTIVER LA CAMÉRA
       </button>
       <div id="permError" style="display: none; color: #ff5555; font-size: 0.78rem; margin-top: 1.5rem; line-height: 1.4; max-width: 300px;"></div>
@@ -61,6 +68,8 @@
 
   <script>
     const video = document.getElementById('cameraFeed');
+    const arCanvas = document.getElementById('arCanvas');
+    const arCtx = arCanvas.getContext('2d');
     const startOverlay = document.getElementById('startOverlay');
     const startBtn = document.getElementById('startBtn');
     const permError = document.getElementById('permError');
@@ -69,14 +78,16 @@
     const hudReticle = document.getElementById('hudReticle');
     const arLayer = document.getElementById('arSecretLayer');
     const secretCodeDisplay = document.getElementById('secretCodeDisplay');
+    const toggleZoomBtn = document.getElementById('toggleZoomBtn');
     const restartBtn = document.getElementById('restartBtn');
 
     const urlParams = new URLSearchParams(window.location.search);
     const customSecret = urlParams.get('secret') || localStorage.getItem('room45_webar_secret_b') || 'RÉPONSE : OUVERTURE';
     secretCodeDisplay.textContent = customSecret;
 
-    const tracker = new FrameTracker();
+    const tracker = new VisionTracker();
     let isTracking = false;
+    let isCoverMode = false;
     let smoothedDst = null;
     let lastTrackTime = 0;
 
@@ -84,6 +95,14 @@
     const LAYER_H = 350;
     arLayer.style.width = LAYER_W + 'px';
     arLayer.style.height = LAYER_H + 'px';
+
+    toggleZoomBtn.addEventListener('click', () => {
+      isCoverMode = !isCoverMode;
+      video.classList.toggle('cover-mode', isCoverMode);
+      toggleZoomBtn.textContent = isCoverMode ? '🔍 Plein Écran (Cover)' : '🔍 Vue Complète (Dézoomée)';
+    });
+
+    restartBtn.addEventListener('click', () => window.location.reload());
 
     startBtn.addEventListener('click', async () => {
       startBtn.textContent = 'Activation...';
@@ -104,21 +123,34 @@
       } catch (err) {
         console.error('Camera error:', err);
         permError.style.display = 'block';
-        permError.innerHTML = '⚠️ Impossible d\'accéder à la caméra.<br>Vérifiez les permissions HTTPS / Safari.';
+        permError.innerHTML = '⚠️ Erreur caméra : ' + err.message;
         startBtn.textContent = 'RÉESSAYER';
       }
     });
 
-    restartBtn.addEventListener('click', () => window.location.reload());
-
     function trackLoop() {
       if (!isTracking) return;
 
+      if (arCanvas.width !== window.innerWidth || arCanvas.height !== window.innerHeight) {
+        arCanvas.width = window.innerWidth;
+        arCanvas.height = window.innerHeight;
+      }
+      arCtx.clearRect(0, 0, arCanvas.width, arCanvas.height);
+
       if (video.readyState >= 2 && video.videoWidth > 0) {
-        const quad = tracker.detect(video, 480);
+        const quad = tracker.detectScreenFrame(video, 320);
 
         if (quad) {
           const screenPts = quad.map(pt => videoToScreen(pt.x, pt.y));
+
+          // Dessiner le cadre détecté en bleu cyan
+          arCtx.strokeStyle = '#00aaff';
+          arCtx.lineWidth = 3;
+          arCtx.beginPath();
+          arCtx.moveTo(screenPts[0].x, screenPts[0].y);
+          for (let i = 1; i < 4; i++) arCtx.lineTo(screenPts[i].x, screenPts[i].y);
+          arCtx.closePath();
+          arCtx.stroke();
 
           if (!smoothedDst) {
             smoothedDst = screenPts;
@@ -131,7 +163,7 @@
             }));
           }
 
-          const matrix3d = getCssMatrix3d(LAYER_W, LAYER_H, smoothedDst);
+          const matrix3d = tracker.computeMatrix3d(LAYER_W, LAYER_H, smoothedDst);
           if (matrix3d) {
             arLayer.style.transform = matrix3d;
             arLayer.style.display = 'block';
@@ -161,12 +193,23 @@
       const sw = window.innerWidth;
       const sh = window.innerHeight;
 
-      const scale = Math.max(sw / vw, sh / vh);
-      const renderedW = vw * scale;
-      const renderedH = vh * scale;
+      if (!vw || !vh) return { x: vx, y: vy };
 
-      const offsetX = (sw - renderedW) / 2;
-      const offsetY = (sh - renderedH) / 2;
+      let scale, renderedW, renderedH, offsetX, offsetY;
+
+      if (isCoverMode) {
+        scale = Math.max(sw / vw, sh / vh);
+        renderedW = vw * scale;
+        renderedH = vh * scale;
+        offsetX = (sw - renderedW) / 2;
+        offsetY = (sh - renderedH) / 2;
+      } else {
+        scale = Math.min(sw / vw, sh / vh);
+        renderedW = vw * scale;
+        renderedH = vh * scale;
+        offsetX = (sw - renderedW) / 2;
+        offsetY = (sh - renderedH) / 2;
+      }
 
       return {
         x: vx * scale + offsetX,
