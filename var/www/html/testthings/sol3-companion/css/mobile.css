@@ -1,0 +1,513 @@
+/**
+ * mobile.css — Lentille Spectrale Mobile ARG (Solution 3)
+ * Optimisé pour smartphones iOS & Android, tactile fluide, zero zoom bug
+ */
+:root {
+  --bg: #000000;
+  --text: #ffffff;
+  --neon-cyan: #00e5ff;
+  --neon-green: #00ff88;
+  --neon-amber: #ffaa00;
+  --neon-red: #ff3344;
+  --hud-bg: rgba(14, 16, 20, 0.88);
+  --hud-border: rgba(0, 229, 255, 0.28);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: fixed;
+  inset: 0;
+  background: #000;
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Courier New', monospace;
+  touch-action: manipulation;
+}
+
+/* ── Viewport Caméra Plein Écran ──────────────────────────────────────────── */
+.camera-container {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#cameraFeed {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Plein écran sans bande noire */
+  background: #000;
+}
+
+#cameraFeed.contain-mode,
+#freezeCanvas.contain-mode,
+#mockCanvas.contain-mode {
+  object-fit: contain; /* Mode sans aucun rognage */
+}
+
+/* Canvas de capture spectrale figé */
+#freezeCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: none;
+  z-index: 10;
+}
+
+/* Flash de l'obturateur */
+#shutterFlash {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 40;
+  transition: opacity 0.08s ease-out;
+}
+
+#shutterFlash.flash {
+  opacity: 0.95;
+}
+
+/* ── HUD Supérieur (Barre d'outils tactique) ──────────────────────────────── */
+.top-hud {
+  position: absolute;
+  top: env(safe-area-inset-top, 12px);
+  left: 12px;
+  right: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 30;
+  pointer-events: auto;
+}
+
+.hud-pill {
+  background: var(--hud-bg);
+  border: 1px solid var(--hud-border);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+}
+
+.hud-btn {
+  background: var(--hud-bg);
+  border: 1px solid var(--hud-border);
+  color: #fff;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+  transition: transform 0.1s, border-color 0.2s;
+}
+
+.hud-btn:active {
+  transform: scale(0.92);
+  border-color: var(--neon-cyan);
+}
+
+/* ── Sélecteur de Filtres Spectrals ────────────────────────────────────────── */
+.filter-selector-bar {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 12px) + 48px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.4rem;
+  z-index: 30;
+  background: rgba(10, 12, 15, 0.75);
+  padding: 3px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+}
+
+.filter-tab {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.65rem;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  padding: 4px 10px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-tab.active {
+  background: var(--neon-cyan);
+  color: #000;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+}
+
+/* ── Viseur Central Holographique ─────────────────────────────────────────── */
+.reticle-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(84vw, 340px);
+  aspect-ratio: 5 / 6;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.reticle-box {
+  position: absolute;
+  inset: 0;
+  border: 1px dashed rgba(0, 229, 255, 0.4);
+  border-radius: 8px;
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+
+.reticle-box.locked {
+  border: 2px solid var(--neon-green);
+  box-shadow: 0 0 30px rgba(0, 255, 136, 0.6), inset 0 0 20px rgba(0, 255, 136, 0.25);
+}
+
+/* Coins de visée */
+.reticle-corner {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-color: var(--neon-cyan);
+  border-style: solid;
+}
+.rc-tl { top: -2px; left: -2px; border-width: 3px 0 0 3px; }
+.rc-tr { top: -2px; right: -2px; border-width: 3px 3px 0 0; }
+.rc-br { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; }
+.rc-bl { bottom: -2px; left: -2px; border-width: 0 0 3px 3px; }
+
+.reticle-box.locked .reticle-corner {
+  border-color: var(--neon-green);
+}
+
+/* Croix centrale et lignes de télémétrie */
+.reticle-crosshair {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 24px;
+  height: 24px;
+  pointer-events: none;
+}
+
+.reticle-crosshair::before, .reticle-crosshair::after {
+  content: '';
+  position: absolute;
+  background: rgba(0, 229, 255, 0.6);
+}
+.reticle-crosshair::before { top: 11px; left: 0; right: 0; height: 2px; }
+.reticle-crosshair::after { left: 11px; top: 0; bottom: 0; width: 2px; }
+
+.reticle-box.locked .reticle-crosshair::before,
+.reticle-box.locked .reticle-crosshair::after {
+  background: var(--neon-green);
+}
+
+/* Indicateur d'alignement */
+.aim-guide-label {
+  position: absolute;
+  bottom: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.68rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.8);
+  white-space: nowrap;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.9);
+}
+
+/* ── Décryptage In-Situ (Overlay de Secret Révélé) ─────────────────────────── */
+.decryption-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(14, 16, 20, 0.94);
+  border: 2px solid var(--neon-green);
+  border-radius: 8px;
+  padding: 1.2rem;
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 0 40px rgba(0, 255, 136, 0.4), inset 0 0 30px rgba(0, 255, 136, 0.15);
+  animation: slamDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  pointer-events: auto;
+  z-index: 25;
+}
+
+@keyframes slamDown {
+  0% { transform: scale(0.92); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.stamp-tag {
+  display: inline-block;
+  border: 2px solid #b30000;
+  color: #b30000;
+  padding: 3px 8px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  transform: rotate(-2deg);
+}
+
+.cipher-display-box {
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px dashed var(--neon-green);
+  padding: 0.9rem;
+  border-radius: 6px;
+  text-align: center;
+  margin: 0.8rem 0;
+}
+
+.cipher-scrambler-text {
+  font-family: 'Courier New', monospace;
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  color: var(--neon-green);
+  text-shadow: 0 0 15px rgba(0, 255, 136, 0.8);
+  min-height: 2.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lore-quote {
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.4;
+  font-style: italic;
+  margin-top: 0.4rem;
+}
+
+.cipher-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.btn-cyber {
+  background: var(--neon-green);
+  color: #000;
+  border: none;
+  padding: 0.7rem;
+  font-size: 0.75rem;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: center;
+  transition: transform 0.1s;
+}
+
+.btn-cyber:active {
+  transform: scale(0.96);
+}
+
+.btn-cyber.secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+/* ── HUD Inférieur (Jauge de Résonance & Gâchette Scan) ────────────────────── */
+.bottom-hud {
+  position: absolute;
+  bottom: calc(env(safe-area-inset-bottom, 16px) + 8px);
+  left: 16px;
+  right: 16px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  pointer-events: auto;
+}
+
+/* Jauge de résonance */
+.resonance-meter-wrapper {
+  width: min(92vw, 360px);
+  background: var(--hud-bg);
+  border: 1px solid var(--hud-border);
+  border-radius: 20px;
+  padding: 0.45rem 0.9rem;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+}
+
+.meter-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.3rem;
+}
+
+.meter-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.meter-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--neon-amber);
+  transition: width 0.12s ease-out, background-color 0.25s;
+}
+
+.meter-fill.locked {
+  background: var(--neon-green);
+  box-shadow: 0 0 10px var(--neon-green);
+}
+
+/* Gâchette Principale "SCANNER L'ÉCRAN" */
+.scan-trigger-btn {
+  width: min(92vw, 360px);
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.95), rgba(0, 255, 136, 0.95));
+  color: #000;
+  border: none;
+  padding: 0.9rem 1.4rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  border-radius: 30px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  box-shadow: 0 0 25px rgba(0, 229, 255, 0.55), 0 4px 15px rgba(0,0,0,0.8);
+  transition: transform 0.1s, box-shadow 0.2s;
+}
+
+.scan-trigger-btn:active {
+  transform: scale(0.96);
+  box-shadow: 0 0 35px rgba(0, 255, 136, 0.8);
+}
+
+.scan-trigger-btn.scanning {
+  background: #ffaa00;
+  box-shadow: 0 0 25px rgba(255, 170, 0, 0.7);
+}
+
+/* ── Écran d'Accueil / Permission Caméra ───────────────────────────────────── */
+.splash-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 35%, rgba(20, 25, 35, 0.98), #060709);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  text-align: center;
+}
+
+.splash-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid var(--neon-cyan);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 0 25px rgba(0, 229, 255, 0.4);
+}
+
+.splash-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #fff;
+  margin-bottom: 0.8rem;
+}
+
+.splash-desc {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.6;
+  max-width: 320px;
+  margin-bottom: 2rem;
+}
+
+.splash-btn {
+  background: var(--neon-cyan);
+  color: #000;
+  border: none;
+  padding: 0.95rem 2.2rem;
+  font-size: 0.9rem;
+  font-weight: bold;
+  letter-spacing: 0.12em;
+  border-radius: 30px;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.6);
+  transition: transform 0.1s;
+}
+
+.splash-btn:active {
+  transform: scale(0.96);
+}
+
+/* Toast message notification */
+.toast-msg {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 255, 136, 0.95);
+  color: #000;
+  font-size: 0.8rem;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  padding: 8px 16px;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.toast-msg.show {
+  opacity: 1;
+}

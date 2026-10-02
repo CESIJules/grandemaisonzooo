@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Scanner WebAR MindAR — Salle 45 | Grande Maison</title>
+  
+  <!-- Feuilles de style locales -->
+  <link rel="stylesheet" href="/testthings/sol1-mindar/css/style.css">
+  
+  <!-- Dépendances locales bundlées (Zéro CDN, Zéro blocage CSP) -->
+  <script src="/testthings/sol1-mindar/js/aframe.min.js"></script>
+  <script src="/testthings/sol1-mindar/js/mindar-image-aframe.prod.js"></script>
+
+  <style>
+    /* Optimisation mobile immersive */
+    body {
+      background: #000000;
+      overflow: hidden;
+      position: fixed;
+      width: 100%;
+      height: 100%;
+    }
+    
+    /* A-Frame scene plein écran sans marges */
+    a-scene {
+      width: 100% !important;
+      height: 100% !important;
+      position: absolute !important;
+      top: 0;
+      left: 0;
+    }
+
+    /* Désactiver les messages VR d'A-Frame */
+    .a-enter-vr {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Conteneur d'affichage WebAR (MindAR + Vidéo Caméra + Scène 3D A-Frame) -->
+  <div class="webar-viewport">
+    
+    <div id="ar-container">
+      <a-scene 
+        id="arScene"
+        mindar-image="imageTargetSrc: /testthings/sol1-mindar/targets.mind; autoStart: false; uiLoading: no; uiError: no; uiScanning: no; filterMinCF: 0.0001; filterBeta: 0.001; missTolerance: 8; warmupTolerance: 3;" 
+        color-space="sRGB" 
+        renderer="colorManagement: true, physicallyCorrectLights: true, antialias: true, alpha: true" 
+        vr-mode-ui="enabled: false" 
+        device-orientation-permission-ui="enabled: false"
+        embedded
+      >
+        <a-assets>
+          <!-- Canvas dynamique 2D pour le texte secret et le HUD holographique -->
+          <canvas id="secretHoloCanvas" width="1024" height="640"></canvas>
+        </a-assets>
+
+        <!-- Caméra AR statique orientée vers l'espace virtuel -->
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+        <!-- Cible 0 : Ancrée sur l'artwork Room 45 (a01.png) -->
+        <a-entity id="targetAnchor" mindar-image-target="targetIndex: 0">
+          
+          <!-- 1. Cadre lumineux néon autour de l'artwork (1.0 x 1.0) -->
+          <a-entity id="holoBorderGroup" position="0 0 0.008">
+            <!-- Cadre supérieur -->
+            <a-plane position="0 0.505 0" width="1.04" height="0.015" material="color: #00ff88; shader: flat; opacity: 0.9;"></a-plane>
+            <!-- Cadre inférieur -->
+            <a-plane position="0 -0.505 0" width="1.04" height="0.015" material="color: #00ff88; shader: flat; opacity: 0.9;"></a-plane>
+            <!-- Cadre gauche -->
+            <a-plane position="-0.505 0 0" width="0.015" height="1.04" material="color: #00ff88; shader: flat; opacity: 0.9;"></a-plane>
+            <!-- Cadre droit -->
+            <a-plane position="0.505 0 0" width="0.015" height="1.04" material="color: #00ff88; shader: flat; opacity: 0.9;"></a-plane>
+
+            <!-- 4 Coins Tech Lumineux -->
+            <a-plane position="-0.48 0.48 0.002" width="0.07" height="0.07" material="color: #00f0ff; shader: flat; opacity: 0.8;"></a-plane>
+            <a-plane position="0.48 0.48 0.002" width="0.07" height="0.07" material="color: #00f0ff; shader: flat; opacity: 0.8;"></a-plane>
+            <a-plane position="0.48 -0.48 0.002" width="0.07" height="0.07" material="color: #00f0ff; shader: flat; opacity: 0.8;"></a-plane>
+            <a-plane position="-0.48 -0.48 0.002" width="0.07" height="0.07" material="color: #00f0ff; shader: flat; opacity: 0.8;"></a-plane>
+          </a-entity>
+
+          <!-- 2. Plaque Holographique 3D Flottante portant le message secret -->
+          <a-entity 
+            id="secretHoloCard" 
+            position="0 0 0.12" 
+            animation="property: position; to: 0 0.025 0.14; dur: 2400; easing: easeInOutSine; loop: true; dir: alternate"
+          >
+            <!-- Fond de verre fumé cyber -->
+            <a-plane 
+              position="0 0 -0.004" 
+              width="0.96" 
+              height="0.60" 
+              material="color: #080c14; opacity: 0.88; transparent: true; shader: flat;"
+            ></a-plane>
+
+            <!-- Face avant avec le canvas holographique haute résolution -->
+            <a-plane 
+              id="secretPlane"
+              position="0 0 0.002" 
+              width="0.95" 
+              height="0.59" 
+              material="src: #secretHoloCanvas; transparent: true; alphaTest: 0.02; shader: flat;"
+            ></a-plane>
+          </a-entity>
+
+          <!-- 3. Anneaux Mystiques 3D en rotation holographique -->
+          <a-entity position="0 0 0.22">
+            <!-- Anneau externe néon vert -->
+            <a-torus 
+              radius="0.14" 
+              radius-tubular="0.004" 
+              segments-tubular="32" 
+              material="color: #00ff88; wireframe: true; opacity: 0.85; shader: flat;" 
+              animation="property: rotation; to: 360 360 0; dur: 9000; easing: linear; loop: true;"
+            ></a-torus>
+            
+            <!-- Anneau interne cyan -->
+            <a-torus 
+              radius="0.085" 
+              radius-tubular="0.003" 
+              segments-tubular="24" 
+              material="color: #00f0ff; wireframe: true; opacity: 0.75; shader: flat;" 
+              animation="property: rotation; to: -360 360 180; dur: 6000; easing: linear; loop: true;"
+            ></a-torus>
+
+            <!-- Glyphe central brillant -->
+            <a-octahedron 
+              radius="0.04" 
+              material="color: #ffffff; wireframe: true; opacity: 0.9; shader: flat;"
+              animation="property: rotation; to: 0 360 360; dur: 4000; easing: linear; loop: true;"
+            ></a-octahedron>
+          </a-entity>
+
+          <!-- Lumière ponctuelle 3D ancrée -->
+          <a-light type="point" position="0 0 0.35" color="#00ff88" intensity="1.2" distance="1.5"></a-light>
+        </a-entity>
+      </a-scene>
+    </div>
+
+    <!-- Interface HUD Superposée (Affichage mobile tête haute) -->
+    <div class="webar-hud" id="hudOverlay">
+      
+      <!-- Barre Supérieure -->
+      <div class="hud-topbar">
+        <div class="hud-title">
+          <span>👁️</span>
+          <span>ROOM 45 // AR VISION</span>
+        </div>
+
+        <div class="hud-status-chip scanning" id="hudStatusChip">
+          <span class="status-dot"></span>
+          <span id="hudStatusText">RECHERCHE...</span>
+        </div>
+      </div>
+
+      <!-- Réticule Central de Visée et de Scan -->
+      <div class="hud-reticle" id="reticle">
+        <div class="reticle-corner rc-tl"></div>
+        <div class="reticle-corner rc-tr"></div>
+        <div class="reticle-corner rc-br"></div>
+        <div class="reticle-corner rc-bl"></div>
+        <div class="reticle-scanner-line"></div>
+      </div>
+
+      <!-- Panneau Inférieur : Message Secret & Actions Rapides -->
+      <div class="hud-bottom">
+        
+        <!-- Carte de Clue Détectée -->
+        <div class="hud-clue-card" id="clueCard">
+          <div class="hud-clue-header">
+            <span>SALLE 45 • ARCHIVE DÉCRYPTÉE</span>
+            <span style="color: var(--accent-cyan);">60 FPS</span>
+          </div>
+          <div class="hud-clue-text" id="hudClueText">
+            LE CODE D'ACCÈS EST : SUFFOCATION
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.68rem; color: var(--text-dim);">Ancré en 3D sur l'écran</span>
+            <button class="hud-clue-copy-btn" id="hudCopyBtn">
+              COPIER LE CODE
+            </button>
+          </div>
+        </div>
+
+        <!-- Rangée d'Actions & Contrôles Caméra -->
+        <div class="hud-action-row">
+          <button class="hud-circle-btn" id="torchBtn" title="Lampe torche" style="display: none;">
+            🔦
+          </button>
+          <button class="hud-circle-btn" id="simulateBtn" title="Mode Simulation 3D">
+            👁️
+          </button>
+          <button class="hud-circle-btn" id="soundBtn" title="Son actif">
+            🔔
+          </button>
+          <button class="hud-circle-btn" id="fullscreenBtn" title="Plein écran">
+            ⛶
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Modal d'Accueil et Autorisation Caméra (iOS Safari & Chrome Android) -->
+  <div class="camera-prompt-overlay" id="cameraPrompt">
+    <div class="prompt-card">
+      <span class="prompt-icon">🔍</span>
+      <h2>RÉALITÉ AUGMENTÉE SALLE 45</h2>
+      <p>
+        Pointe ton smartphone vers l'artwork affiché sur ton écran d'ordinateur. Le calque secret s'affichera instantanément en 3D.
+      </p>
+      
+      <button class="btn-primary" id="startArBtn" style="font-size: 0.95rem; padding: 0.9rem;">
+        ACTIVER LA CAMÉRA
+      </button>
+
+      <button class="btn-secondary" id="directSimulateBtn" style="margin-top: 0.8rem;">
+        Tester en Mode Simulation (Sans Caméra)
+      </button>
+
+      <div class="prompt-error-box" id="promptErrorBox">
+        <!-- Message d'erreur dynamique si la caméra est refusée -->
+      </div>
+      
+      <div style="margin-top: 1.2rem; font-size: 0.68rem; color: var(--text-muted);">
+        Compatible iOS 14.3+ (Safari) & Android 8+ (Chrome) • Zéro installation requise
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * Logique de Contrôle MindAR & Expérience WebAR
+     */
+    (function() {
+      // Éléments DOM
+      const sceneEl = document.getElementById('arScene');
+      const targetAnchor = document.getElementById('targetAnchor');
+      const secretPlane = document.getElementById('secretPlane');
+      const secretCanvas = document.getElementById('secretHoloCanvas');
+      const cameraPrompt = document.getElementById('cameraPrompt');
+      const startArBtn = document.getElementById('startArBtn');
+      const directSimulateBtn = document.getElementById('directSimulateBtn');
+      const promptErrorBox = document.getElementById('promptErrorBox');
+      
+      // Éléments HUD
+      const hudStatusChip = document.getElementById('hudStatusChip');
+      const hudStatusText = document.getElementById('hudStatusText');
+      const reticle = document.getElementById('reticle');
+      const clueCard = document.getElementById('clueCard');
+      const hudClueText = document.getElementById('hudClueText');
+      const hudCopyBtn = document.getElementById('hudCopyBtn');
+      const torchBtn = document.getElementById('torchBtn');
+      const simulateBtn = document.getElementById('simulateBtn');
+      const soundBtn = document.getElementById('soundBtn');
+      const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+      // État de l'application
+      let isTracking = false;
+      let soundEnabled = true;
+      let torchActive = false;
+      let videoTrack = null;
+      let isSimulated = false;
+      let audioCtx = null;
+
+      // 1. Récupération du message secret (via paramètre URL ?secret= ou valeur par défaut)
+      const urlParams = new URLSearchParams(window.location.search);
+      const secretParam = urlParams.get('secret');
+      const defaultSecret = 'LE CODE EST : SUFFOCATION\n[Seule la troisième retient le souffle]';
+      const secretText = secretParam ? decodeURIComponent(secretParam) : defaultSecret;
+
+      hudClueText.textContent = secretText.replace('\n', ' • ');
+
+      // 2. Rendu graphique haute résolution sur le canvas de texture holographique
+      function drawHoloCanvas(text, highlight = false) {
+        const ctx = secretCanvas.getContext('2d');
+        const w = secretCanvas.width;
+        const h = secretCanvas.height;
+
+        ctx.clearRect(0, 0, w, h);
+
+        // Fond sombre translucide
+        const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+        bgGrad.addColorStop(0, 'rgba(8, 14, 24, 0.95)');
+        bgGrad.addColorStop(1, 'rgba(4, 7, 14, 0.98)');
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, w, h);
+
+        // Quadrillage cyber discret
+        ctx.strokeStyle = 'rgba(0, 240, 255, 0.07)';
+        ctx.lineWidth = 1;
+        const gridSize = 40;
+        for (let x = 0; x < w; x += gridSize) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, h);
+          ctx.stroke();
+        }
+        for (let y = 0; y < h; y += gridSize) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(w, y);
+          ctx.stroke();
+        }
+
+        // Bordure néon avec halo
+        ctx.strokeStyle = highlight ? '#00ff88' : '#00f0ff';
+        ctx.lineWidth = 6;
+        ctx.strokeRect(10, 10, w - 20, h - 20);
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(18, 18, w - 36, h - 36);
+
+        // Repères de coins
+        const cLen = 30;
+        ctx.strokeStyle = '#00ff88';
+        ctx.lineWidth = 8;
+        // TL
+        ctx.beginPath(); ctx.moveTo(10, 10 + cLen); ctx.lineTo(10, 10); ctx.lineTo(10 + cLen, 10); ctx.stroke();
+        // TR
+        ctx.beginPath(); ctx.moveTo(w - 10 - cLen, 10); ctx.lineTo(w - 10, 10); ctx.lineTo(w - 10, 10 + cLen); ctx.stroke();
+        // BR
+        ctx.beginPath(); ctx.moveTo(w - 10, h - 10 - cLen); ctx.lineTo(w - 10, h - 10); ctx.lineTo(w - 10 - cLen, h - 10); ctx.stroke();
+        // BL
+        ctx.beginPath(); ctx.moveTo(10 + cLen, h - 10); ctx.lineTo(10, h - 10); ctx.lineTo(10, h - 10 - cLen); ctx.stroke();
+
+        // En-tête de classification
+        ctx.fillStyle = '#00f0ff';
+        ctx.font = 'bold 24px Courier New, monospace';
+        ctx.letterSpacing = '4px';
+        ctx.textAlign = 'left';
+        ctx.fillText('// ARCHIVE SALLE 45 — PROTOCOLE SPECTRAL //', 40, 60);
+
+        // Badge niveau
+        ctx.fillStyle = '#ff3366';
+        ctx.fillRect(w - 240, 36, 200, 32);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 16px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('CONFIDENTIEL OMEGA', w - 140, 58);
+
+        // Ligne de séparation
+        ctx.strokeStyle = 'rgba(0, 240, 255, 0.4)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(40, 85);
+        ctx.lineTo(w - 40, 85);
+        ctx.stroke();
+
+        // Texte principal du message secret
+        ctx.fillStyle = '#00ff88';
+        ctx.font = 'bold 44px Courier New, monospace';
+        ctx.textAlign = 'center';
+
+        const lines = text.split('\n');
+        const startY = 240 - ((lines.length - 1) * 35);
+        lines.forEach((line, idx) => {
+          // Ombre portée brillante
+          ctx.shadowColor = 'rgba(0, 255, 136, 0.8)';
+          ctx.shadowBlur = 20;
+          ctx.fillText(line, w / 2, startY + (idx * 68));
+        });
+
+        // Réinitialisation de l'ombre
+        ctx.shadowBlur = 0;
+
+        // Sous-titre explicatif
+        ctx.fillStyle = 'rgba(240, 243, 248, 0.7)';
+        ctx.font = '22px Courier New, monospace';
+        ctx.fillText('TRANSMISSION AUGMENTÉE IN-SITU • SYSTÈME DÉVERROUILLÉ', w / 2, h - 110);
+
+        // Pied de page cryptographique
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+        ctx.font = '16px monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText('SIG: 045-GME-7F2A9B', 40, h - 45);
+        ctx.textAlign = 'right';
+        ctx.fillText('FREQ: 142.85 MHz • SYNC OK', w - 40, h - 45);
+
+        // Mise à jour du mesh 3D A-Frame
+        const mesh = secretPlane.getObject3D('mesh');
+        if (mesh && mesh.material && mesh.material.map) {
+          mesh.material.map.needsUpdate = true;
+        }
+      }
+
+      // 3. Audio de verrouillage Web Audio (synthétisé, 0 fichier externe)
+      function initAudio() {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+      }
+
+      function playLockChime() {
+        if (!soundEnabled) return;
+        try {
+          initAudio();
+          const now = audioCtx.currentTime;
+          
+          // Harmonique 1 (D5 -> A5)
+          const osc1 = audioCtx.createOscillator();
+          const gain1 = audioCtx.createGain();
+          osc1.type = 'sine';
+          osc1.frequency.setValueAtTime(587.33, now);
+          osc1.frequency.exponentialRampToValueAtTime(880, now + 0.12);
+          gain1.gain.setValueAtTime(0.09, now);
+          gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.38);
+          osc1.connect(gain1);
+          gain1.connect(audioCtx.destination);
+          osc1.start(now);
+          osc1.stop(now + 0.38);
+
+          // Harmonique 2 (D6 étincelante)
+          const osc2 = audioCtx.createOscillator();
+          const gain2 = audioCtx.createGain();
+          osc2.type = 'triangle';
+          osc2.frequency.setValueAtTime(1174.66, now + 0.06);
+          gain2.gain.setValueAtTime(0.07, now + 0.06);
+          gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.48);
+          osc2.connect(gain2);
+          gain2.connect(audioCtx.destination);
+          osc2.start(now + 0.06);
+          osc2.stop(now + 0.48);
+        } catch (e) {
+          // Audio context bloqué ou non disponible
+        }
+      }
+
+      // 4. Événements de Tracking MindAR
+      targetAnchor.addEventListener('targetFound', () => {
+        isTracking = true;
+        hudStatusChip.className = 'hud-status-chip tracking';
+        hudStatusText.textContent = 'CIBLE VERROUILLÉE';
+        reticle.classList.add('locked');
+        clueCard.classList.add('visible');
+        drawHoloCanvas(secretText, true);
+        playLockChime();
+
+        // Vibration haptique (Android)
+        if (navigator.vibrate) {
+          navigator.vibrate([30, 50, 30]);
+        }
+      });
+
+      targetAnchor.addEventListener('targetLost', () => {
+        isTracking = false;
+        hudStatusChip.className = 'hud-status-chip scanning';
+        hudStatusText.textContent = 'RECHERCHE...';
+        reticle.classList.remove('locked');
+        drawHoloCanvas(secretText, false);
+      });
+
+      // 5. Initialisation du Scanner Caméra AR
+      async function launchAR() {
+        initAudio();
+        startArBtn.disabled = true;
+        startArBtn.textContent = 'INITIALISATION DE LA CAMÉRA...';
+
+        // Vérification de compatibilité de base
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          showError('Votre navigateur ne supporte pas l\'accès caméra ou vous êtes en HTTP non-sécurisé. Veuillez utiliser HTTPS.');
+          startArBtn.disabled = false;
+          startArBtn.textContent = 'RÉESSAYER';
+          return;
+        }
+
+        try {
+          const mindarSystem = sceneEl.systems['mindar-image-system'];
+          if (!mindarSystem) {
+            throw new Error('Le système MindAR n\'a pas encore chargé. Veuillez patienter.');
+          }
+
+          // Démarrage du système MindAR
+          mindarSystem.start();
+
+          // Masquage de l'overlay de permission
+          cameraPrompt.classList.add('hidden');
+          
+          // Mise à jour de l'état
+          drawHoloCanvas(secretText);
+
+          // Détecter la torche dès que la vidéo tourne
+          setTimeout(() => {
+            detectTorchCapability();
+          }, 2000);
+
+        } catch (err) {
+          console.error('Erreur démarrage AR:', err);
+          showError('Impossible de démarrer la caméra : ' + (err.message || 'Autorisation refusée'));
+          startArBtn.disabled = false;
+          startArBtn.textContent = 'RÉESSAYER';
+        }
+      }
+
+      function showError(msg) {
+        promptErrorBox.style.display = 'block';
+        promptErrorBox.textContent = msg;
+      }
+
+      // Détecter si la lampe torche est supportée
+      function detectTorchCapability() {
+        const video = document.querySelector('video');
+        if (video && video.srcObject) {
+          const tracks = video.srcObject.getVideoTracks();
+          if (tracks.length > 0) {
+            videoTrack = tracks[0];
+            const caps = videoTrack.getCapabilities ? videoTrack.getCapabilities() : {};
+            if (caps.torch) {
+              torchBtn.style.display = 'flex';
+            }
+          }
+        }
+      }
+
+      // 6. Mode Simulation / Preview 3D (Pour tester sans caméra physique)
+      function toggleSimulation() {
+        isSimulated = !isSimulated;
+        if (isSimulated) {
+          simulateBtn.style.borderColor = 'var(--accent-neon)';
+          simulateBtn.style.color = 'var(--accent-neon)';
+          cameraPrompt.classList.add('hidden');
+
+          // Forcer la cible à visible et positionnée face à la caméra
+          targetAnchor.object3D.visible = true;
+          targetAnchor.object3D.position.set(0, 0, -2);
+          targetAnchor.object3D.rotation.set(0, 0, 0);
+          targetAnchor.object3D.scale.set(1, 1, 1);
+          targetAnchor.emit('targetFound');
+        } else {
+          simulateBtn.style.borderColor = '';
+          simulateBtn.style.color = '';
+          targetAnchor.object3D.visible = false;
+          targetAnchor.emit('targetLost');
+        }
+      }
+
+      // Gestionnaires d'événements UI
+      startArBtn.addEventListener('click', launchAR);
+
+      directSimulateBtn.addEventListener('click', () => {
+        toggleSimulation();
+      });
+
+      simulateBtn.addEventListener('click', () => {
+        toggleSimulation();
+      });
+
+      hudCopyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(secretText);
+          hudCopyBtn.textContent = '✓ COPIÉ !';
+        } catch (e) {
+          hudCopyBtn.textContent = 'COPIÉ';
+        }
+        setTimeout(() => { hudCopyBtn.textContent = 'COPIER LE CODE'; }, 1800);
+      });
+
+      soundBtn.addEventListener('click', () => {
+        soundEnabled = !soundEnabled;
+        soundBtn.textContent = soundEnabled ? '🔔' : '🔕';
+        soundBtn.style.opacity = soundEnabled ? '1' : '0.5';
+      });
+
+      torchBtn.addEventListener('click', async () => {
+        if (!videoTrack) return;
+        torchActive = !torchActive;
+        try {
+          await videoTrack.applyConstraints({
+            advanced: [{ torch: torchActive }]
+          });
+          torchBtn.style.color = torchActive ? 'var(--accent-neon)' : 'var(--text)';
+        } catch (e) {
+          console.warn('Erreur activation torche:', e);
+        }
+      });
+
+      fullscreenBtn.addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+          fullscreenBtn.textContent = '✕';
+        } else {
+          document.exitFullscreen().catch(() => {});
+          fullscreenBtn.textContent = '⛶';
+        }
+      });
+
+      // Gestion de la scène A-Frame une fois chargée
+      sceneEl.addEventListener('loaded', () => {
+        drawHoloCanvas(secretText);
+        
+        // Écouter les erreurs du système AR
+        sceneEl.addEventListener('arError', (e) => {
+          console.error('AR System Error:', e);
+          cameraPrompt.classList.remove('hidden');
+          showError('Erreur AR : ' + (e.detail && e.detail.error ? e.detail.error : 'Erreur caméra'));
+        });
+      });
+
+    })();
+  </script>
+</body>
+</html>

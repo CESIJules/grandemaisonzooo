@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Lentille Spectrale — Scanner Room 45</title>
+  <link rel="stylesheet" href="/testthings/sol3-companion/css/mobile.css">
+  <script src="/testthings/sol3-companion/js/audio.js"></script>
+  <script src="/testthings/sol3-companion/js/spectral.js"></script>
+  <script src="/testthings/sol3-companion/js/sync-client.js"></script>
+</head>
+<body>
+
+  <!-- Viewport Caméra & Capture Figée -->
+  <div class="camera-container">
+    <video id="cameraFeed" autoplay playsinline webkit-playsinline muted></video>
+    <canvas id="freezeCanvas"></canvas>
+    <div id="shutterFlash"></div>
+
+    <!-- Viseur Central Tactique -->
+    <div class="reticle-container">
+      <div id="reticleBox" class="reticle-box">
+        <div class="reticle-corner rc-tl"></div>
+        <div class="reticle-corner rc-tr"></div>
+        <div class="reticle-corner rc-br"></div>
+        <div class="reticle-corner rc-bl"></div>
+        <div class="reticle-crosshair"></div>
+
+        <div id="aimGuideLabel" class="aim-guide-label">
+          CADREZ L'ÉCRAN DE L'ÉNIGME
+        </div>
+
+        <!-- Overlay de Décryptage In-Situ (Révélation Secrète) -->
+        <div id="decryptionOverlay" class="decryption-overlay">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 0.35rem; margin-bottom: 0.5rem; font-size: 0.65rem; color: #888;">
+              <span>ARCHIVE N° 45 • LENTILLE ARG</span>
+              <span id="cipherStatusBadge" style="color: var(--neon-cyan); font-weight: bold;">DÉCHIFFREMENT</span>
+            </div>
+
+            <div class="stamp-tag" id="secretStampTag">CLASSIFIÉ</div>
+            
+            <p style="font-size: 0.72rem; color: #888; text-decoration: line-through; margin-top: 0.4rem; line-height: 1.3;">
+              Trois portes se dressent dans le silence...
+            </p>
+          </div>
+
+          <div class="cipher-display-box">
+            <div style="font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--neon-cyan); margin-bottom: 0.2rem;">
+              • CLÉ MATRICE RÉVÉLÉE •
+            </div>
+            
+            <div id="scramblerText" class="cipher-scrambler-text">
+              ……………………
+            </div>
+
+            <div class="lore-quote">
+              « Si l'air se raréfie et que ta poitrine s'oppresse... C'est là seulement que tu retrouveras ton souffle. »
+            </div>
+          </div>
+
+          <div class="cipher-actions">
+            <button id="copySecretBtn" class="btn-cyber">
+              📋 COPIER LE MOT DE PASSE
+            </button>
+            <div style="display: flex; gap: 0.4rem;">
+              <button id="sendToPcBtn" class="btn-cyber secondary" style="flex: 1; font-size: 0.7rem;">
+                📡 TRANSMETTRE AU PC
+              </button>
+              <button id="rescanBtn" class="btn-cyber secondary" style="flex: 1; font-size: 0.7rem;">
+                ↺ NOUVEAU SCAN
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Barre d'Outils Supérieure (HUD) -->
+  <header class="top-hud">
+    <div class="hud-pill">
+      <span id="syncDot" style="width: 7px; height: 7px; border-radius: 50%; background: var(--neon-amber);"></span>
+      <span id="syncLabel" style="font-weight: bold;">ARG LENS v3</span>
+    </div>
+
+    <div style="display: flex; gap: 0.4rem;">
+      <button id="toggleAudioBtn" class="hud-btn" title="Activer/Couper le son">
+        🔊
+      </button>
+      <button id="toggleTorchBtn" class="hud-btn" style="display: none;" title="Lampe torche">
+        🔦
+      </button>
+      <button id="switchCameraBtn" class="hud-btn" title="Changer de caméra">
+        🔄
+      </button>
+      <button id="toggleAspectBtn" class="hud-btn" title="Ajuster le cadrage (Cover/Contain)">
+        🔲
+      </button>
+    </div>
+  </header>
+
+  <!-- Sélecteur de Filtres Spectrals -->
+  <nav class="filter-selector-bar">
+    <button class="filter-tab active" data-filter="xray">NÉGATIF X-RAY</button>
+    <button class="filter-tab" data-filter="thermal">THERMIQUE UV</button>
+    <button class="filter-tab" data-filter="phosphor">PHOSPHORE CRT</button>
+  </nav>
+
+  <!-- Barre de Contrôle Inférieure -->
+  <footer class="bottom-hud">
+    <!-- Jauge de Résonance Spectrale -->
+    <div class="resonance-meter-wrapper">
+      <div class="meter-header">
+        <span style="color: rgba(255,255,255,0.7);">RÉSONANCE SPECTRALE</span>
+        <span id="resonancePercent" style="font-weight: bold; color: var(--neon-amber);">0%</span>
+      </div>
+      <div class="meter-track">
+        <div id="meterFillBar" class="meter-fill"></div>
+      </div>
+      <div id="meterStatusSub" style="font-size: 0.62rem; color: rgba(255,255,255,0.5); text-align: center; margin-top: 0.25rem;">
+        Approchez la caméra du document sur l'ordinateur...
+      </div>
+    </div>
+
+    <!-- Gâchette Tactile Principale -->
+    <button id="triggerScanBtn" class="scan-trigger-btn">
+      <span style="font-size: 1.1rem;">⚡</span>
+      <span>SCANNER L'ÉCRAN</span>
+    </button>
+  </footer>
+
+  <!-- Notification Toast -->
+  <div id="toastMessage" class="toast-msg"></div>
+
+  <!-- Écran de Démarrage / Permission Caméra -->
+  <div id="splashOverlay" class="splash-overlay">
+    <div class="splash-icon">👁️</div>
+    <h1 class="splash-title">LENTILLE SPECTRALE</h1>
+    <p class="splash-desc">
+      Visez l'affiche sur l'ordinateur pour capter les émissions spectrales et déchiffrer la clé secrète de la Salle 45.
+    </p>
+    <button id="startCameraBtn" class="splash-btn">
+      ACTIVER LA LENTILLE
+    </button>
+    <div id="fallbackNotice" style="margin-top: 1.5rem; font-size: 0.75rem; color: rgba(255,255,255,0.4); text-decoration: underline; cursor: pointer;">
+      Ou tester en mode simulateur (sans caméra)
+    </div>
+  </div>
+
+  <script>
+    // ── Éléments DOM ─────────────────────────────────────────────────────────
+    const video = document.getElementById('cameraFeed');
+    const freezeCanvas = document.getElementById('freezeCanvas');
+    const shutterFlash = document.getElementById('shutterFlash');
+    const reticleBox = document.getElementById('reticleBox');
+    const aimGuideLabel = document.getElementById('aimGuideLabel');
+    const decryptionOverlay = document.getElementById('decryptionOverlay');
+    const cipherStatusBadge = document.getElementById('cipherStatusBadge');
+    const secretStampTag = document.getElementById('secretStampTag');
+    const scramblerText = document.getElementById('scramblerText');
+    const copySecretBtn = document.getElementById('copySecretBtn');
+    const sendToPcBtn = document.getElementById('sendToPcBtn');
+    const rescanBtn = document.getElementById('rescanBtn');
+
+    const syncDot = document.getElementById('syncDot');
+    const syncLabel = document.getElementById('syncLabel');
+    const toggleAudioBtn = document.getElementById('toggleAudioBtn');
+    const toggleTorchBtn = document.getElementById('toggleTorchBtn');
+    const switchCameraBtn = document.getElementById('switchCameraBtn');
+    const toggleAspectBtn = document.getElementById('toggleAspectBtn');
+    const filterTabs = document.querySelectorAll('.filter-tab');
+
+    const meterFillBar = document.getElementById('meterFillBar');
+    const resonancePercent = document.getElementById('resonancePercent');
+    const meterStatusSub = document.getElementById('meterStatusSub');
+    const triggerScanBtn = document.getElementById('triggerScanBtn');
+    const toastMessage = document.getElementById('toastMessage');
+
+    const splashOverlay = document.getElementById('splashOverlay');
+    const startCameraBtn = document.getElementById('startCameraBtn');
+    const fallbackNotice = document.getElementById('fallbackNotice');
+
+    // ── Moteurs et États ─────────────────────────────────────────────────────
+    const spectralEngine = new SpectralEngine({ threshold: 0.65, filterMode: 'xray' });
+    const syncClient = new ARGSyncClient({ role: 'mobile' });
+
+    let mediaStream = null;
+    let currentFacingMode = 'environment';
+    let isTorchOn = false;
+    let isContainMode = false;
+    let isScanningActive = false;
+    let isDecrypted = false;
+    let isProcessingScan = false;
+    let animationFrameId = null;
+    let currentFilter = 'xray';
+    let mockMode = false;
+
+    const SECRET_KEYWORD = 'SUFFOCATION';
+
+    // ── Initialisation Synchronisation ───────────────────────────────────────
+    syncClient.init().then(sessionId => {
+      if (sessionId && sessionId !== 'STANDALONE') {
+        syncLabel.textContent = sessionId;
+        syncDot.style.background = 'var(--neon-green)';
+      } else {
+        syncLabel.textContent = 'STANDALONE';
+        syncDot.style.background = 'var(--neon-cyan)';
+      }
+    });
+
+    let mockCanvas = null;
+
+    function getActiveSource() {
+      if (mockMode && mockCanvas) return mockCanvas;
+      return video;
+    }
+
+    // ── Démarrage de la Caméra ───────────────────────────────────────────────
+    async function initCamera() {
+      if (mediaStream) {
+        mediaStream.getTracks().forEach(t => t.stop());
+        mediaStream = null;
+      }
+      video.srcObject = null;
+
+      try {
+        const isPortrait = window.innerHeight > window.innerWidth;
+        const constraints = {
+          audio: false,
+          video: {
+            facingMode: { ideal: currentFacingMode },
+            width: { ideal: isPortrait ? 1080 : 1920 },
+            height: { ideal: isPortrait ? 1920 : 1080 }
+          }
+        };
+
+        mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = mediaStream;
+        await video.play();
+
+        // Vérifier support lampe torche
+        const track = mediaStream.getVideoTracks()[0];
+        if (track && track.getCapabilities && track.getCapabilities().torch) {
+          toggleTorchBtn.style.display = 'flex';
+        } else {
+          toggleTorchBtn.style.display = 'none';
+        }
+
+        splashOverlay.style.display = 'none';
+        isScanningActive = true;
+        requestAnimationFrame(analysisLoop);
+      } catch (err) {
+        console.warn('Erreur accès caméra:', err);
+        enableMockCamera();
+      }
+    }
+
+    // Mode Simulateur si la caméra est indisponible (ordinateur / permission refusée / Safari)
+    function enableMockCamera() {
+      mockMode = true;
+      splashOverlay.style.display = 'none';
+      isScanningActive = true;
+
+      if (!mockCanvas) {
+        mockCanvas = document.createElement('canvas');
+        mockCanvas.id = 'mockCanvas';
+        mockCanvas.width = 640;
+        mockCanvas.height = 480;
+        mockCanvas.style.position = 'absolute';
+        mockCanvas.style.inset = '0';
+        mockCanvas.style.width = '100%';
+        mockCanvas.style.height = '100%';
+        mockCanvas.style.objectFit = isContainMode ? 'contain' : 'cover';
+        mockCanvas.style.zIndex = '1';
+        document.querySelector('.camera-container').insertBefore(mockCanvas, freezeCanvas);
+      }
+
+      const ctx = mockCanvas.getContext('2d');
+      const mockImg = new Image();
+      mockImg.crossOrigin = 'anonymous';
+      mockImg.src = '/room45/cover/a01.png';
+
+      function renderMock() {
+        if (!mockMode) return;
+        ctx.fillStyle = '#111';
+        ctx.fillRect(0, 0, 640, 480);
+        if (mockImg.complete && mockImg.naturalWidth > 0) {
+          ctx.drawImage(mockImg, 120, 40, 400, 400);
+        } else {
+          ctx.fillStyle = '#1a1d24';
+          ctx.fillRect(120, 40, 400, 400);
+          ctx.fillStyle = '#00e5ff';
+          ctx.font = 'bold 20px monospace';
+          ctx.fillText('SALLE 45 • ARCHIVE', 170, 180);
+          ctx.fillStyle = '#fff';
+          ctx.font = '14px monospace';
+          ctx.fillText('RÉF 045-GME-A01', 200, 220);
+        }
+        // Bruit vidéo simulé
+        ctx.fillStyle = 'rgba(255,255,255,0.04)';
+        ctx.fillRect(Math.random() * 640, Math.random() * 480, 240, 20);
+
+        requestAnimationFrame(renderMock);
+      }
+      renderMock();
+
+      // Si captureStream est supporté, on l'attache également à la balise vidéo
+      if (mockCanvas.captureStream) {
+        try {
+          const stream = mockCanvas.captureStream(30);
+          video.srcObject = stream;
+          video.play().catch(() => {});
+        } catch (e) {}
+      }
+
+      showToast('Mode Simulateur Actif');
+      requestAnimationFrame(analysisLoop);
+    }
+
+    startCameraBtn.addEventListener('click', () => {
+      ARGAudio.init();
+      initCamera();
+    });
+
+    fallbackNotice.addEventListener('click', () => {
+      ARGAudio.init();
+      enableMockCamera();
+    });
+
+    // ── Boucle d'Analyse Spectrale en Temps Réel ──────────────────────────────
+    function analysisLoop() {
+      if (!isScanningActive || isDecrypted || isProcessingScan) return;
+
+      const source = getActiveSource();
+      const isVideo = source.tagName === 'VIDEO';
+      const isReady = isVideo ? (source.readyState >= 2 && source.videoWidth > 0) : (source.width > 0);
+
+      if (isReady) {
+        const result = spectralEngine.analyzeCenter(source);
+        
+        // Mise à jour de la jauge
+        meterFillBar.style.width = result.score + '%';
+        resonancePercent.textContent = result.score + '%';
+
+        if (result.locked) {
+          reticleBox.classList.add('locked');
+          meterFillBar.classList.add('locked');
+          resonancePercent.style.color = 'var(--neon-green)';
+          meterStatusSub.textContent = '✓ SIGNAL VERROUILLÉ • STABILISATION OPTIQUE';
+          aimGuideLabel.textContent = 'SIGNAL ALIGNÉ • SCAN DISPONIBLE';
+          aimGuideLabel.style.color = 'var(--neon-green)';
+        } else {
+          reticleBox.classList.remove('locked');
+          meterFillBar.classList.remove('locked');
+          resonancePercent.style.color = 'var(--neon-amber)';
+          aimGuideLabel.textContent = 'CADREZ L\'ÉCRAN DE L\'ÉNIGME';
+          aimGuideLabel.style.color = 'rgba(255,255,255,0.8)';
+
+          if (result.score === 0) {
+            meterStatusSub.textContent = 'Visez le document Room 45 sur le PC...';
+          } else if (result.score < 40) {
+            meterStatusSub.textContent = 'Approchez-vous doucement de l\'écran...';
+          } else {
+            meterStatusSub.textContent = `Cohérence à ${result.score}% ! Maintenez stable...`;
+          }
+        }
+      }
+
+      animationFrameId = requestAnimationFrame(analysisLoop);
+    }
+
+    // ── Déclenchement du Scan et Capture Spectrale ───────────────────────────
+    async function executeScan() {
+      if (isProcessingScan || isDecrypted) return;
+      isProcessingScan = true;
+
+      // Effets sonores et haptiques
+      ARGAudio.playLockTone();
+      ARGAudio.playShutter();
+      if (navigator.vibrate) navigator.vibrate([40, 80, 50]);
+
+      // Flash obturateur
+      shutterFlash.classList.add('flash');
+      setTimeout(() => shutterFlash.classList.remove('flash'), 100);
+
+      // Figer l'image et appliquer le shader spectral sur le canevas
+      const source = getActiveSource();
+      spectralEngine.captureAndFilter(source, freezeCanvas, currentFilter);
+      freezeCanvas.style.display = 'block';
+
+      // Notifier le PC via sync
+      syncClient.notifyScanStart();
+
+      triggerScanBtn.classList.add('scanning');
+      triggerScanBtn.innerHTML = '<span>📡</span><span>DÉCHIFFREMENT EN COURS...</span>';
+
+      // Afficher le calque de décryptage
+      decryptionOverlay.style.display = 'flex';
+
+      // Démarrer l'animation de décryptage matriciel
+      await runMatrixDecryption(SECRET_KEYWORD);
+
+      isProcessingScan = false;
+      isDecrypted = true;
+    }
+
+    // Animation de décryptage lettre par lettre avec son synthétique
+    function runMatrixDecryption(targetWord) {
+      return new Promise(resolve => {
+        const glyphs = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#$%&@§‡ΔΨ';
+        const totalLetters = targetWord.length;
+        let revealedCount = 0;
+        let iteration = 0;
+
+        const interval = setInterval(() => {
+          iteration++;
+          ARGAudio.playDecryptionTick(1.0 + (revealedCount / totalLetters) * 0.5);
+
+          let currentStr = '';
+          for (let i = 0; i < totalLetters; i++) {
+            if (i < revealedCount) {
+              currentStr += targetWord[i];
+            } else {
+              currentStr += glyphs[Math.floor(Math.random() * glyphs.length)];
+            }
+          }
+          scramblerText.textContent = currentStr;
+
+          // Toutes les 4 itérations, une lettre se stabilise
+          if (iteration % 4 === 0 && revealedCount < totalLetters) {
+            revealedCount++;
+          }
+
+          if (revealedCount >= totalLetters && iteration >= totalLetters * 4 + 4) {
+            clearInterval(interval);
+            scramblerText.textContent = targetWord;
+            
+            // Grand Boom & Accord Révélateur
+            ARGAudio.playRevelationBoom();
+            if (navigator.vibrate) navigator.vibrate([100, 150, 250]);
+
+            // Mise à jour des badges
+            secretStampTag.textContent = 'DÉCLASSIFIÉ // SUFFOCATION';
+            secretStampTag.style.borderColor = 'var(--neon-green)';
+            secretStampTag.style.color = 'var(--neon-green)';
+            cipherStatusBadge.textContent = 'ACCÈS ACCORDÉ';
+            cipherStatusBadge.style.color = 'var(--neon-green)';
+
+            triggerScanBtn.classList.remove('scanning');
+            triggerScanBtn.innerHTML = '<span>✓</span><span>SECRET DÉVERROUILLÉ</span>';
+
+            // Informer le PC pour déverrouiller l'écran simultanément
+            syncClient.notifyReveal(targetWord);
+            showToast('Clé SUFFOCATION déverrouillée !');
+
+            resolve();
+          }
+        }, 45);
+      });
+    }
+
+    triggerScanBtn.addEventListener('click', executeScan);
+
+    // ── Réinitialiser pour un nouveau scan ───────────────────────────────────
+    rescanBtn.addEventListener('click', () => {
+      freezeCanvas.style.display = 'none';
+      decryptionOverlay.style.display = 'none';
+      isDecrypted = false;
+      isProcessingScan = false;
+
+      spectralEngine.resetScore();
+
+      triggerScanBtn.classList.remove('scanning');
+      triggerScanBtn.innerHTML = '<span>⚡</span><span>SCANNER L\'ÉCRAN</span>';
+
+      scramblerText.textContent = '……………………';
+      secretStampTag.textContent = 'CLASSIFIÉ';
+      secretStampTag.style.borderColor = '#b30000';
+      secretStampTag.style.color = '#b30000';
+      cipherStatusBadge.textContent = 'DÉCHIFFREMENT';
+      cipherStatusBadge.style.color = 'var(--neon-cyan)';
+
+      // Informer le PC pour réinitialiser la révélation et être prêt pour un nouveau scan
+      syncClient.rescanSession();
+
+      requestAnimationFrame(analysisLoop);
+    });
+
+    // ── Copier le code dans le presse-papier ──────────────────────────────────
+    copySecretBtn.addEventListener('click', () => {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(SECRET_KEYWORD).then(() => {
+          showToast('✓ "SUFFOCATION" copié !');
+          ARGAudio.playBeep(1200, 0.08);
+        }).catch(() => {
+          showToast('Code : SUFFOCATION');
+        });
+      } else {
+        showToast('Code : SUFFOCATION');
+      }
+    });
+
+    sendToPcBtn.addEventListener('click', () => {
+      syncClient.notifyReveal(SECRET_KEYWORD);
+      ARGAudio.playLockTone();
+      showToast('Signal transmis au PC !');
+    });
+
+    // ── Sélecteur de Filtres Spectrals ────────────────────────────────────────
+    filterTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        filterTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentFilter = tab.dataset.filter;
+        spectralEngine.setFilterMode(currentFilter);
+        ARGAudio.playBeep(950, 0.04);
+
+        if (freezeCanvas.style.display === 'block') {
+          // Ré-appliquer le filtre choisi sur l'image figée SANS recapturer le direct
+          spectralEngine.reapplyFilter(freezeCanvas, currentFilter);
+        }
+      });
+    });
+
+    // ── Contrôles Caméra et Audio ────────────────────────────────────────────
+    toggleAudioBtn.addEventListener('click', () => {
+      const isMuted = ARGAudio.toggleMute();
+      toggleAudioBtn.textContent = isMuted ? '🔇' : '🔊';
+      showToast(isMuted ? 'Audio désactivé' : 'Audio activé');
+    });
+
+    toggleTorchBtn.addEventListener('click', async () => {
+      if (!mediaStream) return;
+      const track = mediaStream.getVideoTracks()[0];
+      if (track && track.applyConstraints) {
+        try {
+          const nextTorch = !isTorchOn;
+          await track.applyConstraints({ advanced: [{ torch: nextTorch }] });
+          isTorchOn = nextTorch;
+          toggleTorchBtn.textContent = isTorchOn ? '⚡' : '🔦';
+          toggleTorchBtn.style.borderColor = isTorchOn ? 'var(--neon-amber)' : 'var(--hud-border)';
+        } catch (e) {
+          console.warn('Torch non applicable:', e);
+          showToast('Lampe torche indisponible');
+        }
+      }
+    });
+
+    switchCameraBtn.addEventListener('click', () => {
+      currentFacingMode = (currentFacingMode === 'environment') ? 'user' : 'environment';
+      initCamera();
+    });
+
+    toggleAspectBtn.addEventListener('click', () => {
+      isContainMode = !isContainMode;
+      video.classList.toggle('contain-mode', isContainMode);
+      freezeCanvas.classList.toggle('contain-mode', isContainMode);
+      if (mockCanvas) mockCanvas.classList.toggle('contain-mode', isContainMode);
+      toggleAspectBtn.textContent = isContainMode ? '⬛' : '🔲';
+      showToast(isContainMode ? 'Vue intégrale (Contain)' : 'Plein écran (Cover)');
+    });
+
+    // ── Affichage de Toast ───────────────────────────────────────────────────
+    let toastTimer = null;
+    function showToast(msg) {
+      toastMessage.textContent = msg;
+      toastMessage.classList.add('show');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toastMessage.classList.remove('show');
+      }, 2000);
+    }
+  </script>
+</body>
+</html>

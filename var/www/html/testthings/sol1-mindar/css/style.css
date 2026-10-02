@@ -1,0 +1,559 @@
+/**
+ * style.css — Solution 1: MindAR WebAR Image Tracking
+ * Grande Maison / Room 45
+ */
+
+:root {
+  --bg: #090a0d;
+  --surface: #12141a;
+  --surface-hover: #181b24;
+  --surface-border: rgba(255, 255, 255, 0.12);
+  --text: #f0f3f8;
+  --text-dim: rgba(240, 243, 248, 0.6);
+  --text-muted: rgba(240, 243, 248, 0.4);
+  --accent-neon: #00ff88;
+  --accent-cyan: #00f0ff;
+  --accent-gold: #ffc400;
+  --accent-crimson: #ff3366;
+  --glow-neon: 0 0 16px rgba(0, 255, 136, 0.4);
+  --glow-cyan: 0 0 16px rgba(0, 240, 255, 0.4);
+  --font-mono: 'Courier New', Courier, ui-monospace, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-mono);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── PC Container Layout ───────────────────────────────────────────── */
+.pc-page-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.pc-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1.2rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--surface-border);
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+}
+
+.pc-nav a {
+  color: var(--text-dim);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.pc-nav a:hover {
+  color: var(--accent-neon);
+}
+
+.pc-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 2.5rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .pc-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Cadre Cible Image Artwork Room 45 ────────────────────────────── */
+.artwork-plate {
+  position: relative;
+  background: #fbfbf9;
+  color: #1a1a1a;
+  padding: 2.5rem;
+  border-radius: 4px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  text-align: center;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.artwork-plate-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #555;
+  border-bottom: 1px solid #e2dfd5;
+  padding-bottom: 0.6rem;
+  margin-bottom: 1.8rem;
+}
+
+.artwork-img-container {
+  position: relative;
+  display: inline-block;
+  max-width: 480px;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: #111;
+  border: 2px solid #222;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  margin-bottom: 1.5rem;
+}
+
+.artwork-img-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.artwork-corners-bracket {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  pointer-events: none;
+}
+
+.corner-tl { top: -2px; left: -2px; border-top: 3px solid var(--accent-neon); border-left: 3px solid var(--accent-neon); }
+.corner-tr { top: -2px; right: -2px; border-top: 3px solid var(--accent-neon); border-right: 3px solid var(--accent-neon); }
+.corner-br { bottom: -2px; right: -2px; border-bottom: 3px solid var(--accent-neon); border-right: 3px solid var(--accent-neon); }
+.corner-bl { bottom: -2px; left: -2px; border-bottom: 3px solid var(--accent-neon); border-left: 3px solid var(--accent-neon); }
+
+.artwork-caption {
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  color: #666;
+  text-transform: uppercase;
+}
+
+/* ── Contrôles & QR Code PC ────────────────────────────────────────── */
+.panel-card {
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  padding: 1.6rem;
+  margin-bottom: 1.5rem;
+}
+
+.panel-card h3 {
+  font-size: 0.82rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.qr-box {
+  background: #ffffff;
+  padding: 1rem;
+  border-radius: 6px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.qr-box canvas, .qr-box img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.badge-tag {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+.badge-sol1 {
+  background: rgba(0, 255, 136, 0.12);
+  color: var(--accent-neon);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+}
+
+.btn-primary {
+  display: block;
+  width: 100%;
+  background: var(--accent-neon);
+  color: #050a07;
+  padding: 0.8rem 1rem;
+  border: none;
+  border-radius: 4px;
+  font-family: inherit;
+  font-weight: bold;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.btn-primary:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  display: block;
+  width: 100%;
+  background: transparent;
+  color: var(--text);
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--surface-border);
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  margin-top: 0.6rem;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.btn-secondary:hover {
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #fff;
+}
+
+/* ── Mobile WebAR Viewport ─────────────────────────────────────────── */
+.webar-viewport {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: #000000;
+  touch-action: none;
+  user-select: none;
+}
+
+/* Le conteneur MindAR */
+#ar-container {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* ── Mobile HUD Interface ─────────────────────────────────────────── */
+.webar-hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: env(safe-area-inset-top, 16px) env(safe-area-inset-right, 16px) env(safe-area-inset-bottom, 16px) env(safe-area-inset-left, 16px);
+}
+
+.hud-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: auto;
+  background: rgba(10, 12, 16, 0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--surface-border);
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  margin: 0.5rem;
+}
+
+.hud-title {
+  font-size: 0.72rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.hud-status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  padding: 3px 8px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-dim);
+  transition: all 0.2s ease;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #888;
+  transition: background 0.2s;
+}
+
+.hud-status-chip.tracking {
+  background: rgba(0, 255, 136, 0.15);
+  border-color: var(--accent-neon);
+  color: var(--accent-neon);
+  box-shadow: var(--glow-neon);
+}
+
+.hud-status-chip.tracking .status-dot {
+  background: var(--accent-neon);
+  box-shadow: 0 0 8px var(--accent-neon);
+  animation: pulse-dot 1.2s infinite ease-in-out;
+}
+
+.hud-status-chip.scanning .status-dot {
+  background: var(--accent-cyan);
+  animation: pulse-dot 0.8s infinite ease-in-out;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
+
+/* Réticule de visée central */
+.hud-reticle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 260px;
+  height: 260px;
+  pointer-events: none;
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.hud-reticle .reticle-corner {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-color: rgba(255, 255, 255, 0.4);
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.hud-reticle .rc-tl { top: 0; left: 0; border-top: 2px solid; border-left: 2px solid; }
+.hud-reticle .rc-tr { top: 0; right: 0; border-top: 2px solid; border-right: 2px solid; }
+.hud-reticle .rc-br { bottom: 0; right: 0; border-bottom: 2px solid; border-right: 2px solid; }
+.hud-reticle .rc-bl { bottom: 0; left: 0; border-bottom: 2px solid; border-left: 2px solid; }
+
+.hud-reticle .reticle-scanner-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+  box-shadow: 0 0 8px var(--accent-cyan);
+  animation: scanline 2.5s infinite ease-in-out;
+}
+
+@keyframes scanline {
+  0% { top: 0%; opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+.hud-reticle.locked {
+  transform: translate(-50%, -50%) scale(1.06);
+}
+
+.hud-reticle.locked .reticle-corner {
+  border-color: var(--accent-neon);
+  box-shadow: 0 0 10px var(--accent-neon);
+}
+
+.hud-reticle.locked .reticle-scanner-line {
+  display: none;
+}
+
+/* ── HUD Bottom Bar & Actions ──────────────────────────────────────── */
+.hud-bottom {
+  pointer-events: auto;
+  margin: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.hud-clue-card {
+  background: rgba(14, 16, 22, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 8px;
+  padding: 1rem 1.2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), var(--glow-neon);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateY(20px);
+  opacity: 0;
+}
+
+.hud-clue-card.visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.hud-clue-header {
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent-neon);
+  margin-bottom: 0.4rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+.hud-clue-text {
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: #ffffff;
+  line-height: 1.4;
+  margin-bottom: 0.6rem;
+  word-break: break-word;
+}
+
+.hud-clue-copy-btn {
+  background: rgba(0, 255, 136, 0.15);
+  border: 1px solid var(--accent-neon);
+  color: var(--accent-neon);
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: bold;
+  transition: all 0.15s;
+}
+
+.hud-clue-copy-btn:active {
+  background: var(--accent-neon);
+  color: #000;
+}
+
+.hud-action-row {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: center;
+}
+
+.hud-circle-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(18, 20, 26, 0.8);
+  border: 1px solid var(--surface-border);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.hud-circle-btn:active {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* ── Modal d'activation Caméra (Perms iOS / Android) ──────────────── */
+.camera-prompt-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(9, 10, 13, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  transition: opacity 0.3s ease, visibility 0.3s;
+}
+
+.camera-prompt-overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.prompt-card {
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+}
+
+.prompt-icon {
+  font-size: 2.8rem;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.prompt-card h2 {
+  font-size: 1.15rem;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.8rem;
+  color: #fff;
+}
+
+.prompt-card p {
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  line-height: 1.6;
+  margin-bottom: 1.6rem;
+}
+
+.prompt-error-box {
+  background: rgba(255, 51, 102, 0.1);
+  border: 1px solid rgba(255, 51, 102, 0.3);
+  color: var(--accent-crimson);
+  padding: 0.8rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  margin-top: 1rem;
+  display: none;
+  text-align: left;
+}

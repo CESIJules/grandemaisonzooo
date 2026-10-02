@@ -1,0 +1,392 @@
+/**
+ * pc.css — Styles pour l'écran PC Station Énigme Room 45 (Solution 3)
+ */
+:root {
+  --bg: #0a0a0c;
+  --surface: #121215;
+  --surface-border: rgba(255, 255, 255, 0.1);
+  --text: #eaeaea;
+  --text-dim: rgba(234, 234, 234, 0.55);
+  --accent-cyan: #00e5ff;
+  --accent-green: #00ff88;
+  --accent-amber: #ffaa00;
+  --accent-red: #ff3344;
+  --paper-bg: #f5f4ef;
+  --paper-ink: #141414;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Courier New', Courier, monospace;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+  background-image: radial-gradient(circle at 50% 20%, rgba(20, 20, 30, 0.8) 0%, #08080a 100%);
+}
+
+.pc-layout {
+  max-width: 1200px;
+  width: 95%;
+  margin: 1.5rem auto 3rem;
+}
+
+/* ── Top Header ───────────────────────────────────────────────────────────── */
+.top-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--surface-border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+}
+
+.top-nav a {
+  color: var(--text-dim);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.top-nav a:hover {
+  color: #fff;
+}
+
+.session-pill {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--surface-border);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-amber);
+  box-shadow: 0 0 8px var(--accent-amber);
+  animation: pulseDot 1.8s infinite;
+}
+
+.status-dot.connected {
+  background: var(--accent-cyan);
+  box-shadow: 0 0 10px var(--accent-cyan);
+}
+
+.status-dot.revealed {
+  background: var(--accent-green);
+  box-shadow: 0 0 12px var(--accent-green);
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+/* ── Grille Principale ─────────────────────────────────────────────────────── */
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 2.2rem;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .main-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Dossier Classifié (Planche Énigme) ─────────────────────────────────────── */
+.document-wrapper {
+  position: relative;
+  background: var(--paper-bg);
+  color: var(--paper-ink);
+  padding: 3rem;
+  border: 1px solid #dcd7ca;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.75), inset 0 0 40px rgba(0, 0, 0, 0.03);
+  border-radius: 2px;
+  overflow: hidden;
+  transition: box-shadow 0.3s, transform 0.3s;
+}
+
+.document-wrapper.scanning {
+  box-shadow: 0 0 40px rgba(0, 229, 255, 0.35), 0 20px 60px rgba(0, 0, 0, 0.75);
+  animation: jitterDocument 0.15s infinite;
+}
+
+.document-wrapper.revealed {
+  box-shadow: 0 0 50px rgba(0, 255, 136, 0.4), 0 20px 60px rgba(0, 0, 0, 0.75);
+}
+
+@keyframes jitterDocument {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-0.5px, 0.5px); }
+  50% { transform: translate(0.5px, -0.5px); }
+  70% { transform: translate(-0.5px, -0.5px); }
+  100% { transform: translate(0, 0); }
+}
+
+/* Repères d'imprimerie 1px */
+.crop-mark {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+}
+.crop-tl { top: 14px; left: 14px; border-top: 1.5px solid #666; border-left: 1.5px solid #666; }
+.crop-tr { top: 14px; right: 14px; border-top: 1.5px solid #666; border-right: 1.5px solid #666; }
+.crop-br { bottom: 14px; right: 14px; border-bottom: 1.5px solid #666; border-right: 1.5px solid #666; }
+.crop-bl { bottom: 14px; left: 14px; border-bottom: 1.5px solid #666; border-left: 1.5px solid #666; }
+
+.doc-header {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1.5px solid #222;
+  padding-bottom: 0.6rem;
+  margin-bottom: 1.8rem;
+  font-size: 0.72rem;
+  font-weight: bold;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.artwork-frame {
+  position: relative;
+  width: 100%;
+  max-height: 280px;
+  background: #000;
+  border: 1px solid #ccc;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.artwork-img {
+  width: 100%;
+  height: 280px;
+  object-fit: cover;
+  filter: contrast(1.1) grayscale(0.85);
+  transition: filter 0.5s;
+}
+
+.document-wrapper.revealed .artwork-img {
+  filter: contrast(1.15) grayscale(0.2);
+}
+
+.artwork-overlay-grid {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(0, 229, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 229, 255, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* Zone d'énigme textuelle */
+.enigma-content {
+  background: #fff;
+  border: 1px dashed #bbb;
+  padding: 1.8rem;
+  position: relative;
+  line-height: 1.7;
+}
+
+.clue-lead {
+  font-size: 1.05rem;
+  font-weight: bold;
+  color: #111;
+  margin-bottom: 1rem;
+}
+
+.clue-sub {
+  font-size: 0.9rem;
+  color: #444;
+  margin-bottom: 1rem;
+}
+
+.clue-conclusion {
+  font-size: 0.85rem;
+  font-style: italic;
+  color: #666;
+}
+
+.spectral-placeholder-tag {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e0ded5;
+  font-size: 0.7rem;
+  color: #888;
+  letter-spacing: 0.15em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+/* ── Calque Révélé In-Situ sur PC ─────────────────────────────────────────── */
+.pc-secret-revelation {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: rgba(245, 244, 239, 0.97);
+  padding: 2.5rem;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 2px solid var(--accent-green);
+  box-shadow: inset 0 0 30px rgba(0, 255, 136, 0.2);
+  animation: revealFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes revealFade {
+  0% { opacity: 0; transform: scale(0.98); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.stamp-declassified {
+  display: inline-block;
+  border: 3px solid #b30000;
+  color: #b30000;
+  padding: 4px 14px;
+  font-size: 0.9rem;
+  font-weight: 900;
+  letter-spacing: 0.25em;
+  transform: rotate(-3deg);
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+.secret-password-banner {
+  background: #111;
+  color: #fff;
+  border-left: 4px solid var(--accent-green);
+  padding: 1.2rem;
+  margin: 1.2rem 0;
+}
+
+.secret-key-display {
+  font-size: 1.8rem;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  color: var(--accent-green);
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.6);
+  margin-top: 0.3rem;
+}
+
+/* ── Panneau Latéral de Contrôle ───────────────────────────────────────────── */
+.sidebar-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 6px;
+  padding: 1.4rem;
+}
+
+.card-title {
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* QR Code Box */
+.qrcode-box {
+  background: #ffffff;
+  padding: 1rem;
+  border-radius: 4px;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.action-btn {
+  display: block;
+  width: 100%;
+  background: #fff;
+  color: #000;
+  border: none;
+  padding: 0.65rem 1rem;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+.action-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.action-btn.secondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border: 1px solid var(--surface-border);
+}
+
+.action-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.action-btn.accent {
+  background: var(--accent-green);
+  color: #000;
+}
+
+/* Visualiseur Audio */
+#audioCanvas {
+  width: 100%;
+  height: 38px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 3px;
+  margin-top: 0.6rem;
+  display: block;
+}
+
+/* Input test code */
+.code-input {
+  width: 100%;
+  background: #08080a;
+  border: 1px solid var(--surface-border);
+  color: var(--accent-green);
+  padding: 0.6rem 0.8rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  font-weight: bold;
+  letter-spacing: 0.15em;
+  border-radius: 4px;
+  text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+
+.code-input:focus {
+  outline: none;
+  border-color: var(--accent-green);
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+}

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solution 1 — MindAR Image Tracking (Écran PC) | Grande Maison</title>
+  <link rel="stylesheet" href="/testthings/sol1-mindar/css/style.css">
+  <script src="/testthings/sol1-mindar/js/qrcode.min.js"></script>
+  <style>
+    /* Spécifique à la vue PC */
+    .screen-control-bar {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+    .btn-pill {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--surface-border);
+      color: var(--text-dim);
+      padding: 0.4rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-pill:hover, .btn-pill.active {
+      background: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+    .btn-pill.active {
+      border-color: var(--accent-neon);
+      color: var(--accent-neon);
+    }
+    .artwork-img-container.large {
+      max-width: 620px;
+    }
+    .artwork-img-container.boost-contrast img {
+      filter: contrast(1.25) brightness(1.05);
+    }
+    .fullscreen-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+    }
+    .fullscreen-modal.active {
+      display: flex;
+    }
+    .fullscreen-modal img {
+      max-width: 85vh;
+      max-height: 85vh;
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+      border: 2px solid #222;
+      box-shadow: 0 0 50px rgba(0, 255, 136, 0.2);
+    }
+    .fullscreen-close {
+      position: absolute;
+      top: 1.5rem;
+      right: 1.5rem;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="pc-page-wrapper">
+
+    <!-- En-tête Navigation -->
+    <header class="pc-nav">
+      <a href="/testthings/">← Retour au Hub WebAR</a>
+      <div style="display: flex; align-items: center; gap: 0.6rem;">
+        <span class="badge-tag badge-sol1">Solution 1 • MindAR AI / WebAssembly</span>
+        <span style="color: var(--text-muted);">|</span>
+        <span style="color: var(--text-dim);">Room 45</span>
+      </div>
+      <a href="/testthings/sol1-mindar/mobile.html" id="topMobileLink" target="_blank" style="color: var(--accent-neon);">Lancer Mobile →</a>
+    </header>
+
+    <!-- Grille Principale : Cible Artwork + Panneau QR Code -->
+    <div class="pc-grid">
+      
+      <!-- Colonne Cible Artwork PC -->
+      <div>
+        <div class="artwork-plate" id="artworkPlate">
+          <div class="artwork-plate-header">
+            <span>ARCHIVE N° 45 — CLASSIFIÉ</span>
+            <span>MODÈLE IA D'ALIGNEMENT OPTIQUE</span>
+            <span>RÉF. 045-GME</span>
+          </div>
+
+          <div style="font-size: 0.85rem; color: #333; margin-bottom: 1.2rem; font-weight: bold; letter-spacing: 0.05em;">
+            CIBLE NATURELLE : ARTWORK SALLE 45
+          </div>
+
+          <!-- L'illustration cible pour MindAR -->
+          <div class="artwork-img-container" id="artContainer">
+            <div class="artwork-corners-bracket corner-tl"></div>
+            <div class="artwork-corners-bracket corner-tr"></div>
+            <div class="artwork-corners-bracket corner-br"></div>
+            <div class="artwork-corners-bracket corner-bl"></div>
+
+            <img id="artworkImg" src="/room45/cover/a01.png" alt="Artwork Salle 45">
+          </div>
+
+          <div class="artwork-caption">
+            Illustration haute résolution — Tracking par descripteurs locaux (FREAK / FAST)
+          </div>
+
+          <!-- Barre d'ajustement de l'affichage de l'écran PC -->
+          <div class="screen-control-bar">
+            <button class="btn-pill active" id="sizeStdBtn">Taille Normale</button>
+            <button class="btn-pill" id="sizeLgBtn">Grand Format</button>
+            <button class="btn-pill" id="contrastToggleBtn">Contraste Écran ++</button>
+            <button class="btn-pill" id="fullscreenBtn">⛶ Plein Écran Cible</button>
+          </div>
+        </div>
+
+        <!-- Instructions du test -->
+        <div style="margin-top: 1.5rem; background: var(--surface); border: 1px dashed var(--surface-border); border-radius: 8px; padding: 1.2rem; font-size: 0.78rem; color: var(--text-dim); line-height: 1.6;">
+          <strong style="color: #ffffff;">💡 Comment tester en 30 secondes :</strong><br>
+          1. Laisse cette page ouverte sur ton écran d'ordinateur.<br>
+          2. Scanne le <strong>QR Code</strong> à droite avec ton smartphone (iPhone Safari ou Android Chrome).<br>
+          3. Autorise l'accès à la caméra arrière sur ton téléphone.<br>
+          4. Vise l'illustration ci-dessus : MindAR identifie la peinture instantanément et projette l'indice secret en 3D ancré sur l'image !
+        </div>
+      </div>
+
+      <!-- Colonne Panneau QR Code & Paramètres -->
+      <div>
+        
+        <!-- Boîte QR Code -->
+        <div class="panel-card">
+          <h3>
+            <span>📱</span>
+            <span>Caméra Mobile</span>
+          </h3>
+
+          <div class="qr-box" id="qrcodeBox">
+            <!-- QR code généré dynamiquement -->
+          </div>
+
+          <p style="font-size: 0.72rem; color: var(--text-dim); line-height: 1.5; text-align: center; margin-bottom: 1rem;">
+            Scanne avec l'application Appareil Photo pour ouvrir le scanner WebAR sans installer d'application.
+          </p>
+
+          <a id="directMobileBtn" href="/testthings/sol1-mindar/mobile.html" target="_blank" class="btn-primary">
+            Ouvrir la vue Mobile
+          </a>
+
+          <button id="copyUrlBtn" class="btn-secondary">
+            📋 Copier le lien mobile
+          </button>
+        </div>
+
+        <!-- Clue / Indice Secret Personnalisable -->
+        <div class="panel-card">
+          <h3>
+            <span>🔒</span>
+            <span>Message Secret Injecté</span>
+          </h3>
+
+          <label style="display: block; font-size: 0.7rem; letter-spacing: 0.1em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 0.5rem;">
+            Texte révélé en Réalité Augmentée :
+          </label>
+          <textarea id="secretClueInput" rows="3" style="width: 100%; background: #08090c; border: 1px solid var(--surface-border); color: var(--accent-neon); padding: 0.6rem; font-family: monospace; font-size: 0.8rem; border-radius: 4px; box-sizing: border-box; resize: none; margin-bottom: 0.6rem; line-height: 1.4;">LA RÉPONSE EST : SUFFOCATION
+[Porte 3 déverrouillée]</textarea>
+
+          <button id="updateSecretBtn" class="btn-secondary" style="border-color: rgba(0, 255, 136, 0.4); color: var(--accent-neon);">
+            ✓ Appliquer au QR Code
+          </button>
+          
+          <div style="margin-top: 0.8rem; font-size: 0.68rem; color: var(--text-muted); line-height: 1.4;">
+            Le texte secret est encodé dans le lien du QR Code. Dès que le smartphone scanne l'image, il projette ce message exact en 3D.
+          </div>
+        </div>
+
+        <!-- Fiche Technique MindAR -->
+        <div class="panel-card" style="font-size: 0.72rem; color: var(--text-dim); line-height: 1.6;">
+          <div style="font-weight: bold; color: #fff; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.1em;">
+            ⚙️ Spécifications MindAR
+          </div>
+          <div>• Moteur : <strong>MindAR 1.2.5 (TF.js WebGL / WASM)</strong></div>
+          <div>• Rendu 3D : <strong>A-Frame 1.4.2 (Three.js r147)</strong></div>
+          <div>• Fichier Cible : <strong>targets.mind (891 Ko précompilé)</strong></div>
+          <div>• Taux de rafraîchissement : <strong>~60 FPS</strong></div>
+          <div>• Dépendance CDN : <strong>0 (100% Bundled Local)</strong></div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Modal Plein Écran pour l'artwork -->
+  <div class="fullscreen-modal" id="fsModal">
+    <button class="fullscreen-close" id="fsCloseBtn">✕ Quitter le plein écran</button>
+    <img src="/room45/cover/a01.png" alt="Artwork Plein Écran">
+  </div>
+
+  <script>
+    // Configuration dynamique des URLs
+    const secretInput = document.getElementById('secretClueInput');
+    const qrcodeBox = document.getElementById('qrcodeBox');
+    const directBtn = document.getElementById('directMobileBtn');
+    const topLink = document.getElementById('topMobileLink');
+    const copyBtn = document.getElementById('copyUrlBtn');
+    const updateBtn = document.getElementById('updateSecretBtn');
+
+    let qrcodeInstance = null;
+
+    function buildMobileUrl() {
+      const base = window.location.origin + '/testthings/sol1-mindar/mobile.html';
+      const secret = secretInput.value.trim();
+      const url = new URL(base);
+      if (secret) {
+        url.searchParams.set('secret', secret);
+      }
+      return url.toString();
+    }
+
+    function renderQr() {
+      const fullUrl = buildMobileUrl();
+      qrcodeBox.innerHTML = '';
+      qrcodeInstance = new QRCode(qrcodeBox, {
+        text: fullUrl,
+        width: 180,
+        height: 180,
+        colorDark: '#000000',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+      directBtn.href = fullUrl;
+      topLink.href = fullUrl;
+    }
+
+    // Sauvegarde & Restauration du secret
+    const savedSecret = localStorage.getItem('mindar_room45_secret');
+    if (savedSecret) {
+      secretInput.value = savedSecret;
+    }
+    renderQr();
+
+    updateBtn.addEventListener('click', () => {
+      localStorage.setItem('mindar_room45_secret', secretInput.value);
+      renderQr();
+      updateBtn.textContent = '✓ QR Code Mis à Jour !';
+      setTimeout(() => { updateBtn.textContent = '✓ Appliquer au QR Code'; }, 1500);
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      const url = buildMobileUrl();
+      try {
+        await navigator.clipboard.writeText(url);
+        copyBtn.textContent = '✓ Lien Copié !';
+      } catch (e) {
+        copyBtn.textContent = url;
+      }
+      setTimeout(() => { copyBtn.textContent = '📋 Copier le lien mobile'; }, 2000);
+    });
+
+    // Contrôles d'affichage de la cible sur l'écran PC
+    const artContainer = document.getElementById('artContainer');
+    const sizeStdBtn = document.getElementById('sizeStdBtn');
+    const sizeLgBtn = document.getElementById('sizeLgBtn');
+    const contrastBtn = document.getElementById('contrastToggleBtn');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    const fsModal = document.getElementById('fsModal');
+    const fsCloseBtn = document.getElementById('fsCloseBtn');
+
+    sizeStdBtn.addEventListener('click', () => {
+      artContainer.classList.remove('large');
+      sizeStdBtn.classList.add('active');
+      sizeLgBtn.classList.remove('active');
+    });
+
+    sizeLgBtn.addEventListener('click', () => {
+      artContainer.classList.add('large');
+      sizeLgBtn.classList.add('active');
+      sizeStdBtn.classList.remove('active');
+    });
+
+    contrastBtn.addEventListener('click', () => {
+      artContainer.classList.toggle('boost-contrast');
+      contrastBtn.classList.toggle('active');
+    });
+
+    fullscreenBtn.addEventListener('click', () => {
+      fsModal.classList.add('active');
+    });
+
+    fsCloseBtn.addEventListener('click', () => {
+      fsModal.classList.remove('active');
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && fsModal.classList.contains('active')) {
+        fsModal.classList.remove('active');
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Lentille Spectrale — Scanner Sceau Occulte (jsQR)</title>
+  <link rel="stylesheet" href="/testthings/css/style.css">
+  <script src="/testthings/sol2-jsqr/js/jsQR.js"></script>
+  <script src="/testthings/sol2-jsqr/js/seal-tracker.js"></script>
+  <style>
+    :root {
+      --neon-green: #00ff88;
+      --neon-cyan: #00f0ff;
+      --neon-red: #ff3366;
+    }
+
+    body {
+      background: #000000;
+      color: #ffffff;
+      overflow: hidden;
+      position: fixed;
+      inset: 0;
+      touch-action: none;
+      font-family: 'Courier New', Courier, monospace;
+    }
+
+    .ar-viewport {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000000;
+      overflow: hidden;
+    }
+
+    /* Flux caméra natif grand angle non rogné */
+    #cameraFeed {
+      width: 100%;
+      height: 100%;
+      object-fit: contain; /* Grand angle sans zoom artificiel */
+      background: #000000;
+    }
+
+    #cameraFeed.cover-mode {
+      object-fit: cover;
+    }
+
+    /* Conteneur de projection calqué sur le rectangle vidéo affiché */
+    #projectionViewport {
+      position: absolute;
+      pointer-events: none;
+      overflow: visible;
+      z-index: 15;
+    }
+
+    /* Calque secret In-Situ (remplace le texte de l'énigme en 3D perspective) */
+    #arSecretLayer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 530px;
+      height: 160px;
+      transform-origin: 0 0;
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      background: rgba(246, 243, 235, 0.96);
+      color: #111111;
+      padding: 1.1rem 1.3rem;
+      border: 2px solid #b91c1c;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(185, 28, 28, 0.4);
+      border-radius: 3px;
+      backdrop-filter: blur(4px);
+      box-sizing: border-box;
+      will-change: transform;
+      animation: stampEntrance 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+    }
+
+    @keyframes stampEntrance {
+      0% { opacity: 0; }
+      100% { opacity: 1; }
+    }
+
+    .stamp-classified {
+      display: inline-block;
+      border: 2px solid #b91c1c;
+      color: #b91c1c;
+      padding: 2px 7px;
+      font-size: 0.65rem;
+      font-weight: 900;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      transform: rotate(-2deg);
+    }
+
+    .secret-reveal-box {
+      background: #ffffff;
+      border: 1.5px solid #b91c1c;
+      padding: 0.65rem 0.9rem;
+      margin: 0.3rem 0;
+      box-shadow: inset 0 0 10px rgba(185, 28, 28, 0.1);
+    }
+
+    .secret-code-main {
+      font-size: 1.25rem;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      color: #b91c1c;
+      line-height: 1.2;
+    }
+
+    /* Calque Artwork In-Situ (remplace la gravure centrale en 3D perspective : 530x170) */
+    #arArtworkLayer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 530px;
+      height: 170px;
+      transform-origin: 0 0;
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      background: rgba(12, 16, 22, 0.95);
+      color: #00ff88;
+      padding: 0.85rem 1.1rem;
+      border: 2px solid #00ff88;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.85), 0 0 30px rgba(0, 255, 136, 0.35);
+      border-radius: 3px;
+      backdrop-filter: blur(4px);
+      box-sizing: border-box;
+      will-change: transform;
+      animation: stampEntrance 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+    }
+
+    .artwork-hud-header, .artwork-hud-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.58rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.75);
+    }
+
+    .artwork-blueprint-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.8rem;
+      margin: 0.2rem 0;
+    }
+
+    .artwork-blueprint-grid {
+      display: flex;
+      gap: 0.5rem;
+      flex: 1;
+    }
+
+    .blueprint-room {
+      flex: 1;
+      padding: 0.45rem 0.25rem;
+      border: 1px dashed rgba(255, 255, 255, 0.3);
+      text-align: center;
+      font-size: 0.62rem;
+      color: #777;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .blueprint-room.active {
+      border: 1.5px solid #00ff88;
+      color: #00ff88;
+      background: rgba(0, 255, 136, 0.12);
+      box-shadow: 0 0 12px rgba(0, 255, 136, 0.3);
+      font-weight: bold;
+    }
+
+    .artwork-secret-seal {
+      border-left: 1px solid rgba(0, 255, 136, 0.35);
+      padding-left: 0.8rem;
+      text-align: right;
+    }
+
+    /* Calque Holographique sur le Sceau 3D (100x100 net) */
+    #arSealLayer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100px;
+      height: 100px;
+      transform-origin: 0 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      will-change: transform;
+    }
+
+    .sigil-portal-ring {
+      position: absolute;
+      inset: -25px;
+      border-radius: 50%;
+      border: 2px dashed #00ff88;
+      box-shadow: 0 0 25px #00ff88, inset 0 0 15px #00ff88;
+      animation: rotateSigil 10s linear infinite;
+    }
+
+    .sigil-inner-glyph {
+      width: 80%;
+      height: 80%;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,255,136,0.3) 0%, transparent 75%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #00ff88;
+      text-shadow: 0 0 10px #00ff88;
+      font-size: 0.68rem;
+      font-weight: bold;
+      letter-spacing: 0.15em;
+    }
+
+    @keyframes rotateSigil {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Viseur HUD guidé */
+    .viewfinder-box {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: min(84vw, 360px);
+      aspect-ratio: 540 / 680;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .viewfinder-border {
+      position: absolute;
+      inset: 0;
+      border: 1.5px dashed rgba(255, 255, 255, 0.35);
+      border-radius: 8px;
+      transition: all 0.25s ease-out;
+    }
+
+    .viewfinder-border.locked {
+      border: 2.5px solid #00ff88;
+      box-shadow: 0 0 35px rgba(0, 255, 136, 0.7), inset 0 0 25px rgba(0, 255, 136, 0.25);
+    }
+
+    .vf-corner {
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      border-color: #ffffff;
+      border-style: solid;
+      transition: border-color 0.2s;
+    }
+    .vf-tl { top: -2px; left: -2px; border-width: 3px 0 0 3px; }
+    .vf-tr { top: -2px; right: -2px; border-width: 3px 3px 0 0; }
+    .vf-br { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; }
+    .vf-bl { bottom: -2px; left: -2px; border-width: 0 0 3px 3px; }
+
+    .viewfinder-border.locked .vf-corner {
+      border-color: #00ff88;
+    }
+
+    /* Barre supérieure de diagnostic */
+    .top-hud-bar {
+      position: absolute;
+      top: 0.75rem;
+      left: 0.75rem;
+      right: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 40;
+      gap: 0.4rem;
+    }
+
+    .status-pill {
+      background: rgba(18, 18, 20, 0.88);
+      border: 1px solid var(--surface-border);
+      color: #fff;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.7rem;
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #ffaa00;
+      box-shadow: 0 0 6px #ffaa00;
+    }
+    .status-dot.active {
+      background: #00ff88;
+      box-shadow: 0 0 10px #00ff88;
+    }
+
+    /* Jauge et barre inférieure */
+    .bottom-hud-bar {
+      position: absolute;
+      bottom: 1.8rem;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(88vw, 360px);
+      background: rgba(18, 18, 20, 0.94);
+      border: 1px solid var(--surface-border);
+      border-radius: 30px;
+      padding: 0.7rem 1.2rem;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 25px rgba(0,0,0,0.6);
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: #ffaa00;
+      transition: width 0.15s ease-out, background-color 0.2s;
+    }
+
+    .progress-fill.locked {
+      background: #00ff88;
+      box-shadow: 0 0 8px #00ff88;
+    }
+
+    /* Écran de permission caméra */
+    #startOverlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(13, 13, 14, 0.98);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* HUD de télémétrie détaillé */
+    #telemetryPanel {
+      position: absolute;
+      bottom: 5.5rem;
+      left: 0.75rem;
+      background: rgba(0, 0, 0, 0.82);
+      border: 1px solid rgba(0, 255, 136, 0.3);
+      border-radius: 6px;
+      padding: 0.5rem 0.8rem;
+      font-size: 0.65rem;
+      color: #00ff88;
+      z-index: 35;
+      display: none;
+      line-height: 1.4;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="ar-viewport" id="arContainer">
+    
+    <!-- Flux vidéo de la caméra -->
+    <video id="cameraFeed" autoplay playsinline muted></video>
+
+    <!-- Zone de projection géométrique 3D -->
+    <div id="projectionViewport">
+      
+      <!-- Calque 1 : Remplacement In-Situ du texte de l'énigme -->
+      <div id="arSecretLayer">
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #d5cfbf; padding-bottom: 0.3rem; margin-bottom: 0.4rem; font-size: 0.62rem; color: #555;">
+            <span>ARCHIVE N° 045-JSQR</span>
+            <span style="color: #b91c1c; font-weight: bold;">RÉVÉLATION OPTIQUE</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="stamp-classified">DÉCLASSIFIÉ</span>
+            <span style="font-size: 0.62rem; color: #888;">SCEAU FIDUCIAL VÉRIFIÉ</span>
+          </div>
+          <p style="font-size: 0.72rem; color: #777; text-decoration: line-through; margin: 0.3rem 0; line-height: 1.3;">
+            Trois portes se dressent dans le silence... [ILLUSION DISSOLTE]
+          </p>
+        </div>
+
+        <div class="secret-reveal-box">
+          <div style="font-size: 0.58rem; letter-spacing: 0.2em; text-transform: uppercase; color: #666; margin-bottom: 0.2rem;">
+            ✦ SOLUTION SECRÈTE DE LA SALLE 45 ✦
+          </div>
+          <div id="secretCodeDisplay" class="secret-code-main">
+            LA RÉPONSE EST : SUFFOCATION
+          </div>
+          <div id="secretSubCode" style="font-size: 0.65rem; color: #444; margin-top: 0.2rem;">
+            Code de déverrouillage : <strong>45-88-ALPHA</strong>
+          </div>
+        </div>
+
+        <div style="font-size: 0.58rem; color: #888; display: flex; justify-content: space-between;">
+          <span>• SALLE 45 SPECTRAL LENS •</span>
+          <span>LATENCE: &lt;15ms</span>
+        </div>
+      </div>
+
+      <!-- Calque 2 : Remplacement In-Situ de l'Artwork / Gravure Centrale -->
+      <div id="arArtworkLayer">
+        <div class="artwork-hud-header">
+          <span>ARCHIVE ANOMALE • CRYPTE SALLE 45</span>
+          <span style="color: #00ff88; font-weight: bold;">VISION SPECTRALE ACTIVÉE</span>
+        </div>
+        <div class="artwork-blueprint-content">
+          <div class="artwork-blueprint-grid">
+            <div class="blueprint-room blueprint-room-1">PORTE I<br><small>NÉANT</small></div>
+            <div class="blueprint-room blueprint-room-2">PORTE II<br><small>ÉCHO</small></div>
+            <div class="blueprint-room blueprint-room-3 active">PORTE III<br><small>SUFFOCATION</small></div>
+          </div>
+          <div class="artwork-secret-seal">
+            <div style="font-size: 0.58rem; color: #00ff88; letter-spacing: 0.15em;">GRAND ŒUVRE</div>
+            <div style="font-size: 0.95rem; font-weight: 900; color: #fff; text-shadow: 0 0 10px #00ff88;">45-88-ALPHA</div>
+          </div>
+        </div>
+        <div class="artwork-hud-footer">
+          <span>HOMOGRAPHIE jsQR : &lt;15ms</span>
+          <span>DÉVERROUILLAGE TOTAL</span>
+        </div>
+      </div>
+
+      <!-- Calque 3 : Sceau Alchimique Holographique 3D -->
+      <div id="arSealLayer">
+        <div class="sigil-portal-ring"></div>
+        <div class="sigil-inner-glyph">
+          <span style="font-size: 1.4rem;">🜂</span>
+          <span>SCEAU VIVANT</span>
+          <span style="font-size: 0.55rem; color: #fff;">SALLE 45</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Viseur AR guidé -->
+    <div class="viewfinder-box" id="viewfinderBox">
+      <div id="viewfinderBorder" class="viewfinder-border">
+        <div class="vf-corner vf-tl"></div>
+        <div class="vf-corner vf-tr"></div>
+        <div class="vf-corner vf-br"></div>
+        <div class="vf-corner vf-bl"></div>
+
+        <div id="viewfinderHint" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: rgba(255,255,255,0.85); font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase; text-align: center; width: 85%; line-height: 1.6; pointer-events: none; text-shadow: 0 1px 4px rgba(0,0,0,0.85);">
+          Visez le document et le sceau sur l'écran PC
+        </div>
+      </div>
+    </div>
+
+    <!-- Barre supérieure HUD -->
+    <div class="top-hud-bar">
+      <div class="status-pill">
+        <span id="statusDot" class="status-dot"></span>
+        <span id="statusLabel">RECHERCHE...</span>
+      </div>
+
+      <div style="display: flex; gap: 0.35rem;">
+        <button id="previewBtn" class="pill-btn" style="border-color: #00ff88; color: #00ff88;">
+          👁️ Test
+        </button>
+        <button id="modeToggleBtn" class="pill-btn">
+          Mode: Énigme
+        </button>
+        <button id="hudToggleBtn" class="pill-btn">
+          HUD
+        </button>
+      </div>
+    </div>
+
+    <!-- Panneau de télémétrie détaillé -->
+    <div id="telemetryPanel">
+      <div>FPS: <span id="telemetryFps">60</span> | Scan: <span id="telemetryMs">0</span>ms</div>
+      <div>Résolution: <span id="telemetryRes">0x0</span></div>
+      <div>Signal: <span id="telemetryPayload">Aucun</span></div>
+    </div>
+
+    <!-- Barre de progression et instructions -->
+    <div class="bottom-hud-bar">
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem;">
+        <span id="syncLabel" style="color: var(--text);">Alignement optique :</span>
+        <span id="syncPercent" style="font-weight: bold; color: #ffaa00;">0%</span>
+      </div>
+      <div class="progress-track">
+        <div id="progressFill" class="progress-fill"></div>
+      </div>
+      <div id="syncStatusTip" style="font-size: 0.68rem; color: var(--text-dim); text-align: center; margin-top: 0.1rem;">
+        Pointez la caméra vers l'écran du PC...
+      </div>
+    </div>
+
+    <!-- Écran d'accueil et d'autorisation caméra -->
+    <div id="startOverlay">
+      <div style="width: 58px; height: 58px; border-radius: 50%; border: 2px solid #00ff88; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; margin-bottom: 1.4rem; box-shadow: 0 0 25px rgba(0,255,136,0.5);">
+        👁️
+      </div>
+      <h2 style="font-size: 1.25rem; margin-bottom: 0.6rem; letter-spacing: 0.08em; color: #fff;">
+        LENTILLE SALLE 45
+      </h2>
+      <div style="font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase; color: #00ff88; margin-bottom: 1.2rem;">
+        Solution 2 : Sceau Fiducial (jsQR)
+      </div>
+      <p style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.6; max-width: 310px; margin-bottom: 2rem;">
+        Visez l'affiche sur votre écran d'ordinateur. Le sceau fiducial va verrouiller la position et révéler la réponse secrète en 3D en temps réel.
+      </p>
+      <button id="activateCameraBtn" style="background: #00ff88; color: #000; border: none; padding: 0.85rem 2.2rem; font-size: 0.95rem; font-weight: bold; border-radius: 30px; letter-spacing: 0.12em; cursor: pointer; box-shadow: 0 0 25px rgba(0,255,136,0.6);">
+        ACTIVER LA CAMÉRA
+      </button>
+      <div id="camErrorMsg" style="display: none; color: #ff5555; font-size: 0.78rem; margin-top: 1.5rem; line-height: 1.5; max-width: 320px;"></div>
+    </div>
+
+  </div>
+
+  <script>
+    // ── Éléments DOM ──────────────────────────────────────────────────────────
+    const video = document.getElementById('cameraFeed');
+    const arContainer = document.getElementById('arContainer');
+    const projectionViewport = document.getElementById('projectionViewport');
+    const arSecretLayer = document.getElementById('arSecretLayer');
+    const arArtworkLayer = document.getElementById('arArtworkLayer');
+    const arSealLayer = document.getElementById('arSealLayer');
+    const viewfinderBorder = document.getElementById('viewfinderBorder');
+    const viewfinderHint = document.getElementById('viewfinderHint');
+    const statusDot = document.getElementById('statusDot');
+    const statusLabel = document.getElementById('statusLabel');
+    const progressFill = document.getElementById('progressFill');
+    const syncPercent = document.getElementById('syncPercent');
+    const syncStatusTip = document.getElementById('syncStatusTip');
+    const secretCodeDisplay = document.getElementById('secretCodeDisplay');
+    const secretSubCode = document.getElementById('secretSubCode');
+    const startOverlay = document.getElementById('startOverlay');
+    const activateBtn = document.getElementById('activateCameraBtn');
+    const camErrorMsg = document.getElementById('camErrorMsg');
+    const previewBtn = document.getElementById('previewBtn');
+    const modeToggleBtn = document.getElementById('modeToggleBtn');
+    const hudToggleBtn = document.getElementById('hudToggleBtn');
+    const telemetryPanel = document.getElementById('telemetryPanel');
+    const telemetryFps = document.getElementById('telemetryFps');
+    const telemetryMs = document.getElementById('telemetryMs');
+    const telemetryRes = document.getElementById('telemetryRes');
+    const telemetryPayload = document.getElementById('telemetryPayload');
+
+    // ── Configuration du Secret Transmis par le QR ou Stockage Local ──────────
+    function loadSecret() {
+      // Priorité 1 : Secret transmis dans l'URL par le QR du PC (?secret=... ou #secret=...)
+      const urlParams = new URLSearchParams(window.location.search);
+      let secret = urlParams.get('secret');
+      if (!secret && window.location.hash) {
+        const hashMatch = window.location.hash.match(/secret=([^&]+)/);
+        if (hashMatch) secret = decodeURIComponent(hashMatch[1]);
+      }
+      // Priorité 2 : Stockage local du smartphone
+      if (!secret) {
+        secret = localStorage.getItem('room45_sol2_secret');
+      }
+      // Priorité 3 : Valeur par défaut authentique Salle 45
+      if (!secret) {
+        secret = "LA RÉPONSE EST : SUFFOCATION\nCode Porte : 45-88-ALPHA";
+      }
+
+      const lines = secret.split('\n');
+      secretCodeDisplay.textContent = lines[0] || 'LA RÉPONSE EST : SUFFOCATION';
+      if (lines.length > 1) {
+        secretSubCode.innerHTML = lines.slice(1).join('<br>');
+      }
+    }
+    loadSecret();
+
+    // ── Dimensions Calibrées du Document Salle 45 (1:1 avec pc.html) ──────────
+    const RIDDLE_ELEM_W = 530;
+    const RIDDLE_ELEM_H = 160;
+    const ARTWORK_ELEM_W = 530;
+    const ARTWORK_ELEM_H = 170;
+    const SEAL_ELEM_W = 100;
+    const SEAL_ELEM_H = 100;
+
+    const tracker = new SealTracker({
+      expectedPrefix: 'ROOM45-SEAL',
+      processWidth: 512,
+      smoothingAlpha: 0.65,
+      maxGraceFrames: 6,
+      docLayout: {
+        docWidth: 600,
+        docHeight: 760,
+        seal: { x: 250, y: 540, width: 100, height: 100 },
+        riddle: { x: 35, y: 310, width: 530, height: 160 },
+        artwork: { x: 35, y: 115, width: 530, height: 170 }
+      }
+    });
+
+    let isScanning = false;
+    let isPreviewSimulated = false;
+    // Modes de projection : 'all' (Tout révéler), 'riddle' (Énigme seule), 'artwork' (Artwork seul), 'seal' (Sceau seul)
+    let projectionMode = 'all';
+    let showTelemetry = false;
+    let hasVibrated = false;
+
+    // Mesures FPS
+    let lastFrameTime = performance.now();
+    let frameCounter = 0;
+    let currentFps = 60;
+
+    // ── Cache de Mise à l'Échelle (Zéro layout thrashing à 60 FPS) ────────────
+    let cachedVp = null;
+    let lastCw = 0, lastCh = 0, lastVw = 0, lastVh = 0;
+
+    function getProjectionViewport() {
+      const cw = arContainer.clientWidth;
+      const ch = arContainer.clientHeight;
+      const vw = video.videoWidth || 1280;
+      const vh = video.videoHeight || 720;
+
+      if (cachedVp && cw === lastCw && ch === lastCh && vw === lastVw && vh === lastVh) {
+        return cachedVp;
+      }
+
+      lastCw = cw; lastCh = ch; lastVw = vw; lastVh = vh;
+
+      const containerRatio = cw / ch;
+      const videoRatio = vw / vh;
+      let renderW, renderH, offsetX, offsetY;
+
+      if (containerRatio > videoRatio) {
+        renderH = ch;
+        renderW = ch * videoRatio;
+        offsetX = (cw - renderW) / 2;
+        offsetY = 0;
+      } else {
+        renderW = cw;
+        renderH = cw / videoRatio;
+        offsetX = 0;
+        offsetY = (ch - renderH) / 2;
+      }
+
+      projectionViewport.style.left = offsetX + 'px';
+      projectionViewport.style.top = offsetY + 'px';
+      projectionViewport.style.width = renderW + 'px';
+      projectionViewport.style.height = renderH + 'px';
+
+      cachedVp = {
+        offsetX, offsetY, renderW, renderH,
+        scaleX: renderW / vw,
+        scaleY: renderH / vh
+      };
+      return cachedVp;
+    }
+
+    window.addEventListener('resize', () => { cachedVp = null; getProjectionViewport(); });
+
+    // ── Bouton Aperçu / Test direct ──────────────────────────────────────────
+    previewBtn.addEventListener('click', () => {
+      isPreviewSimulated = !isPreviewSimulated;
+      previewBtn.textContent = isPreviewSimulated ? '❌ Masquer' : '👁️ Test';
+      previewBtn.style.color = isPreviewSimulated ? '#ff5555' : '#00ff88';
+      previewBtn.style.borderColor = isPreviewSimulated ? '#ff5555' : '#00ff88';
+
+      if (isPreviewSimulated) {
+        applySimulatedLock();
+      } else {
+        resetLockVisuals();
+      }
+    });
+
+    // ── Bascule de Mode de Projection (Énigme, Artwork, Sceau, Tout Révéler) ──
+    const modeLabels = {
+      'all': 'Mode: Tout Révéler',
+      'riddle': 'Mode: Énigme',
+      'artwork': 'Mode: Artwork',
+      'seal': 'Mode: Sceau'
+    };
+    const modeCycle = ['all', 'riddle', 'artwork', 'seal'];
+    modeToggleBtn.textContent = modeLabels[projectionMode];
+
+    modeToggleBtn.addEventListener('click', () => {
+      const nextIdx = (modeCycle.indexOf(projectionMode) + 1) % modeCycle.length;
+      projectionMode = modeCycle[nextIdx];
+      modeToggleBtn.textContent = modeLabels[projectionMode];
+      if (isPreviewSimulated) applySimulatedLock();
+    });
+
+    // ── Bascule du Panneau Télémétrie ────────────────────────────────────────
+    hudToggleBtn.addEventListener('click', () => {
+      showTelemetry = !showTelemetry;
+      telemetryPanel.style.display = showTelemetry ? 'block' : 'none';
+      hudToggleBtn.style.color = showTelemetry ? '#00ff88' : '#ffffff';
+    });
+
+    // ── Activation de la Caméra avec Contraintes Safari / Android Robustes ────
+    activateBtn.addEventListener('click', async () => {
+      activateBtn.textContent = 'Connexion à la caméra...';
+      try {
+        video.playsInline = true;
+        video.muted = true;
+        video.setAttribute('playsinline', '');
+        video.setAttribute('webkit-playsinline', '');
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: {
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1280, max: 1920 },
+            height: { ideal: 720, max: 1080 }
+          }
+        });
+
+        video.srcObject = stream;
+        await video.play();
+
+        startOverlay.style.display = 'none';
+        isScanning = true;
+        cachedVp = null;
+        getProjectionViewport();
+        requestAnimationFrame(renderLoop);
+      } catch (err) {
+        console.error('Camera access error:', err);
+        camErrorMsg.style.display = 'block';
+        camErrorMsg.innerHTML = `
+          ⚠️ <strong>Impossible d'accéder à la caméra :</strong> ${err.message}<br>
+          <small>Vérifiez que le site est en HTTPS ou localhost et autorisez la caméra dans les réglages de Safari/Chrome.</small>
+        `;
+        activateBtn.textContent = 'RÉESSAYER';
+      }
+    });
+
+    // ── Simulation de Verrouillage pour Démonstration / Tests ─────────────────
+    function applySimulatedLock() {
+      viewfinderBorder.classList.add('locked');
+      statusDot.classList.add('active');
+      statusLabel.textContent = 'TEST ✦ VERROUILLÉ';
+      statusLabel.style.color = '#00ff88';
+      progressFill.classList.add('locked');
+      progressFill.style.width = '100%';
+      syncPercent.textContent = '100%';
+      syncPercent.style.color = '#00ff88';
+      syncStatusTip.textContent = '✓ APERÇU DU SECRET ACTIVÉ (MODE TEST)';
+      viewfinderHint.style.display = 'none';
+
+      const rect = getProjectionViewport();
+      const centerX = rect.renderW * 0.5;
+      const centerY = rect.renderH * 0.45;
+
+      // Matrice 3D simulée inclinée pour perspective réaliste
+      const simRiddleMatrix = `matrix3d(
+        0.82, 0.03, 0, -0.00012,
+        -0.02, 0.84, 0, 0.00007,
+        0, 0, 1, 0,
+        ${(centerX - (RIDDLE_ELEM_W * 0.41)).toFixed(2)}, ${(centerY - (RIDDLE_ELEM_H * 0.20)).toFixed(2)}, 0, 1
+      )`;
+
+      const simArtworkMatrix = `matrix3d(
+        0.82, 0.03, 0, -0.00012,
+        -0.02, 0.84, 0, 0.00007,
+        0, 0, 1, 0,
+        ${(centerX - (ARTWORK_ELEM_W * 0.41)).toFixed(2)}, ${(centerY - (ARTWORK_ELEM_H * 1.25)).toFixed(2)}, 0, 1
+      )`;
+
+      const simSealMatrix = `matrix3d(
+        0.78, 0.02, 0, -0.00008,
+        -0.02, 0.80, 0, 0.00005,
+        0, 0, 1, 0,
+        ${(centerX - (SEAL_ELEM_W * 0.39)).toFixed(2)}, ${(centerY + 105).toFixed(2)}, 0, 1
+      )`;
+
+      const showRiddle = (projectionMode === 'riddle' || projectionMode === 'all');
+      const showArtwork = (projectionMode === 'artwork' || projectionMode === 'all');
+      const showSeal = (projectionMode === 'seal' || projectionMode === 'all');
+
+      arSecretLayer.style.display = showRiddle ? 'flex' : 'none';
+      if (showRiddle) arSecretLayer.style.transform = simRiddleMatrix;
+
+      arArtworkLayer.style.display = showArtwork ? 'flex' : 'none';
+      if (showArtwork) arArtworkLayer.style.transform = simArtworkMatrix;
+
+      arSealLayer.style.display = showSeal ? 'flex' : 'none';
+      if (showSeal) arSealLayer.style.transform = simSealMatrix;
+    }
+
+    function resetLockVisuals() {
+      viewfinderBorder.classList.remove('locked');
+      statusDot.classList.remove('active');
+      statusLabel.textContent = 'RECHERCHE...';
+      statusLabel.style.color = '#ffffff';
+      progressFill.classList.remove('locked');
+      progressFill.style.width = '0%';
+      syncPercent.textContent = '0%';
+      syncPercent.style.color = '#ffaa00';
+      syncStatusTip.textContent = 'Pointez la caméra vers l\'écran du PC...';
+      viewfinderHint.style.display = 'block';
+      arSecretLayer.style.display = 'none';
+      arArtworkLayer.style.display = 'none';
+      arSealLayer.style.display = 'none';
+      hasVibrated = false;
+    }
+
+    // ── Boucle de Traitement AR Principale (60 FPS, < 15ms Scan) ─────────────
+    function renderLoop() {
+      if (!isScanning) return;
+
+      const now = performance.now();
+      frameCounter++;
+      if (now - lastFrameTime >= 500) {
+        currentFps = Math.round((frameCounter * 1000) / (now - lastFrameTime));
+        frameCounter = 0;
+        lastFrameTime = now;
+        telemetryFps.textContent = currentFps;
+      }
+
+      if (!isPreviewSimulated && video.readyState >= 2 && video.videoWidth > 0) {
+        const vp = getProjectionViewport();
+        telemetryRes.textContent = `${video.videoWidth}x${video.videoHeight}`;
+
+        // Exécution ultra-rapide de jsQR via SealTracker
+        const result = tracker.processFrame(video);
+
+        if (result && result.locked) {
+          telemetryMs.textContent = result.scanTimeMs.toFixed(1);
+          telemetryPayload.textContent = result.payload || 'Validé';
+
+          // Verrouillage visuel du HUD
+          viewfinderBorder.classList.add('locked');
+          statusDot.classList.add('active');
+          statusLabel.textContent = `VERROUILLÉ (${result.scanTimeMs.toFixed(0)}ms)`;
+          statusLabel.style.color = '#00ff88';
+
+          progressFill.classList.add('locked');
+          progressFill.style.width = '100%';
+          syncPercent.textContent = '100%';
+          syncPercent.style.color = '#00ff88';
+          syncStatusTip.textContent = '✓ SCEAU OCCULTE RECONNU • SECRET RÉVÉLÉ';
+          viewfinderHint.style.display = 'none';
+
+          // Vibration tactile courte
+          if (!hasVibrated) {
+            if (navigator.vibrate) navigator.vibrate([35, 50, 35]);
+            hasVibrated = true;
+          }
+
+          // Échelle vidéo vers coordonnées d'affichage écran (projectionViewport)
+          const scaleX = vp.scaleX;
+          const scaleY = vp.scaleY;
+          const scaledSealCorners = result.sealCorners.map(p => ({
+            x: p.x * scaleX,
+            y: p.y * scaleY
+          }));
+
+          const showRiddle = (projectionMode === 'riddle' || projectionMode === 'all');
+          const showArtwork = (projectionMode === 'artwork' || projectionMode === 'all');
+          const showSeal = (projectionMode === 'seal' || projectionMode === 'all');
+
+          // 1. Projection 3D sur l'Énigme
+          if (showRiddle) {
+            const riddleHomography = tracker.computeHomographyForSubZone(
+              tracker.docLayout.seal,
+              tracker.docLayout.riddle,
+              scaledSealCorners,
+              RIDDLE_ELEM_W,
+              RIDDLE_ELEM_H
+            );
+            if (riddleHomography && riddleHomography.matrix3d) {
+              arSecretLayer.style.display = 'flex';
+              arSecretLayer.style.transform = riddleHomography.matrix3d;
+            }
+          } else {
+            arSecretLayer.style.display = 'none';
+          }
+
+          // 2. Projection 3D sur l'Artwork (Gravure Centrale)
+          if (showArtwork) {
+            const artworkHomography = tracker.computeHomographyForSubZone(
+              tracker.docLayout.seal,
+              tracker.docLayout.artwork,
+              scaledSealCorners,
+              ARTWORK_ELEM_W,
+              ARTWORK_ELEM_H
+            );
+            if (artworkHomography && artworkHomography.matrix3d) {
+              arArtworkLayer.style.display = 'flex';
+              arArtworkLayer.style.transform = artworkHomography.matrix3d;
+            }
+          } else {
+            arArtworkLayer.style.display = 'none';
+          }
+
+          // 3. Projection 3D sur le Sceau Alchimique
+          if (showSeal) {
+            const sealMatrix = tracker.computeMatrix3dForRect(
+              0, 0, SEAL_ELEM_W, SEAL_ELEM_H, scaledSealCorners
+            );
+            if (sealMatrix) {
+              arSealLayer.style.display = 'flex';
+              arSealLayer.style.transform = sealMatrix;
+            }
+          } else {
+            arSealLayer.style.display = 'none';
+          }
+
+        } else {
+          if (result) {
+            telemetryMs.textContent = result.scanTimeMs.toFixed(1);
+          }
+          telemetryPayload.textContent = 'En recherche';
+          resetLockVisuals();
+        }
+      }
+
+      requestAnimationFrame(renderLoop);
+    }
+  </script>
+</body>
+</html>

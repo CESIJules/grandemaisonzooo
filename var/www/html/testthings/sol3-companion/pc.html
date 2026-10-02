@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Salle 45 — Station Énigme & Scanner Compagnon</title>
+  <link rel="stylesheet" href="/testthings/sol3-companion/css/pc.css">
+  <script src="/testthings/sol3-companion/js/qr.js"></script>
+  <script src="/testthings/sol3-companion/js/audio.js"></script>
+  <script src="/testthings/sol3-companion/js/sync-client.js"></script>
+</head>
+<body>
+
+  <div class="pc-layout">
+
+    <!-- En-tête de navigation -->
+    <header class="top-nav">
+      <div style="display: flex; align-items: center; gap: 1.2rem;">
+        <a href="/testthings/">← RETOUR AU HUB LAB</a>
+        <span style="color: var(--text-dim);">|</span>
+        <span style="color: #fff; font-weight: bold; letter-spacing: 0.15em;">SOLUTION 3 : SCANNER COMPAGNON ARG</span>
+      </div>
+
+      <div class="session-pill">
+        <span id="sessionStatusDot" class="status-dot"></span>
+        <span id="sessionStatusLabel" style="text-transform: uppercase;">INITIALISATION...</span>
+        <span id="sessionIdTag" style="color: var(--text-dim); margin-left: 0.4rem; font-weight: bold;"></span>
+      </div>
+    </header>
+
+    <!-- Grille principale : Document d'Énigme + Panneau de Contrôle -->
+    <main class="main-grid">
+
+      <!-- Colonne Gauche : Planche d'Énigme Room 45 -->
+      <section>
+        <div id="enigmaDocument" class="document-wrapper">
+          
+          <!-- Repères typographiques fins (style gravure / imprimerie) -->
+          <div class="crop-mark crop-tl"></div>
+          <div class="crop-mark crop-tr"></div>
+          <div class="crop-mark crop-br"></div>
+          <div class="crop-mark crop-bl"></div>
+
+          <!-- En-tête du document -->
+          <div class="doc-header">
+            <span>GRANDE MAISON • SALLE 45</span>
+            <span>RÉF. 045-GME-A01 // CLASSIFIÉ</span>
+          </div>
+
+          <!-- Artwork Room 45 avec calque d'alignement holographique -->
+          <div class="artwork-frame">
+            <img src="/room45/cover/a01.png" alt="Illustration de l'énigme 45" class="artwork-img" id="artworkImage">
+            <div class="artwork-overlay-grid"></div>
+          </div>
+
+          <!-- Corps de l'Énigme (Room a01) -->
+          <div class="enigma-content" id="enigmaContentArea">
+            <p class="clue-lead">
+              Trois portes se dressent dans le silence, chacune murmurant une illusion différente.
+            </p>
+            <p class="clue-sub">
+              La première parle de ce qui fut, mais pas de ce qui doit être compris.<br>
+              La seconde parle sans détour, mais ne dit rien de ce qui compte.<br>
+              Et la troisième… retient le souffle dans l'ombre.
+            </p>
+            <p class="clue-conclusion">
+              Une seule prendra tout son sens quand les autres demeureront muettes.
+            </p>
+
+            <div class="spectral-placeholder-tag">
+              [ CALQUE INVISIBLE À L'ŒIL NU — EXAMINER AVEC LA LENTILLE SPECTRALE ]
+            </div>
+
+            <!-- Calque secret in-situ révélé en direct -->
+            <div id="pcSecretOverlay" class="pc-secret-revelation">
+              <div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.68rem; font-weight: bold; border-bottom: 1.5px solid #222; padding-bottom: 0.4rem; margin-bottom: 0.8rem;">
+                  <span>SALLE 45 • ARCHIVE DÉCHIFFRÉE</span>
+                  <span style="color: #b30000;">ACCÈS AUTORISÉ</span>
+                </div>
+                <div class="stamp-declassified">DÉCLASSIFIÉ PAR LENTILLE MOBILE</div>
+                <p style="font-size: 0.85rem; color: #555; text-decoration: line-through; margin-bottom: 1rem;">
+                  Trois portes se dressent dans le silence...
+                </p>
+              </div>
+
+              <div class="secret-password-banner">
+                <div style="font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase; color: #aaa;">
+                  • MOT DE PASSE DE DÉVERROUILLAGE •
+                </div>
+                <div class="secret-key-display">
+                  SUFFOCATION
+                </div>
+                <div style="font-size: 0.75rem; color: #888; margin-top: 0.5rem; line-height: 1.5;">
+                  <em>« Si l'air se raréfie et que ta poitrine s'oppresse, écoute la voix qui enseigne par l'illusion. C'est là seulement que tu retrouveras ton souffle. »</em>
+                </div>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #ddd; padding-top: 0.8rem;">
+                <div style="display: flex; align-items: center; gap: 0.8rem;">
+                  <img src="/room45/symbols/fable.png" alt="Symbole Fable" style="height: 38px; width: auto; filter: contrast(1.2);">
+                  <span style="font-size: 0.72rem; color: #666;">SYMBOLE MATRICE DÉBLOQUÉ</span>
+                </div>
+                <button id="closePcSecretBtn" style="background: transparent; border: 1px solid #999; padding: 4px 10px; font-family: inherit; font-size: 0.72rem; cursor: pointer;">
+                  Fermer
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <div style="margin-top: 1.2rem; font-size: 0.78rem; color: var(--text-dim); line-height: 1.6; background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 4px; border: 1px solid var(--surface-border);">
+          <strong style="color: #fff;">💡 Comment fonctionne l'expérience ARG :</strong><br>
+          1. Scannez le QR Code à droite avec votre smartphone (iPhone ou Android).<br>
+          2. Votre téléphone ouvre la <strong>Lentille Spectrale</strong> (sans aucune application à installer).<br>
+          3. Pointez l'objectif de votre téléphone vers cette affiche : le scanner analyse la résonance spectrale de l'écran, applique le filtre X-Ray négatif et décrypte le mot de passe <strong>SUFFOCATION</strong> en direct !<br>
+          4. La réponse se synchronise automatiquement entre votre téléphone et cet écran de PC.
+        </div>
+      </section>
+
+      <!-- Colonne Droite : Commandes & QR Code -->
+      <aside class="sidebar-panel">
+
+        <!-- Carte QR Code d'Appairage -->
+        <div class="card">
+          <div class="card-title">
+            <span>Appairage Mobile</span>
+            <span style="color: var(--accent-cyan);">QR-SYNC</span>
+          </div>
+
+          <div class="qrcode-box" id="qrContainer">
+            <!-- QR code rendu par qr.js -->
+            <div style="padding: 2rem 0; color: #666; font-size: 0.75rem;">Génération du QR Code...</div>
+          </div>
+
+          <div style="margin-top: 1rem; text-align: center;">
+            <div style="font-size: 0.7rem; color: var(--text-dim); margin-bottom: 0.4rem;">
+              Scannez avec l'appareil photo du smartphone
+            </div>
+            <a id="directMobileLink" href="#" target="_blank" class="action-btn secondary" style="margin-top: 0.6rem; font-size: 0.72rem;">
+              📱 Ouvrir la Lentille sur cet écran (Split View)
+            </a>
+            <button id="copyUrlBtn" class="action-btn secondary" style="margin-top: 0.5rem; font-size: 0.72rem;">
+              📋 Copier le lien mobile
+            </button>
+          </div>
+        </div>
+
+        <!-- Carte Ambiance & Audio -->
+        <div class="card">
+          <div class="card-title">
+            <span>Station Audio Room 45</span>
+            <span id="audioStatusBadge" style="color: var(--accent-amber);">MUTED</span>
+          </div>
+
+          <div style="display: flex; gap: 0.6rem;">
+            <button id="toggleAmbientBtn" class="action-btn secondary" style="flex: 1;">
+              🔊 Ambiance Drone
+            </button>
+            <button id="muteAudioBtn" class="action-btn secondary" style="width: 44px;">
+              🔇
+            </button>
+          </div>
+
+          <!-- Visualiseur spectral Web Audio -->
+          <canvas id="audioCanvas" width="280" height="38"></canvas>
+        </div>
+
+        <!-- Terminal de Test de Réponse -->
+        <div class="card">
+          <div class="card-title">
+            <span>Validation de Salle</span>
+            <span>R45-CLI</span>
+          </div>
+
+          <label style="display: block; font-size: 0.7rem; color: var(--text-dim); margin-bottom: 0.4rem;">
+            Entrer la clé secrète déchiffrée :
+          </label>
+          <input type="text" id="answerInput" class="code-input" placeholder="…………………………………" autocomplete="off">
+          <div style="display: flex; gap: 0.5rem;">
+            <button id="submitAnswerBtn" class="action-btn" style="flex: 1;">
+              Valider la Clé
+            </button>
+            <button id="fillSecretBtn" class="action-btn secondary" title="Insérer SUFFOCATION">
+              ⚡
+            </button>
+          </div>
+          <div id="answerFeedback" style="font-size: 0.75rem; margin-top: 0.6rem; min-height: 1.2rem;"></div>
+        </div>
+
+        <!-- Outils de Simulation Rapide -->
+        <div class="card" style="border-style: dashed;">
+          <div class="card-title">
+            <span>Contrôles Démo / Test</span>
+            <span style="font-size: 0.65rem; color: var(--text-dim);">DEBUG</span>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <button id="simConnectBtn" class="action-btn secondary" style="font-size: 0.72rem;">
+              📲 Simuler Connexion Mobile
+            </button>
+            <button id="simScanBtn" class="action-btn secondary" style="font-size: 0.72rem;">
+              📡 Simuler Scan Optique
+            </button>
+            <button id="simRevealBtn" class="action-btn accent" style="font-size: 0.72rem;">
+              🔓 Révéler Immédiatement le Secret
+            </button>
+            <button id="resetSessionBtn" class="action-btn secondary" style="font-size: 0.72rem; color: var(--accent-red);">
+              ↺ Réinitialiser la Session
+            </button>
+          </div>
+        </div>
+
+      </aside>
+
+    </main>
+
+  </div>
+
+  <script>
+    // ── Initialisation du Moteur PC ──────────────────────────────────────────
+    const statusDot = document.getElementById('sessionStatusDot');
+    const statusLabel = document.getElementById('sessionStatusLabel');
+    const sessionIdTag = document.getElementById('sessionIdTag');
+    const qrContainer = document.getElementById('qrContainer');
+    const directMobileLink = document.getElementById('directMobileLink');
+    const copyUrlBtn = document.getElementById('copyUrlBtn');
+    const enigmaDoc = document.getElementById('enigmaDocument');
+    const pcSecretOverlay = document.getElementById('pcSecretOverlay');
+    const closePcSecretBtn = document.getElementById('closePcSecretBtn');
+
+    const toggleAmbientBtn = document.getElementById('toggleAmbientBtn');
+    const muteAudioBtn = document.getElementById('muteAudioBtn');
+    const audioStatusBadge = document.getElementById('audioStatusBadge');
+    const audioCanvas = document.getElementById('audioCanvas');
+    const audioCtx2d = audioCanvas.getContext('2d');
+
+    const answerInput = document.getElementById('answerInput');
+    const submitAnswerBtn = document.getElementById('submitAnswerBtn');
+    const fillSecretBtn = document.getElementById('fillSecretBtn');
+    const answerFeedback = document.getElementById('answerFeedback');
+
+    const simConnectBtn = document.getElementById('simConnectBtn');
+    const simScanBtn = document.getElementById('simScanBtn');
+    const simRevealBtn = document.getElementById('simRevealBtn');
+    const resetSessionBtn = document.getElementById('resetSessionBtn');
+
+    // Client de synchronisation
+    const syncClient = new ARGSyncClient({ role: 'pc' });
+
+    async function setupSession() {
+      const sessionId = await syncClient.init();
+      sessionIdTag.textContent = '[' + sessionId + ']';
+      
+      const origin = (window.location.origin && window.location.origin !== 'null')
+        ? window.location.origin
+        : (window.location.protocol + '//' + window.location.host);
+      const basePath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+      const mobileUrl = (origin && !origin.startsWith('file:') ? origin : '') + basePath + '/mobile.html?session=' + encodeURIComponent(sessionId);
+      directMobileLink.href = mobileUrl;
+
+      // Génération du QR Code localement
+      ARGQRCode.render(qrContainer, mobileUrl, {
+        width: 175,
+        height: 175,
+        colorDark: '#0a0a0c',
+        colorLight: '#ffffff'
+      });
+
+      updateUIState('standby');
+    }
+
+    function updateUIState(state, session = null) {
+      statusDot.className = 'status-dot';
+      enigmaDoc.classList.remove('scanning', 'revealed');
+
+      switch (state) {
+        case 'connected':
+          statusDot.classList.add('connected');
+          statusLabel.textContent = 'Lentille Connectée';
+          statusLabel.style.color = 'var(--accent-cyan)';
+          pcSecretOverlay.style.display = 'none';
+          break;
+
+        case 'scanning':
+          statusDot.classList.add('connected');
+          statusLabel.textContent = 'Scan Optique en cours...';
+          statusLabel.style.color = 'var(--accent-cyan)';
+          enigmaDoc.classList.add('scanning');
+          pcSecretOverlay.style.display = 'none';
+          ARGAudio.playScanningPulse(0.7);
+          break;
+
+        case 'revealed':
+          statusDot.classList.add('revealed');
+          statusLabel.textContent = 'Accès Autorisé • SUFFOCATION';
+          statusLabel.style.color = 'var(--accent-green)';
+          enigmaDoc.classList.add('revealed');
+          pcSecretOverlay.style.display = 'flex';
+          answerInput.value = 'SUFFOCATION';
+          answerFeedback.innerHTML = '<span style="color: var(--accent-green); font-weight: bold;">✓ CLÉ EXACTE — Déchiffrée par la Lentille !</span>';
+          ARGAudio.playRevelationBoom();
+          break;
+
+        case 'standby':
+        default:
+          statusLabel.textContent = 'En attente du Scanner';
+          statusLabel.style.color = 'var(--accent-amber)';
+          pcSecretOverlay.style.display = 'none';
+          break;
+      }
+    }
+
+    // Écouter les changements d'état en direct
+    let previousState = 'standby';
+    syncClient.onStateChange((state, session) => {
+      if (state !== previousState) {
+        if (state === 'connected' && previousState === 'standby') {
+          ARGAudio.playLockTone();
+        }
+        updateUIState(state, session);
+        previousState = state;
+      }
+    });
+
+    closePcSecretBtn.addEventListener('click', () => {
+      pcSecretOverlay.style.display = 'none';
+    });
+
+    copyUrlBtn.addEventListener('click', () => {
+      if (directMobileLink.href) {
+        navigator.clipboard.writeText(directMobileLink.href).then(() => {
+          copyUrlBtn.textContent = '✓ Lien copié !';
+          setTimeout(() => { copyUrlBtn.textContent = '📋 Copier le lien mobile'; }, 1800);
+        });
+      }
+    });
+
+    // ── Contrôles Audio Ambiance ─────────────────────────────────────────────
+    let ambientActive = false;
+    toggleAmbientBtn.addEventListener('click', () => {
+      ARGAudio.init();
+      ambientActive = ARGAudio.toggleAmbient();
+      toggleAmbientBtn.textContent = ambientActive ? '⏸️ Arrêter Ambiance' : '🔊 Ambiance Drone';
+      audioStatusBadge.textContent = ambientActive ? 'ACTIVE' : (ARGAudio.muted ? 'MUTED' : 'READY');
+      audioStatusBadge.style.color = ambientActive ? 'var(--accent-green)' : 'var(--text-dim)';
+    });
+
+    muteAudioBtn.addEventListener('click', () => {
+      const isMuted = ARGAudio.toggleMute();
+      muteAudioBtn.textContent = isMuted ? '🔈' : '🔇';
+      audioStatusBadge.textContent = isMuted ? 'MUTED' : (ambientActive ? 'ACTIVE' : 'READY');
+      audioStatusBadge.style.color = isMuted ? 'var(--accent-red)' : 'var(--text-dim)';
+    });
+
+    // Animation du spectre audio canvas (analyseur Web Audio temps réel)
+    const freqData = new Uint8Array(24);
+    function drawAudioVisualizer() {
+      requestAnimationFrame(drawAudioVisualizer);
+      const w = audioCanvas.width;
+      const h = audioCanvas.height;
+      audioCtx2d.clearRect(0, 0, w, h);
+
+      const hasAudio = ARGAudio.getFrequencyData(freqData);
+      const numBars = 24;
+      const barWidth = (w / numBars) - 2;
+
+      for (let i = 0; i < numBars; i++) {
+        let barHeight = 2;
+        if (hasAudio && freqData[i] > 2) {
+          barHeight = Math.max(3, (freqData[i] / 255) * (h - 4));
+        } else if (ambientActive || previousState === 'scanning') {
+          const noise = Math.sin(Date.now() * 0.005 + i * 0.5) * 0.5 + 0.5;
+          const jitter = Math.random() * 0.3;
+          barHeight = Math.max(3, (noise + jitter) * (h - 6));
+        }
+
+        const x = i * (barWidth + 2);
+        const y = h - barHeight;
+
+        audioCtx2d.fillStyle = previousState === 'revealed' ? '#00ff88' : (previousState === 'scanning' ? '#00e5ff' : '#ffaa00');
+        audioCtx2d.fillRect(x, y, barWidth, barHeight);
+      }
+    }
+    drawAudioVisualizer();
+
+    // ── Validation de l'Énigme ───────────────────────────────────────────────
+    function checkAnswer() {
+      const val = answerInput.value.trim().toUpperCase();
+      if (val === 'SUFFOCATION') {
+        answerFeedback.innerHTML = '<span style="color: var(--accent-green); font-weight: bold;">✓ CLÉ EXACTE — Salle 45 déverrouillée !</span>';
+        syncClient.notifyReveal('SUFFOCATION');
+      } else if (val.length === 0) {
+        answerFeedback.innerHTML = '<span style="color: var(--text-dim);">Entrez le mot trouvé par la lentille...</span>';
+      } else {
+        answerFeedback.innerHTML = '<span style="color: var(--accent-red);">✗ Clé incorrecte. Utilisez la lentille pour sonder le spectre.</span>';
+        ARGAudio.playBeep(220, 0.15, 'sawtooth');
+      }
+    }
+
+    submitAnswerBtn.addEventListener('click', checkAnswer);
+    answerInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') checkAnswer();
+    });
+
+    fillSecretBtn.addEventListener('click', () => {
+      answerInput.value = 'SUFFOCATION';
+      checkAnswer();
+    });
+
+    // ── Boutons de Simulation Démo ───────────────────────────────────────────
+    simConnectBtn.addEventListener('click', () => {
+      syncClient.joinSession();
+      ARGAudio.playLockTone();
+    });
+
+    simScanBtn.addEventListener('click', () => {
+      syncClient.notifyScanStart();
+      ARGAudio.playScanningPulse(0.8);
+    });
+
+    simRevealBtn.addEventListener('click', () => {
+      syncClient.notifyReveal('SUFFOCATION');
+    });
+
+    resetSessionBtn.addEventListener('click', () => {
+      syncClient.resetSession();
+      answerInput.value = '';
+      answerFeedback.textContent = '';
+      previousState = 'standby';
+      updateUIState('standby');
+    });
+
+    // Démarrer la session au chargement
+    setupSession();
+  </script>
+</body>
+</html>
