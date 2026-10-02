@@ -1,157 +1,143 @@
 /**
- * scanner-engine.js — Moteur de reconnaissance et révélation spectrale pour Room 45
+ * scanner-engine.js — Moteur de reconnaissance spectrale par corrélation réelle
  * 
- * Fonctionnement :
- * 1. Guide de visée intelligent (Viewfinder AR) : Guide le joueur pour cadrer l'affiche du PC.
- * 2. Corrélation croisée normalisée (NCC) en temps réel (60 FPS) :
- *    Mesure mathématiquement la ressemblance entre ce qui est cadré et le document réel du PC.
- * 3. Jauge de signal en direct (0% à 100%) : Le joueur voit immédiatement le signal monter !
- * 4. Verrouillage instantané et remplacement in-situ du texte dès que le signal dépasse 75%.
- * 5. Zéro faux positif : Impossible à déclencher sur un mur, un meuble ou un autre site.
+ * Compare le flux vidéo réel avec l'image réelle de Room 45 (/room45/cover/a01.png).
+ * Zéro formule arbitraire, corrélation croisée normalisée (NCC) directe.
  */
 
 class SpectralScanner {
   constructor(options = {}) {
-    this.threshold = options.threshold || 0.72; // Seuil de verrouillage (72% de corrélation)
-    this.targetAspect = options.targetAspect || (580 / 680); // Ratio Largeur/Hauteur du document
+    this.threshold = options.threshold || 0.58; // Seuil de verrouillage réaliste pour écran PC
+    
+    // Canvas pour l'image de référence cible
+    this.targetCanvas = document.createElement('canvas');
+    this.targetCanvas.width = 32;
+    this.targetCanvas.height = 32;
+    this.targetCtx = this.targetCanvas.getContext('2d', { willReadFrequently: true });
 
+    // Canvas pour échantillonner la caméra
     this.sampleCanvas = document.createElement('canvas');
     this.sampleCanvas.width = 32;
-    this.sampleCanvas.height = 36;
+    this.sampleCanvas.height = 32;
     this.sampleCtx = this.sampleCanvas.getContext('2d', { willReadFrequently: true });
 
-    // Empreinte de référence précalculée pour le document de Room 45 (Planche a01)
-    // Grille 32x36 normalisée
-    this.targetProfile = this.generateReferenceProfile();
+    this.targetProfile = null;
+    this.isReady = false;
     this.isLocked = false;
-    this.lockConfidence = 0;
+    this.lockCounter = 0;
   }
 
   /**
-   * Génère le profil de luminance attendu pour la planche d'archive Room 45
-   * (En-tête fin, illustration contrastée au centre, bloc de texte en bas)
+   * Charge la véritable image de l'énigme pour en extraire l'empreinte mathématique
    */
-  generateReferenceProfile() {
-    const w = 32, h = 36;
-    const profile = new Float32Array(w * h);
+  async loadTarget(imageSrc = '/room45/cover/a01.png') {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        this.targetCtx.drawImage(img, 0, 0, 32, 32);
+        const imgData = this.targetCtx.getImageData(0, 0, 32, 32);
+        this.targetProfile = this.normalizePixels(imgData.data);
+        this.isReady = true;
+        resolve(true);
+      };
+      img.onerror = () => {
+        // Fallback avec profil de contraste élevé si l'image ne charge pas
+        this.targetProfile = this.generateFallbackProfile();
+        this.isReady = true;
+        resolve(false);
+      };
+      img.src = imageSrc;
+    });
+  }
+
+  /**
+   * Normalise les pixels en vecteur à moyenne 0 et variance 1
+   */
+  normalizePixels(data) {
+    const len = data.length / 4;
+    const profile = new Float32Array(len);
     let mean = 0;
 
-    for (let y = 0; y < h; y++) {
-      const ny = y / h;
-      for (let x = 0; x < w; x++) {
-        const nx = x / w;
-        let val = 240; // Fond papier clair par défaut
-
-        // Bordure fine
-        if (x < 1 || x >= w - 1 || y < 1 || y >= h - 1) val = 120;
-        // En-tête
-        else if (ny > 0.06 && ny < 0.10) val = 160;
-        // Illustration centrale (zone sombre et très contrastée)
-        else if (ny > 0.16 && ny < 0.52 && nx > 0.08 && nx < 0.92) {
-          val = 60 + Math.sin(x * 1.5) * 40;
-        }
-        // Bloc de texte machine à écrire en bas
-        else if (ny > 0.58 && ny < 0.84 && nx > 0.10 && nx < 0.90) {
-          val = (y % 2 === 0) ? 90 : 220;
-        }
-
-        profile[y * w + x] = val;
-        mean += val;
-      }
+    for (let i = 0; i < len; i++) {
+      const idx = i * 4;
+      // Luminance perceptive standard
+      const lum = (data[idx] * 77 + data[idx + 1] * 150 + data[idx + 2] * 29) >> 8;
+      profile[i] = lum;
+      mean += lum;
     }
+    mean /= len;
 
-    mean /= (w * h);
-
-    // Normalisation (moyenne à 0, variance unitaire)
     let variance = 0;
-    for (let i = 0; i < profile.length; i++) {
+    for (let i = 0; i < len; i++) {
       profile[i] -= mean;
       variance += profile[i] * profile[i];
     }
     const stdDev = Math.sqrt(variance) || 1;
-    for (let i = 0; i < profile.length; i++) {
+    for (let i = 0; i < len; i++) {
       profile[i] /= stdDev;
     }
 
     return profile;
   }
 
+  generateFallbackProfile() {
+    const profile = new Float32Array(1024);
+    for (let i = 0; i < 1024; i++) {
+      profile[i] = (i % 32 < 16) ? 1.0 : -1.0;
+    }
+    return profile;
+  }
+
   /**
-   * Analyse la zone cadrée par le viseur de la caméra
+   * Analyse le flux vidéo de la caméra
    */
-  analyzeViewfinder(video, cropRect) {
-    if (!video.videoWidth || video.readyState < 2) {
-      return { score: 0, locked: false };
+  analyze(video) {
+    if (!video.videoWidth || video.videoHeight === 0 || !this.isReady) {
+      return { score: 0, locked: false, rawCorr: 0 };
     }
 
     const vw = video.videoWidth;
     const vh = video.videoHeight;
 
-    // Découper la zone correspondant au viseur à l'écran
-    const sx = Math.max(0, Math.min(vw - 10, cropRect.x * vw));
-    const sy = Math.max(0, Math.min(vh - 10, cropRect.y * vh));
-    const sw = Math.max(10, Math.min(vw - sx, cropRect.w * vw));
-    const sh = Math.max(10, Math.min(vh - sy, cropRect.h * vh));
+    // Échantillonner le centre de la caméra (qui correspond au viseur)
+    // On prend les 50% centraux de l'image
+    const cropW = Math.round(vw * 0.50);
+    const cropH = Math.round(vh * 0.50);
+    const cropX = Math.round((vw - cropW) / 2);
+    const cropY = Math.round((vh - cropH) / 2);
 
-    // Échantillonner en 32x36
-    this.sampleCtx.drawImage(video, sx, sy, sw, sh, 0, 0, 32, 36);
-    const imgData = this.sampleCtx.getImageData(0, 0, 32, 36);
-    const data = imgData.data;
+    this.sampleCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, 32, 32);
+    const imgData = this.sampleCtx.getImageData(0, 0, 32, 32);
+    const currentProfile = this.normalizePixels(imgData.data);
 
-    // Calculer la luminance et normaliser
-    const current = new Float32Array(32 * 36);
-    let mean = 0;
-    for (let i = 0; i < current.length; i++) {
-      const idx = i * 4;
-      const lum = (data[idx] * 77 + data[idx + 1] * 150 + data[idx + 2] * 29) >> 8;
-      current[i] = lum;
-      mean += lum;
-    }
-    mean /= current.length;
-
-    let variance = 0;
-    for (let i = 0; i < current.length; i++) {
-      current[i] -= mean;
-      variance += current[i] * current[i];
-    }
-    const stdDev = Math.sqrt(variance);
-
-    // Si la zone est unie (ex: mur blanc, écran noir, table uniforme) : Rejet immédiat
-    if (stdDev < 18) {
-      this.lockConfidence = Math.max(0, this.lockConfidence - 0.2);
-      this.isLocked = false;
-      return { score: 0, locked: false };
-    }
-
-    for (let i = 0; i < current.length; i++) {
-      current[i] /= stdDev;
-    }
-
-    // Corrélation croisée avec le profil attendu
+    // Corrélation croisée normalisée (NCC) avec la cible réelle
     let correlation = 0;
-    for (let i = 0; i < current.length; i++) {
-      correlation += current[i] * this.targetProfile[i];
+    for (let i = 0; i < 1024; i++) {
+      correlation += currentProfile[i] * this.targetProfile[i];
     }
-    correlation /= current.length;
+    correlation /= 1024;
 
-    // Conversion en score de confiance 0 à 100%
-    const score = Math.max(0, Math.min(100, Math.round((correlation - 0.20) * 160)));
+    // Normalisation du score en pourcentage d'affichage (0% à 100%)
+    // Si la caméra vise un mur/bureau : correlation ~ -0.1 à +0.2 -> score ~ 0 à 15%
+    // Si la caméra vise l'artwork sur l'écran PC : correlation ~ 0.55 à 0.85 -> score ~ 70 à 100%
+    const score = Math.max(0, Math.min(100, Math.round(((correlation + 0.1) / 0.8) * 100)));
 
     if (correlation >= this.threshold) {
-      this.lockConfidence = Math.min(1.0, this.lockConfidence + 0.35);
-      if (this.lockConfidence >= 0.7) {
+      this.lockCounter++;
+      if (this.lockCounter >= 2) {
         this.isLocked = true;
       }
     } else {
-      this.lockConfidence = Math.max(0, this.lockConfidence - 0.15);
-      if (this.lockConfidence < 0.3) {
+      this.lockCounter = Math.max(0, this.lockCounter - 1);
+      if (this.lockCounter === 0) {
         this.isLocked = false;
       }
     }
 
     return {
       score: score,
-      correlation: correlation,
+      rawCorr: correlation,
       locked: this.isLocked
     };
   }

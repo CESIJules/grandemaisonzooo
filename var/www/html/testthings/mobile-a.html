@@ -3,11 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Lentille Spectrale — Scanner de Révélation</title>
+  <title>Lentille Spectrale — Scanner Room 45</title>
   <link rel="stylesheet" href="/testthings/css/style.css">
   <script src="/testthings/js/scanner-engine.js"></script>
   <style>
-    /* Viseur de cadrage intelligent */
     .viewfinder-container {
       position: absolute;
       top: 50%;
@@ -29,11 +28,10 @@
 
     .viewfinder-frame.locked {
       border: 3px solid #00ff88;
-      box-shadow: 0 0 35px rgba(0, 255, 136, 0.7), inset 0 0 25px rgba(0, 255, 136, 0.3);
+      box-shadow: 0 0 35px rgba(0, 255, 136, 0.8), inset 0 0 25px rgba(0, 255, 136, 0.35);
       background: rgba(0, 0, 0, 0.1);
     }
 
-    /* Coins de visée */
     .vf-corner {
       position: absolute;
       width: 20px;
@@ -50,7 +48,7 @@
       border-color: #00ff88;
     }
 
-    /* Calque secret qui apparaît DEDANS le viseur */
+    /* Calque secret révélé in-situ */
     #revealedSecretOverlay {
       position: absolute;
       inset: 0;
@@ -62,8 +60,9 @@
       flex-direction: column;
       justify-content: space-between;
       border-radius: 4px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.85);
       animation: revealStamp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      pointer-events: auto;
     }
 
     @keyframes revealStamp {
@@ -93,10 +92,9 @@
       text-align: center;
     }
 
-    /* Jauge de synchronisation */
     .sync-meter-container {
       position: absolute;
-      bottom: 2.2rem;
+      bottom: 2rem;
       left: 50%;
       transform: translateX(-50%);
       width: min(88vw, 360px);
@@ -137,7 +135,6 @@
 
   <div class="ar-viewport">
     
-    <!-- Flux caméra grand angle sans zoom -->
     <video id="cameraFeed" autoplay playsinline muted></video>
 
     <!-- Viseur AR guidé -->
@@ -148,9 +145,8 @@
         <div class="vf-corner vf-br"></div>
         <div class="vf-corner vf-bl"></div>
 
-        <!-- Indication de cadrage flottante -->
-        <div id="aimHint" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: rgba(255,255,255,0.7); font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; text-align: center; width: 85%; line-height: 1.5; pointer-events: none;">
-          Cadrez le document du PC dans ce rectangle
+        <div id="aimHint" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: rgba(255,255,255,0.8); font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; text-align: center; width: 85%; line-height: 1.5; pointer-events: none; text-shadow: 0 1px 4px rgba(0,0,0,0.8);">
+          Cadrez l'affiche de l'énigme ici
         </div>
 
         <!-- Calque secret révélé in-situ -->
@@ -170,11 +166,11 @@
             <div style="font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.3rem;">
               • CLÉ SECRÈTE DE LA SALLE •
             </div>
-            <div id="secretCodeText" style="font-size: 1.35rem; font-weight: 900; letter-spacing: 0.08em; line-height: 1.3;">
+            <div id="secretCodeText" style="font-size: 1.3rem; font-weight: 900; letter-spacing: 0.08em; line-height: 1.3;">
               LA RÉPONSE EST : SUFFOCATION
             </div>
             <div style="font-size: 0.7rem; color: #666; margin-top: 0.4rem;">
-              Tapez ce mot exact sur le PC.
+              Entrez ce mot sur le site pour débloquer la porte.
             </div>
           </div>
 
@@ -188,25 +184,31 @@
 
     <!-- Barre d'outils haut d'écran -->
     <div class="debug-top-bar">
-      <button id="toggleZoomBtn" class="pill-btn">
-        🔍 Vue Complète (Dézoomée)
+      <!-- Bouton de test forcé direct pour voir le secret immédiatement -->
+      <button id="forceTestBtn" class="pill-btn" style="background: rgba(0, 255, 136, 0.25); border-color: #00ff88; color: #00ff88;">
+        👁️ Test du Secret (Aperçu)
       </button>
-      <button id="restartBtn" class="pill-btn">
-        ↺ Reset
-      </button>
+      <div style="display: flex; gap: 0.4rem;">
+        <button id="toggleZoomBtn" class="pill-btn">
+          🔍 Plein Écran
+        </button>
+        <button id="restartBtn" class="pill-btn">
+          ↺ Reset
+        </button>
+      </div>
     </div>
 
     <!-- Jauge de synchronisation et de signal -->
     <div class="sync-meter-container">
       <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem;">
-        <span id="meterLabel" style="color: var(--text);">Signal optique :</span>
+        <span id="meterLabel" style="color: var(--text);">Signal spectral :</span>
         <span id="meterPercent" style="font-weight: bold; color: #ffaa00;">0%</span>
       </div>
       <div class="meter-bar-bg">
         <div id="meterFill" class="meter-bar-fill"></div>
       </div>
       <div id="meterStatus" style="font-size: 0.68rem; color: var(--text-dim); text-align: center; margin-top: 0.1rem;">
-        Approchez votre téléphone du document PC...
+        Approchez la caméra de l'écran du PC...
       </div>
     </div>
 
@@ -217,7 +219,7 @@
       </div>
       <h2 style="font-size: 1.3rem; margin-bottom: 0.8rem; color: #fff;">LENTILLE DE RÉVÉLATION</h2>
       <p style="font-size: 0.85rem; color: var(--text-dim); line-height: 1.5; max-width: 320px; margin-bottom: 2rem;">
-        Cadrez le document sur votre écran de PC pour révéler la clé cachée.
+        Visez l'affiche sur votre écran de PC pour révéler le message secret.
       </p>
       <button id="startBtn" style="background: #00ff88; color: #000; border: none; padding: 0.9rem 2.2rem; font-size: 0.95rem; font-weight: bold; border-radius: 30px; letter-spacing: 0.1em; cursor: pointer; box-shadow: 0 0 20px rgba(0,255,136,0.6);">
         ACTIVER LA CAMÉRA
@@ -240,21 +242,40 @@
     const startBtn = document.getElementById('startBtn');
     const permError = document.getElementById('permError');
     const toggleZoomBtn = document.getElementById('toggleZoomBtn');
+    const forceTestBtn = document.getElementById('forceTestBtn');
     const restartBtn = document.getElementById('restartBtn');
 
     // Récupérer le secret personnalisé
     const customSecret = localStorage.getItem('room45_insitu_secret') || 'LA RÉPONSE EST : SUFFOCATION';
     secretCodeText.textContent = customSecret;
 
-    const scanner = new SpectralScanner({ threshold: 0.65 });
+    const scanner = new SpectralScanner({ threshold: 0.55 });
     let isScanning = false;
     let isCoverMode = false;
+    let isForceRevealed = false;
     let hasVibrated = false;
+
+    // Bouton de Test / Révélation forcée
+    forceTestBtn.addEventListener('click', () => {
+      isForceRevealed = !isForceRevealed;
+      forceTestBtn.textContent = isForceRevealed ? '❌ Masquer l\'Aperçu' : '👁️ Test du Secret (Aperçu)';
+      forceTestBtn.style.color = isForceRevealed ? '#ff5555' : '#00ff88';
+      forceTestBtn.style.borderColor = isForceRevealed ? '#ff5555' : '#00ff88';
+
+      viewfinderFrame.classList.toggle('locked', isForceRevealed);
+      meterFill.classList.toggle('locked', isForceRevealed);
+      meterFill.style.width = isForceRevealed ? '100%' : '0%';
+      meterPercent.textContent = isForceRevealed ? '100% (TEST)' : '0%';
+      meterPercent.style.color = isForceRevealed ? '#00ff88' : '#ffaa00';
+      meterStatus.textContent = isForceRevealed ? '✓ APERÇU DU SECRET ACTIVÉ' : 'Approchez la caméra du document PC...';
+      aimHint.style.display = isForceRevealed ? 'none' : 'block';
+      revealedOverlay.style.display = isForceRevealed ? 'flex' : 'none';
+    });
 
     toggleZoomBtn.addEventListener('click', () => {
       isCoverMode = !isCoverMode;
       video.classList.toggle('cover-mode', isCoverMode);
-      toggleZoomBtn.textContent = isCoverMode ? '🔍 Plein Écran (Cover)' : '🔍 Vue Complète (Dézoomée)';
+      toggleZoomBtn.textContent = isCoverMode ? '🔍 Plein Écran' : '🔍 Vue Complète';
     });
 
     restartBtn.addEventListener('click', () => window.location.reload());
@@ -262,12 +283,11 @@
     startBtn.addEventListener('click', async () => {
       startBtn.textContent = 'Activation...';
       try {
+        // Précharger l'image cible réelle
+        await scanner.loadTarget('/room45/cover/a01.png');
+
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: { ideal: 'environment' },
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
-          },
+          video: { facingMode: { ideal: 'environment' } },
           audio: false
         });
         video.srcObject = stream;
@@ -286,32 +306,27 @@
     function scanLoop() {
       if (!isScanning) return;
 
-      if (video.readyState >= 2 && video.videoWidth > 0) {
-        // Coordonnées relatives du viseur central à l'écran
-        const cropRect = getViewfinderCropRect();
-        
-        // Analyse en temps réel de la zone visée
-        const result = scanner.analyzeViewfinder(video, cropRect);
+      if (!isForceRevealed && video.readyState >= 2 && video.videoWidth > 0) {
+        // Analyser le centre de l'image
+        const result = scanner.analyze(video);
 
-        // Mettre à jour la jauge de signal en direct
+        // Mettre à jour la jauge
         meterFill.style.width = result.score + '%';
         meterPercent.textContent = result.score + '%';
 
         if (result.locked) {
-          // --- VERROUILLÉ : RÉVÉLATION DU SECRET ---
           viewfinderFrame.classList.add('locked');
           meterFill.classList.add('locked');
           meterPercent.style.color = '#00ff88';
-          meterStatus.textContent = '✓ DOCUMENT IDENTIFIÉ • CLÉ RÉVÉLÉE';
+          meterStatus.textContent = '✓ DOCUMENT RECONNU • CLÉ RÉVÉLÉE';
           aimHint.style.display = 'none';
           revealedOverlay.style.display = 'flex';
 
           if (!hasVibrated) {
-            if (navigator.vibrate) navigator.vibrate([40, 50, 40]);
+            if (navigator.vibrate) navigator.vibrate([40, 60, 40]);
             hasVibrated = true;
           }
         } else {
-          // --- EN RECHERCHE / NON VERROUILLÉ ---
           viewfinderFrame.classList.remove('locked');
           meterFill.classList.remove('locked');
           meterPercent.style.color = '#ffaa00';
@@ -322,58 +337,14 @@
           if (result.score === 0) {
             meterStatus.textContent = 'Visez l\'affiche de l\'énigme sur le PC...';
           } else if (result.score < 40) {
-            meterStatus.textContent = 'Signal faible... Rapprochez-vous de l\'écran';
+            meterStatus.textContent = 'Approchez-vous doucement de l\'écran...';
           } else {
-            meterStatus.textContent = 'Signal détecté ! Stabilisez le cadrage...';
+            meterStatus.textContent = `Signal à ${result.score}% ! Stabilisez...`;
           }
         }
       }
 
       requestAnimationFrame(scanLoop);
-    }
-
-    /**
-     * Calcule la boîte de découpe relative (0.0 à 1.0) dans la vidéo
-     * correspondant exactement au rectangle du viseur affiché sur le téléphone
-     */
-    function getViewfinderCropRect() {
-      const vw = video.videoWidth;
-      const vh = video.videoHeight;
-      const sw = window.innerWidth;
-      const sh = window.innerHeight;
-
-      // Position du viseur sur l'écran
-      const vfEl = document.querySelector('.viewfinder-container');
-      const vfRect = vfEl.getBoundingClientRect();
-
-      let scale, renderedW, renderedH, offsetX, offsetY;
-
-      if (isCoverMode) {
-        scale = Math.max(sw / vw, sh / vh);
-        renderedW = vw * scale;
-        renderedH = vh * scale;
-        offsetX = (sw - renderedW) / 2;
-        offsetY = (sh - renderedH) / 2;
-      } else {
-        scale = Math.min(sw / vw, sh / vh);
-        renderedW = vw * scale;
-        renderedH = vh * scale;
-        offsetX = (sw - renderedW) / 2;
-        offsetY = (sh - renderedH) / 2;
-      }
-
-      // Inverser la projection écran -> vidéo
-      const vx = (vfRect.left - offsetX) / scale;
-      const vy = (vfRect.top - offsetY) / scale;
-      const vwBox = vfRect.width / scale;
-      const vhBox = vfRect.height / scale;
-
-      return {
-        x: Math.max(0, vx / vw),
-        y: Math.max(0, vy / vh),
-        w: Math.min(1, vwBox / vw),
-        h: Math.min(1, vhBox / vh)
-      };
     }
   </script>
 </body>

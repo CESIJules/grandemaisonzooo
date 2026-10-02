@@ -28,7 +28,7 @@
 
     .viewfinder-frame-b.locked {
       border: 3px solid #00aaff;
-      box-shadow: 0 0 40px rgba(0, 170, 255, 0.8), inset 0 0 30px rgba(0, 170, 255, 0.4);
+      box-shadow: 0 0 40px rgba(0, 170, 255, 0.85), inset 0 0 30px rgba(0, 170, 255, 0.4);
       background: rgba(0, 0, 0, 0.2);
     }
 
@@ -44,7 +44,6 @@
     .vf-br { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; }
     .vf-bl { bottom: -2px; left: -2px; border-width: 0 0 3px 3px; }
 
-    /* Calque secret d'artwork révélé */
     #revealedArtOverlay {
       position: absolute;
       inset: 0;
@@ -53,6 +52,7 @@
       overflow: hidden;
       display: none;
       animation: revealArt 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      pointer-events: auto;
     }
 
     @keyframes revealArt {
@@ -66,7 +66,7 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      filter: contrast(1.4) brightness(0.55) hue-rotate(180deg);
+      filter: contrast(1.4) brightness(0.5) hue-rotate(180deg);
       opacity: 0.9;
     }
 
@@ -79,7 +79,7 @@
       align-items: center;
       text-align: center;
       padding: 1.5rem;
-      background: radial-gradient(circle, rgba(0, 170, 255, 0.25) 0%, rgba(0,0,0,0.75) 85%);
+      background: radial-gradient(circle, rgba(0, 170, 255, 0.25) 0%, rgba(0,0,0,0.8) 85%);
       color: #fff;
     }
   </style>
@@ -90,7 +90,6 @@
     
     <video id="cameraFeed" autoplay playsinline muted></video>
 
-    <!-- Viseur AR pour l'Artwork -->
     <div class="viewfinder-container-b">
       <div id="viewfinderFrameB" class="viewfinder-frame-b">
         <div class="vf-corner-b vf-tl"></div>
@@ -98,11 +97,10 @@
         <div class="vf-corner-b vf-br"></div>
         <div class="vf-corner-b vf-bl"></div>
 
-        <div id="aimHintB" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: rgba(255,255,255,0.7); font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; text-align: center; width: 85%; line-height: 1.5; pointer-events: none;">
+        <div id="aimHintB" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: rgba(255,255,255,0.8); font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; text-align: center; width: 85%; line-height: 1.5; pointer-events: none; text-shadow: 0 1px 4px rgba(0,0,0,0.8);">
           Cadrez l'illustration du PC dans ce rectangle
         </div>
 
-        <!-- Remplacement de l'Artwork en 1:1 -->
         <div id="revealedArtOverlay">
           <img src="/room45/cover/a01.png" alt="" class="art-bg-fill">
           <div class="art-content-box">
@@ -112,7 +110,7 @@
             <div style="font-size: 0.65rem; letter-spacing: 0.25em; text-transform: uppercase; color: #00aaff; margin-bottom: 0.4rem;">
               • SCEAU SPECTRAL RÉVÉLÉ •
             </div>
-            <div id="artSecretCodeDisplay" style="font-size: 1.5rem; font-weight: 900; letter-spacing: 0.12em; color: #fff; text-shadow: 0 0 20px #00aaff; border-bottom: 2px solid #00aaff; padding-bottom: 0.4rem;">
+            <div id="artSecretCodeDisplay" style="font-size: 1.4rem; font-weight: 900; letter-spacing: 0.12em; color: #fff; text-shadow: 0 0 20px #00aaff; border-bottom: 2px solid #00aaff; padding-bottom: 0.4rem;">
               RÉPONSE : OUVERTURE
             </div>
             <p style="font-size: 0.72rem; color: #ccc; margin-top: 0.6rem;">
@@ -126,12 +124,17 @@
 
     <!-- Barre d'outils haut d'écran -->
     <div class="debug-top-bar">
-      <button id="toggleZoomBtn" class="pill-btn">
-        🔍 Vue Complète (Dézoomée)
+      <button id="forceTestBtnB" class="pill-btn" style="background: rgba(0, 170, 255, 0.25); border-color: #00aaff; color: #00aaff;">
+        👁️ Test du Secret (Aperçu)
       </button>
-      <button id="restartBtn" class="pill-btn">
-        ↺ Reset
-      </button>
+      <div style="display: flex; gap: 0.4rem;">
+        <button id="toggleZoomBtn" class="pill-btn">
+          🔍 Plein Écran
+        </button>
+        <button id="restartBtn" class="pill-btn">
+          ↺ Reset
+        </button>
+      </div>
     </div>
 
     <!-- Jauge de synchronisation et de signal -->
@@ -144,7 +147,7 @@
         <div id="meterFillB" class="meter-bar-fill" style="background: #00aaff;"></div>
       </div>
       <div id="meterStatusB" style="font-size: 0.68rem; color: var(--text-dim); text-align: center; margin-top: 0.1rem;">
-        Approchez votre téléphone de l'artwork...
+        Approchez la caméra de l'artwork...
       </div>
     </div>
 
@@ -155,7 +158,7 @@
       </div>
       <h2 style="font-size: 1.3rem; margin-bottom: 0.8rem; color: #fff;">LENTILLE D'ARTWORK</h2>
       <p style="font-size: 0.85rem; color: var(--text-dim); line-height: 1.5; max-width: 320px; margin-bottom: 2rem;">
-        Visez l'illustration sur votre écran PC pour transformer la toile en réalité augmentée.
+        Cadrez l'illustration sur votre écran PC pour transformer la toile.
       </p>
       <button id="startBtn" style="background: #00aaff; color: #000; border: none; padding: 0.9rem 2.2rem; font-size: 0.95rem; font-weight: bold; border-radius: 30px; letter-spacing: 0.1em; cursor: pointer; box-shadow: 0 0 20px rgba(0,170,255,0.6);">
         ACTIVER LA CAMÉRA
@@ -178,20 +181,38 @@
     const startBtn = document.getElementById('startBtn');
     const permError = document.getElementById('permError');
     const toggleZoomBtn = document.getElementById('toggleZoomBtn');
+    const forceTestBtnB = document.getElementById('forceTestBtnB');
     const restartBtn = document.getElementById('restartBtn');
 
     const customSecret = localStorage.getItem('room45_art_secret') || 'RÉPONSE : OUVERTURE';
     artSecretCodeDisplay.textContent = customSecret;
 
-    const scanner = new SpectralScanner({ threshold: 0.65, targetAspect: (540 / 380) });
+    const scanner = new SpectralScanner({ threshold: 0.55 });
     let isScanning = false;
     let isCoverMode = false;
+    let isForceRevealed = false;
     let hasVibrated = false;
+
+    // Bouton de Test / Révélation forcée
+    forceTestBtnB.addEventListener('click', () => {
+      isForceRevealed = !isForceRevealed;
+      forceTestBtnB.textContent = isForceRevealed ? '❌ Masquer l\'Aperçu' : '👁️ Test du Secret (Aperçu)';
+      forceTestBtnB.style.color = isForceRevealed ? '#ff5555' : '#00aaff';
+      forceTestBtnB.style.borderColor = isForceRevealed ? '#ff5555' : '#00aaff';
+
+      vfFrame.classList.toggle('locked', isForceRevealed);
+      meterFill.classList.toggle('locked', isForceRevealed);
+      meterFill.style.width = isForceRevealed ? '100%' : '0%';
+      meterPercent.textContent = isForceRevealed ? '100% (TEST)' : '0%';
+      meterStatus.textContent = isForceRevealed ? '✓ APERÇU DE LA TOILE ACTIVÉ' : 'Approchez la caméra de l\'artwork...';
+      aimHint.style.display = isForceRevealed ? 'none' : 'block';
+      revealedOverlay.style.display = isForceRevealed ? 'block' : 'none';
+    });
 
     toggleZoomBtn.addEventListener('click', () => {
       isCoverMode = !isCoverMode;
       video.classList.toggle('cover-mode', isCoverMode);
-      toggleZoomBtn.textContent = isCoverMode ? '🔍 Plein Écran (Cover)' : '🔍 Vue Complète (Dézoomée)';
+      toggleZoomBtn.textContent = isCoverMode ? '🔍 Plein Écran' : '🔍 Vue Complète';
     });
 
     restartBtn.addEventListener('click', () => window.location.reload());
@@ -199,12 +220,10 @@
     startBtn.addEventListener('click', async () => {
       startBtn.textContent = 'Activation...';
       try {
+        await scanner.loadTarget('/room45/cover/a01.png');
+
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: { ideal: 'environment' },
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
-          },
+          video: { facingMode: { ideal: 'environment' } },
           audio: false
         });
         video.srcObject = stream;
@@ -223,16 +242,14 @@
     function scanLoop() {
       if (!isScanning) return;
 
-      if (video.readyState >= 2 && video.videoWidth > 0) {
-        const cropRect = getViewfinderCropRect();
-        const result = scanner.analyzeViewfinder(video, cropRect);
+      if (!isForceRevealed && video.readyState >= 2 && video.videoWidth > 0) {
+        const result = scanner.analyze(video);
 
         meterFill.style.width = result.score + '%';
         meterPercent.textContent = result.score + '%';
 
         if (result.locked) {
           vfFrame.classList.add('locked');
-          meterPercent.style.color = '#00aaff';
           meterStatus.textContent = '✓ TOILE IDENTIFIÉE • SCEAU RÉVÉLÉ';
           aimHint.style.display = 'none';
           revealedOverlay.style.display = 'block';
@@ -243,7 +260,6 @@
           }
         } else {
           vfFrame.classList.remove('locked');
-          meterPercent.style.color = '#00aaff';
           revealedOverlay.style.display = 'none';
           aimHint.style.display = 'block';
           hasVibrated = false;
@@ -251,52 +267,14 @@
           if (result.score === 0) {
             meterStatus.textContent = 'Visez l\'artwork sur l\'écran PC...';
           } else if (result.score < 40) {
-            meterStatus.textContent = 'Signal faible... Rapprochez-vous de la toile';
+            meterStatus.textContent = 'Approchez-vous doucement de la toile...';
           } else {
-            meterStatus.textContent = 'Alignement en cours... Stabilisez';
+            meterStatus.textContent = `Signal à ${result.score}% ! Stabilisez...`;
           }
         }
       }
 
       requestAnimationFrame(scanLoop);
-    }
-
-    function getViewfinderCropRect() {
-      const vw = video.videoWidth;
-      const vh = video.videoHeight;
-      const sw = window.innerWidth;
-      const sh = window.innerHeight;
-
-      const vfEl = document.querySelector('.viewfinder-container-b');
-      const vfRect = vfEl.getBoundingClientRect();
-
-      let scale, renderedW, renderedH, offsetX, offsetY;
-
-      if (isCoverMode) {
-        scale = Math.max(sw / vw, sh / vh);
-        renderedW = vw * scale;
-        renderedH = vh * scale;
-        offsetX = (sw - renderedW) / 2;
-        offsetY = (sh - renderedH) / 2;
-      } else {
-        scale = Math.min(sw / vw, sh / vh);
-        renderedW = vw * scale;
-        renderedH = vh * scale;
-        offsetX = (sw - renderedW) / 2;
-        offsetY = (sh - renderedH) / 2;
-      }
-
-      const vx = (vfRect.left - offsetX) / scale;
-      const vy = (vfRect.top - offsetY) / scale;
-      const vwBox = vfRect.width / scale;
-      const vhBox = vfRect.height / scale;
-
-      return {
-        x: Math.max(0, vx / vw),
-        y: Math.max(0, vy / vh),
-        w: Math.min(1, vwBox / vw),
-        h: Math.min(1, vhBox / vh)
-      };
     }
   </script>
 </body>
