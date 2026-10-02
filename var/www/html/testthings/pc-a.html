@@ -3,54 +3,118 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cible PC (Solution A — Mires Optiques) — Room 45</title>
+  <title>Salle 45 — Énigme Spectrale</title>
   <link rel="stylesheet" href="/testthings/css/style.css">
   <script src="/testthings/js/qrcode.min.js"></script>
+  <style>
+    /* Esthétique Room 45 : Vintage, papier texturé, typographie machine à écrire */
+    .plate-container {
+      position: relative;
+      background: #f4f3ef;
+      color: #111;
+      padding: 3rem;
+      border: 1px solid #dcd9d0;
+      box-shadow: 0 15px 50px rgba(0, 0, 0, 0.7);
+      border-radius: 2px;
+      max-width: 620px;
+      margin: 0 auto;
+    }
+
+    /* Repères d'imprimerie ultra-discrets (1px, style planche de gravure) */
+    .crop-mark {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      pointer-events: none;
+    }
+    .crop-tl { top: 12px; left: 12px; border-top: 1px solid #777; border-left: 1px solid #777; }
+    .crop-tr { top: 12px; right: 12px; border-top: 1px solid #777; border-right: 1px solid #777; }
+    .crop-br { bottom: 12px; right: 12px; border-bottom: 1px solid #777; border-right: 1px solid #777; }
+    .crop-bl { bottom: 12px; left: 12px; border-bottom: 1px solid #777; border-left: 1px solid #777; }
+
+    .plate-header {
+      font-size: 0.68rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: #666;
+      border-bottom: 1px solid #e0ddd5;
+      padding-bottom: 0.6rem;
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .plate-art {
+      width: 100%;
+      height: auto;
+      max-height: 240px;
+      object-fit: contain;
+      filter: grayscale(1) contrast(1.15);
+      border: 1px solid #e0ddd5;
+      margin-bottom: 2rem;
+      background: #fff;
+    }
+
+    /* Zone de texte qui sera remplacée en AR par le téléphone */
+    .target-text-zone {
+      background: #ffffff;
+      border: 1px dashed #d5d1c5;
+      padding: 1.5rem;
+      font-size: 0.95rem;
+      line-height: 1.7;
+      color: #222;
+      position: relative;
+    }
+  </style>
 </head>
 <body>
-  <div class="pc-container">
+  <div class="pc-container" style="max-width: 1000px;">
 
     <!-- Navigation haut -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; font-size: 0.8rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; font-size: 0.78rem;">
       <a href="/testthings/" style="color: var(--text-dim); text-decoration: none;">← Retour au HUB</a>
-      <span style="color: #00ff88; letter-spacing: 0.1em; font-weight: bold;">SOLUTION A — 4 MIRES CHROMATIQUES</span>
+      <span style="color: #ffffff; letter-spacing: 0.15em;">SALLE 45 • TEST REMPLACEMENT IN-SITU</span>
       <a href="/testthings/pc-b.html" style="color: var(--text-dim); text-decoration: none;">Voir Solution B →</a>
     </div>
 
-    <div style="display: grid; grid-template-columns: 1fr 280px; gap: 2rem; align-items: start;">
+    <div style="display: grid; grid-template-columns: 1fr 280px; gap: 2.5rem; align-items: start;">
       
-      <!-- Zone Cible Énigme avec les 4 mires optiques chromatiques -->
+      <!-- Planche d'énigme sur le PC -->
       <div>
-        <div id="targetZone" class="enigma-box" style="min-height: 480px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; position: relative;">
+        <div id="puzzlePlate" class="plate-container">
           
-          <!-- Les 4 mires de couleur ultra-repérables par la caméra -->
-          <div class="chroma-target tl" title="Mire 1 : Cyan"></div>
-          <div class="chroma-target tr" title="Mire 2 : Magenta"></div>
-          <div class="chroma-target br" title="Mire 3 : Jaune"></div>
-          <div class="chroma-target bl" title="Mire 4 : Vert"></div>
+          <!-- Repères typographiques 1px (ressemblent à des repères d'imprimerie) -->
+          <div class="crop-mark crop-tl"></div>
+          <div class="crop-mark crop-tr"></div>
+          <div class="crop-mark crop-br"></div>
+          <div class="crop-mark crop-bl"></div>
 
-          <!-- Contenu de l'énigme visible à l'œil nu sur PC -->
-          <div style="max-width: 480px; padding: 1.5rem; position: relative; z-index: 2;">
-            <div style="font-size: 0.72rem; letter-spacing: 0.35em; text-transform: uppercase; color: #888; margin-bottom: 1.5rem;">
-              • PROTOCOLE D'ALIGNEMENT OPTIQUE •
-            </div>
-            
-            <p style="font-size: 1.2rem; line-height: 1.7; font-weight: normal; color: #111; margin-bottom: 1.8rem;">
-              « L'œil organique fusionne l'ombre et la cendre.<br>
-              Ce que tes sens confondent,<br>
-              la lentille de poche le sépare. »
+          <div class="plate-header">
+            <span>ARCHIVE N° 45 — CLASSIFIÉ</span>
+            <span>RÉF. 045-GME</span>
+          </div>
+
+          <!-- Illustration centrale -->
+          <img src="/room45/cover/a01.png" alt="Illustration" class="plate-art">
+
+          <!-- Texte de l'énigme sur PC (qui sera remplacé en direct sur le smartphone) -->
+          <div id="targetTextZone" class="target-text-zone">
+            <p style="margin-bottom: 0.8rem;">
+              Trois portes se dressent dans le silence, chacune murmurant une illusion différente.
             </p>
+            <p style="color: #555; font-size: 0.88rem;">
+              La première parle de ce qui fut. La seconde parle sans fin. Seule la troisième retient le souffle.
+            </p>
+          </div>
 
-            <div style="font-size: 0.82rem; letter-spacing: 0.15em; color: #555; border-top: 1px solid #e0e0e0; padding-top: 1.4rem;">
-              [ ALIGNEZ LES 4 MIRES DE COULEURS AVEC VOTRE SMARTPHONE ]
-            </div>
+          <div style="margin-top: 1.5rem; font-size: 0.72rem; color: #888; text-align: center; letter-spacing: 0.12em;">
+            [ NE CROIS PAS CE QUE TES YEUX LISENT SUR CET ÉCRAN ]
           </div>
 
         </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; font-size: 0.75rem; color: var(--text-dim);">
-          <span>Les 4 cercles de couleur permettent un verrouillage instantané sans lag.</span>
-          <span style="color: #00ff88;">✓ Actif</span>
+        <div style="margin-top: 1.2rem; font-size: 0.78rem; color: var(--text-dim); line-height: 1.5;">
+          ℹ️ <strong>Remplacement In-Situ :</strong> Les repères sont devenus des traits fins d'imprimerie de 1px. Dès que ton iPhone vise ce document, le texte ci-dessus est remplacé sur ton téléphone par la réponse secrète au même emplacement exact.
         </div>
       </div>
 
@@ -58,23 +122,23 @@
       <div style="background: var(--surface); border: 1px solid var(--surface-border); border-radius: 8px; padding: 1.5rem;">
         
         <div style="font-size: 0.72rem; letter-spacing: 0.15em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 0.8rem;">
-          Connexion iPhone / Mobile
+          Accès Caméra iPhone
         </div>
 
         <div id="qrcodeBox" style="background: #ffffff; padding: 0.8rem; border-radius: 6px; margin-bottom: 1rem; text-align: center;">
-          <!-- QR code injecté ici en JS -->
+          <!-- QR code injecté en JS -->
         </div>
 
         <p style="font-size: 0.75rem; color: var(--text-dim); line-height: 1.5; margin-bottom: 1.2rem; text-align: center;">
-          📱 <strong>Scanne ce QR Code</strong> avec ton iPhone 15 pour lancer la caméra AR.
+          📱 Scanne avec ton appareil photo iOS pour activer la lentille de révélation.
         </p>
 
-        <div style="border-top: 1px solid var(--surface-border); padding-top: 1rem; margin-top: 1rem;">
+        <div style="border-top: 1px solid var(--surface-border); padding-top: 1rem;">
           <label style="display: block; font-size: 0.7rem; letter-spacing: 0.1em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 0.4rem;">
-            Message secret à afficher en AR :
+            Texte secret injecté en AR :
           </label>
-          <input type="text" id="secretTextInput" value="CODE : VOID-45" style="width: 100%; background: var(--bg); border: 1px solid var(--surface-border); color: #00ff88; padding: 0.5rem; font-family: monospace; font-size: 0.85rem; font-weight: bold; border-radius: 4px; box-sizing: border-box; text-align: center;">
-          <button id="saveSecretBtn" style="width: 100%; margin-top: 0.5rem; background: var(--text); color: var(--bg); border: none; padding: 0.5rem; font-size: 0.75rem; font-weight: bold; border-radius: 4px; cursor: pointer;">
+          <textarea id="secretTextInput" rows="3" style="width: 100%; background: var(--bg); border: 1px solid var(--surface-border); color: #00ff88; padding: 0.5rem; font-family: monospace; font-size: 0.8rem; border-radius: 4px; box-sizing: border-box; resize: none;">LA RÉPONSE EST : SUFFOCATION&#10;Entrez ce mot pour déverrouiller la salle.</textarea>
+          <button id="saveSecretBtn" style="width: 100%; margin-top: 0.5rem; background: var(--text); color: var(--bg); border: none; padding: 0.45rem; font-size: 0.75rem; font-weight: bold; border-radius: 4px; cursor: pointer;">
             Mettre à jour le secret
           </button>
         </div>
@@ -92,7 +156,6 @@
   </div>
 
   <script>
-    // QR Code avec URL absolue
     const mobileUrl = window.location.origin + '/testthings/mobile-a.html';
     new QRCode(document.getElementById('qrcodeBox'), {
       text: mobileUrl,
@@ -103,11 +166,11 @@
 
     const secretInput = document.getElementById('secretTextInput');
     const saveBtn = document.getElementById('saveSecretBtn');
-    const saved = localStorage.getItem('room45_webar_secret');
+    const saved = localStorage.getItem('room45_insitu_secret');
     if (saved) secretInput.value = saved;
 
     saveBtn.addEventListener('click', () => {
-      localStorage.setItem('room45_webar_secret', secretInput.value);
+      localStorage.setItem('room45_insitu_secret', secretInput.value);
       saveBtn.textContent = '✓ Enregistré !';
       setTimeout(() => { saveBtn.textContent = 'Mettre à jour le secret'; }, 1500);
     });

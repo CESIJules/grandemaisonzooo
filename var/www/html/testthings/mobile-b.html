@@ -3,9 +3,65 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Lentille Spectrale AR (Solution B)</title>
+  <title>Lentille Spectrale — Artwork Vivant (B)</title>
   <link rel="stylesheet" href="/testthings/css/style.css">
-  <script src="/testthings/js/tracker.js"></script>
+  <script src="/testthings/js/vision-core.js"></script>
+  <style>
+    /* Calque secret qui remplace l'artwork en 1:1 */
+    #artReplacementLayer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 540px;
+      height: 380px;
+      transform-origin: 0 0;
+      pointer-events: none;
+      z-index: 25;
+      display: none;
+      will-change: transform;
+      background: #000;
+      border: 4px solid #00aaff;
+      box-shadow: 0 0 50px rgba(0, 170, 255, 0.8);
+      overflow: hidden;
+    }
+
+    .art-bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: contrast(1.4) brightness(0.6) hue-rotate(180deg);
+      opacity: 0.85;
+    }
+
+    .art-secret-content {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 2rem;
+      background: radial-gradient(circle, rgba(0, 170, 255, 0.2) 0%, rgba(0,0,0,0.7) 80%);
+      color: #fff;
+    }
+
+    .spectral-runes {
+      font-size: 2rem;
+      letter-spacing: 0.3em;
+      color: #00aaff;
+      text-shadow: 0 0 15px #00aaff;
+      margin-bottom: 0.5rem;
+      animation: pulseRune 2s infinite alternate;
+    }
+
+    @keyframes pulseRune {
+      0% { opacity: 0.6; transform: scale(0.98); }
+      100% { opacity: 1; transform: scale(1.02); }
+    }
+  </style>
 </head>
 <body style="background: #000; overflow: hidden; position: fixed; inset: 0;">
 
@@ -13,21 +69,23 @@
     
     <video id="cameraFeed" autoplay playsinline muted></video>
 
-    <!-- Canvas de superposition -->
-    <canvas id="arCanvas" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 15;"></canvas>
+    <canvas id="reticleCanvas" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 15;"></canvas>
 
-    <!-- Calque AR Solution B -->
-    <div id="arSecretLayer" style="border-color: #00aaff; box-shadow: 0 0 35px rgba(0, 170, 255, 0.7);">
-      <div class="secret-badge" style="color: #00aaff; border-color: #00aaff; background: rgba(0, 170, 255, 0.1);">
-        ANALYSE DU CADRE TERMINÉE
+    <!-- Calque de remplacement de l'Artwork en 1:1 -->
+    <div id="artReplacementLayer">
+      <img src="/room45/cover/a01.png" alt="" class="art-bg">
+      <div class="art-secret-content">
+        <div class="spectral-runes">𐘀 𐘁 𐘂 𐘃</div>
+        <div style="font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase; color: #00aaff; margin-bottom: 0.4rem;">
+          • SCEAU DÉVERROUILLÉ •
+        </div>
+        <div id="artSecretCodeDisplay" style="font-size: 1.8rem; font-weight: 900; letter-spacing: 0.15em; color: #ffffff; text-shadow: 0 0 20px #00aaff; border-bottom: 2px solid #00aaff; padding-bottom: 0.4rem;">
+          RÉPONSE : OUVERTURE
+        </div>
+        <p style="font-size: 0.78rem; color: #ddd; margin-top: 0.8rem; line-height: 1.4;">
+          « L'image cachait la clé depuis le début. »
+        </p>
       </div>
-      <div class="secret-title">SECRET CACHÉ DANS LA TOILE</div>
-      <div id="secretCodeDisplay" class="secret-code" style="color: #00aaff; border-color: #00aaff; text-shadow: 0 0 20px rgba(0, 170, 255, 1);">
-        RÉPONSE : OUVERTURE
-      </div>
-      <p style="font-size: 0.85rem; line-height: 1.4; color: rgba(255,255,255,0.85); margin-top: 0.5rem;">
-        « Les symboles invisibles à l'œil nu étaient gravés au cœur même de l'œuvre. »
-      </p>
     </div>
 
     <!-- Barre d'outils haut d'écran -->
@@ -46,17 +104,17 @@
     <!-- Barre d'état bas d'écran -->
     <div class="hud-bar">
       <div id="hudDot" class="hud-status-dot" style="background: #00aaff;"></div>
-      <span id="hudText">Ciblez le cadre blanc de l'image sur l'écran PC...</span>
+      <span id="hudText">Ciblez l'artwork sur l'écran PC...</span>
     </div>
 
     <!-- Écran d'accueil -->
     <div id="startOverlay" style="position: absolute; inset: 0; background: rgba(13,13,14,0.96); z-index: 50; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 2rem; text-align: center;">
       <div style="width: 54px; height: 54px; border-radius: 50%; border: 2px solid #00aaff; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 1.5rem; box-shadow: 0 0 20px rgba(0,170,255,0.4);">
-        👁️
+        🖼️
       </div>
-      <h2 style="font-size: 1.3rem; margin-bottom: 0.8rem; color: #fff;">SCANNER D'ARTWORK (B)</h2>
+      <h2 style="font-size: 1.3rem; margin-bottom: 0.8rem; color: #fff;">LENTILLE D'ARTWORK</h2>
       <p style="font-size: 0.85rem; color: var(--text-dim); line-height: 1.5; max-width: 320px; margin-bottom: 2rem;">
-        Autorisez l'accès à la caméra pour scanner le cadre de l'image affichée sur votre PC.
+        Visez l'illustration sur votre écran PC pour transformer la toile en réalité augmentée.
       </p>
       <button id="startBtn" style="background: #00aaff; color: #000; border: none; padding: 0.9rem 2.2rem; font-size: 0.95rem; font-weight: bold; border-radius: 30px; letter-spacing: 0.1em; cursor: pointer; box-shadow: 0 0 20px rgba(0,170,255,0.6);">
         ACTIVER LA CAMÉRA
@@ -68,33 +126,31 @@
 
   <script>
     const video = document.getElementById('cameraFeed');
-    const arCanvas = document.getElementById('arCanvas');
-    const arCtx = arCanvas.getContext('2d');
-    const startOverlay = document.getElementById('startOverlay');
-    const startBtn = document.getElementById('startBtn');
-    const permError = document.getElementById('permError');
+    const reticleCanvas = document.getElementById('reticleCanvas');
+    const reticleCtx = reticleCanvas.getContext('2d');
+    const artLayer = document.getElementById('artReplacementLayer');
     const hudDot = document.getElementById('hudDot');
     const hudText = document.getElementById('hudText');
     const hudReticle = document.getElementById('hudReticle');
-    const arLayer = document.getElementById('arSecretLayer');
-    const secretCodeDisplay = document.getElementById('secretCodeDisplay');
+    const artSecretCodeDisplay = document.getElementById('artSecretCodeDisplay');
+    const startOverlay = document.getElementById('startOverlay');
+    const startBtn = document.getElementById('startBtn');
+    const permError = document.getElementById('permError');
     const toggleZoomBtn = document.getElementById('toggleZoomBtn');
     const restartBtn = document.getElementById('restartBtn');
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const customSecret = urlParams.get('secret') || localStorage.getItem('room45_webar_secret_b') || 'RÉPONSE : OUVERTURE';
-    secretCodeDisplay.textContent = customSecret;
+    const customSecret = localStorage.getItem('room45_art_secret') || 'RÉPONSE : OUVERTURE';
+    artSecretCodeDisplay.textContent = customSecret;
 
-    const tracker = new VisionTracker();
+    // Dimensions 1:1 de l'artwork
+    const LAYER_W = 540;
+    const LAYER_H = 380;
+    artLayer.style.width = LAYER_W + 'px';
+    artLayer.style.height = LAYER_H + 'px';
+
+    const vision = new Room45Vision(LAYER_W / LAYER_H);
     let isTracking = false;
     let isCoverMode = false;
-    let smoothedDst = null;
-    let lastTrackTime = 0;
-
-    const LAYER_W = 500;
-    const LAYER_H = 350;
-    arLayer.style.width = LAYER_W + 'px';
-    arLayer.style.height = LAYER_H + 'px';
 
     toggleZoomBtn.addEventListener('click', () => {
       isCoverMode = !isCoverMode;
@@ -131,56 +187,42 @@
     function trackLoop() {
       if (!isTracking) return;
 
-      if (arCanvas.width !== window.innerWidth || arCanvas.height !== window.innerHeight) {
-        arCanvas.width = window.innerWidth;
-        arCanvas.height = window.innerHeight;
+      if (reticleCanvas.width !== window.innerWidth || reticleCanvas.height !== window.innerHeight) {
+        reticleCanvas.width = window.innerWidth;
+        reticleCanvas.height = window.innerHeight;
       }
-      arCtx.clearRect(0, 0, arCanvas.width, arCanvas.height);
+      reticleCtx.clearRect(0, 0, reticleCanvas.width, reticleCanvas.height);
 
       if (video.readyState >= 2 && video.videoWidth > 0) {
-        const quad = tracker.detectScreenFrame(video, 320);
+        const result = vision.process(video, 480);
 
-        if (quad) {
-          const screenPts = quad.map(pt => videoToScreen(pt.x, pt.y));
+        if (result && result.verified) {
+          const screenCorners = result.corners.map(pt => videoToScreen(pt.x, pt.y));
 
-          // Dessiner le cadre détecté en bleu cyan
-          arCtx.strokeStyle = '#00aaff';
-          arCtx.lineWidth = 3;
-          arCtx.beginPath();
-          arCtx.moveTo(screenPts[0].x, screenPts[0].y);
-          for (let i = 1; i < 4; i++) arCtx.lineTo(screenPts[i].x, screenPts[i].y);
-          arCtx.closePath();
-          arCtx.stroke();
+          // Dessiner le cadre cyan fin
+          reticleCtx.strokeStyle = '#00aaff';
+          reticleCtx.lineWidth = 2.5;
+          reticleCtx.beginPath();
+          reticleCtx.moveTo(screenCorners[0].x, screenCorners[0].y);
+          for (let i = 1; i < 4; i++) reticleCtx.lineTo(screenCorners[i].x, screenCorners[i].y);
+          reticleCtx.closePath();
+          reticleCtx.stroke();
 
-          if (!smoothedDst) {
-            smoothedDst = screenPts;
-            if (navigator.vibrate) navigator.vibrate(30);
-          } else {
-            const alpha = 0.4;
-            smoothedDst = smoothedDst.map((p, i) => ({
-              x: p.x + (screenPts[i].x - p.x) * alpha,
-              y: p.y + (screenPts[i].y - p.y) * alpha
-            }));
-          }
-
-          const matrix3d = tracker.computeMatrix3d(LAYER_W, LAYER_H, smoothedDst);
+          const matrix3d = vision.getMatrix3d(LAYER_W, LAYER_H, screenCorners);
           if (matrix3d) {
-            arLayer.style.transform = matrix3d;
-            arLayer.style.display = 'block';
+            artLayer.style.transform = matrix3d;
+            artLayer.style.display = 'block';
             hudDot.style.background = '#00aaff';
             hudReticle.style.borderColor = '#00aaff';
-            hudText.textContent = 'CADRE VERROUILLÉ • Révélation en cours';
-            lastTrackTime = performance.now();
+            hudText.textContent = `TOILE VERROUILLÉE • Remplacement 1:1 (${result.confidence}%)`;
           }
 
-        } else if (smoothedDst && (performance.now() - lastTrackTime < 300)) {
-          // Maintien temporaire
         } else {
-          smoothedDst = null;
-          arLayer.style.display = 'none';
+          // Hors cible : DISPARITION IMMÉDIATE (Zéro faux positif)
+          artLayer.style.display = 'none';
           hudDot.style.background = '#ffaa00';
-          hudReticle.style.borderColor = 'rgba(255,255,255,0.3)';
-          hudText.textContent = 'Ciblez le cadre blanc de l\'image sur PC...';
+          hudReticle.style.borderColor = 'rgba(255,255,255,0.25)';
+          hudText.textContent = 'Ciblez l\'artwork sur l\'écran PC...';
         }
       }
 

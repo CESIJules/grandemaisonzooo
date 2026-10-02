@@ -3,65 +3,127 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Lentille Spectrale AR (Solution A)</title>
+  <title>Lentille Spectrale — Révélation In-Situ</title>
   <link rel="stylesheet" href="/testthings/css/style.css">
-  <script src="/testthings/js/tracker.js"></script>
+  <script src="/testthings/js/vision-core.js"></script>
+  <style>
+    /* Calque secret qui remplace exactement le document du PC en réalité augmentée */
+    #inSituLayer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 580px;
+      height: 680px;
+      transform-origin: 0 0;
+      pointer-events: none;
+      z-index: 25;
+      display: none;
+      will-change: transform;
+      background: #f4f3ef;
+      border: 2px solid #111;
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
+      padding: 2.5rem;
+      color: #111;
+      font-family: 'Courier New', Courier, monospace;
+    }
+
+    .revealed-stamp {
+      display: inline-block;
+      border: 2px solid #b30000;
+      color: #b30000;
+      padding: 4px 10px;
+      font-weight: bold;
+      font-size: 0.8rem;
+      letter-spacing: 0.2em;
+      transform: rotate(-3deg);
+      margin-bottom: 1.5rem;
+      text-transform: uppercase;
+    }
+
+    .strike-text {
+      text-decoration: line-through;
+      color: #999;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .secret-box-insitu {
+      background: #fff;
+      border: 2px solid #b30000;
+      padding: 1.2rem;
+      margin-top: 1rem;
+      color: #b30000;
+      box-shadow: 0 4px 15px rgba(179, 0, 0, 0.15);
+    }
+  </style>
 </head>
 <body style="background: #000; overflow: hidden; position: fixed; inset: 0;">
 
   <div class="ar-viewport">
     
-    <!-- Flux vidéo de la caméra -->
+    <!-- Caméra en vue complète dézoomée -->
     <video id="cameraFeed" autoplay playsinline muted></video>
 
-    <!-- Canvas de superposition pour afficher les points détectés en direct -->
-    <canvas id="arCanvas" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 15;"></canvas>
+    <!-- Canvas de superposition des repères de visée -->
+    <canvas id="reticleCanvas" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 15;"></canvas>
 
-    <!-- Calque de Réalité Augmentée 3D -->
-    <div id="arSecretLayer">
-      <div class="secret-badge">SIGNAL SYNCHRONISÉ</div>
-      <div class="secret-title">SECRET SALLE 45</div>
-      <div id="secretCodeDisplay" class="secret-code">CODE : VOID-45</div>
-      <p style="font-size: 0.85rem; line-height: 1.4; color: rgba(255,255,255,0.85); margin-top: 0.5rem;">
-        « Là où la lumière s'éteint, le passage s'ouvre. »
+    <!-- Calque de remplacement In-Situ (Remplace le document du PC au millimètre) -->
+    <div id="inSituLayer">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; padding-bottom: 0.5rem; margin-bottom: 1.5rem; font-size: 0.7rem; color: #555;">
+        <span>ARCHIVE N° 45 — VÉRITÉ DÉVOILÉE</span>
+        <span style="color: #b30000; font-weight: bold;">RÉVÉLÉ PAR LA LENTILLE</span>
+      </div>
+
+      <div class="revealed-stamp">DÉCLASSIFIÉ</div>
+
+      <p class="strike-text">
+        « Trois portes se dressent dans le silence, chacune murmurant une illusion différente... »
       </p>
-      <div style="font-size: 0.65rem; color: #00ff88; margin-top: 0.8rem; letter-spacing: 0.2em;">
-        • CLÉ SPECTRAL DÉTECTÉE PAR LA LENTILLE •
+
+      <div class="secret-box-insitu">
+        <div style="font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.4rem;">
+          • MESSAGE RÉVÉLÉ •
+        </div>
+        <div id="secretTextDisplay" style="font-size: 1.25rem; font-weight: 900; line-height: 1.4; letter-spacing: 0.05em;">
+          LA RÉPONSE EST : SUFFOCATION
+        </div>
+        <p style="font-size: 0.75rem; color: #666; margin-top: 0.6rem;">
+          Tapez ce mot exact sur le site pour débloquer l'accès.
+        </p>
+      </div>
+
+      <div style="margin-top: 2rem; font-size: 0.65rem; color: #888; text-align: center; letter-spacing: 0.15em;">
+        • SYSTÈME OPTIQUE SPECTRAL ROOM 45 •
       </div>
     </div>
 
     <!-- Barre d'outils haut d'écran -->
     <div class="debug-top-bar">
-      <button id="toggleZoomBtn" class="pill-btn" title="Changer le cadrage">
+      <button id="toggleZoomBtn" class="pill-btn">
         🔍 Vue Complète (Dézoomée)
       </button>
-      <div style="display: flex; gap: 0.4rem;">
-        <button id="toggleDebugBtn" class="pill-btn">
-          👁️ Repères : ON
-        </button>
-        <button id="restartBtn" class="pill-btn">
-          ↺ Reset
-        </button>
-      </div>
+      <button id="restartBtn" class="pill-btn">
+        ↺ Reset
+      </button>
     </div>
 
-    <!-- Viseur HUD -->
+    <!-- Viseur HUD central -->
     <div id="hudReticle" class="hud-reticle"></div>
 
     <!-- Barre d'état bas d'écran -->
     <div class="hud-bar">
       <div id="hudDot" class="hud-status-dot"></div>
-      <span id="hudText">Initialisation de la caméra...</span>
+      <span id="hudText">Pointez la caméra vers l'énigme sur le PC...</span>
     </div>
 
     <!-- Écran d'accueil pour la permission caméra -->
     <div id="startOverlay" style="position: absolute; inset: 0; background: rgba(13,13,14,0.96); z-index: 50; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 2rem; text-align: center;">
       <div style="width: 54px; height: 54px; border-radius: 50%; border: 2px solid #00ff88; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 1.5rem; box-shadow: 0 0 20px rgba(0,255,136,0.4);">
-        📷
+        👁️
       </div>
-      <h2 style="font-size: 1.3rem; margin-bottom: 0.8rem; color: #fff;">LENTILLE SPECTRALE</h2>
+      <h2 style="font-size: 1.3rem; margin-bottom: 0.8rem; color: #fff;">LENTILLE DE RÉVÉLATION</h2>
       <p style="font-size: 0.85rem; color: var(--text-dim); line-height: 1.5; max-width: 320px; margin-bottom: 2rem;">
-        Pointez votre iPhone vers l'écran de votre PC pour révéler l'énigme cachée.
+        Pointez votre iPhone vers le document sur votre écran de PC pour transformer le texte en temps réel.
       </p>
       <button id="startBtn" style="background: #00ff88; color: #000; border: none; padding: 0.9rem 2.2rem; font-size: 0.95rem; font-weight: bold; border-radius: 30px; letter-spacing: 0.1em; cursor: pointer; box-shadow: 0 0 20px rgba(0,255,136,0.6);">
         ACTIVER LA CAMÉRA
@@ -73,52 +135,41 @@
 
   <script>
     const video = document.getElementById('cameraFeed');
-    const arCanvas = document.getElementById('arCanvas');
-    const arCtx = arCanvas.getContext('2d');
-    const startOverlay = document.getElementById('startOverlay');
-    const startBtn = document.getElementById('startBtn');
-    const permError = document.getElementById('permError');
+    const reticleCanvas = document.getElementById('reticleCanvas');
+    const reticleCtx = reticleCanvas.getContext('2d');
+    const inSituLayer = document.getElementById('inSituLayer');
     const hudDot = document.getElementById('hudDot');
     const hudText = document.getElementById('hudText');
     const hudReticle = document.getElementById('hudReticle');
-    const arLayer = document.getElementById('arSecretLayer');
-    const secretCodeDisplay = document.getElementById('secretCodeDisplay');
+    const secretTextDisplay = document.getElementById('secretTextDisplay');
+    const startOverlay = document.getElementById('startOverlay');
+    const startBtn = document.getElementById('startBtn');
+    const permError = document.getElementById('permError');
     const toggleZoomBtn = document.getElementById('toggleZoomBtn');
-    const toggleDebugBtn = document.getElementById('toggleDebugBtn');
     const restartBtn = document.getElementById('restartBtn');
 
     // Récupérer le secret personnalisé
-    const urlParams = new URLSearchParams(window.location.search);
-    const customSecret = urlParams.get('secret') || localStorage.getItem('room45_webar_secret') || 'CODE : VOID-45';
-    secretCodeDisplay.textContent = customSecret;
+    const customSecret = localStorage.getItem('room45_insitu_secret') || 'LA RÉPONSE EST : SUFFOCATION';
+    secretTextDisplay.textContent = customSecret;
 
-    const tracker = new VisionTracker();
+    // Dimensions de référence du document
+    const LAYER_W = 580;
+    const LAYER_H = 680;
+    inSituLayer.style.width = LAYER_W + 'px';
+    inSituLayer.style.height = LAYER_H + 'px';
+
+    const vision = new Room45Vision(LAYER_W / LAYER_H);
     let isTracking = false;
-    let showDebug = true;
     let isCoverMode = false;
-    let smoothedDst = null;
-    let lastTrackTime = 0;
 
-    const LAYER_W = 500;
-    const LAYER_H = 350;
-    arLayer.style.width = LAYER_W + 'px';
-    arLayer.style.height = LAYER_H + 'px';
-
-    // Basculer mode de zoom (Contain vs Cover)
     toggleZoomBtn.addEventListener('click', () => {
       isCoverMode = !isCoverMode;
       video.classList.toggle('cover-mode', isCoverMode);
       toggleZoomBtn.textContent = isCoverMode ? '🔍 Plein Écran (Cover)' : '🔍 Vue Complète (Dézoomée)';
     });
 
-    toggleDebugBtn.addEventListener('click', () => {
-      showDebug = !showDebug;
-      toggleDebugBtn.textContent = showDebug ? '👁️ Repères : ON' : '👁️ Repères : OFF';
-    });
-
     restartBtn.addEventListener('click', () => window.location.reload());
 
-    // Activation de la caméra
     startBtn.addEventListener('click', async () => {
       startBtn.textContent = 'Activation...';
       try {
@@ -138,108 +189,59 @@
       } catch (err) {
         console.error('Camera error:', err);
         permError.style.display = 'block';
-        permError.innerHTML = '⚠️ Erreur caméra : ' + err.message + '<br>Vérifiez que vous êtes sur <strong>HTTPS</strong>.';
+        permError.innerHTML = '⚠️ Erreur caméra : ' + err.message;
         startBtn.textContent = 'RÉESSAYER';
       }
     });
 
-    // Boucle de vision optique
     function trackLoop() {
       if (!isTracking) return;
 
-      // Adapter la taille du canvas overlay à l'écran
-      if (arCanvas.width !== window.innerWidth || arCanvas.height !== window.innerHeight) {
-        arCanvas.width = window.innerWidth;
-        arCanvas.height = window.innerHeight;
+      if (reticleCanvas.width !== window.innerWidth || reticleCanvas.height !== window.innerHeight) {
+        reticleCanvas.width = window.innerWidth;
+        reticleCanvas.height = window.innerHeight;
       }
-      arCtx.clearRect(0, 0, arCanvas.width, arCanvas.height);
+      reticleCtx.clearRect(0, 0, reticleCanvas.width, reticleCanvas.height);
 
       if (video.readyState >= 2 && video.videoWidth > 0) {
-        // Détecter les 4 mires de couleur (Cyan, Magenta, Jaune, Vert)
-        const points = tracker.detectColorTargets(video, 360);
+        // Analyse visuelle avec rejet strict des faux positifs
+        const result = vision.process(video, 480);
 
-        const colorsNames = ['Cyan', 'Magenta', 'Jaune', 'Vert'];
-        const hexColors = ['#00f0ff', '#ff0055', '#ffe600', '#00ff66'];
-        const foundMap = {};
+        if (result && result.verified) {
+          // Convertir les coins détectés dans l'espace écran du téléphone
+          const screenCorners = result.corners.map(pt => videoToScreen(pt.x, pt.y));
 
-        if (points && points.length > 0) {
-          for (const p of points) {
-            foundMap[p.id] = p;
-            
-            // Dessiner des repères visuels sur l'écran du mobile
-            if (showDebug) {
-              const sp = videoToScreen(p.x, p.y);
-              arCtx.strokeStyle = hexColors[p.id];
-              arCtx.fillStyle = hexColors[p.id];
-              arCtx.lineWidth = 3;
-              arCtx.beginPath();
-              arCtx.arc(sp.x, sp.y, 18, 0, Math.PI * 2);
-              arCtx.stroke();
-              arCtx.font = 'bold 11px monospace';
-              arCtx.fillText(colorsNames[p.id], sp.x + 22, sp.y + 4);
-            }
-          }
-        }
+          // Dessiner le cadre de verrouillage vert fin
+          reticleCtx.strokeStyle = '#00ff88';
+          reticleCtx.lineWidth = 2.5;
+          reticleCtx.beginPath();
+          reticleCtx.moveTo(screenCorners[0].x, screenCorners[0].y);
+          for (let i = 1; i < 4; i++) reticleCtx.lineTo(screenCorners[i].x, screenCorners[i].y);
+          reticleCtx.closePath();
+          reticleCtx.stroke();
 
-        const count = Object.keys(foundMap).length;
-
-        // Si les 4 cibles sont présentes : Cyan(0), Magenta(1), Jaune(2), Vert(3)
-        if (foundMap[0] && foundMap[1] && foundMap[2] && foundMap[3]) {
-          const rawCorners = [
-            videoToScreen(foundMap[0].x, foundMap[0].y), // TL (Cyan)
-            videoToScreen(foundMap[1].x, foundMap[1].y), // TR (Magenta)
-            videoToScreen(foundMap[2].x, foundMap[2].y), // BR (Jaune)
-            videoToScreen(foundMap[3].x, foundMap[3].y)  // BL (Vert)
-          ];
-
-          // Lissage de position
-          if (!smoothedDst) {
-            smoothedDst = rawCorners;
-            if (navigator.vibrate) navigator.vibrate(40);
-          } else {
-            const alpha = 0.45;
-            smoothedDst = smoothedDst.map((p, i) => ({
-              x: p.x + (rawCorners[i].x - p.x) * alpha,
-              y: p.y + (rawCorners[i].y - p.y) * alpha
-            }));
-          }
-
-          // Projection 3D Homographique
-          const matrix3d = tracker.computeMatrix3d(LAYER_W, LAYER_H, smoothedDst);
+          // Calculer la matrice 3D de remplacement in-situ
+          const matrix3d = vision.getMatrix3d(LAYER_W, LAYER_H, screenCorners);
           if (matrix3d) {
-            arLayer.style.transform = matrix3d;
-            arLayer.style.display = 'block';
+            inSituLayer.style.transform = matrix3d;
+            inSituLayer.style.display = 'block';
             hudDot.classList.add('active');
             hudReticle.classList.add('locked');
-            hudText.textContent = 'VERROUILLÉ (4/4 mires) • Clé visible';
-            lastTrackTime = performance.now();
+            hudText.textContent = `DOCUMENT VERROUILLÉ • Remplacement en cours (${result.confidence}%)`;
           }
 
-        } else if (count > 0 && smoothedDst && (performance.now() - lastTrackTime < 350)) {
-          // Maintien temporaire
-          hudText.textContent = `Mires détectées (${count}/4)...`;
         } else {
-          smoothedDst = null;
-          arLayer.style.display = 'none';
+          // Si on ne regarde pas l'énigme du PC : DISPARITION IMMÉDIATE (Zéro faux positif)
+          inSituLayer.style.display = 'none';
           hudDot.classList.remove('active');
           hudReticle.classList.remove('locked');
-
-          if (count === 0) {
-            hudText.textContent = 'Visez les 4 cercles de couleur sur l\'écran PC';
-          } else {
-            const missing = [0, 1, 2, 3].filter(i => !foundMap[i]).map(i => colorsNames[i]);
-            hudText.textContent = `Trouvé ${count}/4 (Manque : ${missing.join(', ')})`;
-          }
+          hudText.textContent = 'Pointez la caméra vers l\'énigme sur le PC...';
         }
       }
 
       requestAnimationFrame(trackLoop);
     }
 
-    /**
-     * Conversion géométrique exacte entre les pixels de la caméra
-     * et l'affichage sur le mobile (gère object-fit: contain et cover sans déformation)
-     */
     function videoToScreen(vx, vy) {
       const vw = video.videoWidth;
       const vh = video.videoHeight;
@@ -257,7 +259,6 @@
         offsetX = (sw - renderedW) / 2;
         offsetY = (sh - renderedH) / 2;
       } else {
-        // Mode Contain (Vue complète par défaut)
         scale = Math.min(sw / vw, sh / vh);
         renderedW = vw * scale;
         renderedH = vh * scale;
