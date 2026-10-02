@@ -3,39 +3,74 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Lentille Spectrale — Artwork Vivant (B)</title>
+  <title>Lentille Spectrale — Scanner d'Artwork (B)</title>
   <link rel="stylesheet" href="/testthings/css/style.css">
-  <script src="/testthings/js/vision-core.js"></script>
+  <script src="/testthings/js/scanner-engine.js"></script>
   <style>
-    /* Calque secret qui remplace l'artwork en 1:1 */
-    #artReplacementLayer {
+    .viewfinder-container-b {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 540px;
-      height: 380px;
-      transform-origin: 0 0;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: min(88vw, 420px);
+      aspect-ratio: 540 / 380;
       pointer-events: none;
-      z-index: 25;
-      display: none;
-      will-change: transform;
-      background: #000;
-      border: 4px solid #00aaff;
-      box-shadow: 0 0 50px rgba(0, 170, 255, 0.8);
-      overflow: hidden;
+      z-index: 20;
     }
 
-    .art-bg {
+    .viewfinder-frame-b {
+      position: absolute;
+      inset: 0;
+      border: 2px dashed rgba(0, 170, 255, 0.45);
+      border-radius: 6px;
+      transition: all 0.25s ease-out;
+    }
+
+    .viewfinder-frame-b.locked {
+      border: 3px solid #00aaff;
+      box-shadow: 0 0 40px rgba(0, 170, 255, 0.8), inset 0 0 30px rgba(0, 170, 255, 0.4);
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .vf-corner-b {
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      border-color: #00aaff;
+      border-style: solid;
+    }
+    .vf-tl { top: -2px; left: -2px; border-width: 3px 0 0 3px; }
+    .vf-tr { top: -2px; right: -2px; border-width: 3px 3px 0 0; }
+    .vf-br { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; }
+    .vf-bl { bottom: -2px; left: -2px; border-width: 0 0 3px 3px; }
+
+    /* Calque secret d'artwork révélé */
+    #revealedArtOverlay {
+      position: absolute;
+      inset: 0;
+      background: #000;
+      border-radius: 4px;
+      overflow: hidden;
+      display: none;
+      animation: revealArt 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes revealArt {
+      0% { opacity: 0; transform: scale(0.96); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    .art-bg-fill {
       position: absolute;
       inset: 0;
       width: 100%;
       height: 100%;
       object-fit: cover;
-      filter: contrast(1.4) brightness(0.6) hue-rotate(180deg);
-      opacity: 0.85;
+      filter: contrast(1.4) brightness(0.55) hue-rotate(180deg);
+      opacity: 0.9;
     }
 
-    .art-secret-content {
+    .art-content-box {
       position: absolute;
       inset: 0;
       display: flex;
@@ -43,23 +78,9 @@
       justify-content: center;
       align-items: center;
       text-align: center;
-      padding: 2rem;
-      background: radial-gradient(circle, rgba(0, 170, 255, 0.2) 0%, rgba(0,0,0,0.7) 80%);
+      padding: 1.5rem;
+      background: radial-gradient(circle, rgba(0, 170, 255, 0.25) 0%, rgba(0,0,0,0.75) 85%);
       color: #fff;
-    }
-
-    .spectral-runes {
-      font-size: 2rem;
-      letter-spacing: 0.3em;
-      color: #00aaff;
-      text-shadow: 0 0 15px #00aaff;
-      margin-bottom: 0.5rem;
-      animation: pulseRune 2s infinite alternate;
-    }
-
-    @keyframes pulseRune {
-      0% { opacity: 0.6; transform: scale(0.98); }
-      100% { opacity: 1; transform: scale(1.02); }
     }
   </style>
 </head>
@@ -69,22 +90,37 @@
     
     <video id="cameraFeed" autoplay playsinline muted></video>
 
-    <canvas id="reticleCanvas" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 15;"></canvas>
+    <!-- Viseur AR pour l'Artwork -->
+    <div class="viewfinder-container-b">
+      <div id="viewfinderFrameB" class="viewfinder-frame-b">
+        <div class="vf-corner-b vf-tl"></div>
+        <div class="vf-corner-b vf-tr"></div>
+        <div class="vf-corner-b vf-br"></div>
+        <div class="vf-corner-b vf-bl"></div>
 
-    <!-- Calque de remplacement de l'Artwork en 1:1 -->
-    <div id="artReplacementLayer">
-      <img src="/room45/cover/a01.png" alt="" class="art-bg">
-      <div class="art-secret-content">
-        <div class="spectral-runes">𐘀 𐘁 𐘂 𐘃</div>
-        <div style="font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase; color: #00aaff; margin-bottom: 0.4rem;">
-          • SCEAU DÉVERROUILLÉ •
+        <div id="aimHintB" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: rgba(255,255,255,0.7); font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; text-align: center; width: 85%; line-height: 1.5; pointer-events: none;">
+          Cadrez l'illustration du PC dans ce rectangle
         </div>
-        <div id="artSecretCodeDisplay" style="font-size: 1.8rem; font-weight: 900; letter-spacing: 0.15em; color: #ffffff; text-shadow: 0 0 20px #00aaff; border-bottom: 2px solid #00aaff; padding-bottom: 0.4rem;">
-          RÉPONSE : OUVERTURE
+
+        <!-- Remplacement de l'Artwork en 1:1 -->
+        <div id="revealedArtOverlay">
+          <img src="/room45/cover/a01.png" alt="" class="art-bg-fill">
+          <div class="art-content-box">
+            <div style="font-size: 1.6rem; letter-spacing: 0.3em; color: #00aaff; text-shadow: 0 0 15px #00aaff; margin-bottom: 0.3rem;">
+              𐘀 𐘁 𐘂 𐘃
+            </div>
+            <div style="font-size: 0.65rem; letter-spacing: 0.25em; text-transform: uppercase; color: #00aaff; margin-bottom: 0.4rem;">
+              • SCEAU SPECTRAL RÉVÉLÉ •
+            </div>
+            <div id="artSecretCodeDisplay" style="font-size: 1.5rem; font-weight: 900; letter-spacing: 0.12em; color: #fff; text-shadow: 0 0 20px #00aaff; border-bottom: 2px solid #00aaff; padding-bottom: 0.4rem;">
+              RÉPONSE : OUVERTURE
+            </div>
+            <p style="font-size: 0.72rem; color: #ccc; margin-top: 0.6rem;">
+              « L'encre invisible apparaît sous la lentille. »
+            </p>
+          </div>
         </div>
-        <p style="font-size: 0.78rem; color: #ddd; margin-top: 0.8rem; line-height: 1.4;">
-          « L'image cachait la clé depuis le début. »
-        </p>
+
       </div>
     </div>
 
@@ -98,13 +134,18 @@
       </button>
     </div>
 
-    <!-- Viseur HUD -->
-    <div id="hudReticle" class="hud-reticle"></div>
-
-    <!-- Barre d'état bas d'écran -->
-    <div class="hud-bar">
-      <div id="hudDot" class="hud-status-dot" style="background: #00aaff;"></div>
-      <span id="hudText">Ciblez l'artwork sur l'écran PC...</span>
+    <!-- Jauge de synchronisation et de signal -->
+    <div class="sync-meter-container">
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem;">
+        <span style="color: var(--text);">Signal de la toile :</span>
+        <span id="meterPercentB" style="font-weight: bold; color: #00aaff;">0%</span>
+      </div>
+      <div class="meter-bar-bg">
+        <div id="meterFillB" class="meter-bar-fill" style="background: #00aaff;"></div>
+      </div>
+      <div id="meterStatusB" style="font-size: 0.68rem; color: var(--text-dim); text-align: center; margin-top: 0.1rem;">
+        Approchez votre téléphone de l'artwork...
+      </div>
     </div>
 
     <!-- Écran d'accueil -->
@@ -126,12 +167,12 @@
 
   <script>
     const video = document.getElementById('cameraFeed');
-    const reticleCanvas = document.getElementById('reticleCanvas');
-    const reticleCtx = reticleCanvas.getContext('2d');
-    const artLayer = document.getElementById('artReplacementLayer');
-    const hudDot = document.getElementById('hudDot');
-    const hudText = document.getElementById('hudText');
-    const hudReticle = document.getElementById('hudReticle');
+    const vfFrame = document.getElementById('viewfinderFrameB');
+    const aimHint = document.getElementById('aimHintB');
+    const revealedOverlay = document.getElementById('revealedArtOverlay');
+    const meterFill = document.getElementById('meterFillB');
+    const meterPercent = document.getElementById('meterPercentB');
+    const meterStatus = document.getElementById('meterStatusB');
     const artSecretCodeDisplay = document.getElementById('artSecretCodeDisplay');
     const startOverlay = document.getElementById('startOverlay');
     const startBtn = document.getElementById('startBtn');
@@ -142,15 +183,10 @@
     const customSecret = localStorage.getItem('room45_art_secret') || 'RÉPONSE : OUVERTURE';
     artSecretCodeDisplay.textContent = customSecret;
 
-    // Dimensions 1:1 de l'artwork
-    const LAYER_W = 540;
-    const LAYER_H = 380;
-    artLayer.style.width = LAYER_W + 'px';
-    artLayer.style.height = LAYER_H + 'px';
-
-    const vision = new Room45Vision(LAYER_W / LAYER_H);
-    let isTracking = false;
+    const scanner = new SpectralScanner({ threshold: 0.65, targetAspect: (540 / 380) });
+    let isScanning = false;
     let isCoverMode = false;
+    let hasVibrated = false;
 
     toggleZoomBtn.addEventListener('click', () => {
       isCoverMode = !isCoverMode;
@@ -174,8 +210,8 @@
         video.srcObject = stream;
         await video.play();
         startOverlay.style.display = 'none';
-        isTracking = true;
-        requestAnimationFrame(trackLoop);
+        isScanning = true;
+        requestAnimationFrame(scanLoop);
       } catch (err) {
         console.error('Camera error:', err);
         permError.style.display = 'block';
@@ -184,58 +220,55 @@
       }
     });
 
-    function trackLoop() {
-      if (!isTracking) return;
-
-      if (reticleCanvas.width !== window.innerWidth || reticleCanvas.height !== window.innerHeight) {
-        reticleCanvas.width = window.innerWidth;
-        reticleCanvas.height = window.innerHeight;
-      }
-      reticleCtx.clearRect(0, 0, reticleCanvas.width, reticleCanvas.height);
+    function scanLoop() {
+      if (!isScanning) return;
 
       if (video.readyState >= 2 && video.videoWidth > 0) {
-        const result = vision.process(video, 480);
+        const cropRect = getViewfinderCropRect();
+        const result = scanner.analyzeViewfinder(video, cropRect);
 
-        if (result && result.verified) {
-          const screenCorners = result.corners.map(pt => videoToScreen(pt.x, pt.y));
+        meterFill.style.width = result.score + '%';
+        meterPercent.textContent = result.score + '%';
 
-          // Dessiner le cadre cyan fin
-          reticleCtx.strokeStyle = '#00aaff';
-          reticleCtx.lineWidth = 2.5;
-          reticleCtx.beginPath();
-          reticleCtx.moveTo(screenCorners[0].x, screenCorners[0].y);
-          for (let i = 1; i < 4; i++) reticleCtx.lineTo(screenCorners[i].x, screenCorners[i].y);
-          reticleCtx.closePath();
-          reticleCtx.stroke();
+        if (result.locked) {
+          vfFrame.classList.add('locked');
+          meterPercent.style.color = '#00aaff';
+          meterStatus.textContent = '✓ TOILE IDENTIFIÉE • SCEAU RÉVÉLÉ';
+          aimHint.style.display = 'none';
+          revealedOverlay.style.display = 'block';
 
-          const matrix3d = vision.getMatrix3d(LAYER_W, LAYER_H, screenCorners);
-          if (matrix3d) {
-            artLayer.style.transform = matrix3d;
-            artLayer.style.display = 'block';
-            hudDot.style.background = '#00aaff';
-            hudReticle.style.borderColor = '#00aaff';
-            hudText.textContent = `TOILE VERROUILLÉE • Remplacement 1:1 (${result.confidence}%)`;
+          if (!hasVibrated) {
+            if (navigator.vibrate) navigator.vibrate([40, 50, 40]);
+            hasVibrated = true;
           }
-
         } else {
-          // Hors cible : DISPARITION IMMÉDIATE (Zéro faux positif)
-          artLayer.style.display = 'none';
-          hudDot.style.background = '#ffaa00';
-          hudReticle.style.borderColor = 'rgba(255,255,255,0.25)';
-          hudText.textContent = 'Ciblez l\'artwork sur l\'écran PC...';
+          vfFrame.classList.remove('locked');
+          meterPercent.style.color = '#00aaff';
+          revealedOverlay.style.display = 'none';
+          aimHint.style.display = 'block';
+          hasVibrated = false;
+
+          if (result.score === 0) {
+            meterStatus.textContent = 'Visez l\'artwork sur l\'écran PC...';
+          } else if (result.score < 40) {
+            meterStatus.textContent = 'Signal faible... Rapprochez-vous de la toile';
+          } else {
+            meterStatus.textContent = 'Alignement en cours... Stabilisez';
+          }
         }
       }
 
-      requestAnimationFrame(trackLoop);
+      requestAnimationFrame(scanLoop);
     }
 
-    function videoToScreen(vx, vy) {
+    function getViewfinderCropRect() {
       const vw = video.videoWidth;
       const vh = video.videoHeight;
       const sw = window.innerWidth;
       const sh = window.innerHeight;
 
-      if (!vw || !vh) return { x: vx, y: vy };
+      const vfEl = document.querySelector('.viewfinder-container-b');
+      const vfRect = vfEl.getBoundingClientRect();
 
       let scale, renderedW, renderedH, offsetX, offsetY;
 
@@ -253,9 +286,16 @@
         offsetY = (sh - renderedH) / 2;
       }
 
+      const vx = (vfRect.left - offsetX) / scale;
+      const vy = (vfRect.top - offsetY) / scale;
+      const vwBox = vfRect.width / scale;
+      const vhBox = vfRect.height / scale;
+
       return {
-        x: vx * scale + offsetX,
-        y: vy * scale + offsetY
+        x: Math.max(0, vx / vw),
+        y: Math.max(0, vy / vh),
+        w: Math.min(1, vwBox / vw),
+        h: Math.min(1, vhBox / vh)
       };
     }
   </script>

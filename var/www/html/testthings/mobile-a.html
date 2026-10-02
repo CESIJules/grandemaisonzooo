@@ -3,57 +3,133 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Lentille Spectrale — Révélation In-Situ</title>
+  <title>Lentille Spectrale — Scanner de Révélation</title>
   <link rel="stylesheet" href="/testthings/css/style.css">
-  <script src="/testthings/js/vision-core.js"></script>
+  <script src="/testthings/js/scanner-engine.js"></script>
   <style>
-    /* Calque secret qui remplace exactement le document du PC en réalité augmentée */
-    #inSituLayer {
+    /* Viseur de cadrage intelligent */
+    .viewfinder-container {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 580px;
-      height: 680px;
-      transform-origin: 0 0;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: min(84vw, 360px);
+      aspect-ratio: 580 / 680;
       pointer-events: none;
-      z-index: 25;
-      display: none;
-      will-change: transform;
-      background: #f4f3ef;
-      border: 2px solid #111;
-      box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
-      padding: 2.5rem;
-      color: #111;
-      font-family: 'Courier New', Courier, monospace;
+      z-index: 20;
     }
 
-    .revealed-stamp {
+    .viewfinder-frame {
+      position: absolute;
+      inset: 0;
+      border: 2px dashed rgba(255, 255, 255, 0.45);
+      border-radius: 6px;
+      transition: all 0.25s ease-out;
+    }
+
+    .viewfinder-frame.locked {
+      border: 3px solid #00ff88;
+      box-shadow: 0 0 35px rgba(0, 255, 136, 0.7), inset 0 0 25px rgba(0, 255, 136, 0.3);
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    /* Coins de visée */
+    .vf-corner {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-color: #fff;
+      border-style: solid;
+    }
+    .vf-tl { top: -2px; left: -2px; border-width: 3px 0 0 3px; }
+    .vf-tr { top: -2px; right: -2px; border-width: 3px 3px 0 0; }
+    .vf-br { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; }
+    .vf-bl { bottom: -2px; left: -2px; border-width: 0 0 3px 3px; }
+
+    .viewfinder-frame.locked .vf-corner {
+      border-color: #00ff88;
+    }
+
+    /* Calque secret qui apparaît DEDANS le viseur */
+    #revealedSecretOverlay {
+      position: absolute;
+      inset: 0;
+      background: #f4f3ef;
+      color: #111;
+      padding: 1.5rem 1.2rem;
+      font-family: 'Courier New', Courier, monospace;
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      border-radius: 4px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+      animation: revealStamp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes revealStamp {
+      0% { opacity: 0; transform: scale(0.95); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    .stamp-red {
       display: inline-block;
       border: 2px solid #b30000;
       color: #b30000;
-      padding: 4px 10px;
-      font-weight: bold;
-      font-size: 0.8rem;
+      padding: 3px 8px;
+      font-weight: 900;
+      font-size: 0.75rem;
       letter-spacing: 0.2em;
-      transform: rotate(-3deg);
-      margin-bottom: 1.5rem;
+      transform: rotate(-2deg);
       text-transform: uppercase;
+      margin-bottom: 0.8rem;
     }
 
-    .strike-text {
-      text-decoration: line-through;
-      color: #999;
-      margin-bottom: 1rem;
-      font-size: 0.9rem;
-    }
-
-    .secret-box-insitu {
+    .secret-box-highlight {
       background: #fff;
       border: 2px solid #b30000;
-      padding: 1.2rem;
-      margin-top: 1rem;
+      padding: 1rem;
       color: #b30000;
       box-shadow: 0 4px 15px rgba(179, 0, 0, 0.15);
+      text-align: center;
+    }
+
+    /* Jauge de synchronisation */
+    .sync-meter-container {
+      position: absolute;
+      bottom: 2.2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(88vw, 360px);
+      background: rgba(18, 18, 20, 0.95);
+      border: 1px solid var(--surface-border);
+      border-radius: 30px;
+      padding: 0.75rem 1.2rem;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      box-shadow: 0 4px 25px rgba(0,0,0,0.6);
+      backdrop-filter: blur(12px);
+    }
+
+    .meter-bar-bg {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .meter-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: #ffaa00;
+      transition: width 0.15s ease-out, background-color 0.2s;
+    }
+
+    .meter-bar-fill.locked {
+      background: #00ff88;
+      box-shadow: 0 0 10px #00ff88;
     }
   </style>
 </head>
@@ -61,39 +137,52 @@
 
   <div class="ar-viewport">
     
-    <!-- Caméra en vue complète dézoomée -->
+    <!-- Flux caméra grand angle sans zoom -->
     <video id="cameraFeed" autoplay playsinline muted></video>
 
-    <!-- Canvas de superposition des repères de visée -->
-    <canvas id="reticleCanvas" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 15;"></canvas>
+    <!-- Viseur AR guidé -->
+    <div class="viewfinder-container">
+      <div id="viewfinderFrame" class="viewfinder-frame">
+        <div class="vf-corner vf-tl"></div>
+        <div class="vf-corner vf-tr"></div>
+        <div class="vf-corner vf-br"></div>
+        <div class="vf-corner vf-bl"></div>
 
-    <!-- Calque de remplacement In-Situ (Remplace le document du PC au millimètre) -->
-    <div id="inSituLayer">
-      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; padding-bottom: 0.5rem; margin-bottom: 1.5rem; font-size: 0.7rem; color: #555;">
-        <span>ARCHIVE N° 45 — VÉRITÉ DÉVOILÉE</span>
-        <span style="color: #b30000; font-weight: bold;">RÉVÉLÉ PAR LA LENTILLE</span>
-      </div>
-
-      <div class="revealed-stamp">DÉCLASSIFIÉ</div>
-
-      <p class="strike-text">
-        « Trois portes se dressent dans le silence, chacune murmurant une illusion différente... »
-      </p>
-
-      <div class="secret-box-insitu">
-        <div style="font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.4rem;">
-          • MESSAGE RÉVÉLÉ •
+        <!-- Indication de cadrage flottante -->
+        <div id="aimHint" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: rgba(255,255,255,0.7); font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; text-align: center; width: 85%; line-height: 1.5; pointer-events: none;">
+          Cadrez le document du PC dans ce rectangle
         </div>
-        <div id="secretTextDisplay" style="font-size: 1.25rem; font-weight: 900; line-height: 1.4; letter-spacing: 0.05em;">
-          LA RÉPONSE EST : SUFFOCATION
-        </div>
-        <p style="font-size: 0.75rem; color: #666; margin-top: 0.6rem;">
-          Tapez ce mot exact sur le site pour débloquer l'accès.
-        </p>
-      </div>
 
-      <div style="margin-top: 2rem; font-size: 0.65rem; color: #888; text-align: center; letter-spacing: 0.15em;">
-        • SYSTÈME OPTIQUE SPECTRAL ROOM 45 •
+        <!-- Calque secret révélé in-situ -->
+        <div id="revealedSecretOverlay">
+          <div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: #666; border-bottom: 1px solid #ddd; padding-bottom: 0.4rem; margin-bottom: 0.8rem;">
+              <span>ARCHIVE N° 45</span>
+              <span style="color: #b30000; font-weight: bold;">RÉVÉLÉ PAR LA LENTILLE</span>
+            </div>
+            <div class="stamp-red">DÉCLASSIFIÉ</div>
+            <p style="font-size: 0.78rem; color: #888; text-decoration: line-through; margin-bottom: 0.8rem; line-height: 1.4;">
+              Trois portes se dressent dans le silence, chacune murmurant une illusion...
+            </p>
+          </div>
+
+          <div class="secret-box-highlight">
+            <div style="font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.3rem;">
+              • CLÉ SECRÈTE DE LA SALLE •
+            </div>
+            <div id="secretCodeText" style="font-size: 1.35rem; font-weight: 900; letter-spacing: 0.08em; line-height: 1.3;">
+              LA RÉPONSE EST : SUFFOCATION
+            </div>
+            <div style="font-size: 0.7rem; color: #666; margin-top: 0.4rem;">
+              Tapez ce mot exact sur le PC.
+            </div>
+          </div>
+
+          <div style="font-size: 0.6rem; color: #999; text-align: center; letter-spacing: 0.15em;">
+            • SYSTÈME OPTIQUE SPECTRAL •
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -107,13 +196,18 @@
       </button>
     </div>
 
-    <!-- Viseur HUD central -->
-    <div id="hudReticle" class="hud-reticle"></div>
-
-    <!-- Barre d'état bas d'écran -->
-    <div class="hud-bar">
-      <div id="hudDot" class="hud-status-dot"></div>
-      <span id="hudText">Pointez la caméra vers l'énigme sur le PC...</span>
+    <!-- Jauge de synchronisation et de signal -->
+    <div class="sync-meter-container">
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem;">
+        <span id="meterLabel" style="color: var(--text);">Signal optique :</span>
+        <span id="meterPercent" style="font-weight: bold; color: #ffaa00;">0%</span>
+      </div>
+      <div class="meter-bar-bg">
+        <div id="meterFill" class="meter-bar-fill"></div>
+      </div>
+      <div id="meterStatus" style="font-size: 0.68rem; color: var(--text-dim); text-align: center; margin-top: 0.1rem;">
+        Approchez votre téléphone du document PC...
+      </div>
     </div>
 
     <!-- Écran d'accueil pour la permission caméra -->
@@ -123,7 +217,7 @@
       </div>
       <h2 style="font-size: 1.3rem; margin-bottom: 0.8rem; color: #fff;">LENTILLE DE RÉVÉLATION</h2>
       <p style="font-size: 0.85rem; color: var(--text-dim); line-height: 1.5; max-width: 320px; margin-bottom: 2rem;">
-        Pointez votre iPhone vers le document sur votre écran de PC pour transformer le texte en temps réel.
+        Cadrez le document sur votre écran de PC pour révéler la clé cachée.
       </p>
       <button id="startBtn" style="background: #00ff88; color: #000; border: none; padding: 0.9rem 2.2rem; font-size: 0.95rem; font-weight: bold; border-radius: 30px; letter-spacing: 0.1em; cursor: pointer; box-shadow: 0 0 20px rgba(0,255,136,0.6);">
         ACTIVER LA CAMÉRA
@@ -135,13 +229,13 @@
 
   <script>
     const video = document.getElementById('cameraFeed');
-    const reticleCanvas = document.getElementById('reticleCanvas');
-    const reticleCtx = reticleCanvas.getContext('2d');
-    const inSituLayer = document.getElementById('inSituLayer');
-    const hudDot = document.getElementById('hudDot');
-    const hudText = document.getElementById('hudText');
-    const hudReticle = document.getElementById('hudReticle');
-    const secretTextDisplay = document.getElementById('secretTextDisplay');
+    const viewfinderFrame = document.getElementById('viewfinderFrame');
+    const aimHint = document.getElementById('aimHint');
+    const revealedOverlay = document.getElementById('revealedSecretOverlay');
+    const meterFill = document.getElementById('meterFill');
+    const meterPercent = document.getElementById('meterPercent');
+    const meterStatus = document.getElementById('meterStatus');
+    const secretCodeText = document.getElementById('secretCodeText');
     const startOverlay = document.getElementById('startOverlay');
     const startBtn = document.getElementById('startBtn');
     const permError = document.getElementById('permError');
@@ -150,17 +244,12 @@
 
     // Récupérer le secret personnalisé
     const customSecret = localStorage.getItem('room45_insitu_secret') || 'LA RÉPONSE EST : SUFFOCATION';
-    secretTextDisplay.textContent = customSecret;
+    secretCodeText.textContent = customSecret;
 
-    // Dimensions de référence du document
-    const LAYER_W = 580;
-    const LAYER_H = 680;
-    inSituLayer.style.width = LAYER_W + 'px';
-    inSituLayer.style.height = LAYER_H + 'px';
-
-    const vision = new Room45Vision(LAYER_W / LAYER_H);
-    let isTracking = false;
+    const scanner = new SpectralScanner({ threshold: 0.65 });
+    let isScanning = false;
     let isCoverMode = false;
+    let hasVibrated = false;
 
     toggleZoomBtn.addEventListener('click', () => {
       isCoverMode = !isCoverMode;
@@ -184,8 +273,8 @@
         video.srcObject = stream;
         await video.play();
         startOverlay.style.display = 'none';
-        isTracking = true;
-        requestAnimationFrame(trackLoop);
+        isScanning = true;
+        requestAnimationFrame(scanLoop);
       } catch (err) {
         console.error('Camera error:', err);
         permError.style.display = 'block';
@@ -194,61 +283,68 @@
       }
     });
 
-    function trackLoop() {
-      if (!isTracking) return;
-
-      if (reticleCanvas.width !== window.innerWidth || reticleCanvas.height !== window.innerHeight) {
-        reticleCanvas.width = window.innerWidth;
-        reticleCanvas.height = window.innerHeight;
-      }
-      reticleCtx.clearRect(0, 0, reticleCanvas.width, reticleCanvas.height);
+    function scanLoop() {
+      if (!isScanning) return;
 
       if (video.readyState >= 2 && video.videoWidth > 0) {
-        // Analyse visuelle avec rejet strict des faux positifs
-        const result = vision.process(video, 480);
+        // Coordonnées relatives du viseur central à l'écran
+        const cropRect = getViewfinderCropRect();
+        
+        // Analyse en temps réel de la zone visée
+        const result = scanner.analyzeViewfinder(video, cropRect);
 
-        if (result && result.verified) {
-          // Convertir les coins détectés dans l'espace écran du téléphone
-          const screenCorners = result.corners.map(pt => videoToScreen(pt.x, pt.y));
+        // Mettre à jour la jauge de signal en direct
+        meterFill.style.width = result.score + '%';
+        meterPercent.textContent = result.score + '%';
 
-          // Dessiner le cadre de verrouillage vert fin
-          reticleCtx.strokeStyle = '#00ff88';
-          reticleCtx.lineWidth = 2.5;
-          reticleCtx.beginPath();
-          reticleCtx.moveTo(screenCorners[0].x, screenCorners[0].y);
-          for (let i = 1; i < 4; i++) reticleCtx.lineTo(screenCorners[i].x, screenCorners[i].y);
-          reticleCtx.closePath();
-          reticleCtx.stroke();
+        if (result.locked) {
+          // --- VERROUILLÉ : RÉVÉLATION DU SECRET ---
+          viewfinderFrame.classList.add('locked');
+          meterFill.classList.add('locked');
+          meterPercent.style.color = '#00ff88';
+          meterStatus.textContent = '✓ DOCUMENT IDENTIFIÉ • CLÉ RÉVÉLÉE';
+          aimHint.style.display = 'none';
+          revealedOverlay.style.display = 'flex';
 
-          // Calculer la matrice 3D de remplacement in-situ
-          const matrix3d = vision.getMatrix3d(LAYER_W, LAYER_H, screenCorners);
-          if (matrix3d) {
-            inSituLayer.style.transform = matrix3d;
-            inSituLayer.style.display = 'block';
-            hudDot.classList.add('active');
-            hudReticle.classList.add('locked');
-            hudText.textContent = `DOCUMENT VERROUILLÉ • Remplacement en cours (${result.confidence}%)`;
+          if (!hasVibrated) {
+            if (navigator.vibrate) navigator.vibrate([40, 50, 40]);
+            hasVibrated = true;
           }
-
         } else {
-          // Si on ne regarde pas l'énigme du PC : DISPARITION IMMÉDIATE (Zéro faux positif)
-          inSituLayer.style.display = 'none';
-          hudDot.classList.remove('active');
-          hudReticle.classList.remove('locked');
-          hudText.textContent = 'Pointez la caméra vers l\'énigme sur le PC...';
+          // --- EN RECHERCHE / NON VERROUILLÉ ---
+          viewfinderFrame.classList.remove('locked');
+          meterFill.classList.remove('locked');
+          meterPercent.style.color = '#ffaa00';
+          revealedOverlay.style.display = 'none';
+          aimHint.style.display = 'block';
+          hasVibrated = false;
+
+          if (result.score === 0) {
+            meterStatus.textContent = 'Visez l\'affiche de l\'énigme sur le PC...';
+          } else if (result.score < 40) {
+            meterStatus.textContent = 'Signal faible... Rapprochez-vous de l\'écran';
+          } else {
+            meterStatus.textContent = 'Signal détecté ! Stabilisez le cadrage...';
+          }
         }
       }
 
-      requestAnimationFrame(trackLoop);
+      requestAnimationFrame(scanLoop);
     }
 
-    function videoToScreen(vx, vy) {
+    /**
+     * Calcule la boîte de découpe relative (0.0 à 1.0) dans la vidéo
+     * correspondant exactement au rectangle du viseur affiché sur le téléphone
+     */
+    function getViewfinderCropRect() {
       const vw = video.videoWidth;
       const vh = video.videoHeight;
       const sw = window.innerWidth;
       const sh = window.innerHeight;
 
-      if (!vw || !vh) return { x: vx, y: vy };
+      // Position du viseur sur l'écran
+      const vfEl = document.querySelector('.viewfinder-container');
+      const vfRect = vfEl.getBoundingClientRect();
 
       let scale, renderedW, renderedH, offsetX, offsetY;
 
@@ -266,9 +362,17 @@
         offsetY = (sh - renderedH) / 2;
       }
 
+      // Inverser la projection écran -> vidéo
+      const vx = (vfRect.left - offsetX) / scale;
+      const vy = (vfRect.top - offsetY) / scale;
+      const vwBox = vfRect.width / scale;
+      const vhBox = vfRect.height / scale;
+
       return {
-        x: vx * scale + offsetX,
-        y: vy * scale + offsetY
+        x: Math.max(0, vx / vw),
+        y: Math.max(0, vy / vh),
+        w: Math.min(1, vwBox / vw),
+        h: Math.min(1, vhBox / vh)
       };
     }
   </script>
